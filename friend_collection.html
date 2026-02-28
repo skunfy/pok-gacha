@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Collection Ami — Pokégacha</title>
+
+<style>
+:root{ --bg1:#05060d; --bg2:#090b18; }
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui;
+  color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment: fixed;
+  overflow-x:hidden;
+}
+.wrap{
+  width:min(1200px,95vw);
+  margin:24px auto;
+  display:grid;
+  gap:16px;
+}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+  gap:12px;
+}
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+input, select{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:600;
+}
+button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+.gridWrap{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:20px;
+  max-height:820px;
+  overflow:auto;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
+@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
+
+.cardBox{
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.cImg{
+  height:220px;
+  background:center/contain no-repeat;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  place-items:center;
+  z-index:9999;
+  padding:24px;
+}
+.modal.open{display:grid}
+.slab{
+  width:380px;
+  height:560px;
+  border-radius:22px;
+  position:relative;
+}
+.shell{
+  position:absolute;
+  inset:0;
+  border-radius:22px;
+  background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(6px);
+}
+.label{
+  position:absolute;
+  left:50%;
+  top:30px;
+  transform:translateX(-50%);
+  width:85%;
+  height:60px;
+  border-radius:14px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 12px;
+  gap:10px;
+}
+.grade{
+  font-size:24px;
+  font-weight:900;
+}
+.mintBadge{
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  border:1px solid rgba(255,80,80,.6);
+  color:#ff5050;
+  display:none;
+}
+.cardImgZoom{
+  position:absolute;
+  left:50%;
+  top:58%;
+  transform:translate(-50%,-50%);
+  width:300px;
+  height:420px;
+  background:center/contain no-repeat;
+  border-radius:16px;
+}
+.msg{opacity:.8; font-size:13px; padding:10px 2px}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="topbar">
+  <div>
+    <b>POKÉGACHA</b> — Collection Ami
+    <div class="msg" id="sub"></div>
+  </div>
+  <div class="controls">
+    <input id="search" placeholder="Rechercher...">
+    <select id="sort">
+      <option value="recent">Dernières obtenues</option>
+      <option value="grade">Meilleure note</option>
+      <option value="name">Nom A-Z</option>
+    </select>
+    <button onclick="location.href='/friends.html'">← Retour</button>
+  </div>
+</div>
+
+<div class="gridWrap">
+  <div class="grid" id="grid"></div>
+</div>
+
+</div>
+
+<div class="modal" id="modal">
+  <div class="slab" id="zoomSlab" data-tier="" data-mint="0">
+    <div class="shell"></div>
+
+    <div class="label">
+      <div id="zoomTitle">POKÉMON</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="mintBadge" id="zoomMint">MINT</div>
+        <div class="grade" id="zoomGrade">?</div>
+      </div>
+    </div>
+
+    <div class="cardImgZoom" id="zoomImg"></div>
+  </div>
+</div>
+
+<script>
+const TOKEN = localStorage.getItem("gacha_token_v1");
+if(!TOKEN) location.href="/login.html";
+
+const grid = document.getElementById("grid");
+const searchInput = document.getElementById("search");
+const sortSelect = document.getElementById("sort");
+const sub = document.getElementById("sub");
+
+const modal = document.getElementById("modal");
+const zoomImg = document.getElementById("zoomImg");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+
+let allItems = [];
+const params = new URLSearchParams(location.search);
+const friendCode = (params.get("code") || "").toUpperCase();
+
+if(!friendCode){
+  sub.textContent = "❌ Code ami manquant.";
+}
+
+function tierFromGrade(g){
+  if(g >= 10) return "g";
+  if(g >= 7) return "v";
+  if(g >= 5) return "b";
+  return "w";
+}
+
+async function loadFriendCollection(){
+  sub.textContent = friendCode ? `Code: ${friendCode}` : "";
+
+  const r = await fetch(`/api/friends/${encodeURIComponent(friendCode)}/collection`, {
+    headers:{ Authorization:"Bearer "+TOKEN }
+  });
+
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok){
+    sub.textContent = "❌ " + (data.error || "Erreur");
+    return;
+  }
+
+  allItems = data.items || [];
+  applyFilters();
+}
+
+function applyFilters(){
+  const q = searchInput.value.toLowerCase().trim();
+  let items = [...allItems];
+
+  if(q){
+    items = items.filter(item =>
+      (item.name || "").toLowerCase().includes(q) ||
+      (item.setName || item.set || "").toLowerCase().includes(q) ||
+      String(item.grade || "").includes(q)
+    );
+  }
+
+  const sort = sortSelect.value;
+  if(sort === "grade"){
+    items.sort((a,b)=> (b.grade||0) - (a.grade||0));
+  } else if(sort === "name"){
+    items.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+  } else {
+    items.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
+  }
+
+  render(items);
+}
+
+function openZoom(x){
+  // on tente high.webp si possible
+  let img = x.image;
+  if (img && img.includes("/low.webp")) img = img.replace("/low.webp", "/high.webp");
+
+  zoomImg.style.backgroundImage = `url('${img}')`;
+  zoomTitle.textContent = `${x.name} • ${(x.setName || x.set || "")}`;
+  zoomGrade.textContent = x.grade;
+
+  zoomMint.style.display = x.mint ? "block" : "none";
+  modal.classList.add("open");
+}
+
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function render(items){
+  grid.innerHTML="";
+  items.forEach(x=>{
+    const el=document.createElement("div");
+    el.className="cardBox";
+    el.innerHTML=`
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div><b>${escapeHtml(x.name)}</b></div>
+      <div>${escapeHtml(x.setName || x.set || "")}</div>
+      <div>Grade ${escapeHtml(x.grade)} ${x.mint?"(MINT)":""} ×${escapeHtml(x.count)}</div>
+      <div style="opacity:.65;font-size:12px;">Lecture seule</div>
+    `;
+
+    el.querySelector(".cImg").onclick = () => openZoom(x);
+    grid.appendChild(el);
+  });
+}
+
+searchInput.addEventListener("input", applyFilters);
+sortSelect.addEventListener("change", applyFilters);
+
+modal.onclick = e => {
+  if(e.target === modal) modal.classList.remove("open");
+};
+
+loadFriendCollection();
+</script>
+
+</body>
+</html>
