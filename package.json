@@ -3,6 +3,7 @@
   "type": "module",
   "dependencies": {
     "express": "^4.19.2",
+    "pg": "^8.19.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   }
