@@ -199,57 +199,59 @@ function normalizeImageUrl(imgUrl) {
   return imgUrl;
 }
 
-async function drawCard() {
-  // 1) offline prioritaire si présent
-  if (offlineCards?.length) {
-    const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-    if (c?.image) return c;
-  }
-
-  // si tu veux TCGdex => mets FORCE_OFFLINE=0
+async function drawCard(){
+  // 0) si OFFLINE forcé : uniquement offline
   if (FORCE_OFFLINE) {
+    if(offlineCards?.length){
+      const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
+      if(c?.image) return c;
+    }
     throw new Error("Offline only: no cards.json");
   }
 
-  // 2) online retries
+  // 1) ONLINE d'abord (TCGdex)
   const MAX_TRIES = 6;
 
-  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+  for(let attempt=0; attempt<MAX_TRIES; attempt++){
     const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/cards", 20000);
-    if (!r.ok) continue;
+    if(!r.ok) continue;
 
-    const cards = await r.json().catch(() => null);
-    if (!Array.isArray(cards) || cards.length === 0) continue;
+    const cards = await r.json().catch(()=>null);
+    if(!Array.isArray(cards) || cards.length === 0) continue;
 
     const pick = cards[Math.floor(Math.random() * cards.length)];
-    if (!pick?.id) continue;
+    if(!pick?.id) continue;
 
     const r2 = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${pick.id}`, 20000);
-    if (!r2.ok) continue;
+    if(!r2.ok) continue;
 
-    const c = await r2.json().catch(() => null);
-    if (!c) continue;
+    const c = await r2.json().catch(()=>null);
+    if(!c) continue;
 
     const img = normalizeImageUrl(c.image);
-    if (!img) continue;
+    if(!img) continue;
+
+    console.log("🌐 source=TCGDEX");
 
     return {
       name: c.name || pick.name || "Unknown",
       set: (c.set && (c.set.name || c.set.id)) || "Unknown",
       rarity: c.rarity || "",
-      image: img,
+      image: img
     };
   }
 
-  // 3) dernière chance offline
-  if (offlineCards?.length) {
-    const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-    if (c?.image) return c;
+  // 2) fallback OFFLINE si TCGdex down
+  if(offlineCards?.length){
+  const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
+  if(c?.image){
+    console.log("📦 source=OFFLINE");
+    return c;
   }
-
-  throw new Error("No image (TCGdex)");
 }
 
+  throw new Error("No card available (TCGdex + offline empty)");
+}
 // ----- GRADES -----
 function rollGrade() {
   const r = Math.random();
