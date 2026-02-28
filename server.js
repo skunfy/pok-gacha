@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
-
 import pg from "pg";
 
 const { Pool } = pg;
@@ -17,7 +16,7 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 8000;
 
 // =========================
-// OFFLINE CARDS
+// OFFLINE CARDS (fallback)
 // =========================
 const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
 const OFFLINE_PATH = path.join(__dirname, "data", "cards.json");
@@ -61,22 +60,20 @@ app.use(
 );
 
 // =========================
-// POSTGRES (Supabase)
+// POSTGRES
 // =========================
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error("❌ Missing env DATABASE_URL (set it in Render)");
+  console.error("❌ Missing env DATABASE_URL");
   process.exit(1);
 }
 
-// Supabase Postgres => SSL requis en général
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
 async function initDb() {
-  // test connexion
   const client = await pool.connect();
   try {
     const r = await client.query("select now() as now");
@@ -85,7 +82,6 @@ async function initDb() {
     client.release();
   }
 
-  // tables
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -145,7 +141,8 @@ async function applyPayForUser(userId) {
   if (!u) return;
 
   const now = Date.now();
-  const last = Number(u.lastpay || u.lastPay || 0) || now; // sécurité
+  // selon pg, ça peut revenir en lower-case
+  const last = Number(u.lastpay ?? u.lastPay ?? 0) || now;
   const delta = Math.max(0, now - last);
   const ticks = Math.floor(delta / PAY_EVERY_MS);
 
@@ -185,73 +182,146 @@ async function fetchWithTimeout(url, ms = 20000) {
   }
 }
 
-function normalizeImageUrl(imgUrl) {
-  if (!imgUrl) return null;
+// =========================
+// TCGDEX PERF: CACHE LIST + CACHE DETAILS
+// =========================
+const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000;   // 6h
+const CARD_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
-  if (typeof imgUrl === "object") {
-    imgUrl = imgUrl.high || imgUrl.large || imgUrl.medium || imgUrl.small || imgUrl.url || null;
+let cardsBriefCache = { at: 0, list: [] };      // [{id, name, ...}]
+const cardDetailCache = new Map();              // id -> { at, data }
+
+async function getCardsBriefList() {
+  const now = Date.now();
+  if (cardsBriefCache.list.length && (now - cardsBriefCache.at) < CARDS_LIST_TTL_MS) {
+    return cardsBriefCache.list;
   }
-  if (typeof imgUrl !== "string") return null;
 
-  const hasExt = /\.(png|jpe?g|webp)(\?|$)/i.test(imgUrl);
-  if (!hasExt) imgUrl = imgUrl.replace(/\/$/, "") + "/high.png";
+  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/cards", 20000);
+  if (!r.ok) throw new Error("TCGdex list failed");
 
-  return imgUrl;
+  const list = await r.json().catch(() => null);
+  if (!Array.isArray(list) || !list.length) throw new Error("TCGdex list empty");
+
+  cardsBriefCache = { at: now, list };
+  console.log(`🌐 cached cards list: ${list.length} items`);
+  return list;
 }
 
-async function drawCard(){
-  // 0) si OFFLINE forcé : uniquement offline
+async function getCardDetailById(id) {
+  const now = Date.now();
+  const cached = cardDetailCache.get(id);
+  if (cached && (now - cached.at) < CARD_DETAIL_TTL_MS) return cached.data;
+
+  const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${id}`, 20000);
+  if (!r.ok) throw new Error("TCGdex detail failed");
+
+  const data = await r.json().catch(() => null);
+  if (!data) throw new Error("TCGdex detail invalid");
+
+  cardDetailCache.set(id, { at: now, data });
+  return data;
+}
+
+// =========================
+// IMAGE URL NORMALIZATION
+// Objectif: low.webp pour affichage rapide,
+//          high.webp possible pour zoom
+// =========================
+function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
+  if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
+
+  // si déjà une extension, on laisse tel quel
+  const hasExt = /\.(png|jpe?g|webp)(\?|$)/i.test(urlBaseOrWithExt);
+  if (hasExt) return urlBaseOrWithExt;
+
+  // sinon on suppose base tcgdex -> on ajoute /low.webp ou /high.webp
+  return urlBaseOrWithExt.replace(/\/$/, "") + `/${quality}.${ext}`;
+}
+
+function normalizeImageField(imageField, quality = "low", ext = "webp") {
+  if (!imageField) return null;
+
+  // TCGdex renvoie souvent image: { low, high } ou image: "baseUrl"
+  let base = imageField;
+  if (typeof imageField === "object") {
+    base =
+      imageField[quality] ||
+      imageField.high ||
+      imageField.low ||
+      imageField.large ||
+      imageField.medium ||
+      imageField.small ||
+      imageField.url ||
+      null;
+  }
+  if (typeof base !== "string") return null;
+
+  return buildTcgdexAsset(base, quality, ext);
+}
+
+// =========================
+// DRAW CARD
+// =========================
+async function drawCard() {
+  // 0) offline forcé
   if (FORCE_OFFLINE) {
-    if(offlineCards?.length){
+    if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-      if(c?.image) return c;
+      if (c?.image) return c;
     }
     throw new Error("Offline only: no cards.json");
   }
 
-  // 1) ONLINE d'abord (TCGdex)
+  // 1) online (TCGdex) avec caches
   const MAX_TRIES = 6;
 
-  for(let attempt=0; attempt<MAX_TRIES; attempt++){
-    const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/cards", 20000);
-    if(!r.ok) continue;
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    let list;
+    try {
+      list = await getCardsBriefList();
+    } catch {
+      list = null;
+    }
+    if (!list?.length) break;
 
-    const cards = await r.json().catch(()=>null);
-    if(!Array.isArray(cards) || cards.length === 0) continue;
+    const pick = list[Math.floor(Math.random() * list.length)];
+    if (!pick?.id) continue;
 
-    const pick = cards[Math.floor(Math.random() * cards.length)];
-    if(!pick?.id) continue;
+    let c;
+    try {
+      c = await getCardDetailById(pick.id);
+    } catch {
+      continue;
+    }
 
-    const r2 = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${pick.id}`, 20000);
-    if(!r2.ok) continue;
+    const imageLow = normalizeImageField(c.image, "low", "webp");   // rapide
+    const imageHigh = normalizeImageField(c.image, "high", "webp"); // zoom HD
+    if (!imageLow) continue;
 
-    const c = await r2.json().catch(()=>null);
-    if(!c) continue;
-
-    const img = normalizeImageUrl(c.image);
-    if(!img) continue;
-
-    console.log("🌐 source=TCGDEX");
+    console.log("🌐 source=TCGDEX (cached)");
 
     return {
       name: c.name || pick.name || "Unknown",
       set: (c.set && (c.set.name || c.set.id)) || "Unknown",
       rarity: c.rarity || "",
-      image: img
+      image: imageLow,        // ce que tu stockes/affiches normalement
+      imageHigh: imageHigh || null // optionnel
     };
   }
 
-  // 2) fallback OFFLINE si TCGdex down
-  if(offlineCards?.length){
-  const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-  if(c?.image){
-    console.log("📦 source=OFFLINE");
-    return c;
+  // 2) fallback offline
+  if (offlineCards?.length) {
+    const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
+    if (c?.image) {
+      console.log("📦 source=OFFLINE");
+      return c;
+    }
   }
-}
 
   throw new Error("No card available (TCGdex + offline empty)");
 }
+
 // ----- GRADES -----
 function rollGrade() {
   const r = Math.random();
@@ -266,7 +336,6 @@ function rollGrade() {
   if (r < 0.97) return 2;
   return 1;
 }
-
 function rollMintForGrade(grade) {
   if (grade !== 10) return 0;
   return Math.random() < 1 / 3 ? 1 : 0;
@@ -280,11 +349,9 @@ const COST_ONE = 5;
 app.post("/api/login", async (req, res) => {
   const name = String(req.body?.name || "").trim();
   const code = String(req.body?.code || "").trim();
-
   if (!name) return res.status(400).json({ error: "Pseudo requis" });
 
   const now = Date.now();
-
   const existing = await pool.query(`SELECT id, code, token FROM users WHERE name=$1`, [name]);
   const u = existing.rows[0];
 
@@ -312,8 +379,11 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
+
   const { rows } = await pool.query(`SELECT name, money FROM users WHERE id=$1`, [req.user.id]);
   const u = rows[0];
+
+  // (ton front attend juste name/money, pas les stats)
   res.json({ name: u?.name, money: u?.money || 0 });
 });
 
@@ -344,7 +414,7 @@ app.post("/api/open", auth, async (req, res) => {
   const mint = rollMintForGrade(grade);
   const now = Date.now();
 
-  const idKey = `${c.name}__${c.set}__${c.image}`;
+  const idKey = `${c.name}__${c.set}__${c.image}`; // image low.webp => OK
 
   // pulls log
   await pool.query(
@@ -353,7 +423,7 @@ app.post("/api/open", auth, async (req, res) => {
     [req.user.id, c.name, c.set, c.image, grade, mint, now]
   );
 
-  // upsert collection (Postgres)
+  // upsert collection
   await pool.query(
     `
     INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
@@ -375,7 +445,8 @@ app.post("/api/open", auth, async (req, res) => {
     card: {
       name: c.name,
       set: c.set,
-      image: c.image,
+      image: c.image,           // low.webp
+      imageHigh: c.imageHigh,   // optionnel
       grade,
       mint: Boolean(mint),
     },
