@@ -5,33 +5,23 @@ import crypto from "crypto";
 import { fileURLToPath } from "url";
 
 import pg from "pg";
+
 const { Pool } = pg;
 
 const app = express();
 app.use(express.json());
-
-const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 8000;
 
-// ----- STATIC -----
-app.use(express.static(__dirname));
-app.use(
-  "/data",
-  express.static(path.join(__dirname, "data"), {
-    setHeaders(res) {
-      res.setHeader("Cache-Control", "no-store");
-    },
-  })
-);
-
-console.log(`✅ http://localhost:${PORT}`);
-
-// ----- OFFLINE CARDS -----
+// =========================
+// OFFLINE CARDS
+// =========================
+const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
 const OFFLINE_PATH = path.join(__dirname, "data", "cards.json");
+
 let offlineCards = null;
 
 function loadOffline() {
@@ -42,7 +32,11 @@ function loadOffline() {
       if (Array.isArray(parsed) && parsed.length) {
         offlineCards = parsed;
         console.log(`📦 Offline loaded: ${offlineCards.length} cards`);
+      } else {
+        console.log("📦 Offline cards.json present but empty/invalid array");
       }
+    } else {
+      console.log("📦 No offline cards.json found at", OFFLINE_PATH);
     }
   } catch (e) {
     console.log("Offline load error:", e.message);
@@ -53,61 +47,74 @@ loadOffline();
 console.log(`🧩 FORCE_OFFLINE=${FORCE_OFFLINE ? "ON" : "OFF"}`);
 console.log(`📦 Offline cards: ${offlineCards?.length || 0}`);
 
-// ----- DB (Postgres / Supabase) -----
+// =========================
+// STATIC
+// =========================
+app.use(express.static(__dirname));
+app.use(
+  "/data",
+  express.static(path.join(__dirname, "data"), {
+    setHeaders(res) {
+      res.setHeader("Cache-Control", "no-store");
+    },
+  })
+);
+
+// =========================
+// POSTGRES (Supabase)
+// =========================
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
-  console.error("❌ Missing DATABASE_URL env var (Render -> Environment)");
+  console.error("❌ Missing env DATABASE_URL (set it in Render)");
   process.exit(1);
 }
 
+// Supabase Postgres => SSL requis en général
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // nécessaire pour Supabase
+  ssl: { rejectUnauthorized: false },
 });
 
-// helpers (style sqlite)
-async function dbGet(sql, params = []) {
-  const r = await pool.query(sql, params);
-  return r.rows[0] || null;
-}
-async function dbAll(sql, params = []) {
-  const r = await pool.query(sql, params);
-  return r.rows;
-}
-async function dbRun(sql, params = []) {
-  return pool.query(sql, params);
-}
-
 async function initDb() {
-  await dbRun(`
+  // test connexion
+  const client = await pool.connect();
+  try {
+    const r = await client.query("select now() as now");
+    console.log("✅ Postgres connected:", r.rows[0].now);
+  } finally {
+    client.release();
+  }
+
+  // tables
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id BIGSERIAL PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,
       code TEXT NOT NULL,
       token TEXT NOT NULL UNIQUE,
       money INTEGER NOT NULL DEFAULT 0,
-      lastpay BIGINT NOT NULL DEFAULT 0,
-      createdat BIGINT NOT NULL DEFAULT 0
+      lastPay BIGINT NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS collection (
-      user_id BIGINT NOT NULL,
-      idkey TEXT NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
       name TEXT NOT NULL,
-      setname TEXT NOT NULL,
+      setName TEXT NOT NULL,
       image TEXT NOT NULL,
       grade INTEGER NOT NULL,
       mint INTEGER NOT NULL DEFAULT 0,
       count INTEGER NOT NULL DEFAULT 1,
-      lastat BIGINT NOT NULL,
-      PRIMARY KEY (user_id, idkey)
+      lastAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, idKey)
     );
 
     CREATE TABLE IF NOT EXISTS pulls (
-      id BIGSERIAL PRIMARY KEY,
-      user_id BIGINT NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
-      setname TEXT NOT NULL,
+      setName TEXT NOT NULL,
       image TEXT NOT NULL,
       grade INTEGER NOT NULL,
       mint INTEGER NOT NULL DEFAULT 0,
@@ -118,7 +125,9 @@ async function initDb() {
   console.log("✅ Postgres DB ready");
 }
 
-// ----- UTILS -----
+// =========================
+// HELPERS
+// =========================
 function randCode(len = 6) {
   return String(Math.floor(Math.random() * Math.pow(10, len))).padStart(len, "0");
 }
@@ -131,42 +140,38 @@ const PAY_AMOUNT = 10;
 const PAY_EVERY_MS = 5 * 60 * 1000;
 
 async function applyPayForUser(userId) {
-  const u = await dbGet(`SELECT money, lastpay FROM users WHERE id=$1`, [userId]);
+  const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
+  const u = rows[0];
   if (!u) return;
 
   const now = Date.now();
-  const last = Number(u.lastpay || now);
+  const last = Number(u.lastpay || u.lastPay || 0) || now; // sécurité
   const delta = Math.max(0, now - last);
   const ticks = Math.floor(delta / PAY_EVERY_MS);
 
   if (ticks > 0) {
     const add = ticks * PAY_AMOUNT;
     const newLast = last + ticks * PAY_EVERY_MS;
-    await dbRun(`UPDATE users SET money = money + $1, lastpay=$2 WHERE id=$3`, [
-      add,
-      newLast,
-      userId,
-    ]);
+    await pool.query(
+      `UPDATE users SET money = money + $1, lastPay=$2 WHERE id=$3`,
+      [add, newLast, userId]
+    );
   }
 }
 
 // ----- AUTH -----
 async function auth(req, res, next) {
-  try {
-    const h = req.headers.authorization || "";
-    const m = h.match(/^Bearer\s+(.+)$/i);
-    const token = m?.[1];
-    if (!token) return res.status(401).json({ error: "Missing token" });
+  const h = req.headers.authorization || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  const token = m?.[1];
+  if (!token) return res.status(401).json({ error: "Missing token" });
 
-    const u = await dbGet(`SELECT id, name FROM users WHERE token=$1`, [token]);
-    if (!u) return res.status(401).json({ error: "Invalid token" });
+  const { rows } = await pool.query(`SELECT id, name FROM users WHERE token=$1`, [token]);
+  const u = rows[0];
+  if (!u) return res.status(401).json({ error: "Invalid token" });
 
-    req.user = u;
-    next();
-  } catch (e) {
-    console.error("Auth error:", e);
-    res.status(500).json({ error: "Server error" });
-  }
+  req.user = u;
+  next();
 }
 
 // ----- HTTP fetch with timeout -----
@@ -180,7 +185,6 @@ async function fetchWithTimeout(url, ms = 20000) {
   }
 }
 
-// ----- CARD FETCH -----
 function normalizeImageUrl(imgUrl) {
   if (!imgUrl) return null;
 
@@ -196,13 +200,13 @@ function normalizeImageUrl(imgUrl) {
 }
 
 async function drawCard() {
-  // 1) offline prioritaire
+  // 1) offline prioritaire si présent
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if (c?.image) return c;
   }
 
-  // en prod: pas d'online si FORCE_OFFLINE=1
+  // si tu veux TCGdex => mets FORCE_OFFLINE=0
   if (FORCE_OFFLINE) {
     throw new Error("Offline only: no cards.json");
   }
@@ -268,227 +272,201 @@ function rollMintForGrade(grade) {
 
 const COST_ONE = 5;
 
-// ----- ROUTES -----
-
-// Login: pseudo + code (optionnel)
+// =========================
+// ROUTES
+// =========================
 app.post("/api/login", async (req, res) => {
-  try {
-    const name = String(req.body?.name || "").trim();
-    const code = String(req.body?.code || "").trim();
+  const name = String(req.body?.name || "").trim();
+  const code = String(req.body?.code || "").trim();
 
-    if (!name) return res.status(400).json({ error: "Pseudo requis" });
+  if (!name) return res.status(400).json({ error: "Pseudo requis" });
 
-    const now = Date.now();
+  const now = Date.now();
 
-    const existing = await dbGet(`SELECT id, code, token FROM users WHERE name=$1`, [name]);
+  const existing = await pool.query(`SELECT id, code, token FROM users WHERE name=$1`, [name]);
+  const u = existing.rows[0];
 
-    // Nouveau compte
-    if (!existing) {
-      const newCode = randCode(6);
-      const token = randToken();
+  // Nouveau compte
+  if (!u) {
+    const newCode = randCode(6);
+    const token = randToken();
 
-      await dbRun(
-        `INSERT INTO users (name, code, token, money, lastpay, createdat)
-         VALUES ($1, $2, $3, 0, $4, $5)`,
-        [name, newCode, token, now, now]
-      );
+    await pool.query(
+      `INSERT INTO users (name, code, token, money, lastPay, createdAt)
+       VALUES ($1,$2,$3,0,$4,$5)`,
+      [name, newCode, token, now, now]
+    );
 
-      return res.json({ token, isNew: true, code: newCode });
-    }
-
-    // Compte existant -> code obligatoire
-    if (!code || code !== existing.code) {
-      return res.status(401).json({ error: "Code incorrect" });
-    }
-
-    return res.json({ token: existing.token, isNew: false });
-  } catch (e) {
-    console.error("Login error:", e);
-    res.status(500).json({ error: "Server error" });
+    return res.json({ token, isNew: true, code: newCode });
   }
+
+  // Compte existant -> code obligatoire
+  if (!code || code !== u.code) {
+    return res.status(401).json({ error: "Code incorrect" });
+  }
+
+  return res.json({ token: u.token, isNew: false });
 });
 
-// Infos money
 app.get("/api/me", auth, async (req, res) => {
-  try {
-    await applyPayForUser(req.user.id);
-    const u = await dbGet(`SELECT name, money FROM users WHERE id=$1`, [req.user.id]);
-    res.json({ name: u?.name, money: u?.money || 0 });
-  } catch (e) {
-    console.error("Me error:", e);
-    res.status(500).json({ error: "Server error" });
-  }
+  await applyPayForUser(req.user.id);
+  const { rows } = await pool.query(`SELECT name, money FROM users WHERE id=$1`, [req.user.id]);
+  const u = rows[0];
+  res.json({ name: u?.name, money: u?.money || 0 });
 });
 
-// Tirage
 app.post("/api/open", auth, async (req, res) => {
-  try {
-    await applyPayForUser(req.user.id);
+  await applyPayForUser(req.user.id);
 
-    const u = await dbGet(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-    const money = u?.money ?? 0;
+  const { rows } = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+  const money = rows[0]?.money ?? 0;
 
-    if (money < COST_ONE) {
-      return res.status(400).json({ error: "Pas assez de Pokédollars" });
-    }
-
-    // spend
-    await dbRun(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
-
-    // drawCard safe
-    let c;
-    try {
-      c = await drawCard();
-    } catch (e) {
-      // remboursement
-      await dbRun(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
-      return res.status(502).json({ error: "Erreur image (réessaie)" });
-    }
-
-    const grade = rollGrade();
-    const mint = rollMintForGrade(grade);
-    const now = Date.now();
-
-    const idKey = `${c.name}__${c.set}__${c.image}`;
-
-    // pulls log
-    await dbRun(
-      `INSERT INTO pulls (user_id, name, setname, image, grade, mint, at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [req.user.id, c.name, c.set, c.image, grade, mint, now]
-    );
-
-    // upsert collection (Postgres)
-    await dbRun(
-      `INSERT INTO collection (user_id, idkey, name, setname, image, grade, mint, count, lastat)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,1,$8)
-       ON CONFLICT (user_id, idkey)
-       DO UPDATE SET
-         count = collection.count + 1,
-         grade = GREATEST(collection.grade, EXCLUDED.grade),
-         mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-         lastat = EXCLUDED.lastat`,
-      [req.user.id, idKey, c.name, c.set, c.image, grade, mint, now]
-    );
-
-    // renvoie résultat + money actuel
-    const me = await dbGet(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-
-    res.json({
-      money: me?.money || 0,
-      card: {
-        name: c.name,
-        set: c.set,
-        image: c.image,
-        grade,
-        mint: Boolean(mint),
-      },
-    });
-  } catch (e) {
-    console.error("Open error:", e);
-    res.status(500).json({ error: "Server error" });
+  if (money < COST_ONE) {
+    return res.status(400).json({ error: "Pas assez de Pokédollars" });
   }
+
+  // spend
+  await pool.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
+
+  // draw
+  let c;
+  try {
+    c = await drawCard();
+  } catch (e) {
+    // remboursement
+    await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
+    return res.status(502).json({ error: "Erreur image (réessaie)" });
+  }
+
+  const grade = rollGrade();
+  const mint = rollMintForGrade(grade);
+  const now = Date.now();
+
+  const idKey = `${c.name}__${c.set}__${c.image}`;
+
+  // pulls log
+  await pool.query(
+    `INSERT INTO pulls (user_id, name, setName, image, grade, mint, at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [req.user.id, c.name, c.set, c.image, grade, mint, now]
+  );
+
+  // upsert collection (Postgres)
+  await pool.query(
+    `
+    INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,1,$8)
+    ON CONFLICT (user_id, idKey)
+    DO UPDATE SET
+      count = collection.count + 1,
+      grade = GREATEST(collection.grade, EXCLUDED.grade),
+      mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+      lastAt = EXCLUDED.lastAt
+    `,
+    [req.user.id, idKey, c.name, c.set, c.image, grade, mint, now]
+  );
+
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+
+  res.json({
+    money: me.rows[0]?.money || 0,
+    card: {
+      name: c.name,
+      set: c.set,
+      image: c.image,
+      grade,
+      mint: Boolean(mint),
+    },
+  });
 });
 
-// Collection
 app.get("/api/collection", auth, async (req, res) => {
-  try {
-    await applyPayForUser(req.user.id);
+  await applyPayForUser(req.user.id);
 
-    const items = await dbAll(
-      `SELECT idkey, name, setname, image, grade, mint, count, lastat
-       FROM collection
-       WHERE user_id=$1
-       ORDER BY lastat DESC`,
-      [req.user.id]
-    );
+  const items = await pool.query(
+    `SELECT idKey, name, setName, image, grade, mint, count, lastAt
+     FROM collection
+     WHERE user_id=$1
+     ORDER BY lastAt DESC`,
+    [req.user.id]
+  );
 
-    const me = await dbGet(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-    res.json({
-      money: me?.money || 0,
-      items: items.map((x) => ({
-        idKey: x.idkey,
-        name: x.name,
-        set: x.setname,
-        image: x.image,
-        grade: x.grade,
-        mint: Boolean(x.mint),
-        count: x.count,
-        lastAt: Number(x.lastat),
-      })),
-    });
-  } catch (e) {
-    console.error("Collection error:", e);
-    res.status(500).json({ error: "Server error" });
-  }
+  res.json({
+    money: me.rows[0]?.money || 0,
+    items: items.rows.map((x) => ({
+      idKey: x.idkey || x.idKey,
+      name: x.name,
+      set: x.setname || x.setName,
+      image: x.image,
+      grade: x.grade,
+      mint: Boolean(x.mint),
+      count: x.count,
+      lastAt: Number(x.lastat || x.lastAt),
+    })),
+  });
 });
 
-// Historique (pulls)
 app.get("/api/pulls", auth, async (req, res) => {
-  try {
-    const rows = await dbAll(
-      `SELECT name, setname, image, grade, mint, at
-       FROM pulls
-       WHERE user_id=$1
-       ORDER BY at DESC
-       LIMIT 80`,
-      [req.user.id]
-    );
+  const rows = await pool.query(
+    `SELECT name, setName, image, grade, mint, at
+     FROM pulls
+     WHERE user_id=$1
+     ORDER BY at DESC
+     LIMIT 80`,
+    [req.user.id]
+  );
 
-    res.json({
-      pulls: rows.map((r) => ({
-        name: r.name,
-        set: r.setname,
-        image: r.image,
-        grade: r.grade,
-        mint: Boolean(r.mint),
-        at: Number(r.at),
-      })),
-    });
-  } catch (e) {
-    console.error("Pulls error:", e);
-    res.status(500).json({ error: "Server error" });
-  }
+  res.json({
+    pulls: rows.rows.map((r) => ({
+      name: r.name,
+      set: r.setname || r.setName,
+      image: r.image,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+      at: Number(r.at),
+    })),
+  });
 });
 
-// Vendre (retire 1 exemplaire) => +1💵
 app.post("/api/sell", auth, async (req, res) => {
-  try {
-    const idKey = String(req.body?.idKey || "");
-    if (!idKey) return res.status(400).json({ error: "Missing idKey" });
+  const idKey = String(req.body?.idKey || "");
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
-    const item = await dbGet(
-      `SELECT count FROM collection WHERE user_id=$1 AND idkey=$2`,
+  const item = await pool.query(
+    `SELECT count FROM collection WHERE user_id=$1 AND idKey=$2`,
+    [req.user.id, idKey]
+  );
+  const it = item.rows[0];
+  if (!it) return res.status(404).json({ error: "Not owned" });
+
+  if (it.count <= 1) {
+    await pool.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
+  } else {
+    await pool.query(
+      `UPDATE collection SET count = count - 1 WHERE user_id=$1 AND idKey=$2`,
       [req.user.id, idKey]
     );
-    if (!item) return res.status(404).json({ error: "Not owned" });
-
-    if (Number(item.count) <= 1) {
-      await dbRun(`DELETE FROM collection WHERE user_id=$1 AND idkey=$2`, [req.user.id, idKey]);
-    } else {
-      await dbRun(
-        `UPDATE collection SET count = count - 1 WHERE user_id=$1 AND idkey=$2`,
-        [req.user.id, idKey]
-      );
-    }
-
-    await dbRun(`UPDATE users SET money = money + 1 WHERE id=$1`, [req.user.id]);
-
-    const me = await dbGet(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-    res.json({ ok: true, money: me?.money || 0 });
-  } catch (e) {
-    console.error("Sell error:", e);
-    res.status(500).json({ error: "Server error" });
   }
+
+  await pool.query(`UPDATE users SET money = money + 1 WHERE id=$1`, [req.user.id]);
+
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+  res.json({ ok: true, money: me.rows[0]?.money || 0 });
 });
 
-// ----- START -----
+// =========================
+// START
+// =========================
 initDb()
   .then(() => {
-    app.listen(PORT, () => console.log("Server listening."));
+    app.listen(PORT, () => {
+      console.log(`✅ Server listening on port ${PORT}`);
+      console.log(`✅ Render PORT env is ${process.env.PORT || "(not set locally)"}`);
+    });
   })
   .catch((e) => {
-    console.error("DB init error:", e);
+    console.error("❌ DB init error:", e);
     process.exit(1);
   });
