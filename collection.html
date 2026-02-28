@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Collection — Pokégacha</title>
+
+<style>
+.slab{
+  width:380px;
+  height:560px;
+  border-radius:22px;
+  position:relative;
+}
+
+.shell{
+  position:absolute;
+  inset:0;
+  border-radius:22px;
+  background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(6px);
+}
+
+.label{
+  position:absolute;
+  left:50%;
+  top:30px;
+  transform:translateX(-50%);
+  width:85%;
+  height:60px;
+  border-radius:14px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:0 12px;
+}
+
+.grade{
+  font-size:24px;
+  font-weight:900;
+}
+
+.mintBadge{
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  border:1px solid rgba(255,80,80,.6);
+  color:#ff5050;
+  display:none;
+}
+
+.cardImg{
+  position:absolute;
+  left:50%;
+  top:58%;
+  transform:translate(-50%,-50%);
+  width:300px;
+  height:420px;
+  background:center/contain no-repeat;
+  border-radius:16px;
+}
+
+:root{
+  --bg1:#05060d;
+  --bg2:#090b18;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui;
+  color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment: fixed;
+  overflow-x:hidden;
+}
+.wrap{
+  width:min(1200px,95vw);
+  margin:24px auto;
+  display:grid;
+  gap:16px;
+}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+}
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+input, select{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:600;
+}
+button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+}
+.gridWrap{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:20px;
+  max-height:820px;
+  overflow:auto;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:20px;
+}
+.cardBox{
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.cImg{
+  height:220px;
+  background:center/contain no-repeat;
+  border-radius:10px;
+  cursor:pointer;
+}
+.sellBtn{
+  margin-top:auto;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  place-items:center;
+  z-index:9999;
+}
+.modal.open{display:grid}
+.cardImgZoom{
+  width:340px;
+  height:480px;
+  background:center/contain no-repeat;
+  border-radius:18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="topbar">
+  <div><b>POKÉGACHA</b> — Collection</div>
+  <div class="controls">
+    <input id="search" placeholder="Rechercher...">
+    <select id="sort">
+      <option value="recent">Dernières obtenues</option>
+      <option value="grade">Meilleure note</option>
+      <option value="name">Nom A-Z</option>
+    </select>
+    <button onclick="location.href='/'">← Retour</button>
+  </div>
+</div>
+
+<div class="gridWrap">
+  <div class="grid" id="grid"></div>
+</div>
+
+</div>
+
+<div class="modal" id="modal">
+  <div class="slab" id="zoomSlab" data-tier="" data-mint="0">
+    <div class="shell"></div>
+
+    <div class="label">
+      <div id="zoomTitle">POKÉMON</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="mintBadge" id="zoomMint">MINT</div>
+        <div class="grade" id="zoomGrade">?</div>
+      </div>
+    </div>
+
+    <div class="cardImg" id="zoomImg"></div>
+  </div>
+</div>
+
+<script>
+const TOKEN = localStorage.getItem("gacha_token_v1");
+if(!TOKEN) location.href="/login.html";
+
+const grid = document.getElementById("grid");
+const searchInput = document.getElementById("search");
+const sortSelect = document.getElementById("sort");
+
+const modal = document.getElementById("modal");
+const zoomSlab = document.getElementById("zoomSlab");
+const zoomImg = document.getElementById("zoomImg");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+
+let allItems = [];
+
+function tierFromGrade(g){
+  if(g >= 10) return "g";
+  if(g >= 7) return "v";
+  if(g >= 5) return "b";
+  return "w";
+}
+
+async function loadCollection(){
+  const r = await fetch("/api/collection", {
+    headers:{ Authorization:"Bearer "+TOKEN }
+  });
+
+  if(!r.ok){
+    location.href="/login.html";
+    return;
+  }
+
+  const data = await r.json();
+  allItems = data.items || [];
+  applyFilters();
+}
+
+function applyFilters(){
+  const q = searchInput.value.toLowerCase().trim();
+  let items = [...allItems];
+
+  // Recherche
+  if(q){
+    items = items.filter(item =>
+      (item.name || "").toLowerCase().includes(q) ||
+      (item.set || "").toLowerCase().includes(q) ||
+      String(item.grade || "").includes(q)
+    );
+  }
+
+  // Tri
+  const sort = sortSelect.value;
+  if(sort === "grade"){
+    items.sort((a,b)=> (b.grade||0) - (a.grade||0));
+  } else if(sort === "name"){
+    items.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+  } else {
+    items.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
+  }
+
+  render(items);
+}
+
+function openZoom(x){
+  zoomImg.style.backgroundImage = `url('${x.image}')`;
+  zoomTitle.textContent = `${x.name} • ${x.set}`;
+  zoomGrade.textContent = x.grade;
+
+  zoomSlab.dataset.tier = tierFromGrade(x.grade);
+  zoomSlab.dataset.mint = x.mint ? "1" : "0";
+  zoomMint.style.display = x.mint ? "block" : "none";
+
+  modal.classList.add("open");
+}
+
+function render(items){
+  grid.innerHTML="";
+  items.forEach(x=>{
+    const el=document.createElement("div");
+    el.className="cardBox";
+    el.innerHTML=`
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div><b>${x.name}</b></div>
+      <div>${x.set}</div>
+      <div>Grade ${x.grade} ${x.mint?"(MINT)":""} ×${x.count}</div>
+      <button class="sellBtn">VENDRE +1💵</button>
+    `;
+
+    el.querySelector(".cImg").onclick = () => openZoom(x);
+
+    el.querySelector(".sellBtn").onclick = async () => {
+      await fetch("/api/sell",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:"Bearer "+TOKEN
+        },
+        body:JSON.stringify({idKey:x.idKey})
+      });
+      loadCollection();
+    };
+
+    grid.appendChild(el);
+  });
+}
+
+searchInput.addEventListener("input", applyFilters);
+sortSelect.addEventListener("change", applyFilters);
+
+modal.onclick = e => {
+  if(e.target === modal) modal.classList.remove("open");
+};
+
+loadCollection();
+</script>
+
+</body>
+</html>
