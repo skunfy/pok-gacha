@@ -273,7 +273,14 @@ function applyFilters(){
 }
 
 function openZoom(x){
-  zoomImg.style.backgroundImage = `url('${x.image}')`;
+  let img = x.image;
+
+  // si c'est une image low.webp, on tente high.webp
+  if (img.includes("/low.webp")) {
+  img = img.replace("/low.webp", "/high.webp");
+}
+
+zoomImg.style.backgroundImage = `url('${img}')`;
   zoomTitle.textContent = `${x.name} • ${x.set}`;
   zoomGrade.textContent = x.grade;
 
