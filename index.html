@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pokégacha</title>
+
+  <style>
+    :root{
+      --bg1:#05060d; --bg2:#090b18;
+      --shadow: 0 35px 120px rgba(0,0,0,.65);
+
+      --tW: rgba(255,255,255,.92);
+      --tB: rgba(120,170,255,.90);
+      --tV: rgba(190,120,255,.95);
+      --tG: rgba(255,210,110,.98);
+      --tM: rgba(255,80,80,.95);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto;
+      color:#fff;
+      background:
+        radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+        radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+        linear-gradient(180deg,var(--bg1),var(--bg2));
+      overflow-x:hidden;
+      display:block;
+    }
+
+    .cornerLogo{
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      width: 110px;
+      z-index: 10000;
+    }
+    .cornerLogo img{width:100%; height:auto; display:block}
+
+    .wrap{
+      width:min(1100px,94vw);
+      margin: 70px auto 40px;
+      display:grid;
+      gap:50px;
+      place-items:center;
+    }
+
+    .topbar{
+      width:100%;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; padding:12px 14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    .brandRow{display:flex; align-items:center; gap:10px; min-width:260px}
+    .brand{display:flex; flex-direction:column; gap:4px}
+    .brand b{letter-spacing:.7px}
+    .brand small{opacity:.75; font-size:12px}
+
+    .rightTop{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap}
+    .stats{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    .stat{
+      display:flex; gap:8px; align-items:center;
+      padding:8px 10px; border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      font-size:12px; opacity:.92;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:#fff;opacity:.9}
+    .dot.money{background:rgba(120,255,180,.95)}
+    .dot.w{background:var(--tW)}
+    .dot.b{background:var(--tB)}
+    .dot.v{background:var(--tV)}
+    .dot.g{background:var(--tG)}
+    .dot.m{background:var(--tM)}
+
+    .topLink{
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      color:#fff; font-size:12px; font-weight:900;
+      text-decoration:none; opacity:.92; white-space:nowrap;
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .topLink:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
+    .topLink:active{transform: translateY(0px) scale(.99)}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:920px}
+    button{
+      padding:10px 14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);
+      color:#fff;font-weight:800;cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
+    button:active{transform: translateY(0px) scale(.99)}
+    button:disabled{opacity:.5;cursor:not-allowed; transform:none}
+
+    .hint{opacity:.72;font-size:13px;text-align:center}
+
+    .scene{perspective:900px}
+
+    .slab{
+      width:320px;height:460px;border-radius:22px;position:relative;
+      transform-style:preserve-3d;will-change:transform;user-select:none;cursor:grab;
+      filter: drop-shadow(0 22px 70px rgba(0,0,0,.35));
+    }
+    .slab:active{cursor:grabbing}
+
+    .shine,.glare{
+      position:absolute; inset:0; border-radius:22px;
+      transform: translateZ(0px);
+      pointer-events:none;
+      mix-blend-mode:screen;
+      opacity:0;
+      transition:opacity .12s ease;
+    }
+    .shine{ background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.80), rgba(255,255,255,0) 60%); }
+    .glare{
+      background:conic-gradient(from 180deg,
+        rgba(255,0,200,0),
+        rgba(0,255,255,.55),
+        rgba(255,255,0,.45),
+        rgba(255,0,200,.35),
+        rgba(0,255,255,0)
+      );
+      filter:blur(12px);
+    }
+
+    .shell{
+      position:absolute; inset:0; border-radius:22px;
+      background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
+      backdrop-filter: blur(6px);
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,.18);
+      transform:translateZ(10px);
+      overflow:hidden;
+    }
+
+    .label{
+      position:absolute; left:50%; top:26px;
+      transform:translateX(-50%) translateZ(20px);
+      width:280px;height:58px;border-radius:14px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.18);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 14px; backdrop-filter:blur(10px);
+      gap:10px;
+    }
+    .left{display:flex; flex-direction:column; gap:2px; min-width:0}
+    .left .t{font-weight:900;font-size:14px;letter-spacing:.4px}
+    .left .s{opacity:.75;font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:210px}
+
+    .gradeWrap{display:flex; align-items:center; gap:8px; flex:0 0 auto}
+    .grade{font-weight:1000;font-size:22px; min-width:22px; text-align:right}
+
+    .mintBadge{
+      padding:5px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:1000;
+      letter-spacing:.6px;
+      background: rgba(255,80,80,.12);
+      border: 1px solid rgba(255,80,80,.55);
+      color: var(--tM);
+      text-shadow: 0 0 18px rgba(255,80,80,.35);
+      user-select:none;
+      pointer-events:none;
+      line-height:1;
+    }
+
+    .cardImg{
+      position:absolute; left:50%; top:56%;
+      width:260px;height:340px;
+      transform:translate(-50%,-50%) translateZ(18px);
+      border-radius:16px;
+      background-image: linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
+      background-position:center;
+      background-repeat:no-repeat;
+      background-size:contain;
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+      transition: transform .22s ease, filter .22s ease;
+      cursor:pointer;
+    }
+
+    .edge{
+      position:absolute; inset:0; border-radius:22px;
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.05);
+      transform:translateZ(12px); pointer-events:none;
+    }
+
+    .slab[data-tier="w"] .shell{
+      box-shadow: 0 30px 90px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(255,255,255,.22),
+                  0 0 65px rgba(255,255,255,.10);
+    }
+    .slab[data-tier="b"] .shell{
+      box-shadow: 0 30px 90px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(120,170,255,.30),
+                  0 0 75px rgba(120,170,255,.25);
+    }
+    .slab[data-tier="v"] .shell{
+      box-shadow: 0 30px 90px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(190,120,255,.32),
+                  0 0 90px rgba(190,120,255,.28);
+    }
+    .slab[data-tier="g"] .shell{
+      box-shadow: 0 30px 90px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(255,210,110,.34),
+                  0 0 120px rgba(255,210,110,.30);
+    }
+    .slab[data-mint="1"] .shell{
+      box-shadow: 0 30px 90px rgba(0,0,0,.55),
+                  0 0 0 1px rgba(255,80,80,.40),
+                  0 0 130px rgba(255,80,80,.28);
+    }
+
+    .flash{
+      position:absolute; inset:-20%;
+      opacity:0;
+      transform:translateZ(40px);
+      pointer-events:none;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.95), rgba(255,255,255,0) 60%);
+    }
+    .slab[data-tier="b"] .flash{ background: radial-gradient(circle at 50% 50%, rgba(120,170,255,.95), rgba(120,170,255,0) 60%); }
+    .slab[data-tier="v"] .flash{ background: radial-gradient(circle at 50% 50%, rgba(190,120,255,.95), rgba(190,120,255,0) 60%); }
+    .slab[data-tier="g"] .flash{ background: radial-gradient(circle at 50% 50%, rgba(255,210,110,.98), rgba(255,210,110,0) 60%); }
+    .slab[data-mint="1"] .flash{ background: radial-gradient(circle at 50% 50%, rgba(255,80,80,.95), rgba(255,80,80,0) 60%); }
+
+    .slab.reveal .flash{ animation: flash .38s ease; }
+    @keyframes flash{
+      0%{opacity:0; transform:translateZ(40px) scale(.9)}
+      30%{opacity:.9}
+      100%{opacity:0; transform:translateZ(40px) scale(1.15)}
+    }
+
+    .slab.reveal .cardImg{ animation: pop .42s cubic-bezier(.2,.9,.2,1); }
+    @keyframes pop{
+      0%{transform:translate(-50%,-50%) translateZ(18px) scale(.94); filter: blur(1px) brightness(.9)}
+      60%{transform:translate(-50%,-50%) translateZ(18px) scale(1.02); filter: blur(0) brightness(1.1)}
+      100%{transform:translate(-50%,-50%) translateZ(18px) scale(1); filter: blur(0) brightness(1)}
+    }
+
+    .shake{animation:shake .35s ease}
+    @keyframes shake{
+      0%,100%{transform:translateZ(0)}
+      25%{transform:translateZ(0) translateX(-2px)}
+      50%{transform:translateZ(0) translateX(2px)}
+      75%{transform:translateZ(0) translateX(-1px)}
+    }
+
+    .logWrap{
+      width:min(980px, 94vw);
+      border-radius:18px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      padding:10px;
+    }
+    .logTitle{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px 6px}
+    .logTitle b{font-size:13px;letter-spacing:.4px}
+    .logTitle small{opacity:.7}
+    .logRow{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap:10px;
+      max-height:240px;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .pill{
+      display:flex; gap:10px; align-items:center;
+      font-size:12px; opacity:.92;
+      border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px; border-radius:14px;
+      background:rgba(255,255,255,.05);
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .pill:hover{background:rgba(255,255,255,.08); transform: translateY(-1px)}
+    .thumb{
+      width:34px;height:46px;border-radius:8px;
+      background: transparent center/cover no-repeat;
+      border:1px solid rgba(255,255,255,.12);
+      flex:0 0 auto;
+    }
+    .pill .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .pill .meta .line1{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .pill .meta .line2{opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .tag{
+      margin-left:auto;
+      font-weight:900;
+      padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+    .tag.w{color:var(--tW); border-color:rgba(255,255,255,.28)}
+    .tag.b{color:var(--tB); border-color:rgba(120,170,255,.35)}
+    .tag.v{color:var(--tV); border-color:rgba(190,120,255,.35)}
+    .tag.g{color:var(--tG); border-color:rgba(255,210,110,.35)}
+    .tag.m{color:var(--tM); border-color:rgba(255,80,80,.55)}
+
+    .modal{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.72);
+      display:none; place-items:center;
+      z-index:9999;
+      padding:24px;
+    }
+    .modal.open{display:grid}
+    .zoomSlab{
+      cursor:default;
+      width:min(420px, 92vw);
+      height:min(600px, 92vh);
+    }
+    .zoomSlab .cardImg{
+      width: min(340px, 78vw);
+      height: min(460px, 68vh);
+      top: 58%;
+      cursor:default;
+    }
+    .zoomSlab .label{ width: min(360px, 86vw); }
+  </style>
+</head>
+
+<body>
+  <a class="cornerLogo" href="/" aria-label="Accueil">
+    <img src="poke.png" alt="Logo" />
+  </a>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brandRow">
+        <div class="brand">
+          <b>POKÉGACHA</b>
+          <small id="subTop">Connecté</small>
+        </div>
+      </div>
+
+      <div class="rightTop">
+        <div class="stats">
+          <div class="stat"><span class="dot money"></span><span>Pokédollars:</span><b id="money">0</b></div>
+          <div class="stat"><span class="dot"></span><span>Tirages:</span><b id="stTotal">0</b></div>
+          <div class="stat"><span class="dot w"></span><span>1–4:</span><b id="stW">0</b></div>
+          <div class="stat"><span class="dot b"></span><span>5–6:</span><b id="stB">0</b></div>
+          <div class="stat"><span class="dot v"></span><span>7–9:</span><b id="stV">0</b></div>
+          <div class="stat"><span class="dot g"></span><span>10:</span><b id="st10">0</b></div>
+          <div class="stat"><span class="dot m"></span><span>Mint:</span><b id="stM">0</b></div>
+        </div>
+
+        <a class="topLink" href="/collection.html">COLLECTION</a>
+        <a class="topLink" href="#" id="logout">LOGOUT</a>
+      </div>
+    </div>
+
+    <div class="scene">
+      <div class="slab" id="slab" data-tier="" data-mint="0">
+        <div class="shine" id="shine"></div>
+        <div class="glare" id="glare"></div>
+        <div class="shell"></div>
+
+        <div class="label">
+          <div class="left">
+            <div class="t" id="title">POKÉMON • SLAB</div>
+            <div class="s" id="subtitle">Clique “OPEN”</div>
+          </div>
+
+          <div class="gradeWrap">
+            <div class="mintBadge" id="mintTag" style="display:none;">MINT</div>
+            <div class="grade" id="grade">?</div>
+          </div>
+        </div>
+
+        <div class="cardImg" id="card"></div>
+        <div class="edge"></div>
+        <div class="flash"></div>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="open">OPEN (1 slab) — 5💵</button>
+      <button id="clear">Reset (toi)</button>
+    </div>
+
+    <div class="hint">💵 +10 toutes les 5 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom</div>
+
+    <div class="logWrap">
+      <div class="logTitle">
+        <b>Historique</b>
+        <small>(clique une entrée pour revoir)</small>
+      </div>
+      <div class="logRow" id="log"></div>
+    </div>
+  </div>
+
+  <!-- MODAL ZOOM -->
+  <div class="modal" id="modal">
+    <div class="slab zoomSlab" id="zoomSlab" data-tier="" data-mint="0">
+      <div class="shine" id="zoomShine"></div>
+      <div class="glare" id="zoomGlare"></div>
+      <div class="shell"></div>
+
+      <div class="label">
+        <div class="left">
+          <div class="t" id="zoomTitle">POKÉMON • GRADE ?</div>
+          <div class="s" id="zoomSubtitle">...</div>
+        </div>
+
+        <div class="gradeWrap">
+          <div class="mintBadge" id="zoomMintTag" style="display:none;">MINT</div>
+          <div class="grade" id="zoomGrade">?</div>
+        </div>
+      </div>
+
+      <div class="cardImg" id="zoomCard"></div>
+      <div class="edge"></div>
+      <div class="flash"></div>
+    </div>
+  </div>
+
+  <script>
+    // --------- AUTH ---------
+    const TOKEN_KEY = "gacha_token_v1";
+    const token = localStorage.getItem(TOKEN_KEY);
+    if(!token){
+      window.location.href = "/login.html";
+    }
+
+    async function api(path, opts={}){
+      const r = await fetch(path, {
+        ...opts,
+        headers: {
+          ...(opts.headers || {}),
+          "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY)
+        }
+      });
+      const data = await r.json().catch(()=> ({}));
+      if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+      return data;
+    }
+
+    // ---------- DOM ----------
+    const slab = document.getElementById("slab");
+    const shine = document.getElementById("shine");
+    const glare = document.getElementById("glare");
+    const card = document.getElementById("card");
+    const title = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    const gradeEl = document.getElementById("grade");
+    const mintTag = document.getElementById("mintTag");
+    const log = document.getElementById("log");
+
+    const modal = document.getElementById("modal");
+    const zoomSlab = document.getElementById("zoomSlab");
+    const zoomShine = document.getElementById("zoomShine");
+    const zoomGlare = document.getElementById("zoomGlare");
+    const zoomCard = document.getElementById("zoomCard");
+    const zoomTitle = document.getElementById("zoomTitle");
+    const zoomSubtitle = document.getElementById("zoomSubtitle");
+    const zoomGrade = document.getElementById("zoomGrade");
+    const zoomMintTag = document.getElementById("zoomMintTag");
+
+    const btnOpen = document.getElementById("open");
+    const btnClear = document.getElementById("clear");
+    const btnLogout = document.getElementById("logout");
+
+    const stTotal = document.getElementById("stTotal");
+    const stW = document.getElementById("stW");
+    const stB = document.getElementById("stB");
+    const stV = document.getElementById("stV");
+    const st10 = document.getElementById("st10");
+    const stM = document.getElementById("stM");
+    const moneyEl = document.getElementById("money");
+    const subTop = document.getElementById("subTop");
+
+    let dragging = false;
+    let zoomDragging = false;
+
+    const COST_ONE = 5;
+
+    function updateTopUI(me){
+      stTotal.textContent = me.total;
+      stW.textContent = me.w;
+      stB.textContent = me.b;
+      stV.textContent = me.v;
+      st10.textContent = me.g10;
+      stM.textContent = me.mint;
+      moneyEl.textContent = String(me.money);
+      btnOpen.disabled = me.money < COST_ONE;
+    }
+
+    function tierFromGrade(grade){
+      if (grade >= 10) return "g";
+      if (grade >= 7) return "v";
+      if (grade >= 5) return "b";
+      return "w";
+    }
+
+    function tagClass(tier, isMint){ return isMint ? "m" : tier; }
+    function tagText(grade, isMint){ return isMint ? "MINT" : `G${grade}`; }
+
+    function addLog(name, setName, grade, isMint, imageUrl) {
+      const tier = tierFromGrade(grade);
+
+      const el = document.createElement("div");
+      el.className = "pill";
+      el.innerHTML = `
+        <div class="thumb" style="background-image:url('${imageUrl.replace(/'/g,"\\'")}')"></div>
+        <div class="meta">
+          <div class="line1">${isMint ? "MINT" : `Grade ${grade}`} • ${name}</div>
+          <div class="line2">${setName}</div>
+        </div>
+        <div class="tag ${tagClass(tier, isMint)}">${tagText(grade, isMint)}</div>
+      `;
+
+      el.addEventListener("click", () => {
+        card.style.backgroundImage = `url("${imageUrl}")`;
+
+        title.textContent = `POKÉMON • GRADE ${grade}`;
+        subtitle.textContent = `${name} • ${setName}`;
+        gradeEl.textContent = grade;
+
+        slab.dataset.tier = tier;
+        slab.dataset.mint = isMint ? "1" : "0";
+        mintTag.style.display = isMint ? "inline-flex" : "none";
+
+        slab.classList.add("reveal");
+        setTimeout(() => slab.classList.remove("reveal"), 450);
+      });
+
+      log.prepend(el);
+    }
+
+    // ---------- HOLO / TILT ----------
+    function setTilt(clientX, clientY) {
+      const r = slab.getBoundingClientRect();
+      const px = (clientX - r.left) / r.width;
+      const py = (clientY - r.top) / r.height;
+      const rx = (0.5 - py) * 18;
+      const ry = (px - 0.5) * 22;
+      slab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+      const x = Math.max(0, Math.min(1, px));
+      const y = Math.max(0, Math.min(1, py));
+
+      shine.style.opacity = "0.75";
+      glare.style.opacity = "0.45";
+      shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+      glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    }
+
+    slab.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
+    slab.addEventListener("mouseenter", () => { shine.style.opacity = "0.75"; glare.style.opacity = "0.45"; });
+    slab.addEventListener("mouseleave", () => {
+      slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+      shine.style.opacity = "0";
+      glare.style.opacity = "0";
+      shine.style.transform = `translateZ(0px)`;
+      glare.style.transform = `translateZ(0px)`;
+    });
+    slab.addEventListener("mousedown", () => dragging = true);
+    window.addEventListener("mouseup", () => dragging = false);
+    window.addEventListener("mousemove", (e) => { if (dragging) setTilt(e.clientX, e.clientY); });
+
+    function setZoomTilt(clientX, clientY){
+      const r = zoomSlab.getBoundingClientRect();
+      const px = (clientX - r.left) / r.width;
+      const py = (clientY - r.top) / r.height;
+
+      const rx = (0.5 - py) * 14;
+      const ry = (px - 0.5) * 18;
+      zoomSlab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+      const x = Math.max(0, Math.min(1, px));
+      const y = Math.max(0, Math.min(1, py));
+
+      zoomShine.style.opacity = "0.80";
+      zoomGlare.style.opacity = "0.50";
+      zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+      zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    }
+
+    zoomSlab.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
+    zoomSlab.addEventListener("mouseenter", ()=>{ zoomShine.style.opacity="0.80"; zoomGlare.style.opacity="0.50"; });
+    zoomSlab.addEventListener("mouseleave", ()=>{
+      zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+      zoomShine.style.opacity="0";
+      zoomGlare.style.opacity="0";
+      zoomShine.style.transform = `translateZ(0px)`;
+      zoomGlare.style.transform = `translateZ(0px)`;
+    });
+    zoomSlab.addEventListener("mousedown", ()=> zoomDragging = true);
+    window.addEventListener("mouseup", ()=> zoomDragging = false);
+    window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
+
+    function openZoomFromCurrent(){
+      const bg = card.style.backgroundImage;
+      if (!bg || bg.includes("linear-gradient")) return;
+
+      zoomCard.style.backgroundImage = bg;
+      zoomTitle.textContent = title.textContent;
+      zoomSubtitle.textContent = subtitle.textContent;
+      zoomGrade.textContent = gradeEl.textContent;
+
+      zoomSlab.dataset.tier = slab.dataset.tier || "";
+      zoomSlab.dataset.mint = slab.dataset.mint || "0";
+      zoomMintTag.style.display = (mintTag.style.display === "none") ? "none" : "inline-flex";
+
+      modal.classList.add("open");
+    }
+    card.addEventListener("click", openZoomFromCurrent);
+    modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
+
+    async function loadMe(){
+      const me = await api("/api/me");
+      subTop.textContent = `Connecté • ${me.name}`;
+      updateTopUI(me);
+      return me;
+    }
+
+    async function loadPulls(){
+      log.innerHTML = "";
+      const data = await api("/api/pulls");
+      for(const p of (data.pulls || []).slice().reverse()){
+        addLog(p.name, p.set, p.grade, p.mint, p.image);
+      }
+    }
+
+    async function openOne(){
+      btnOpen.disabled = true;
+      slab.classList.remove("shake");
+      void slab.offsetWidth;
+      slab.classList.add("shake");
+
+      subtitle.textContent = "Invocation...";
+      gradeEl.textContent = "?";
+      slab.dataset.tier = "";
+      slab.dataset.mint = "0";
+      mintTag.style.display = "none";
+
+      try{
+        const data = await api("/api/open", { method:"POST" });
+        const c = data.card;
+
+        const img = new Image();
+        img.onload = () => {
+          card.style.backgroundImage = `url("${img.src}")`;
+          slab.dataset.tier = c.tier;
+          slab.dataset.mint = c.mint ? "1" : "0";
+          slab.classList.add("reveal");
+          setTimeout(() => slab.classList.remove("reveal"), 450);
+        };
+        img.onerror = () => { subtitle.textContent = "Image introuvable"; };
+        img.src = c.image;
+
+        title.textContent = `POKÉMON • GRADE ${c.grade}`;
+        subtitle.textContent = `${c.name} • ${c.set}`;
+        gradeEl.textContent = c.grade;
+        mintTag.style.display = c.mint ? "inline-flex" : "none";
+
+        updateTopUI({
+          total: Number(stTotal.textContent) + 1,
+          w: Number(stW.textContent),
+          b: Number(stB.textContent),
+          v: Number(stV.textContent),
+          g10: Number(st10.textContent),
+          mint: Number(stM.textContent),
+          money: data.money
+});
+        addLog(c.name, c.set, c.grade, c.mint, c.image);
+
+      }catch(e){
+        subtitle.textContent = e.message.includes("Not enough") ? "Pas assez de Pokédollars 💵" : "Problème temporaire, réessaie";
+        await loadMe();
+      }finally{
+        btnOpen.disabled = false;
+      }
+    }
+
+    btnOpen.onclick = openOne;
+
+    btnClear.onclick = async () => {
+      // Reset "soft": juste visuel local (on ne reset pas la DB ici)
+      log.innerHTML = "";
+      title.textContent = "POKÉMON • SLAB";
+      subtitle.textContent = "Clique “OPEN”";
+      gradeEl.textContent = "?";
+      slab.dataset.tier = "";
+      slab.dataset.mint = "0";
+      mintTag.style.display = "none";
+      card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
+      await loadPulls();
+      await loadMe();
+    };
+
+    btnLogout.onclick = async (e) => {
+      e.preventDefault();
+      try{ await api("/api/logout", { method:"POST" }); }catch{}
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = "/login.html";
+    };
+
+    // ---------- INIT ----------
+    card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
+
+    (async () => {
+      try{
+        await loadMe();
+        await loadPulls();
+      }catch(e){
+        localStorage.removeItem(TOKEN_KEY);
+        window.location.href = "/login.html";
+      }
+    })();
+  </script>
+</body>
+</html>
