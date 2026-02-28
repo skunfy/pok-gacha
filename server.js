@@ -8,6 +8,7 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
 const app = express();
+const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
 app.use(express.json());
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,6 +44,9 @@ function loadOffline(){
   }
 }
 loadOffline();
+console.log(`🧩 FORCE_OFFLINE=${FORCE_OFFLINE ? "ON" : "OFF"}`);
+console.log(`📦 Offline cards: ${offlineCards?.length || 0}`);
+
 
 // ----- DB -----
 let db;
@@ -181,6 +185,13 @@ async function drawCard(){
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if(c?.image) return c;
   }
+
+  // ✅ en prod: pas d'online
+  if (FORCE_OFFLINE) {
+    throw new Error("Offline only: no cards.json");
+  }
+
+  // 2) online retries ...
 
   // 2) online retries
   const MAX_TRIES = 6;
