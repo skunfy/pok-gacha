@@ -82,12 +82,14 @@ async function initDb() {
     client.release();
   }
 
+  // tables de base
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,
       code TEXT NOT NULL,
       token TEXT NOT NULL UNIQUE,
+      friendCode TEXT UNIQUE,
       money INTEGER NOT NULL DEFAULT 0,
       lastPay BIGINT NOT NULL DEFAULT 0,
       createdAt BIGINT NOT NULL DEFAULT 0
@@ -118,6 +120,22 @@ async function initDb() {
     );
   `);
 
+  // migration safe si la DB existe déjà
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS friendCode TEXT UNIQUE;
+  `);
+
+  // table friends
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS friends (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      friend_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      createdAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, friend_user_id)
+    );
+  `);
+
   console.log("✅ Postgres DB ready");
 }
 
@@ -127,8 +145,14 @@ async function initDb() {
 function randCode(len = 6) {
   return String(Math.floor(Math.random() * Math.pow(10, len))).padStart(len, "0");
 }
+
 function randToken() {
   return crypto.randomBytes(24).toString("hex");
+}
+
+function randFriendCode() {
+  const s = crypto.randomBytes(4).toString("hex").toUpperCase();
+  return s.slice(0, 4) + "-" + s.slice(4, 8);
 }
 
 // ----- PAY LOOP (server-side) -----
@@ -141,7 +165,6 @@ async function applyPayForUser(userId) {
   if (!u) return;
 
   const now = Date.now();
-  // selon pg, ça peut revenir en lower-case
   const last = Number(u.lastpay ?? u.lastPay ?? 0) || now;
   const delta = Math.max(0, now - last);
   const ticks = Math.floor(delta / PAY_EVERY_MS);
@@ -185,15 +208,15 @@ async function fetchWithTimeout(url, ms = 20000) {
 // =========================
 // TCGDEX PERF: CACHE LIST + CACHE DETAILS
 // =========================
-const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000;   // 6h
+const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 const CARD_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
-let cardsBriefCache = { at: 0, list: [] };      // [{id, name, ...}]
-const cardDetailCache = new Map();              // id -> { at, data }
+let cardsBriefCache = { at: 0, list: [] };
+const cardDetailCache = new Map();
 
 async function getCardsBriefList() {
   const now = Date.now();
-  if (cardsBriefCache.list.length && (now - cardsBriefCache.at) < CARDS_LIST_TTL_MS) {
+  if (cardsBriefCache.list.length && now - cardsBriefCache.at < CARDS_LIST_TTL_MS) {
     return cardsBriefCache.list;
   }
 
@@ -211,7 +234,7 @@ async function getCardsBriefList() {
 async function getCardDetailById(id) {
   const now = Date.now();
   const cached = cardDetailCache.get(id);
-  if (cached && (now - cached.at) < CARD_DETAIL_TTL_MS) return cached.data;
+  if (cached && now - cached.at < CARD_DETAIL_TTL_MS) return cached.data;
 
   const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${id}`, 20000);
   if (!r.ok) throw new Error("TCGdex detail failed");
@@ -225,24 +248,18 @@ async function getCardDetailById(id) {
 
 // =========================
 // IMAGE URL NORMALIZATION
-// Objectif: low.webp pour affichage rapide,
-//          high.webp possible pour zoom
+// low.webp pour afficher vite, high.webp pour zoom
 // =========================
 function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
   if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
-
-  // si déjà une extension, on laisse tel quel
   const hasExt = /\.(png|jpe?g|webp)(\?|$)/i.test(urlBaseOrWithExt);
   if (hasExt) return urlBaseOrWithExt;
-
-  // sinon on suppose base tcgdex -> on ajoute /low.webp ou /high.webp
   return urlBaseOrWithExt.replace(/\/$/, "") + `/${quality}.${ext}`;
 }
 
 function normalizeImageField(imageField, quality = "low", ext = "webp") {
   if (!imageField) return null;
 
-  // TCGdex renvoie souvent image: { low, high } ou image: "baseUrl"
   let base = imageField;
   if (typeof imageField === "object") {
     base =
@@ -264,7 +281,6 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // DRAW CARD
 // =========================
 async function drawCard() {
-  // 0) offline forcé
   if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
@@ -273,7 +289,6 @@ async function drawCard() {
     throw new Error("Offline only: no cards.json");
   }
 
-  // 1) online (TCGdex) avec caches
   const MAX_TRIES = 6;
 
   for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
@@ -295,8 +310,8 @@ async function drawCard() {
       continue;
     }
 
-    const imageLow = normalizeImageField(c.image, "low", "webp");   // rapide
-    const imageHigh = normalizeImageField(c.image, "high", "webp"); // zoom HD
+    const imageLow = normalizeImageField(c.image, "low", "webp");
+    const imageHigh = normalizeImageField(c.image, "high", "webp");
     if (!imageLow) continue;
 
     console.log("🌐 source=TCGDEX (cached)");
@@ -305,12 +320,11 @@ async function drawCard() {
       name: c.name || pick.name || "Unknown",
       set: (c.set && (c.set.name || c.set.id)) || "Unknown",
       rarity: c.rarity || "",
-      image: imageLow,        // ce que tu stockes/affiches normalement
-      imageHigh: imageHigh || null // optionnel
+      image: imageLow,
+      imageHigh: imageHigh || null,
     };
   }
 
-  // 2) fallback offline
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if (c?.image) {
@@ -336,6 +350,7 @@ function rollGrade() {
   if (r < 0.97) return 2;
   return 1;
 }
+
 function rollMintForGrade(grade) {
   if (grade !== 10) return 0;
   return Math.random() < 1 / 3 ? 1 : 0;
@@ -359,14 +374,15 @@ app.post("/api/login", async (req, res) => {
   if (!u) {
     const newCode = randCode(6);
     const token = randToken();
+    const friendCode = randFriendCode();
 
     await pool.query(
-      `INSERT INTO users (name, code, token, money, lastPay, createdAt)
-       VALUES ($1,$2,$3,0,$4,$5)`,
-      [name, newCode, token, now, now]
+      `INSERT INTO users (name, code, token, friendCode, money, lastPay, createdAt)
+       VALUES ($1,$2,$3,$4,0,$5,$6)`,
+      [name, newCode, token, friendCode, now, now]
     );
 
-    return res.json({ token, isNew: true, code: newCode });
+    return res.json({ token, isNew: true, code: newCode, friendCode });
   }
 
   // Compte existant -> code obligatoire
@@ -380,11 +396,32 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
-  const { rows } = await pool.query(`SELECT name, money FROM users WHERE id=$1`, [req.user.id]);
+  const { rows } = await pool.query(
+    `SELECT name, money, friendCode FROM users WHERE id=$1`,
+    [req.user.id]
+  );
   const u = rows[0];
 
-  // (ton front attend juste name/money, pas les stats)
-  res.json({ name: u?.name, money: u?.money || 0 });
+  // Optionnel mais pratique: si ancien compte sans friendCode, on en crée un
+  let friendCode = u?.friendcode || u?.friendCode || null;
+  if (!friendCode) {
+    friendCode = randFriendCode();
+    // on essaie de l'écrire (si collision rare, on retente 3 fois)
+    for (let i = 0; i < 3; i++) {
+      try {
+        await pool.query(`UPDATE users SET friendCode=$1 WHERE id=$2`, [friendCode, req.user.id]);
+        break;
+      } catch {
+        friendCode = randFriendCode();
+      }
+    }
+  }
+
+  res.json({
+    name: u?.name,
+    money: u?.money || 0,
+    friendCode,
+  });
 });
 
 app.post("/api/open", auth, async (req, res) => {
@@ -397,15 +434,12 @@ app.post("/api/open", auth, async (req, res) => {
     return res.status(400).json({ error: "Pas assez de Pokédollars" });
   }
 
-  // spend
   await pool.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
 
-  // draw
   let c;
   try {
     c = await drawCard();
   } catch (e) {
-    // remboursement
     await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
     return res.status(502).json({ error: "Erreur image (réessaie)" });
   }
@@ -414,16 +448,14 @@ app.post("/api/open", auth, async (req, res) => {
   const mint = rollMintForGrade(grade);
   const now = Date.now();
 
-  const idKey = `${c.name}__${c.set}__${c.image}`; // image low.webp => OK
+  const idKey = `${c.name}__${c.set}__${c.image}`;
 
-  // pulls log
   await pool.query(
     `INSERT INTO pulls (user_id, name, setName, image, grade, mint, at)
      VALUES ($1,$2,$3,$4,$5,$6,$7)`,
     [req.user.id, c.name, c.set, c.image, grade, mint, now]
   );
 
-  // upsert collection
   await pool.query(
     `
     INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
@@ -445,8 +477,8 @@ app.post("/api/open", auth, async (req, res) => {
     card: {
       name: c.name,
       set: c.set,
-      image: c.image,           // low.webp
-      imageHigh: c.imageHigh,   // optionnel
+      image: c.image, // low.webp
+      imageHigh: c.imageHigh, // optionnel pour zoom
       grade,
       mint: Boolean(mint),
     },
@@ -527,6 +559,97 @@ app.post("/api/sell", auth, async (req, res) => {
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
   res.json({ ok: true, money: me.rows[0]?.money || 0 });
+});
+
+// =========================
+// FRIENDS ROUTES
+// =========================
+app.post("/api/friends/add", auth, async (req, res) => {
+  const friendCode = String(req.body?.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const qFriend = await pool.query(`SELECT id, name, friendCode FROM users WHERE friendCode=$1`, [
+    friendCode,
+  ]);
+  const friend = qFriend.rows[0];
+  if (!friend) return res.status(404).json({ error: "Ami introuvable" });
+
+  if (friend.id === req.user.id) {
+    return res.status(400).json({ error: "Tu ne peux pas t'ajouter toi-même" });
+  }
+
+  await pool.query(
+    `INSERT INTO friends (user_id, friend_user_id, createdAt)
+     VALUES ($1,$2,$3)
+     ON CONFLICT DO NOTHING`,
+    [req.user.id, friend.id, Date.now()]
+  );
+
+  res.json({
+    ok: true,
+    friend: { name: friend.name, friendCode: friend.friendcode || friend.friendCode },
+  });
+});
+
+app.get("/api/friends", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `
+    SELECT u.name, u.friendCode
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1
+    ORDER BY u.name ASC
+    `,
+    [req.user.id]
+  );
+
+  res.json({
+    friends: rows.map((r) => ({
+      name: r.name,
+      friendCode: r.friendcode || r.friendCode,
+    })),
+  });
+});
+
+app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const q = await pool.query(
+    `
+    SELECT u.id
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1 AND u.friendCode=$2
+    `,
+    [req.user.id, friendCode]
+  );
+
+  const friend = q.rows[0];
+  if (!friend) return res.status(403).json({ error: "Pas dans tes amis" });
+
+  const items = await pool.query(
+    `SELECT idKey, name, setName, image, grade, mint, count, lastAt
+     FROM collection
+     WHERE user_id=$1
+     ORDER BY lastAt DESC`,
+    [friend.id]
+  );
+
+  res.json({
+    items: items.rows.map((x) => ({
+      idKey: x.idkey || x.idKey,
+      name: x.name,
+      setName: x.setname || x.setName,
+      image: x.image,
+      grade: x.grade,
+      mint: Boolean(x.mint),
+      count: x.count,
+      lastAt: Number(x.lastat || x.lastAt),
+    })),
+  });
 });
 
 // =========================
