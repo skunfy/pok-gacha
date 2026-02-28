@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Pikachu",
+    "set": "Base",
+    "rarity": "Common",
+    "image": "https://images.pokemontcg.io/base1/58_hires.png"
+  },
+  {
+    "name": "Charizard",
+    "set": "Base",
+    "rarity": "Rare",
+    "image": "https://images.pokemontcg.io/base1/4_hires.png"
+  }
+]
