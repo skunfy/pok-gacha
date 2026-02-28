@@ -610,7 +610,12 @@
       const bg = card.style.backgroundImage;
       if (!bg || bg.includes("linear-gradient")) return;
 
+      const high = card.dataset.high;
+      if (high) {
+      zoomCard.style.backgroundImage = `url("${high}")`;
+      } else {
       zoomCard.style.backgroundImage = bg;
+      }
       zoomTitle.textContent = title.textContent;
       zoomSubtitle.textContent = subtitle.textContent;
       zoomGrade.textContent = gradeEl.textContent;
@@ -658,13 +663,17 @@
         const img = new Image();
         img.onload = () => {
           card.style.backgroundImage = `url("${img.src}")`;
+
+          // 🔥 on stocke aussi la version HD si dispo
+           card.dataset.high = c.imageHigh || "";
+
           slab.dataset.tier = c.tier;
           slab.dataset.mint = c.mint ? "1" : "0";
           slab.classList.add("reveal");
           setTimeout(() => slab.classList.remove("reveal"), 450);
-        };
-        img.onerror = () => { subtitle.textContent = "Image introuvable"; };
-        img.src = c.image;
+          };
+          img.onerror = () => { subtitle.textContent = "Image introuvable"; };
+          img.src = c.image; // low.webp
 
         title.textContent = `POKÉMON • GRADE ${c.grade}`;
         subtitle.textContent = `${c.name} • ${c.set}`;
