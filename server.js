@@ -222,7 +222,7 @@ async function notify(userId, type, title, body, meta = null) {
 
 // ----- PAY LOOP (server-side) -----
 const PAY_AMOUNT = 10;
-const PAY_EVERY_MS = 5 * 60 * 1000;
+const PAY_EVERY_MS = 15 * 60 * 1000;
 
 async function applyPayForUser(userId) {
   const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
