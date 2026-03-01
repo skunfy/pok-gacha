@@ -208,20 +208,35 @@ button{
 
 .foilRainbow{
   position:absolute;
-  inset:-35%;
-  border-radius:24px;
+  inset:-40%;
+  border-radius:30px;
   opacity:0;
-  transition: opacity .20s ease;
-  mix-blend-mode: color-dodge;
-  background: conic-gradient(from 180deg,
-    rgba(255,0,120,.10),
-    rgba(0,220,255,.10),
-    rgba(255,220,0,.08),
-    rgba(180,0,255,.10),
-    rgba(255,0,120,.10)
+  transition: opacity .25s ease;
+  pointer-events:none;
+
+  background: linear-gradient(
+    115deg,
+    rgba(255,0,120,.25),
+    rgba(0,220,255,.25),
+    rgba(255,220,0,.20),
+    rgba(0,255,140,.20),
+    rgba(180,0,255,.25)
   );
-  filter: blur(14px);
+
+  mix-blend-mode: soft-light;   /* plus visible que color-dodge */
+  filter: blur(18px);
   will-change: transform;
+}
+
+@keyframes foilMoveRainbow{
+  0%   { transform: translate(40px,-30px) rotate(0deg); }
+  50%  { transform: translate(-40px,30px) rotate(15deg); }
+  100% { transform: translate(40px,-30px) rotate(0deg); }
+}
+
+.modal.open .foilRainbow{
+  opacity: .55;   /* ← plus visible */
+  animation: foilMoveRainbow 4s ease-in-out infinite;
 }
 
 @keyframes foilMoveRainbow{
