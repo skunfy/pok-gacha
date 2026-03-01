@@ -186,11 +186,11 @@ button{
 .foilShine{
   background:
     radial-gradient(circle at 30% 30%,
-      rgba(255,255,255,.45),
-      rgba(255,255,255,.12),
-      rgba(255,255,255,0) 60%);
+      rgba(255,255,255,.55),
+      rgba(255,255,255,.16),
+      rgba(255,255,255,0) 62%);
   mix-blend-mode: screen;
-  filter: blur(10px);
+  filter: blur(9px);
   transform: translate(-20px,-10px);
 }
 
@@ -198,18 +198,47 @@ button{
 .foilGlare{
   background:
     linear-gradient(120deg,
-      rgba(255,255,255,0) 35%,
-      rgba(255,255,255,.22) 50%,
-      rgba(255,255,255,0) 65%);
+      rgba(255,255,255,0) 33%,
+      rgba(255,255,255,.30) 50%,
+      rgba(255,255,255,0) 67%);
   mix-blend-mode: overlay;
-  filter: blur(12px);
+  filter: blur(11px);
   transform: translate(20px,10px) rotate(10deg);
+}
+
+.foilRainbow{
+  position:absolute;
+  inset:-35%;
+  border-radius:24px;
+  opacity:0;
+  transition: opacity .20s ease;
+  mix-blend-mode: color-dodge;
+  background: conic-gradient(from 180deg,
+    rgba(255,0,120,.10),
+    rgba(0,220,255,.10),
+    rgba(255,220,0,.08),
+    rgba(180,0,255,.10),
+    rgba(255,0,120,.10)
+  );
+  filter: blur(14px);
+  will-change: transform;
+}
+
+@keyframes foilMoveRainbow{
+  0%   { transform: translate(30px,-20px) rotate(0deg); }
+  50%  { transform: translate(-30px,20px) rotate(12deg); }
+  100% { transform: translate(30px,-20px) rotate(0deg); }
+}
+
+.modal.open .foilRainbow{
+  opacity: .35; /* très subtil */
+  animation: foilMoveRainbow 4.4s ease-in-out infinite;
 }
 
 /* Visible seulement quand zoom ouvert */
 .modal.open .foilShine,
 .modal.open .foilGlare{
-  opacity: .70;
+  opacity: .85;
 }
 
 /* Animation automatique */
@@ -271,6 +300,7 @@ button{
     <div class="foilWrap">
       <div class="foilShine" id="foilShine"></div>
       <div class="foilGlare" id="foilGlare"></div>
+      <div class="foilRainbow"></div>
     </div>
   </div>
 </div>
