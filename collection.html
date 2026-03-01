@@ -189,26 +189,28 @@ button{
 }
 
 .foilShine{
-  background: radial-gradient(circle at 30% 30%,
-    rgba(255,255,255,.40),
-    rgba(255,255,255,0) 60%);
-  filter: blur(8px);
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.55),
+      rgba(255,255,255,.15),
+      rgba(255,255,255,0) 60%);
+  mix-blend-mode: screen;
+  filter: blur(10px);
 }
 
 .foilGlare{
-  background: conic-gradient(from 180deg,
-    rgba(255,255,255,0),
-    rgba(255,255,255,.22),
-    rgba(255,255,255,.12),
-    rgba(255,255,255,.22),
-    rgba(255,255,255,0)
-  );
-  filter: blur(14px);
+  background:
+    linear-gradient(120deg,
+      rgba(255,255,255,0) 30%,
+      rgba(255,255,255,.25) 50%,
+      rgba(255,255,255,0) 70%);
+  mix-blend-mode: overlay;
+  opacity:.8;
 }
 
 .modal.open .foilShine,
 .modal.open .foilGlare{
-  opacity: .65; /* intensité du foil */
+  opacity: .75;
 }
 </style>
 </head>
@@ -268,7 +270,6 @@ const sortSelect = document.getElementById("sort");
 
 const modal = document.getElementById("modal");
 const zoomSlab = document.getElementById("zoomSlab");
-const zoomImg = document.getElementById("zoomImg");
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
@@ -381,27 +382,31 @@ modal.onclick = e => {
 };
 
 loadCollection();
-
-const foilWrap = document.getElementById("foilWrap");
+const modal = document.getElementById("modal");
 const foilShine = document.getElementById("foilShine");
 const foilGlare = document.getElementById("foilGlare");
+const zoomImg = document.getElementById("zoomImg");
 
 function moveFoil(e){
-  if(!foilWrap) return;
-  const r = foilWrap.getBoundingClientRect();
-  const x = (e.clientX - r.left) / r.width;  // 0..1
-  const y = (e.clientY - r.top) / r.height; // 0..1
+  const rect = zoomImg.getBoundingClientRect();
 
-  const tx = (x - 0.5) * 30;
-  const ty = (y - 0.5) * 30;
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
 
-  foilShine.style.transform = `translate(${tx}px, ${ty}px)`;
-  foilGlare.style.transform = `translate(${tx * 0.6}px, ${ty * 0.6}px) rotate(${(x-0.5)*25}deg)`;
+  if(x < 0 || x > 1 || y < 0 || y > 1) return;
+
+  const posX = (x - 0.5) * 60;
+  const posY = (y - 0.5) * 60;
+
+  foilShine.style.transform =
+    `translate(${posX}px, ${posY}px)`;
+
+  foilGlare.style.transform =
+    `translate(${posX * 0.6}px, ${posY * 0.6}px)
+     rotate(${(x - 0.5) * 40}deg)`;
 }
 
-if(foilWrap){
-  foilWrap.addEventListener("mousemove", moveFoil);
-}
+modal.addEventListener("mousemove", moveFoil);
 </script>
 
 </body>
