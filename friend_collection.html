@@ -103,6 +103,7 @@ button{
   padding:24px;
 }
 .modal.open{display:grid}
+
 .slab{
   width:380px;
   height:560px;
@@ -173,37 +174,57 @@ button{
 
 .foilShine, .foilGlare{
   position:absolute;
-  inset:-20%;
-  border-radius:20px;
-  mix-blend-mode: screen;
+  inset:-35%;
+  border-radius:24px;
   opacity:0;
   transition: opacity .20s ease;
+  will-change: transform;
 }
 
+/* Shine blanc très léger */
 .foilShine{
   background:
-    radial-gradient(circle at 50% 50%,
-      rgba(255,255,255,.55),
-      rgba(255,255,255,.15),
+    radial-gradient(circle at 30% 30%,
+      rgba(255,255,255,.45),
+      rgba(255,255,255,.12),
       rgba(255,255,255,0) 60%);
   mix-blend-mode: screen;
   filter: blur(10px);
+  transform: translate(-20px,-10px);
 }
 
+/* Glare blanc directionnel */
 .foilGlare{
   background:
     linear-gradient(120deg,
-      rgba(255,255,255,0) 30%,
-      rgba(255,255,255,.25) 50%,
-      rgba(255,255,255,0) 70%);
+      rgba(255,255,255,0) 35%,
+      rgba(255,255,255,.22) 50%,
+      rgba(255,255,255,0) 65%);
   mix-blend-mode: overlay;
-  opacity:.8;
+  filter: blur(12px);
+  transform: translate(20px,10px) rotate(10deg);
 }
 
+/* Visible seulement quand zoom ouvert */
 .modal.open .foilShine,
 .modal.open .foilGlare{
-  opacity: .75;
+  opacity: .70;
 }
+
+/* Animation automatique */
+@keyframes foilMoveShine{
+  0%   { transform: translate(-35px,-25px) scale(1); }
+  50%  { transform: translate(35px,25px) scale(1.05); }
+  100% { transform: translate(-35px,-25px) scale(1); }
+}
+@keyframes foilMoveGlare{
+  0%   { transform: translate(40px,20px) rotate(18deg); }
+  50%  { transform: translate(-40px,-20px) rotate(-18deg); }
+  100% { transform: translate(40px,20px) rotate(18deg); }
+}
+
+.modal.open .foilShine{ animation: foilMoveShine 2.8s ease-in-out infinite; }
+.modal.open .foilGlare{ animation: foilMoveGlare 3.6s ease-in-out infinite; }
 </style>
 </head>
 
@@ -211,25 +232,25 @@ button{
 
 <div class="wrap">
 
-<div class="topbar">
-  <div>
-    <b>POKÉGACHA</b> — Collection Ami
-    <div class="msg" id="sub"></div>
+  <div class="topbar">
+    <div>
+      <b>POKÉGACHA</b> — Collection Ami
+      <div class="msg" id="sub"></div>
+    </div>
+    <div class="controls">
+      <input id="search" placeholder="Rechercher...">
+      <select id="sort">
+        <option value="recent">Dernières obtenues</option>
+        <option value="grade">Meilleure note</option>
+        <option value="name">Nom A-Z</option>
+      </select>
+      <button onclick="location.href='/friends.html'">← Retour</button>
+    </div>
   </div>
-  <div class="controls">
-    <input id="search" placeholder="Rechercher...">
-    <select id="sort">
-      <option value="recent">Dernières obtenues</option>
-      <option value="grade">Meilleure note</option>
-      <option value="name">Nom A-Z</option>
-    </select>
-    <button onclick="location.href='/friends.html'">← Retour</button>
-  </div>
-</div>
 
-<div class="gridWrap">
-  <div class="grid" id="grid"></div>
-</div>
+  <div class="gridWrap">
+    <div class="grid" id="grid"></div>
+  </div>
 
 </div>
 
@@ -246,10 +267,11 @@ button{
     </div>
 
     <div class="cardImgZoom" id="zoomImg"></div>
-    <div class="foilWrap" id="foilWrap">
-    <div class="foilShine" id="foilShine"></div>
-    <div class="foilGlare" id="foilGlare"></div>
-</div>
+
+    <div class="foilWrap">
+      <div class="foilShine" id="foilShine"></div>
+      <div class="foilGlare" id="foilGlare"></div>
+    </div>
   </div>
 </div>
 
@@ -262,7 +284,8 @@ const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
 const sub = document.getElementById("sub");
 
-
+const modal = document.getElementById("modal");
+const zoomImg = document.getElementById("zoomImg");
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
@@ -273,13 +296,6 @@ const friendCode = (params.get("code") || "").toUpperCase();
 
 if(!friendCode){
   sub.textContent = "❌ Code ami manquant.";
-}
-
-function tierFromGrade(g){
-  if(g >= 10) return "g";
-  if(g >= 7) return "v";
-  if(g >= 5) return "b";
-  return "w";
 }
 
 async function loadFriendCollection(){
@@ -324,7 +340,6 @@ function applyFilters(){
 }
 
 function openZoom(x){
-  // on tente high.webp si possible
   let img = x.image;
   if (img && img.includes("/low.webp")) img = img.replace("/low.webp", "/high.webp");
 
@@ -371,32 +386,6 @@ modal.onclick = e => {
 };
 
 loadFriendCollection();
-
-const modal = document.getElementById("modal");
-// ===== FOIL (zoom) =====
-const foilShine = document.getElementById("foilShine");
-const foilGlare = document.getElementById("foilGlare");
-const zoomImg = document.getElementById("zoomImg");
-
-function moveFoil(e){
-  if(!modal.classList.contains("open")) return; // seulement en zoom
-  if(!zoomImg || !foilShine || !foilGlare) return;
-
-  const rect = zoomImg.getBoundingClientRect();
-  const x = (e.clientX - rect.left) / rect.width;
-  const y = (e.clientY - rect.top) / rect.height;
-
-  if(x < 0 || x > 1 || y < 0 || y > 1) return;
-
-  const posX = (x - 0.5) * 60;
-  const posY = (y - 0.5) * 60;
-
-  foilShine.style.transform = `translate(${posX}px, ${posY}px)`;
-  foilGlare.style.transform = `translate(${posX * 0.6}px, ${posY * 0.6}px) rotate(${(x - 0.5) * 40}deg)`;
-}
-
-modal.addEventListener("mousemove", moveFoil);
-
 </script>
 
 </body>
