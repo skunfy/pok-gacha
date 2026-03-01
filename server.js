@@ -120,6 +120,12 @@ async function initDb() {
     );
   `);
 
+  await pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS avatar TEXT,
+  ADD COLUMN IF NOT EXISTS bio TEXT;
+`);
+
   // migration safe si la DB existe déjà
   await pool.query(`
     ALTER TABLE users
@@ -174,6 +180,18 @@ await pool.query(`
 
   CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
   ON notifications(user_id, is_read);
+`);
+
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS favorites (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    idKey TEXT NOT NULL,
+    createdAt BIGINT NOT NULL,
+    PRIMARY KEY(user_id, idKey)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_favorites_user
+  ON favorites(user_id);
 `);
 
   console.log("✅ Postgres DB ready");
@@ -905,7 +923,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
     }
 
     await client.query("COMMIT");
-    
+
     await notify(
     l.seller_user_id,
     "sale",
@@ -1074,6 +1092,130 @@ app.post("/api/notifications/read_all", auth, async (req, res) => {
     [req.user.id]
   );
   res.json({ ok: true });
+});
+
+app.get("/api/profile/me", auth, async (req, res) => {
+  const uQ = await pool.query(
+    `SELECT name, friendCode, avatar, bio FROM users WHERE id=$1`,
+    [req.user.id]
+  );
+  const u = uQ.rows[0];
+
+  const favQ = await pool.query(
+    `
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint
+    FROM favorites f
+    JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
+    WHERE f.user_id=$1
+    ORDER BY f.createdAt DESC
+    LIMIT 12
+    `,
+    [req.user.id]
+  );
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    favorites: favQ.rows.map(r => ({
+      idKey: r.idkey || r.idKey,
+      name: r.name,
+      setName: r.setname || r.setName,
+      image: r.image,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+    }))
+  });
+});
+
+app.post("/api/profile/update", auth, async (req, res) => {
+  const avatar = String(req.body?.avatar || "").trim();
+  const bio = String(req.body?.bio || "").trim().slice(0, 140); // limite safe
+
+  await pool.query(
+    `UPDATE users SET avatar=$1, bio=$2 WHERE id=$3`,
+    [avatar || null, bio || null, req.user.id]
+  );
+
+  res.json({ ok: true });
+});
+
+app.post("/api/favorites/toggle", auth, async (req, res) => {
+  const idKey = String(req.body?.idKey || "");
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
+
+  // vérif que la carte est bien à toi
+  const own = await pool.query(
+    `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+    [req.user.id, idKey]
+  );
+  if (!own.rows[0]) return res.status(404).json({ error: "Not owned" });
+
+  const exists = await pool.query(
+    `SELECT 1 FROM favorites WHERE user_id=$1 AND idKey=$2`,
+    [req.user.id, idKey]
+  );
+
+  if (exists.rows[0]) {
+    await pool.query(`DELETE FROM favorites WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
+    return res.json({ ok: true, isFav: false });
+  } else {
+    // limite à 12 favoris
+    const cnt = await pool.query(`SELECT COUNT(*)::int AS c FROM favorites WHERE user_id=$1`, [req.user.id]);
+    if ((cnt.rows[0]?.c || 0) >= 12) return res.status(400).json({ error: "Max 12 favoris" });
+
+    await pool.query(
+      `INSERT INTO favorites (user_id, idKey, createdAt) VALUES ($1,$2,$3)`,
+      [req.user.id, idKey, Date.now()]
+    );
+    return res.json({ ok: true, isFav: true });
+  }
+});
+
+app.get("/api/profile/:friendCode", auth, async (req, res) => {
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  // autorisation : seulement si c’est dans ta liste d’amis
+  const q = await pool.query(
+    `
+    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1 AND u.friendCode=$2
+    `,
+    [req.user.id, friendCode]
+  );
+  const u = q.rows[0];
+  if (!u) return res.status(403).json({ error: "Pas dans tes amis" });
+
+  const favQ = await pool.query(
+    `
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint
+    FROM favorites f
+    JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
+    WHERE f.user_id=$1
+    ORDER BY f.createdAt DESC
+    LIMIT 12
+    `,
+    [u.id]
+  );
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    favorites: favQ.rows.map(r => ({
+      idKey: r.idkey || r.idKey,
+      name: r.name,
+      setName: r.setname || r.setName,
+      image: r.image,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+    }))
+  });
 });
 // =========================
 // START

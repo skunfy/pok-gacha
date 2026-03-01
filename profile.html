@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Profil — Pokégacha</title>
+<style>
+:root{ --bg1:#05060d; --bg2:#090b18; }
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh;
+  font-family:system-ui; color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment: fixed;
+  overflow-x:hidden;
+}
+.wrap{ width:min(1200px,95vw); margin:24px auto; display:grid; gap:16px; }
+.topbar{
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:14px; border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+}
+.controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+button,input,textarea{
+  padding:10px 12px; border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#fff; font-weight:900; outline:none;
+}
+textarea{font-weight:700; resize:none; min-height:90px; width:100%}
+button{cursor:pointer}
+.panel{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:16px;
+  backdrop-filter:blur(10px);
+}
+.grid2{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
+@media (max-width: 900px){ .grid2{grid-template-columns:1fr;} }
+
+.profileRow{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.avatar{
+  width:90px; height:90px; border-radius:18px;
+  background:rgba(0,0,0,.25) center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.12);
+}
+.badge{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-size:12px; font-weight:900;
+}
+.msg{opacity:.85; font-size:13px; white-space:pre-line; margin-top:10px}
+
+.grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
+@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
+
+.cardBox{
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  display:flex; flex-direction:column; gap:8px;
+}
+.cImg{height:190px; background:center/contain no-repeat; border-radius:10px;}
+.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.small{font-size:12px; opacity:.75}
+.star{
+  margin-left:auto;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  cursor:pointer;
+}
+.star.on{border-color: rgba(255,210,110,.45); box-shadow:0 0 40px rgba(255,210,110,.12)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div><b>POKÉGACHA</b> — Profil</div>
+    <div class="controls">
+      <button onclick="location.href='/collection.html'">COLLECTION</button>
+      <button onclick="location.href='/'">← Retour</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="profileRow">
+        <div class="avatar" id="avatarPreview"></div>
+        <div>
+          <div style="font-size:18px;font-weight:1000" id="pname">...</div>
+          <div class="badge">Code ami: <span id="pcode">----</span> <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button></div>
+        </div>
+      </div>
+
+      <div class="msg" id="msg"></div>
+
+      <div style="margin-top:12px" class="small">Avatar (URL d’image)</div>
+      <input id="avatarUrl" placeholder="https://..." />
+
+      <div style="margin-top:12px" class="small">Description (max 140)</div>
+      <textarea id="bio" maxlength="140" placeholder="Une petite description..."></textarea>
+
+      <div class="row" style="margin-top:12px">
+        <button id="save">ENREGISTRER</button>
+        <div class="small" id="bioCount"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
+        <b>Cartes favorites</b>
+        <span class="small">Max 12</span>
+      </div>
+      <div class="msg small">Ajoute/enlève des ⭐ depuis ta collection en bas.</div>
+      <div class="grid" id="favGrid" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
+      <b>Ta collection (clic ⭐ pour favori)</b>
+      <div class="row">
+        <input id="search" placeholder="Rechercher...">
+      </div>
+    </div>
+    <div class="grid" id="colGrid" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+const TOKEN_KEY = "gacha_token_v1";
+const TOKEN = localStorage.getItem(TOKEN_KEY);
+if(!TOKEN) location.href="/login.html";
+
+async function api(path, opts={}){
+  const r = await fetch(path, {
+    ...opts,
+    headers:{
+      ...(opts.headers||{}),
+      "Authorization":"Bearer " + localStorage.getItem(TOKEN_KEY),
+      "Content-Type":"application/json"
+    }
+  });
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
+
+const avatarPreview = document.getElementById("avatarPreview");
+const pname = document.getElementById("pname");
+const pcode = document.getElementById("pcode");
+const msg = document.getElementById("msg");
+
+const avatarUrl = document.getElementById("avatarUrl");
+const bio = document.getElementById("bio");
+const saveBtn = document.getElementById("save");
+const bioCount = document.getElementById("bioCount");
+const copyCode = document.getElementById("copyCode");
+
+const favGrid = document.getElementById("favGrid");
+const colGrid = document.getElementById("colGrid");
+const search = document.getElementById("search");
+
+let favorites = new Set();
+let allItems = [];
+
+function show(t){ msg.textContent = t || ""; }
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function setAvatar(url){
+  const u = (url||"").trim();
+  avatarPreview.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
+}
+
+function renderFavs(items){
+  favGrid.innerHTML = "";
+  const favs = items.filter(x => favorites.has(x.idKey)).slice(0,12);
+  if(!favs.length){
+    favGrid.innerHTML = `<div class="small" style="opacity:.8;">Aucune favorite.</div>`;
+    return;
+  }
+  favs.forEach(x=>{
+    const el = document.createElement("div");
+    el.className = "cardBox";
+    el.innerHTML = `
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div><b>${escapeHtml(x.name)}</b></div>
+      <div class="small">${escapeHtml(x.set)}</div>
+      <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
+    `;
+    favGrid.appendChild(el);
+  });
+}
+
+function renderCollection(items){
+  colGrid.innerHTML = "";
+  items.forEach(x=>{
+    const el = document.createElement("div");
+    el.className = "cardBox";
+    const isOn = favorites.has(x.idKey);
+
+    el.innerHTML = `
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div class="row">
+        <div style="min-width:0">
+          <div><b>${escapeHtml(x.name)}</b></div>
+          <div class="small">${escapeHtml(x.set)}</div>
+        </div>
+        <button class="star ${isOn ? "on" : ""}" title="Favori">${isOn ? "⭐" : "☆"}</button>
+      </div>
+      <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""} • ×${escapeHtml(x.count)}</div>
+    `;
+
+    el.querySelector(".star").onclick = async (e) => {
+      e.preventDefault();
+      try{
+        const r = await api("/api/favorites/toggle", {
+          method:"POST",
+          body: JSON.stringify({ idKey: x.idKey })
+        });
+        if(r.isFav) favorites.add(x.idKey);
+        else favorites.delete(x.idKey);
+
+        renderFavs(allItems);
+        renderCollection(filteredItems());
+      }catch(err){
+        alert("❌ " + err.message);
+      }
+    };
+
+    colGrid.appendChild(el);
+  });
+}
+
+function filteredItems(){
+  const q = (search.value||"").toLowerCase().trim();
+  if(!q) return allItems;
+  return allItems.filter(x =>
+    (x.name||"").toLowerCase().includes(q) ||
+    (x.set||"").toLowerCase().includes(q) ||
+    String(x.grade||"").includes(q)
+  );
+}
+
+async function load(){
+  // profil
+  const p = await api("/api/profile/me", { method:"GET", headers:{} });
+  pname.textContent = p.name || "...";
+  pcode.textContent = p.friendCode || "----";
+  avatarUrl.value = p.avatar || "";
+  bio.value = p.bio || "";
+  setAvatar(p.avatar || "");
+  bioCount.textContent = `${bio.value.length}/140`;
+
+  favorites = new Set((p.favorites||[]).map(x=>x.idKey));
+
+  // collection
+  const c = await api("/api/collection", { method:"GET", headers:{} });
+  allItems = (c.items||[]);
+
+  renderFavs(allItems);
+  renderCollection(filteredItems());
+}
+
+bio.addEventListener("input", ()=>{
+  bioCount.textContent = `${bio.value.length}/140`;
+});
+
+avatarUrl.addEventListener("input", ()=>{
+  setAvatar(avatarUrl.value);
+});
+
+saveBtn.onclick = async () => {
+  try{
+    saveBtn.disabled = true;
+    await api("/api/profile/update", {
+      method:"POST",
+      body: JSON.stringify({ avatar: avatarUrl.value, bio: bio.value })
+    });
+    show("✅ Profil enregistré !");
+  }catch(e){
+    show("❌ " + e.message);
+  }finally{
+    saveBtn.disabled = false;
+  }
+};
+
+copyCode.onclick = async () => {
+  try{
+    await navigator.clipboard.writeText(pcode.textContent);
+    show("✅ Code ami copié !");
+  }catch{
+    show("Copie manuelle: sélectionne le code et Ctrl+C");
+  }
+};
+
+search.addEventListener("input", ()=>{
+  renderCollection(filteredItems());
+});
+
+load().catch(()=>{
+  localStorage.removeItem(TOKEN_KEY);
+  location.href="/login.html";
+});
+</script>
+</body>
+</html>
