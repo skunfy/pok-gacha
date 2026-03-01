@@ -333,59 +333,50 @@
       cursor:default;
     }
     .zoomSlab .label{ width: min(360px, 86vw); }
-    /* ===== TOPBAR FULL WIDTH FIX ===== */
+    /* ===== TOPBAR SINGLE LINE FIX ===== */
 
-    .topbar{
-      flex-wrap: nowrap;
-      align-items: center;
-      overflow: visible;
-      
-    }
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:nowrap;
+  overflow:hidden;
+}
 
-    .rightTop{
-      flex: 1;
-      justify-content: flex-end;
-      min-width: 0;
-    }
+.brandRow{
+  flex:0 0 auto;
+}
 
-   .stats{
-      flex: 1;
-      min-width: 0;
-      max-width: 100%;
-      overflow-x: auto;
-      overflow-y: hidden;
+.rightTop{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:1;
+  min-width:0;
+  flex-wrap:nowrap; /* 🔥 empêche retour ligne */
+}
 
-      /* 🔥 important pour éviter le rognage */
-      padding: 2px 6px;          /* ← ajoute de l’air à gauche/droite */
-      scroll-padding-left: 6px;  /* ← scroll plus propre */
-      scroll-padding-right: 6px;
+/* Stats scroll horizontal */
+.stats{
+  display:flex;
+  gap:10px;
+  flex:1;
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  white-space:nowrap;
+  padding:2px 4px;
+}
 
-      -webkit-overflow-scrolling: touch;
-    }
-    .stats::-webkit-scrollbar{
-      height: 6px;
-    }
+/* empêche les pills de rétrécir */
+.stat{
+  flex:0 0 auto;
+}
 
-    .stats::-webkit-scrollbar-thumb{
-      background: rgba(255,255,255,.18);
-      border-radius: 99px;
-    }
-
-    .stats{
-      scrollbar-color: rgba(255,255,255,.18) transparent;
-    }
-
-    .stat{
-      flex: 0 0 auto;
-    }
-
-    .topLink{
-      flex: 0 0 auto;
-    }
-    .brandRow{ min-width: unset; flex: 0 0 auto; }
-
-    /* ===== FOOTER SIGNATURE ===== */
-    /* optionnel: évite des “sauts” visuels */
+/* empêche les boutons de rétrécir */
+.topLink{
+  flex:0 0 auto;
+}
     
 
   .footerSignature{
