@@ -718,15 +718,20 @@ app.get("/api/market", auth, async (req, res) => {
   if (sort === "name") order = "name ASC, createdAt DESC";
 
   const { rows } = await pool.query(
-    `
-    SELECT id, seller_user_id AS "sellerUserId", idKey, name, setName, image, grade, mint, price, qty, createdAt
-    FROM market_listings
-    ${where}
-    ORDER BY ${order}
-    LIMIT 200
-    `,
-    params
-  );
+  `
+  SELECT 
+    m.id,
+    m.seller_user_id AS "sellerUserId",
+    u.name AS "sellerName",
+    m.idKey, m.name, m.setName, m.image, m.grade, m.mint, m.price, m.qty, m.createdAt
+  FROM market_listings m
+  JOIN users u ON u.id = m.seller_user_id
+  ${where}
+  ORDER BY ${order}
+  LIMIT 200
+  `,
+  params
+);
 
   res.json({ listings: rows.map(r => ({ ...r, mint: Boolean(r.mint) })) });
 });
@@ -870,14 +875,29 @@ app.post("/api/market/buy", auth, async (req, res) => {
 });
 
 // GET my listings
-app.get("/api/market/mine", auth, async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT id, idKey, name, setName, image, grade, mint, price, qty, createdAt
-     FROM market_listings
-     WHERE seller_user_id=$1
-     ORDER BY createdAt DESC`,
-    [req.user.id]
-  );
+const { rows } = await pool.query(
+  `
+  SELECT 
+    m.id,
+    m.seller_user_id AS "sellerUserId",
+    u.name AS "sellerName",
+    m.idKey,
+    m.name,
+    m.setName,
+    m.image,
+    m.grade,
+    m.mint,
+    m.price,
+    m.qty,
+    m.createdAt
+  FROM market_listings m
+  JOIN users u ON u.id = m.seller_user_id
+  ${where}
+  ORDER BY ${order}
+  LIMIT 200
+  `,
+  params
+);
 
   res.json({
     listings: rows.map(r => ({
@@ -887,7 +907,7 @@ app.get("/api/market/mine", auth, async (req, res) => {
       setName: r.setname || r.setName
     }))
   });
-});
+
 
 // POST cancel listing (return cards to seller)
 app.post("/api/market/cancel", auth, async (req, res) => {
