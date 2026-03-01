@@ -389,27 +389,32 @@
   font-weight: 700;
 }
 
-.notifContainer {
-  position: relative;
-  display: inline-block;
-  margin-right: 12px;
+.notifContainer{
+  position:relative;
+  display:inline-block;
 }
 
-.notifBadge {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  background: #ff3b3b;
-  color: white;
-  font-size: 11px;
-  font-weight: 900;
-  border-radius: 50%;
-  min-width: 18px;
-  height: 18px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
+.notifBtn{
+  background:none;
+  border:none;
+  cursor:pointer;
+}
+
+.notifBadge{
+  position:absolute;
+  top:-6px;
+  right:-8px;
+  background:#ff3b3b;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  border-radius:999px;
+  min-width:18px;
+  height:18px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:0 5px;
 }
  </style>
 </head>
@@ -442,14 +447,15 @@
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
-        <div class="notifContainer">
-        <button id="notifBtn" class="topLink" style="background:none;border:none;">
-          🔔
-          <span id="notifBadge" class="notifBadge"></span>
-        </button>
-      </div>
 
-      <a class="topLink" href="#" id="logout">LOGOUT</a>
+        <div class="notifContainer">
+          <button id="notifBtn" class="topLink notifBtn">
+            🔔
+            <span id="notifBadge" class="notifBadge"></span>
+          </button>
+        </div>
+
+        <a class="topLink" href="#" id="logout">LOGOUT</a>
       </div>
     </div>
 
