@@ -238,22 +238,10 @@ button{
   animation: foilMoveRainbow 4s ease-in-out infinite;
 }
 
-@keyframes foilMoveRainbow{
-  0%   { transform: translate(30px,-20px) rotate(0deg); }
-  50%  { transform: translate(-30px,20px) rotate(12deg); }
-  100% { transform: translate(30px,-20px) rotate(0deg); }
-}
-
-.modal.open .foilRainbow{
-  opacity: .35; /* très subtil */
-  animation: foilMoveRainbow 4.4s ease-in-out infinite;
-}
-
 /* Visible seulement quand zoom ouvert */
-.modal.open .foilShine,
-.modal.open .foilGlare{
-  opacity: .85;
-}
+
+.modal.open .foilShine{ opacity:.55; }
+.modal.open .foilGlare{ opacity:.40; }
 
 /* Animation automatique */
 @keyframes foilMoveShine{
