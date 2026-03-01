@@ -700,6 +700,7 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
 // =========================
 
 // GET market listings
+
 app.get("/api/market", auth, async (req, res) => {
   const q = String(req.query.search || "").toLowerCase().trim();
   const sort = String(req.query.sort || "recent");
@@ -708,32 +709,48 @@ app.get("/api/market", auth, async (req, res) => {
   const params = [];
   if (q) {
     params.push(`%${q}%`);
-    where = `WHERE LOWER(name) LIKE $${params.length}
-             OR LOWER(setName) LIKE $${params.length}`;
+    where = `WHERE LOWER(m.name) LIKE $${params.length}
+             OR LOWER(m.setName) LIKE $${params.length}`;
   }
 
-  let order = "createdAt DESC";
-  if (sort === "price") order = "price ASC, createdAt DESC";
-  if (sort === "grade") order = "grade DESC, createdAt DESC";
-  if (sort === "name") order = "name ASC, createdAt DESC";
+  let order = "m.createdAt DESC";
+  if (sort === "price") order = "m.price ASC, m.createdAt DESC";
+  if (sort === "grade") order = "m.grade DESC, m.createdAt DESC";
+  if (sort === "name") order = "m.name ASC, m.createdAt DESC";
 
   const { rows } = await pool.query(
-  `
-  SELECT 
-    m.id,
-    m.seller_user_id AS "sellerUserId",
-    u.name AS "sellerName",
-    m.idKey, m.name, m.setName, m.image, m.grade, m.mint, m.price, m.qty, m.createdAt
-  FROM market_listings m
-  JOIN users u ON u.id = m.seller_user_id
-  ${where}
-  ORDER BY ${order}
-  LIMIT 200
-  `,
-  params
-);
+    `
+    SELECT 
+      m.id,
+      m.seller_user_id AS "sellerUserId",
+      u.name AS "sellerName",
+      m.idKey,
+      m.name,
+      m.setName,
+      m.image,
+      m.grade,
+      m.mint,
+      m.price,
+      m.qty,
+      m.createdAt
+    FROM market_listings m
+    JOIN users u ON u.id = m.seller_user_id
+    ${where}
+    ORDER BY ${order}
+    LIMIT 200
+    `,
+    params
+  );
 
-  res.json({ listings: rows.map(r => ({ ...r, mint: Boolean(r.mint) })) });
+  res.json({
+    listings: rows.map(r => ({
+      ...r,
+      mint: Boolean(r.mint),
+      idKey: r.idkey || r.idKey,
+      setName: r.setname || r.setName,
+      sellerName: r.sellerName || r.sellername
+    }))
+  });
 });
 
 // POST create listing
