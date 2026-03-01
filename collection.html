@@ -268,11 +268,12 @@ const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
 
+const modal = document.getElementById("modal");      // ✅ ICI
 const zoomSlab = document.getElementById("zoomSlab");
+const zoomImg = document.getElementById("zoomImg");  // ✅ ICI
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
-
 let allItems = [];
 
 function tierFromGrade(g){
@@ -385,7 +386,7 @@ const modal = document.getElementById("modal");
 // ===== FOIL (zoom) =====
 const foilShine = document.getElementById("foilShine");
 const foilGlare = document.getElementById("foilGlare");
-const zoomImg = document.getElementById("zoomImg");
+
 
 function moveFoil(e){
   if(!modal.classList.contains("open")) return; // seulement en zoom
