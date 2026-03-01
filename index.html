@@ -333,6 +333,47 @@
       cursor:default;
     }
     .zoomSlab .label{ width: min(360px, 86vw); }
+    /* ===== TOPBAR FULL WIDTH FIX ===== */
+
+    .topbar{
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .rightTop{
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .stats{
+      flex-wrap: nowrap;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+
+    .stats::-webkit-scrollbar{
+      height: 6px;
+    }
+
+    .stats::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.18);
+      border-radius: 99px;
+    }
+
+    .stats{
+      scrollbar-color: rgba(255,255,255,.18) transparent;
+    }
+
+    .stat{
+      flex: 0 0 auto;
+    }
+
+    .topLink{
+      flex: 0 0 auto;
+    }
   </style>
 </head>
 
