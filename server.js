@@ -900,13 +900,14 @@ const { rows } = await pool.query(
 );
 
   res.json({
-    listings: rows.map(r => ({
-      ...r,
-      mint: Boolean(r.mint),
-      idKey: r.idkey || r.idKey,
-      setName: r.setname || r.setName
-    }))
-  });
+  listings: rows.map(r => ({
+    ...r,
+    mint: Boolean(r.mint),
+    idKey: r.idkey || r.idKey,
+    setName: r.setname || r.setName,
+    sellerName: r.sellerName || r.sellername
+  }))
+});
 
 
 // POST cancel listing (return cards to seller)
