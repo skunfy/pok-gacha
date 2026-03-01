@@ -396,17 +396,16 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
-  const { rows } = await pool.query(
+  const userQ = await pool.query(
     `SELECT name, money, friendCode FROM users WHERE id=$1`,
     [req.user.id]
   );
-  const u = rows[0];
+  const u = userQ.rows[0];
 
-  // Optionnel mais pratique: si ancien compte sans friendCode, on en crée un
+  // si ancien compte sans friendCode
   let friendCode = u?.friendcode || u?.friendCode || null;
   if (!friendCode) {
     friendCode = randFriendCode();
-    // on essaie de l'écrire (si collision rare, on retente 3 fois)
     for (let i = 0; i < 3; i++) {
       try {
         await pool.query(`UPDATE users SET friendCode=$1 WHERE id=$2`, [friendCode, req.user.id]);
@@ -417,10 +416,34 @@ app.get("/api/me", auth, async (req, res) => {
     }
   }
 
+  // stats pulls
+  const statsQ = await pool.query(
+    `
+    SELECT
+      COUNT(*)::int AS total,
+      SUM(CASE WHEN grade BETWEEN 1 AND 4 THEN 1 ELSE 0 END)::int AS w,
+      SUM(CASE WHEN grade BETWEEN 5 AND 6 THEN 1 ELSE 0 END)::int AS b,
+      SUM(CASE WHEN grade BETWEEN 7 AND 9 THEN 1 ELSE 0 END)::int AS v,
+      SUM(CASE WHEN grade = 10 THEN 1 ELSE 0 END)::int AS g10,
+      SUM(CASE WHEN mint = 1 THEN 1 ELSE 0 END)::int AS mint
+    FROM pulls
+    WHERE user_id=$1
+    `,
+    [req.user.id]
+  );
+
+  const s = statsQ.rows[0] || {};
+
   res.json({
     name: u?.name,
     money: u?.money || 0,
     friendCode,
+    total: s.total || 0,
+    w: s.w || 0,
+    b: s.b || 0,
+    v: s.v || 0,
+    g10: s.g10 || 0,
+    mint: s.mint || 0,
   });
 });
 
