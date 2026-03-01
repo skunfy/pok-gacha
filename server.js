@@ -135,6 +135,27 @@ async function initDb() {
       PRIMARY KEY(user_id, friend_user_id)
     );
   `);
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS market_listings (
+    id SERIAL PRIMARY KEY,
+    seller_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    idKey TEXT NOT NULL,
+    name TEXT NOT NULL,
+    setName TEXT NOT NULL,
+    image TEXT NOT NULL,
+    grade INTEGER NOT NULL,
+    mint INTEGER NOT NULL DEFAULT 0,
+    price INTEGER NOT NULL,
+    qty INTEGER NOT NULL,
+    createdAt BIGINT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_market_listings_created 
+  ON market_listings(createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_market_listings_seller 
+  ON market_listings(seller_user_id);
+`);
 
   console.log("✅ Postgres DB ready");
 }
