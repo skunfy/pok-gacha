@@ -65,8 +65,8 @@
     .brand b{letter-spacing:.7px}
     .brand small{opacity:.75; font-size:12px}
 
-    .rightTop{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap}
-    .stats{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    .rightTop{display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:nowrap; min-width:0; flex:1;}
+    .stats{display:flex; gap:10px; flex-wrap:nowrap; justify-content:flex-start; min-width:0; flex:1; overflow-x:auto; overflow-y:hidden; white-space:nowrap;}
     .stat{
       display:flex; gap:8px; align-items:center;
       padding:8px 10px; border-radius:999px;
@@ -523,7 +523,9 @@
 .topbar{ max-width:100%; }
 .brandRow{ min-width:0; }
 .rightTop{ min-width:0; }
-.stats{ min-width:0; max-width:560px; }
+.stats{ min-width:0; }
+.stat{ flex:0 0 auto; }
+.topLink{ flex:0 0 auto; }
  </style>
 </head>
 
