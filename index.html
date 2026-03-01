@@ -416,6 +416,105 @@
   justify-content:center;
   padding:0 5px;
 }
+
+.notifContainer{ position:relative; display:inline-block; }
+
+.notifBtn{
+  background:none;
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.notifBadge{
+  position:absolute;
+  top:-6px;
+  right:-8px;
+  background:#ff3b3b;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  border-radius:999px;
+  min-width:18px;
+  height:18px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:0 5px;
+}
+
+.notifMenu{
+  position:absolute;
+  right:0;
+  top:44px;
+  width:min(360px, 92vw);
+  border-radius:14px;
+  background:rgba(15,17,26,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 22px 70px rgba(0,0,0,.55);
+  display:none;
+  overflow:hidden;
+  z-index:99999;
+}
+
+.notifMenu.open{ display:block; }
+
+.notifHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.10);
+}
+
+.notifSmallBtn{
+  padding:7px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.notifList{
+  max-height:320px;
+  overflow:auto;
+}
+
+.notifItem{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.notifItem:hover{ background:rgba(255,255,255,.06); }
+
+.notifTitle{ font-weight:900; font-size:13px; }
+.notifBody{ opacity:.85; font-size:12px; line-height:1.25; }
+
+.notifMeta{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:11px;
+  opacity:.65;
+}
+
+.notifDot{
+  width:8px;height:8px;border-radius:999px;
+  background:#ff3b3b;
+  display:inline-block;
+  margin-right:6px;
+}
+
+.notifFooter{ padding:10px 12px; }
  </style>
 </head>
 
@@ -448,12 +547,25 @@
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
 
-        <div class="notifContainer">
-          <button id="notifBtn" class="topLink notifBtn">
-            🔔
-            <span id="notifBadge" class="notifBadge"></span>
-          </button>
+       <div class="notifContainer" id="notifWrap">
+        <button id="notifBtn" class="topLink notifBtn" type="button" aria-label="Notifications">
+          🔔
+          <span id="notifBadge" class="notifBadge"></span>
+        </button>
+
+        <div class="notifMenu" id="notifMenu">
+          <div class="notifHeader">
+            <b>Notifications</b>
+            <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
+          </div>
+
+          <div class="notifList" id="notifList"></div>
+
+          <div class="notifFooter">
+            <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+          </div>
         </div>
+      </div>
 
         <a class="topLink" href="#" id="logout">LOGOUT</a>
       </div>
@@ -841,6 +953,121 @@
 
     setInterval(loadNotifCount, 12000);
     loadNotifCount();
+
+    const notifWrap = document.getElementById("notifWrap");
+const notifBtn = document.getElementById("notifBtn");
+const notifMenu = document.getElementById("notifMenu");
+const notifList = document.getElementById("notifList");
+const notifEmpty = document.getElementById("notifEmpty");
+const notifReadAll = document.getElementById("notifReadAll");
+
+function fmtTime(ts){
+  try{
+    const d = new Date(ts);
+    return d.toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
+  }catch{ return ""; }
+}
+
+function setBadge(n){
+  notifBadge.textContent = n ? String(n) : "";
+  notifBadge.style.display = n ? "inline-flex" : "none";
+}
+
+async function loadNotifCount(){
+  try{
+    const data = await api("/api/notifications?limit=1&unread=1");
+    setBadge(data.unread || 0);
+  }catch{}
+}
+
+async function api(path, opts = {}) {
+  const headers = { ...(opts.headers || {}), "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY) };
+
+  if (opts.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const r = await fetch(path, { ...opts, headers });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
+
+// 🔐 protège contre injection HTML
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+async function loadNotifList(){
+  try{
+    const data = await api("/api/notifications?limit=10");
+    const notifs = data.notifications || [];
+    setBadge(data.unread || 0);
+
+    notifList.innerHTML = "";
+    if(!notifs.length){
+      notifEmpty.style.display = "block";
+      return;
+    }
+    notifEmpty.style.display = "none";
+
+    for(const n of notifs){
+      const item = document.createElement("div");
+      item.className = "notifItem";
+      item.innerHTML = `
+        <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
+        <div class="notifBody">${escapeHtml(n.body)}</div>
+        <div class="notifMeta">
+          <span>${escapeHtml(n.type || "")}</span>
+          <span>${fmtTime(n.createdAt)}</span>
+        </div>
+      `;
+
+      item.onclick = async () => {
+        // marque comme lu
+        if(!n.isRead){
+          try{ await api("/api/notifications/read", { method:"POST", body: JSON.stringify({ id: n.id }) }); }catch{}
+        }
+        await loadNotifList();
+      };
+
+      notifList.appendChild(item);
+    }
+  }catch{
+    notifList.innerHTML = "";
+    notifEmpty.style.display = "block";
+  }
+}
+
+function toggleNotifMenu(){
+  const open = notifMenu.classList.toggle("open");
+  if(open) loadNotifList();
+}
+
+notifBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleNotifMenu();
+});
+
+document.addEventListener("click", (e) => {
+  if(!notifWrap.contains(e.target)) notifMenu.classList.remove("open");
+});
+
+notifReadAll.addEventListener("click", async (e) => {
+  e.preventDefault();
+  try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
+  await loadNotifList();
+});
+
+// Poll count
+setInterval(loadNotifCount, 12000);
+loadNotifCount();
 
   </script>
   <div class="footerSignature">
