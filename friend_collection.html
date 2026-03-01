@@ -157,6 +157,51 @@ button{
   border-radius:16px;
 }
 .msg{opacity:.8; font-size:13px; padding:10px 2px}
+
+/* ===== Foil overlay (zoom) ===== */
+.foilWrap{
+  position:absolute;
+  left:50%;
+  top:58%;
+  transform:translate(-50%,-50%);
+  width:300px;
+  height:420px;
+  border-radius:16px;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.foilShine, .foilGlare{
+  position:absolute;
+  inset:-20%;
+  border-radius:20px;
+  mix-blend-mode: screen;
+  opacity:0;
+  transition: opacity .20s ease;
+}
+
+.foilShine{
+  background: radial-gradient(circle at 30% 30%,
+    rgba(255,255,255,.40),
+    rgba(255,255,255,0) 60%);
+  filter: blur(8px);
+}
+
+.foilGlare{
+  background: conic-gradient(from 180deg,
+    rgba(255,255,255,0),
+    rgba(255,255,255,.22),
+    rgba(255,255,255,.12),
+    rgba(255,255,255,.22),
+    rgba(255,255,255,0)
+  );
+  filter: blur(14px);
+}
+
+.modal.open .foilShine,
+.modal.open .foilGlare{
+  opacity: .65; /* intensité du foil */
+}
 </style>
 </head>
 
@@ -199,6 +244,10 @@ button{
     </div>
 
     <div class="cardImgZoom" id="zoomImg"></div>
+    <div class="foilWrap" id="foilWrap">
+    <div class="foilShine" id="foilShine"></div>
+    <div class="foilGlare" id="foilGlare"></div>
+</div>
   </div>
 </div>
 
