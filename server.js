@@ -695,7 +695,256 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
     })),
   });
 });
+// =========================
+// MARKETPLACE ROUTES
+// =========================
 
+// GET market listings
+app.get("/api/market", auth, async (req, res) => {
+  const q = String(req.query.search || "").toLowerCase().trim();
+  const sort = String(req.query.sort || "recent");
+
+  let where = "";
+  const params = [];
+  if (q) {
+    params.push(`%${q}%`);
+    where = `WHERE LOWER(name) LIKE $${params.length}
+             OR LOWER(setName) LIKE $${params.length}`;
+  }
+
+  let order = "createdAt DESC";
+  if (sort === "price") order = "price ASC, createdAt DESC";
+  if (sort === "grade") order = "grade DESC, createdAt DESC";
+  if (sort === "name") order = "name ASC, createdAt DESC";
+
+  const { rows } = await pool.query(
+    `
+    SELECT id, seller_user_id AS "sellerUserId", idKey, name, setName, image, grade, mint, price, qty, createdAt
+    FROM market_listings
+    ${where}
+    ORDER BY ${order}
+    LIMIT 200
+    `,
+    params
+  );
+
+  res.json({ listings: rows.map(r => ({ ...r, mint: Boolean(r.mint) })) });
+});
+
+// POST create listing
+app.post("/api/market/list", auth, async (req, res) => {
+  const idKey = String(req.body?.idKey || "");
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  const price = Math.max(1, Number(req.body?.price || 1) | 0);
+
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const cQ = await client.query(
+      `SELECT name, setName, image, grade, mint, count
+       FROM collection
+       WHERE user_id=$1 AND idKey=$2
+       FOR UPDATE`,
+      [req.user.id, idKey]
+    );
+
+    const it = cQ.rows[0];
+    if (!it) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Not owned" });
+    }
+    if (it.count < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité insuffisante" });
+    }
+
+    if (it.count === qty) {
+      await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
+    } else {
+      await client.query(
+        `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty]
+      );
+    }
+
+    const now = Date.now();
+    const ins = await client.query(
+      `INSERT INTO market_listings
+        (seller_user_id, idKey, name, setName, image, grade, mint, price, qty, createdAt)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+       RETURNING id`,
+      [req.user.id, idKey, it.name, it.setname || it.setName, it.image, it.grade, it.mint ? 1 : 0, price, qty, now]
+    );
+
+    await client.query("COMMIT");
+    res.json({ ok: true, listingId: ins.rows[0].id });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Market list failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// POST buy listing
+app.post("/api/market/buy", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+
+  const listingId = Number(req.body?.listingId || 0) | 0;
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  if (!listingId) return res.status(400).json({ error: "Missing listingId" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const lQ = await client.query(
+      `SELECT id, seller_user_id, idKey, name, setName, image, grade, mint, price, qty
+       FROM market_listings
+       WHERE id=$1
+       FOR UPDATE`,
+      [listingId]
+    );
+
+    const l = lQ.rows[0];
+    if (!l) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Listing introuvable" });
+    }
+    if (l.qty < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Plus assez en stock" });
+    }
+    if (l.seller_user_id === req.user.id) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Tu ne peux pas acheter ta propre vente" });
+    }
+
+    const bQ = await client.query(`SELECT money FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const buyerMoney = Number(bQ.rows[0]?.money ?? 0);
+    const total = Number(l.price) * qty;
+
+    if (buyerMoney < total) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de Pokédollars" });
+    }
+
+    await client.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [total, req.user.id]);
+    await client.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [total, l.seller_user_id]);
+
+    const now = Date.now();
+    await client.query(
+      `
+      INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + EXCLUDED.count,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        lastAt = EXCLUDED.lastAt
+      `,
+      [req.user.id, l.idkey || l.idKey, l.name, l.setname || l.setName, l.image, l.grade, l.mint ? 1 : 0, qty, now]
+    );
+
+    if (l.qty === qty) {
+      await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
+    } else {
+      await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
+    }
+
+    await client.query("COMMIT");
+
+    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    res.json({ ok: true, money: me.rows[0]?.money || 0 });
+
+  } catch {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Buy failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// GET my listings
+app.get("/api/market/mine", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, idKey, name, setName, image, grade, mint, price, qty, createdAt
+     FROM market_listings
+     WHERE seller_user_id=$1
+     ORDER BY createdAt DESC`,
+    [req.user.id]
+  );
+
+  res.json({
+    listings: rows.map(r => ({
+      ...r,
+      mint: Boolean(r.mint),
+      idKey: r.idkey || r.idKey,
+      setName: r.setname || r.setName
+    }))
+  });
+});
+
+// POST cancel listing (return cards to seller)
+app.post("/api/market/cancel", auth, async (req, res) => {
+  const listingId = Number(req.body?.listingId || 0) | 0;
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  if (!listingId) return res.status(400).json({ error: "Missing listingId" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const lQ = await client.query(
+      `SELECT id, seller_user_id, idKey, name, setName, image, grade, mint, qty
+       FROM market_listings
+       WHERE id=$1
+       FOR UPDATE`,
+      [listingId]
+    );
+    const l = lQ.rows[0];
+
+    if (!l) { await client.query("ROLLBACK"); return res.status(404).json({ error: "Listing introuvable" }); }
+    if (l.seller_user_id !== req.user.id) { await client.query("ROLLBACK"); return res.status(403).json({ error: "Interdit" }); }
+    if (l.qty < qty) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Quantité invalide" }); }
+
+    const now = Date.now();
+
+    // return cards to seller collection
+    await client.query(
+      `
+      INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + EXCLUDED.count,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        lastAt = EXCLUDED.lastAt
+      `,
+      [req.user.id, l.idkey || l.idKey, l.name, l.setname || l.setName, l.image, l.grade, l.mint ? 1 : 0, qty, now]
+    );
+
+    // reduce or delete listing
+    if (l.qty === qty) {
+      await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
+    } else {
+      await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
+    }
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Cancel failed" });
+  } finally {
+    client.release();
+  }
+});
 // =========================
 // START
 // =========================

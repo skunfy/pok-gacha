@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Market — Pokégacha</title>
+
+<style>
+:root{ --bg1:#05060d; --bg2:#090b18; }
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui;
+  color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+  background-attachment: fixed;
+  overflow-x:hidden;
+}
+
+.wrap{
+  width:min(1200px,95vw);
+  margin:24px auto 40px;
+  display:grid;
+  gap:16px;
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+  gap:12px;
+}
+.controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+input, select{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:700;
+}
+button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+button:disabled{opacity:.55; cursor:not-allowed}
+
+.panel{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:16px;
+  backdrop-filter:blur(10px);
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap:16px;
+}
+@media (max-width: 980px){ .grid2{grid-template-columns:1fr;} }
+
+.hrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between}
+.hrow b{letter-spacing:.5px}
+.msg{opacity:.8; font-size:13px; white-space:pre-line; margin-top:8px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
+@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
+
+.cardBox{
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.cImg{
+  height:190px;
+  background:center/contain no-repeat;
+  border-radius:10px;
+}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:900;
+  opacity:.9;
+}
+.pill{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.15);
+  font-size:12px;
+  font-weight:900;
+}
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.small{font-size:12px; opacity:.75}
+
+hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
+
+.list{
+  display:grid;
+  gap:10px;
+}
+.itemRow{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+}
+.thumb{
+  width:42px;height:58px;border-radius:10px;
+  background:center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.12);
+}
+.spacer{flex:1 1 auto}
+
+.clickable{cursor:pointer}
+.clickable:hover{outline:1px solid rgba(255,255,255,.18)}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <b>POKÉGACHA</b> — Market
+      <div class="msg" id="subTop"></div>
+    </div>
+    <div class="controls">
+      <div class="pill">💵 <span id="money">0</span></div>
+      <input id="search" placeholder="Rechercher...">
+      <select id="sort">
+        <option value="recent">Plus récents</option>
+        <option value="price">Prix (bas → haut)</option>
+        <option value="grade">Grade (haut → bas)</option>
+        <option value="name">Nom A-Z</option>
+      </select>
+      <button onclick="location.href='/collection.html'">COLLECTION</button>
+      <button onclick="location.href='/'">← Retour</button>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- MARKET LISTINGS -->
+    <div class="panel">
+      <div class="hrow">
+        <b>Ventes en cours</b>
+        <button id="refresh">Rafraîchir</button>
+      </div>
+      <div class="msg" id="msgMarket"></div>
+      <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- SELL + MY LISTINGS -->
+    <div class="panel">
+      <div class="hrow">
+        <b>Mettre en vente</b>
+        <span class="small">Clique une carte ci-dessous</span>
+      </div>
+
+      <div class="msg" id="msgSell"></div>
+
+      <div class="row" style="margin-top:10px;">
+        <input id="price" type="number" min="1" value="5" style="width:140px" placeholder="Prix">
+        <input id="qty" type="number" min="1" value="1" style="width:120px" placeholder="Qté">
+        <button id="btnList" disabled>VENDRE</button>
+      </div>
+
+      <div class="small" id="selected" style="margin-top:8px; opacity:.85;">Aucune carte sélectionnée.</div>
+
+      <hr class="sep">
+
+      <div class="hrow">
+        <b>Ta collection (sélection)</b>
+        <span class="small">scroll</span>
+      </div>
+      <div class="grid" id="myCollectionGrid" style="margin-top:12px; max-height:420px; overflow:auto; padding-right:6px;"></div>
+
+      <hr class="sep">
+
+      <div class="hrow">
+        <b>Mes ventes</b>
+        <button id="reloadMine">Recharger</button>
+      </div>
+      <div class="msg" id="msgMine"></div>
+      <div class="list" id="mineList" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TOKEN_KEY = "gacha_token_v1";
+const TOKEN = localStorage.getItem(TOKEN_KEY);
+if(!TOKEN) location.href="/login.html";
+
+async function api(path, opts={}){
+  const r = await fetch(path, {
+    ...opts,
+    headers:{
+      ...(opts.headers || {}),
+      "Authorization":"Bearer " + localStorage.getItem(TOKEN_KEY),
+      "Content-Type":"application/json"
+    }
+  });
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
+
+const subTop = document.getElementById("subTop");
+const moneyEl = document.getElementById("money");
+
+const searchEl = document.getElementById("search");
+const sortEl = document.getElementById("sort");
+const refreshBtn = document.getElementById("refresh");
+
+const msgMarket = document.getElementById("msgMarket");
+const marketGrid = document.getElementById("marketGrid");
+
+const msgSell = document.getElementById("msgSell");
+const myCollectionGrid = document.getElementById("myCollectionGrid");
+const selectedEl = document.getElementById("selected");
+const priceEl = document.getElementById("price");
+const qtyEl = document.getElementById("qty");
+const btnList = document.getElementById("btnList");
+
+const reloadMine = document.getElementById("reloadMine");
+const msgMine = document.getElementById("msgMine");
+const mineList = document.getElementById("mineList");
+
+let me = null;
+let myItems = [];
+let selectedItem = null;
+
+function show(el, t){ el.textContent = t || ""; }
+
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function fmtCardLine(x){
+  const setName = x.setName || x.set || "";
+  return `${x.name} • ${setName} • Grade ${x.grade}${x.mint ? " (MINT)" : ""}`;
+}
+
+async function loadMe(){
+  me = await api("/api/me", { method:"GET", headers:{} });
+  moneyEl.textContent = me.money ?? 0;
+  subTop.textContent = `Connecté • ${me.name} • Code ami: ${me.friendCode}`;
+}
+
+async function loadMarket(){
+  show(msgMarket, "Chargement...");
+  marketGrid.innerHTML = "";
+
+  const q = encodeURIComponent((searchEl.value||"").trim());
+  const sort = encodeURIComponent(sortEl.value || "recent");
+  const data = await api(`/api/market?search=${q}&sort=${sort}`, { method:"GET", headers:{} });
+
+  const listings = data.listings || [];
+  if(!listings.length){
+    show(msgMarket, "Aucune vente pour l’instant.");
+    return;
+  }
+  show(msgMarket, "");
+
+  listings.forEach(l => {
+    const el = document.createElement("div");
+    el.className = "cardBox";
+    el.innerHTML = `
+      <div class="cImg" style="background-image:url('${l.image}')"></div>
+      <div><b>${escapeHtml(l.name)}</b></div>
+      <div class="small">${escapeHtml(l.setName)}</div>
+      <div class="row">
+        <span class="pill">Grade ${escapeHtml(l.grade)}${l.mint ? " • MINT" : ""}</span>
+        <span class="pill">Stock: ${escapeHtml(l.qty)}</span>
+      </div>
+      <div class="row">
+        <span class="pill">Prix: ${escapeHtml(l.price)}💵</span>
+        <button class="buyBtn" style="margin-left:auto;">Acheter</button>
+      </div>
+      <div class="small">Vendeur: #${escapeHtml(l.sellerUserId)}</div>
+    `;
+
+    const buyBtn = el.querySelector(".buyBtn");
+    buyBtn.onclick = async () => {
+      try{
+        const want = Math.max(1, Number(prompt(`Quantité à acheter ? (max ${l.qty})`, "1") || "1")|0);
+        if(!want) return;
+        await api("/api/market/buy", {
+          method:"POST",
+          body: JSON.stringify({ listingId: l.id, qty: want })
+        });
+        await loadMe();
+        await loadMarket();
+        await loadMyCollection();
+        await loadMine();
+      }catch(e){
+        alert("❌ " + e.message);
+      }
+    };
+
+    marketGrid.appendChild(el);
+  });
+}
+
+async function loadMyCollection(){
+  // on s’appuie sur /api/collection
+  const data = await api("/api/collection", { method:"GET", headers:{} });
+  myItems = data.items || [];
+  myCollectionGrid.innerHTML = "";
+
+  if(!myItems.length){
+    myCollectionGrid.innerHTML = `<div class="small" style="opacity:.8;">Aucune carte.</div>`;
+    return;
+  }
+
+  myItems.forEach(x => {
+    const el = document.createElement("div");
+    el.className = "cardBox clickable";
+    el.innerHTML = `
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div><b>${escapeHtml(x.name)}</b></div>
+      <div class="small">${escapeHtml(x.set)}</div>
+      <div class="row">
+        <span class="pill">Grade ${escapeHtml(x.grade)}${x.mint ? " • MINT" : ""}</span>
+        <span class="pill">×${escapeHtml(x.count)}</span>
+      </div>
+    `;
+
+    el.onclick = () => {
+      selectedItem = x;
+      btnList.disabled = false;
+      selectedEl.textContent = "Sélection : " + fmtCardLine({
+        name: x.name,
+        setName: x.set,
+        grade: x.grade,
+        mint: x.mint
+      }) + ` • Dispo: ×${x.count}`;
+      // clamp qty
+      const q = Math.max(1, Math.min(Number(qtyEl.value||1)|0, x.count));
+      qtyEl.value = String(q);
+      show(msgSell, "");
+    };
+
+    myCollectionGrid.appendChild(el);
+  });
+}
+
+async function loadMine(){
+  show(msgMine, "Chargement...");
+  mineList.innerHTML = "";
+  const data = await api("/api/market/mine", { method:"GET", headers:{} });
+  const listings = data.listings || [];
+  if(!listings.length){
+    show(msgMine, "Aucune vente en cours.");
+    return;
+  }
+  show(msgMine, "");
+
+  listings.forEach(l => {
+    const row = document.createElement("div");
+    row.className = "itemRow";
+    row.innerHTML = `
+      <div class="thumb" style="background-image:url('${l.image}')"></div>
+      <div>
+        <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName)}</span></div>
+        <div class="small">Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix ${escapeHtml(l.price)}💵 • Stock ${escapeHtml(l.qty)}</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="cancelBtn">Annuler…</button>
+    `;
+
+    row.querySelector(".cancelBtn").onclick = async () => {
+      try{
+        const want = Math.max(1, Number(prompt(`Quantité à annuler ? (max ${l.qty})`, String(l.qty)) || "0")|0);
+        if(!want) return;
+        await api("/api/market/cancel", {
+          method:"POST",
+          body: JSON.stringify({ listingId: l.id, qty: want })
+        });
+        await loadMine();
+        await loadMyCollection();
+      }catch(e){
+        alert("❌ " + e.message);
+      }
+    };
+
+    mineList.appendChild(row);
+  });
+}
+
+btnList.onclick = async () => {
+  try{
+    if(!selectedItem) { show(msgSell, "Sélectionne une carte."); return; }
+
+    const price = Math.max(1, Number(priceEl.value||1)|0);
+    const qty = Math.max(1, Number(qtyEl.value||1)|0);
+
+    if(qty > selectedItem.count){
+      show(msgSell, `Quantité trop grande (tu as ×${selectedItem.count}).`);
+      return;
+    }
+
+    btnList.disabled = true;
+    await api("/api/market/list", {
+      method:"POST",
+      body: JSON.stringify({ idKey: selectedItem.idKey, qty, price })
+    });
+
+    show(msgSell, "✅ Mise en vente !");
+    selectedItem = null;
+    btnList.disabled = true;
+    selectedEl.textContent = "Aucune carte sélectionnée.";
+
+    await loadMarket();
+    await loadMyCollection();
+    await loadMine();
+  }catch(e){
+    show(msgSell, "❌ " + e.message);
+  }finally{
+    btnList.disabled = (selectedItem === null);
+  }
+};
+
+qtyEl.addEventListener("input", () => {
+  if(!selectedItem) return;
+  const q = Math.max(1, Math.min(Number(qtyEl.value||1)|0, selectedItem.count));
+  qtyEl.value = String(q);
+});
+
+searchEl.addEventListener("input", () => loadMarket());
+sortEl.addEventListener("change", () => loadMarket());
+refreshBtn.onclick = () => loadMarket();
+reloadMine.onclick = () => loadMine();
+
+(async () => {
+  try{
+    await loadMe();
+    await loadMarket();
+    await loadMyCollection();
+    await loadMine();
+  }catch(e){
+    localStorage.removeItem(TOKEN_KEY);
+    location.href="/login.html";
+  }
+})();
+</script>
+</body>
+</html>
