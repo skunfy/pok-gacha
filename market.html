@@ -322,7 +322,7 @@ async function loadMarket(){
         <span class="pill">Prix: ${escapeHtml(l.price)}💵</span>
         <button class="buyBtn" style="margin-left:auto;">Acheter</button>
       </div>
-      <div class="small">Vendeur: #${escapeHtml(l.sellerUserId)}</div>
+      <div class="small">Vendeur: ${escapeHtml(l.sellerName || ("#" + l.sellerUserId))}</div>
     `;
 
     const buyBtn = el.querySelector(".buyBtn");
