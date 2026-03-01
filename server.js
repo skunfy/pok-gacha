@@ -157,6 +157,25 @@ async function initDb() {
   ON market_listings(seller_user_id);
 `);
 
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    meta JSONB,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    createdAt BIGINT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_time
+  ON notifications(user_id, createdAt DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+  ON notifications(user_id, is_read);
+`);
+
   console.log("✅ Postgres DB ready");
 }
 
@@ -174,6 +193,13 @@ function randToken() {
 function randFriendCode() {
   const s = crypto.randomBytes(4).toString("hex").toUpperCase();
   return s.slice(0, 4) + "-" + s.slice(4, 8);
+}
+async function notify(userId, type, title, body, meta = null) {
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, title, body, meta, is_read, createdAt)
+     VALUES ($1,$2,$3,$4,$5,0,$6)`,
+    [userId, type, title, body, meta ? JSON.stringify(meta) : null, Date.now()]
+  );
 }
 
 // ----- PAY LOOP (server-side) -----
@@ -879,6 +905,13 @@ app.post("/api/market/buy", auth, async (req, res) => {
     }
 
     await client.query("COMMIT");
+    
+    await notify(
+    l.seller_user_id,
+    "sale",
+    "💰 Vente réussie !",
+    `${qty}× ${l.name} vendu pour ${total}💵`
+  );
 
     const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
     res.json({ ok: true, money: me.rows[0]?.money || 0 });
@@ -984,6 +1017,63 @@ app.post("/api/market/cancel", auth, async (req, res) => {
   } finally {
     client.release();
   }
+});
+// GET notifications (latest)
+app.get("/api/notifications", auth, async (req, res) => {
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20) | 0));
+  const onlyUnread = String(req.query.unread || "") === "1";
+
+  const { rows } = await pool.query(
+    `
+    SELECT id, type, title, body, meta, is_read, createdAt
+    FROM notifications
+    WHERE user_id=$1
+      ${onlyUnread ? "AND is_read=0" : ""}
+    ORDER BY createdAt DESC
+    LIMIT ${limit}
+    `,
+    [req.user.id]
+  );
+
+  const unreadQ = await pool.query(
+    `SELECT COUNT(*)::int AS c FROM notifications WHERE user_id=$1 AND is_read=0`,
+    [req.user.id]
+  );
+
+  res.json({
+    unread: unreadQ.rows[0]?.c || 0,
+    notifications: rows.map(r => ({
+      id: r.id,
+      type: r.type,
+      title: r.title,
+      body: r.body,
+      meta: r.meta,
+      isRead: Boolean(r.is_read),
+      createdAt: Number(r.createdat || r.createdAt),
+    }))
+  });
+});
+
+// POST mark as read
+app.post("/api/notifications/read", auth, async (req, res) => {
+  const id = Number(req.body?.id || 0) | 0;
+  if (!id) return res.status(400).json({ error: "Missing id" });
+
+  await pool.query(
+    `UPDATE notifications SET is_read=1 WHERE user_id=$1 AND id=$2`,
+    [req.user.id, id]
+  );
+
+  res.json({ ok: true });
+});
+
+// POST mark all as read
+app.post("/api/notifications/read_all", auth, async (req, res) => {
+  await pool.query(
+    `UPDATE notifications SET is_read=1 WHERE user_id=$1`,
+    [req.user.id]
+  );
+  res.json({ ok: true });
 });
 // =========================
 // START
