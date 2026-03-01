@@ -515,6 +515,12 @@
 }
 
 .notifFooter{ padding:10px 12px; }
+
+/* Fix flex overflow qui décale visuellement */
+.topbar{ max-width:100%; }
+.brandRow{ min-width:0; }
+.rightTop{ min-width:0; }
+.stats{ min-width:0; max-width:560px; }
  </style>
 </head>
 
@@ -973,26 +979,6 @@ function fmtTime(ts){
 function setBadge(n){
   notifBadge.textContent = n ? String(n) : "";
   notifBadge.style.display = n ? "inline-flex" : "none";
-}
-
-async function loadNotifCount(){
-  try{
-    const data = await api("/api/notifications?limit=1&unread=1");
-    setBadge(data.unread || 0);
-  }catch{}
-}
-
-async function api(path, opts = {}) {
-  const headers = { ...(opts.headers || {}), "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY) };
-
-  if (opts.body && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const r = await fetch(path, { ...opts, headers });
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
-  return data;
 }
 
 // 🔐 protège contre injection HTML
