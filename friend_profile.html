@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Profil Ami — Pokégacha</title>
+
+<style>
+:root{ --bg1:#05060d; --bg2:#090b18; }
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui;
+  color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+
+.wrap{
+  width:min(1100px,95vw);
+  margin:24px auto;
+  display:grid;
+  gap:16px;
+}
+
+.panel{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:20px;
+  backdrop-filter:blur(10px);
+}
+
+.profileRow{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.avatar{
+  width:110px;
+  height:110px;
+  border-radius:20px;
+  background:rgba(0,0,0,.25) center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.badge{
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:900;
+  font-size:12px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+
+@media (max-width: 900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+.cardBox{
+  background:rgba(255,255,255,.06);
+  border-radius:14px;
+  padding:12px;
+  border:1px solid rgba(255,255,255,.12);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.cImg{
+  height:180px;
+  background:center/contain no-repeat;
+  border-radius:10px;
+}
+
+.small{font-size:12px; opacity:.75}
+.msg{opacity:.85;font-size:13px}
+button{
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="panel">
+  <button onclick="history.back()">← Retour</button>
+
+  <div class="profileRow" style="margin-top:16px">
+    <div class="avatar" id="avatar"></div>
+    <div>
+      <div style="font-size:20px;font-weight:1000" id="name">...</div>
+      <div class="badge" id="code">----</div>
+      <div class="msg" id="bio" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <b>Cartes favorites</b>
+  <div class="grid" id="favGrid" style="margin-top:12px"></div>
+</div>
+
+</div>
+
+<script>
+const TOKEN = localStorage.getItem("gacha_token_v1");
+if(!TOKEN) location.href="/login.html";
+
+async function api(path){
+  const r = await fetch(path,{
+    headers:{ Authorization:"Bearer "+TOKEN }
+  });
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok) throw new Error(data.error||"Erreur");
+  return data;
+}
+
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+const params = new URLSearchParams(location.search);
+const code = (params.get("code")||"").toUpperCase();
+
+async function load(){
+  const data = await api("/api/profile/"+encodeURIComponent(code));
+
+  document.getElementById("name").textContent = data.name;
+  document.getElementById("code").textContent = "Code ami: "+data.friendCode;
+  document.getElementById("bio").textContent = data.bio || "";
+
+  if(data.avatar){
+    document.getElementById("avatar").style.backgroundImage =
+      `url('${data.avatar.replace(/'/g,"\\'")}')`;
+  }
+
+  const grid = document.getElementById("favGrid");
+  grid.innerHTML = "";
+
+  if(!data.favorites.length){
+    grid.innerHTML = `<div class="small">Aucune carte favorite.</div>`;
+    return;
+  }
+
+  data.favorites.forEach(x=>{
+    const el = document.createElement("div");
+    el.className="cardBox";
+    el.innerHTML=`
+      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div><b>${escapeHtml(x.name)}</b></div>
+      <div class="small">${escapeHtml(x.setName)}</div>
+      <div class="small">Grade ${x.grade}${x.mint?" • MINT":""}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+load().catch(()=>{
+  alert("Impossible de charger le profil");
+  history.back();
+});
+</script>
+
+</body>
+</html>

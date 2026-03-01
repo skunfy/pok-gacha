@@ -201,19 +201,26 @@
     function show(el, t){ el.textContent = t || ""; }
 
     function friendRow(f){
-      const wrap = document.createElement("div");
-      wrap.className = "friendItem";
-      wrap.innerHTML = `
-        <div><b>${escapeHtml(f.name || "Ami")}</b></div>
-        <div class="badge">${escapeHtml(f.friendCode || "----")}</div>
-        <div class="spacer"></div>
-        <button class="smallBtn">Voir collection</button>
-      `;
-      wrap.querySelector("button").onclick = () => {
-        location.href = "/friend_collection.html?code=" + encodeURIComponent(f.friendCode);
-      };
-      return wrap;
-    }
+  const wrap = document.createElement("div");
+  wrap.className = "friendItem";
+  wrap.innerHTML = `
+    <div><b>${escapeHtml(f.name || "Ami")}</b></div>
+    <div class="badge">${escapeHtml(f.friendCode || "----")}</div>
+    <div class="spacer"></div>
+    <button class="smallBtn viewProfileBtn">Profil</button>
+    <button class="smallBtn viewCollectionBtn">Voir collection</button>
+  `;
+
+  wrap.querySelector(".viewCollectionBtn").onclick = () => {
+    location.href = "/friend_collection.html?code=" + encodeURIComponent(f.friendCode);
+  };
+
+  wrap.querySelector(".viewProfileBtn").onclick = () => {
+    location.href = "/friend_profile.html?code=" + encodeURIComponent(f.friendCode);
+  };
+
+  return wrap;
+}
 
     function escapeHtml(s){
       return String(s || "")
