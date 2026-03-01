@@ -338,22 +338,29 @@
     .topbar{
       flex-wrap: nowrap;
       align-items: center;
+      
     }
 
     .rightTop{
-      flex-wrap: nowrap;
+      flex: 1;
+      justify-content: flex-end;
       min-width: 0;
     }
 
-    .stats{
-      flex-wrap: nowrap;
+   .stats{
+      flex: 1;
       min-width: 0;
+      max-width: 100%;
       overflow-x: auto;
       overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 2px;
-    }
 
+      /* 🔥 important pour éviter le rognage */
+      padding: 2px 6px;          /* ← ajoute de l’air à gauche/droite */
+      scroll-padding-left: 6px;  /* ← scroll plus propre */
+      scroll-padding-right: 6px;
+
+      -webkit-overflow-scrolling: touch;
+    }
     .stats::-webkit-scrollbar{
       height: 6px;
     }
@@ -374,7 +381,10 @@
     .topLink{
       flex: 0 0 auto;
     }
+    .brandRow{ min-width: unset; flex: 0 0 auto; }
     /* ===== FOOTER SIGNATURE ===== */
+    /* optionnel: évite des “sauts” visuels */
+    .topbar{ overflow: visible; }
 
   .footerSignature{
   margin-top: 80px;
