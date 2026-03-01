@@ -892,38 +892,40 @@ app.post("/api/market/buy", auth, async (req, res) => {
 });
 
 // GET my listings
-const { rows } = await pool.query(
-  `
-  SELECT 
-    m.id,
-    m.seller_user_id AS "sellerUserId",
-    u.name AS "sellerName",
-    m.idKey,
-    m.name,
-    m.setName,
-    m.image,
-    m.grade,
-    m.mint,
-    m.price,
-    m.qty,
-    m.createdAt
-  FROM market_listings m
-  JOIN users u ON u.id = m.seller_user_id
-  ${where}
-  ORDER BY ${order}
-  LIMIT 200
-  `,
-  params
-);
+app.get("/api/market/mine", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `
+    SELECT 
+      m.id,
+      m.seller_user_id AS "sellerUserId",
+      u.name AS "sellerName",
+      m.idKey,
+      m.name,
+      m.setName,
+      m.image,
+      m.grade,
+      m.mint,
+      m.price,
+      m.qty,
+      m.createdAt
+    FROM market_listings m
+    JOIN users u ON u.id = m.seller_user_id
+    WHERE m.seller_user_id = $1
+    ORDER BY m.createdAt DESC
+    LIMIT 200
+    `,
+    [req.user.id]
+  );
 
   res.json({
-  listings: rows.map(r => ({
-    ...r,
-    mint: Boolean(r.mint),
-    idKey: r.idkey || r.idKey,
-    setName: r.setname || r.setName,
-    sellerName: r.sellerName || r.sellername
-  }))
+    listings: rows.map(r => ({
+      ...r,
+      mint: Boolean(r.mint),
+      idKey: r.idkey || r.idKey,
+      setName: r.setname || r.setName,
+      sellerName: r.sellerName || r.sellername
+    }))
+  });
 });
 
 
