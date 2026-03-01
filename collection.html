@@ -382,13 +382,16 @@ modal.onclick = e => {
 
 loadCollection();
 const modal = document.getElementById("modal");
+// ===== FOIL (zoom) =====
 const foilShine = document.getElementById("foilShine");
 const foilGlare = document.getElementById("foilGlare");
 const zoomImg = document.getElementById("zoomImg");
 
 function moveFoil(e){
-  const rect = zoomImg.getBoundingClientRect();
+  if(!modal.classList.contains("open")) return; // seulement en zoom
+  if(!zoomImg || !foilShine || !foilGlare) return;
 
+  const rect = zoomImg.getBoundingClientRect();
   const x = (e.clientX - rect.left) / rect.width;
   const y = (e.clientY - rect.top) / rect.height;
 
@@ -397,12 +400,8 @@ function moveFoil(e){
   const posX = (x - 0.5) * 60;
   const posY = (y - 0.5) * 60;
 
-  foilShine.style.transform =
-    `translate(${posX}px, ${posY}px)`;
-
-  foilGlare.style.transform =
-    `translate(${posX * 0.6}px, ${posY * 0.6}px)
-     rotate(${(x - 0.5) * 40}deg)`;
+  foilShine.style.transform = `translate(${posX}px, ${posY}px)`;
+  foilGlare.style.transform = `translate(${posX * 0.6}px, ${posY * 0.6}px) rotate(${(x - 0.5) * 40}deg)`;
 }
 
 modal.addEventListener("mousemove", moveFoil);
