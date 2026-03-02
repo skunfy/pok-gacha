@@ -618,6 +618,54 @@
 
   /* mobile: moins de tap/zoom chelou */
   button, a, .cardImg{ touch-action: manipulation; }
+
+  .cardPlaceholder{
+  position:absolute;
+  left:50%;
+  top:56%;
+  width:260px;
+  height:340px;
+  transform:translate(-50%,-50%) translateZ(19px);
+  border-radius:16px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+
+  pointer-events:none;
+  opacity:.85;
+
+  /* petit “habillage” doux */
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%);
+}
+
+.cardPlaceholder img{
+  width: 140px;
+  max-width: 70%;
+  height:auto;
+  display:block;
+  filter: drop-shadow(0 10px 25px rgba(0,0,0,.45));
+  opacity:.95;
+}
+
+.cardPlaceholder .phText{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.3px;
+  opacity:.75;
+  text-align:center;
+}
+
+/* Mobile (si tu as ton bloc @media 420px) */
+@media (max-width:420px){
+  .cardPlaceholder{
+    width:240px;
+    height:320px;
+  }
+  .cardPlaceholder img{ width:120px; }
+}
 </style>
 
 </head>
@@ -697,7 +745,13 @@
         </div>
 
         <div class="cardImg" id="card"></div>
-        <div class="edge"></div>
+
+        <div class="cardPlaceholder" id="cardPh" aria-hidden="true">
+          <img src="poke.png" alt="">
+          <div class="phText">Tire une carte ✨</div>
+        </div>
+
+<div class="edge"></div>
         <div class="flash"></div>
       </div>
     </div>
@@ -803,6 +857,14 @@
     const shine = document.getElementById("shine");
     const glare = document.getElementById("glare");
     const card = document.getElementById("card");
+
+    // ✅ Placeholder logo (ajout)
+    const cardPh = document.getElementById("cardPh");
+    function setPlaceholderVisible(v){
+      if(!cardPh) return;
+      cardPh.style.display = v ? "flex" : "none";
+    }
+
     const title = document.getElementById("title");
     const subtitle = document.getElementById("subtitle");
     const gradeEl = document.getElementById("grade");
@@ -896,6 +958,9 @@
       `;
 
       el.addEventListener("click", () => {
+        // ✅ si on clique un log, on affiche une carte => on cache le placeholder
+        setPlaceholderVisible(false);
+
         card.style.backgroundImage = `url("${imageUrl}")`;
 
         title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
@@ -1036,6 +1101,9 @@
 
         const img = new Image();
         img.onload = () => {
+          // ✅ une vraie carte => on cache le placeholder
+          setPlaceholderVisible(false);
+
           card.style.backgroundImage = `url("${img.src}")`;
           card.dataset.high = c.imageHigh || "";
           slab.dataset.tier = tier;
@@ -1070,6 +1138,9 @@
 
     // ---------- INIT ----------
     card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
+
+    // ✅ au démarrage, aucune carte => placeholder visible
+    setPlaceholderVisible(true);
 
     (async () => {
       try{
@@ -1194,7 +1265,7 @@
 
     loadNotifCount();
     setInterval(loadNotifCount, 12000);
-  </script>
+</script>
 
   <div class="footerSignature">
     Powered by <b>Matthieu Charton</b>
