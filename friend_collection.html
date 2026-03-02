@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Collection Ami — Gachax</title>
+<title>Profil Ami — Gachax</title>
 
 <style>
 :root{ --bg1:#05060d; --bg2:#090b18; }
@@ -17,66 +17,75 @@ body{
     radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
     radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
-  background-attachment: fixed;
-  overflow-x:hidden;
 }
+
 .wrap{
-  width:min(1200px,95vw);
+  width:min(1100px,95vw);
   margin:24px auto;
   display:grid;
   gap:16px;
 }
-.topbar{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(10px);
-  gap:12px;
-}
-.controls{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-}
-input, select{
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
-  background:#0f111a;
-  color:#fff;
-  font-weight:600;
-}
-button{
-  padding:8px 12px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  font-weight:800;
-  cursor:pointer;
-}
-.gridWrap{
+
+.panel{
   border-radius:16px;
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.10);
   padding:20px;
-  max-height:1165px;
-  overflow:auto;
+  backdrop-filter:blur(10px);
 }
+
+.profileRow{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+/* ✅ avatar + glow */
+.avatar{
+  width:110px;
+  height:110px;
+  border-radius:20px;
+  background:rgba(0,0,0,.25) center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.12);
+  position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 34px rgba(120,170,255,.18);
+}
+.avatar::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:22px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(120,170,255,.35), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(190,120,255,.25), transparent 55%);
+  filter: blur(8px);
+  opacity:.55;
+}
+
+.badge{
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:900;
+  font-size:12px;
+}
+
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:20px;
+  gap:14px;
 }
-@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
-@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
 
+@media (max-width: 900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ✅ cards + hover */
 .cardBox{
   background:rgba(255,255,255,.06);
   border-radius:14px;
@@ -84,211 +93,131 @@ button{
   border:1px solid rgba(255,255,255,.12);
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:8px;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
+.cardBox:hover{
+  transform: translateY(-2px);
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.18);
+}
+
 .cImg{
-  height:220px;
+  height:180px;
   background:center/contain no-repeat;
   border-radius:10px;
   cursor:pointer;
 }
 
+.small{font-size:12px; opacity:.75}
+.msg{opacity:.85;font-size:13px}
+
+button{
+  padding:8px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  transition: transform .12s ease, background .12s ease;
+}
+button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
+button:active{ transform: translateY(0px) scale(.99); }
+
+/* ✅ STATS */
+.statsGrid{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.statCard{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.20);
+}
+.statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
+.statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
+
+/* ✅ MODAL ZOOM */
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.72);
   display:none;
   place-items:center;
-  z-index:9999;
+  z-index:99999;
   padding:24px;
 }
 .modal.open{display:grid}
 
-.slab{
-  width:380px;
-  height:560px;
-  border-radius:22px;
-  position:relative;
+.zoomCard{
+  width:min(520px, 92vw);
+  border-radius:18px;
+  background:rgba(15,17,26,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 22px 70px rgba(0,0,0,.55);
+  padding:14px;
+  backdrop-filter: blur(10px);
 }
-.shell{
-  position:absolute;
-  inset:0;
-  border-radius:22px;
-  background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
-  border:1px solid rgba(255,255,255,.18);
-  backdrop-filter:blur(6px);
-}
-.label{
-  position:absolute;
-  left:50%;
-  top:30px;
-  transform:translateX(-50%);
-  width:85%;
-  height:60px;
-  border-radius:14px;
-  background:rgba(0,0,0,.3);
-  border:1px solid rgba(255,255,255,.2);
+
+.zoomHead{
   display:flex;
   justify-content:space-between;
-  align-items:center;
-  padding:0 12px;
-  gap:10px;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:10px;
 }
-.grade{
-  font-size:24px;
-  font-weight:900;
-}
-.mintBadge{
-  padding:5px 8px;
+.zoomTitle{ font-weight:1000; letter-spacing:.3px; }
+.zoomSub{ opacity:.75; font-size:12px; margin-top:2px; }
+.zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+
+.gameTag{
+  display:inline-flex;
+  padding:4px 8px;
   border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
   font-size:11px;
   font-weight:900;
-  border:1px solid rgba(255,80,80,.6);
-  color:#ff5050;
-  display:none;
+  opacity:.85;
 }
-.cardImgZoom{
-  position:absolute;
-  left:50%;
-  top:58%;
-  transform:translate(-50%,-50%);
-  width:300px;
-  height:420px;
+
+.mintBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,80,80,.12);
+  border: 1px solid rgba(255,80,80,.55);
+  color: rgba(255,80,80,.95);
+}
+.gradeBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.zoomImg{
+  width:100%;
+  height:min(64vh, 560px);
+  border-radius:14px;
   background:center/contain no-repeat;
-  border-radius:16px;
-}
-.msg{opacity:.8; font-size:13px; padding:10px 2px}
-
-/* ===== Foil overlay (zoom) ===== */
-.foilWrap{
-  position:absolute;
-  left:50%;
-  top:58%;
-  transform:translate(-50%,-50%);
-  width:300px;
-  height:420px;
-  border-radius:16px;
-  overflow:hidden;
-  pointer-events:none;
+  background-color: rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.10);
 }
 
-.foilShine, .foilGlare{
-  position:absolute;
-  inset:-35%;
-  border-radius:24px;
-  opacity:0;
-  transition: opacity .20s ease;
-  will-change: transform;
-}
-
-/* Shine blanc très léger */
-.foilShine{
-  background:
-    radial-gradient(circle at 30% 30%,
-      rgba(255,255,255,.55),
-      rgba(255,255,255,.16),
-      rgba(255,255,255,0) 62%);
-  mix-blend-mode: screen;
-  filter: blur(9px);
-  transform: translate(-20px,-10px);
-}
-
-/* Glare blanc directionnel */
-.foilGlare{
-  background:
-    linear-gradient(120deg,
-      rgba(255,255,255,0) 33%,
-      rgba(255,255,255,.30) 50%,
-      rgba(255,255,255,0) 67%);
-  mix-blend-mode: overlay;
-  filter: blur(11px);
-  transform: translate(20px,10px) rotate(10deg);
-}
-
-.foilRainbow{
-  position:absolute;
-  inset:-40%;
-  border-radius:30px;
-  opacity:0;
-  transition: opacity .25s ease;
-  pointer-events:none;
-
-  background: linear-gradient(
-    115deg,
-    rgba(255,0,120,.25),
-    rgba(0,220,255,.25),
-    rgba(255,220,0,.20),
-    rgba(0,255,140,.20),
-    rgba(180,0,255,.25)
-  );
-
-  mix-blend-mode: soft-light;   /* plus visible que color-dodge */
-  filter: blur(18px);
-  will-change: transform;
-}
-
-@keyframes foilMoveRainbow{
-  0%   { transform: translate(40px,-30px) rotate(0deg); }
-  50%  { transform: translate(-40px,30px) rotate(15deg); }
-  100% { transform: translate(40px,-30px) rotate(0deg); }
-}
-
-.modal.open .foilRainbow{
-  opacity: .40;   /* ← plus visible */
-  animation: foilMoveRainbow 4s ease-in-out infinite;
-}
-
-/* Visible seulement quand zoom ouvert */
-
-.modal.open .foilShine{ opacity:.40; }
-.modal.open .foilGlare{ opacity:.30; }
-
-/* Animation automatique */
-@keyframes foilMoveShine{
-  0%   { transform: translate(-35px,-25px) scale(1); }
-  50%  { transform: translate(35px,25px) scale(1.05); }
-  100% { transform: translate(-35px,-25px) scale(1); }
-}
-@keyframes foilMoveGlare{
-  0%   { transform: translate(40px,20px) rotate(18deg); }
-  50%  { transform: translate(-40px,-20px) rotate(-18deg); }
-  100% { transform: translate(40px,20px) rotate(18deg); }
-}
-
-.modal.open .foilShine{ animation: foilMoveShine 2.8s ease-in-out infinite; }
-.modal.open .foilGlare{ animation: foilMoveGlare 3.6s ease-in-out infinite; }
-
-/* ===== Scrollbar dark style (Collection) ===== */
-
-/* Firefox */
-.gridWrap{
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
-}
-
-/* Chrome / Edge / Safari */
-.gridWrap::-webkit-scrollbar{
-  width: 10px;
-}
-
-.gridWrap::-webkit-scrollbar-track{
-  background: rgba(255,255,255,.06);
-  border-radius: 999px;
-}
-
-.gridWrap::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.18);
-  border-radius: 999px;
-  border: 2px solid rgba(0,0,0,.25);
-}
-
-.gridWrap::-webkit-scrollbar-thumb:hover{
-  background: rgba(255,255,255,.28);
-}
-
-/* évite le décalage du contenu quand la scroll apparaît */
-.gridWrap{
-  scrollbar-gutter: stable both-edges;
+.zoomHint{
+  margin-top:10px;
+  opacity:.7;
+  font-size:12px;
+  text-align:center;
 }
 </style>
 </head>
@@ -297,47 +226,59 @@ button{
 
 <div class="wrap">
 
-  <div class="topbar">
-    <div>
-      <b>Gachax</b> — Collection Ami
-      <div class="msg" id="sub"></div>
-    </div>
-    <div class="controls">
-      <input id="search" placeholder="Rechercher...">
-      <select id="sort">
-        <option value="recent">Dernières obtenues</option>
-        <option value="grade">Meilleure note</option>
-        <option value="name">Nom A-Z</option>
-      </select>
-      <button onclick="location.href='/friends.html'">← Retour</button>
+  <div class="panel">
+    <button onclick="history.back()">← Retour</button>
+
+    <div class="profileRow" style="margin-top:16px">
+      <div class="avatar" id="avatar"></div>
+      <div>
+        <div style="font-size:20px;font-weight:1000" id="name">...</div>
+        <div class="badge" id="code">----</div>
+        <div class="msg" id="bio" style="margin-top:10px"></div>
+
+        <!-- ✅ STATS (maintenant basées sur la collection complète) -->
+        <div class="statsGrid" aria-label="Statistiques">
+          <div class="statCard">
+            <div class="k">TOTAL POKÉMON</div>
+            <div class="v" id="statPokemon">0</div>
+          </div>
+          <div class="statCard">
+            <div class="k">TOTAL ONE PIECE</div>
+            <div class="v" id="statOnepiece">0</div>
+          </div>
+          <div class="statCard" style="grid-column:1 / -1;">
+            <div class="k">TOTAL CARTES</div>
+            <div class="v" id="statTotal">0</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <div class="gridWrap">
-    <div class="grid" id="grid"></div>
+  <div class="panel">
+    <b>Cartes favorites</b>
+    <div class="grid" id="favGrid" style="margin-top:12px"></div>
   </div>
 
 </div>
 
-<div class="modal" id="modal">
-  <div class="slab" id="zoomSlab" data-tier="" data-mint="0">
-    <div class="shell"></div>
-
-    <div class="label">
-      <div id="zoomTitle">POKÉMON</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div class="mintBadge" id="zoomMint">MINT</div>
-        <div class="grade" id="zoomGrade">?</div>
+<!-- ✅ MODAL ZOOM -->
+<div class="modal" id="zoomModal" aria-hidden="true">
+  <div class="zoomCard" role="dialog" aria-modal="true">
+    <div class="zoomHead">
+      <div style="min-width:0">
+        <div class="zoomTitle" id="zoomTitle">...</div>
+        <div class="zoomSub" id="zoomSub">...</div>
+      </div>
+      <div class="zoomBadges">
+        <span class="gameTag" id="zoomGameTag">POKÉMON</span>
+        <span class="gradeBadge" id="zoomGrade">Grade ?</span>
+        <span class="mintBadge" id="zoomMint" style="display:none;">MINT</span>
       </div>
     </div>
-
-    <div class="cardImgZoom" id="zoomImg"></div>
-
-    <div class="foilWrap">
-      <div class="foilShine" id="foilShine"></div>
-      <div class="foilGlare" id="foilGlare"></div>
-      <div class="foilRainbow"></div>
-    </div>
+    <div class="zoomImg" id="zoomImg"></div>
+    <div class="zoomHint">Clique en dehors pour fermer • ESC</div>
   </div>
 </div>
 
@@ -345,119 +286,13 @@ button{
 const TOKEN = localStorage.getItem("gacha_token_v1");
 if(!TOKEN) location.href="/login.html";
 
-// --- GAME ---
-const GAME_KEY = "gacha_game_v1";
-function currentGame(){
-  const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  return (g === "onepiece") ? "onepiece" : "pokemon";
-}
-function setGame(g){
-  const safe = (String(g).toLowerCase() === "onepiece") ? "onepiece" : "pokemon";
-  localStorage.setItem(GAME_KEY, safe);
-}
-
-const grid = document.getElementById("grid");
-const searchInput = document.getElementById("search");
-const sortSelect = document.getElementById("sort");
-const sub = document.getElementById("sub");
-
-const modal = document.getElementById("modal");
-const zoomImg = document.getElementById("zoomImg");
-const zoomTitle = document.getElementById("zoomTitle");
-const zoomGrade = document.getElementById("zoomGrade");
-const zoomMint = document.getElementById("zoomMint");
-
-let allItems = [];
-const params = new URLSearchParams(location.search);
-const friendCode = (params.get("code") || "").toUpperCase();
-
-if(!friendCode){
-  sub.textContent = "❌ Code ami manquant.";
-}
-
-// ---- Injecteur UI: select jeu dans la topbar (sans toucher ton HTML) ----
-(function addGameSelect(){
-  const controls = document.querySelector(".controls");
-  if(!controls) return;
-
-  const sel = document.createElement("select");
-  sel.id = "gameSel";
-  sel.innerHTML = `
-    <option value="pokemon">Pokémon</option>
-    <option value="onepiece">One Piece</option>
-  `;
-  sel.value = currentGame();
-
-  sel.addEventListener("change", () => {
-    setGame(sel.value);
-    loadFriendCollection();
-  });
-
-  // on le met avant le bouton retour
-  const backBtn = controls.querySelector("button");
-  if(backBtn) controls.insertBefore(sel, backBtn);
-  else controls.appendChild(sel);
-})();
-
-async function loadFriendCollection(){
-  const g = currentGame();
-  sub.textContent = friendCode ? `Code: ${friendCode} • Jeu: ${g === "onepiece" ? "One Piece" : "Pokémon"}` : "";
-
-  // ✅ IMPORTANT: on ajoute ?game=
-  const url = `/api/friends/${encodeURIComponent(friendCode)}/collection?game=${encodeURIComponent(g)}`;
-
-  const r = await fetch(url, {
+async function api(path){
+  const r = await fetch(path,{
     headers:{ Authorization:"Bearer "+TOKEN }
   });
-
   const data = await r.json().catch(()=> ({}));
-  if(!r.ok){
-    sub.textContent = "❌ " + (data.error || "Erreur");
-    allItems = [];
-    render([]);
-    return;
-  }
-
-  allItems = data.items || [];
-  applyFilters();
-}
-
-function applyFilters(){
-  const q = searchInput.value.toLowerCase().trim();
-  let items = [...allItems];
-
-  if(q){
-    items = items.filter(item =>
-      (item.name || "").toLowerCase().includes(q) ||
-      (item.setName || item.set || "").toLowerCase().includes(q) ||
-      String(item.grade || "").includes(q)
-    );
-  }
-
-  const sort = sortSelect.value;
-  if(sort === "grade"){
-    items.sort((a,b)=> (b.grade||0) - (a.grade||0));
-  } else if(sort === "name"){
-    items.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
-  } else {
-    items.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
-  }
-
-  render(items);
-}
-
-function openZoom(x){
-  let img = x.image;
-
-  // si c'est une image low.webp, on tente high.webp
-  if (img && img.includes("/low.webp")) img = img.replace("/low.webp", "/high.webp");
-
-  zoomImg.style.backgroundImage = `url('${img}')`;
-  zoomTitle.textContent = `${x.name} • ${(x.setName || x.set || "")}`;
-  zoomGrade.textContent = x.grade;
-
-  zoomMint.style.display = x.mint ? "block" : "none";
-  modal.classList.add("open");
+  if(!r.ok) throw new Error(data.error||"Erreur");
+  return data;
 }
 
 function escapeHtml(s){
@@ -469,32 +304,108 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-function render(items){
-  grid.innerHTML="";
-  items.forEach(x=>{
-    const el=document.createElement("div");
+function gameLabel(g){
+  return (String(g).toLowerCase() === "onepiece") ? "ONE PIECE" : "POKÉMON";
+}
+
+/* ✅ STATS exactes depuis la collection */
+function updateStatsFromCollection(itemsP, itemsO){
+  let p = 0, o = 0;
+  for(const x of (itemsP || [])) p += Number(x.count || 0) || 0;
+  for(const x of (itemsO || [])) o += Number(x.count || 0) || 0;
+
+  document.getElementById("statPokemon").textContent = String(p);
+  document.getElementById("statOnepiece").textContent = String(o);
+  document.getElementById("statTotal").textContent = String(p + o);
+}
+
+/* ✅ ZOOM */
+const zoomModal = document.getElementById("zoomModal");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomSub = document.getElementById("zoomSub");
+const zoomGameTag = document.getElementById("zoomGameTag");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+const zoomImg = document.getElementById("zoomImg");
+
+function openZoomCard(x){
+  zoomTitle.textContent = x.name || "";
+  zoomSub.textContent = `${x.setName || x.set || ""}`.trim();
+  zoomGameTag.textContent = gameLabel(x.game || "pokemon");
+  zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
+  zoomMint.style.display = x.mint ? "inline-flex" : "none";
+
+  const img = (x.imageHigh || x.image || "").trim();
+  zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
+
+  zoomModal.classList.add("open");
+  zoomModal.setAttribute("aria-hidden","false");
+}
+function closeZoom(){
+  zoomModal.classList.remove("open");
+  zoomModal.setAttribute("aria-hidden","true");
+  zoomImg.style.backgroundImage = "none";
+}
+zoomModal.addEventListener("click", (e)=>{
+  if(e.target === zoomModal) closeZoom();
+});
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom();
+});
+
+const params = new URLSearchParams(location.search);
+const friendCode = (params.get("code")||"").toUpperCase();
+
+async function load(){
+  // profil + favoris (comme avant)
+  const data = await api("/api/profile/"+encodeURIComponent(friendCode));
+
+  document.getElementById("name").textContent = data.name || "...";
+  document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
+  document.getElementById("bio").textContent = data.bio || "";
+
+  if(data.avatar){
+    document.getElementById("avatar").style.backgroundImage =
+      `url('${data.avatar.replace(/'/g,"\\'")}')`;
+  }
+
+  // ✅ collection complète pour stats (pokemon + onepiece)
+  const [cP, cO] = await Promise.all([
+    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=pokemon").catch(()=> ({ items: [] })),
+    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=onepiece").catch(()=> ({ items: [] })),
+  ]);
+
+  updateStatsFromCollection(cP.items || [], cO.items || []);
+
+  // render favoris
+  const grid = document.getElementById("favGrid");
+  grid.innerHTML = "";
+
+  const favs = (data.favorites || []);
+  if(!favs.length){
+    grid.innerHTML = `<div class="small">Aucune carte favorite.</div>`;
+    return;
+  }
+
+  favs.forEach(x=>{
+    const el = document.createElement("div");
     el.className="cardBox";
     el.innerHTML=`
       <div class="cImg" style="background-image:url('${x.image}')"></div>
       <div><b>${escapeHtml(x.name)}</b></div>
-      <div>${escapeHtml(x.setName || x.set || "")}</div>
-      <div>Grade ${escapeHtml(x.grade)} ${x.mint?"(MINT)":""} ×${escapeHtml(x.count)}</div>
-      <div style="opacity:.65;font-size:12px;">Lecture seule</div>
+      <div class="small">${escapeHtml(x.setName)}</div>
+      <div class="small">Grade ${x.grade}${x.mint?" • MINT":""}</div>
     `;
 
-    el.querySelector(".cImg").onclick = () => openZoom(x);
+    el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
     grid.appendChild(el);
   });
 }
 
-searchInput.addEventListener("input", applyFilters);
-sortSelect.addEventListener("change", applyFilters);
-
-modal.onclick = e => {
-  if(e.target === modal) modal.classList.remove("open");
-};
-
-loadFriendCollection();
+load().catch(()=>{
+  alert("Impossible de charger le profil");
+  history.back();
+});
 </script>
 
 </body>
