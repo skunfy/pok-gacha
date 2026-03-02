@@ -235,6 +235,15 @@ function randFriendCode() {
   const s = crypto.randomBytes(4).toString("hex").toUpperCase();
   return s.slice(0, 4) + "-" + s.slice(4, 8);
 }
+
+function sellPriceFor(grade, mint){
+  if (mint) return 20;
+  const g = Number(grade) || 0;
+  if (g >= 10) return 10;
+  if (g >= 7) return 5;
+  if (g >= 5) return 2;
+  return 1;
+}
 async function notify(userId, type, title, body, meta = null) {
   await pool.query(
     `INSERT INTO notifications (user_id, type, title, body, meta, is_read, createdAt)
