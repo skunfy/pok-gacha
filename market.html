@@ -100,14 +100,6 @@ button:disabled{opacity:.55; cursor:not-allowed}
   background:center/contain no-repeat;
   border-radius:10px;
 }
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  font-size:12px;
-  font-weight:900;
-  opacity:.9;
-}
 .pill{
   display:inline-flex;
   gap:8px;
@@ -164,6 +156,12 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
       <div class="msg" id="subTop"></div>
     </div>
     <div class="controls">
+      <!-- ✅ FILTRE JEU -->
+      <select id="gameSel" title="Jeu">
+        <option value="pokemon">Pokémon</option>
+        <option value="onepiece">One Piece</option>
+      </select>
+
       <div class="pill">💵 <span id="money">0</span></div>
       <input id="search" placeholder="Rechercher...">
       <select id="sort">
@@ -228,11 +226,22 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
 
 <script>
 const TOKEN_KEY = "gacha_token_v1";
+const GAME_KEY  = "gacha_game_v1";
+
 const TOKEN = localStorage.getItem(TOKEN_KEY);
 if(!TOKEN) location.href="/login.html";
 
+function currentGame(){
+  const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  return (g === "onepiece") ? "onepiece" : "pokemon";
+}
+
 async function api(path, opts={}){
-  const r = await fetch(path, {
+  const g = encodeURIComponent(currentGame());
+  const sep = path.includes("?") ? "&" : "?";
+  const url = path + sep + "game=" + g;
+
+  const r = await fetch(url, {
     ...opts,
     headers:{
       ...(opts.headers || {}),
@@ -240,10 +249,21 @@ async function api(path, opts={}){
       "Content-Type":"application/json"
     }
   });
+
   const data = await r.json().catch(()=> ({}));
   if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
   return data;
 }
+
+const gameSel = document.getElementById("gameSel");
+gameSel.value = currentGame();
+gameSel.addEventListener("change", async () => {
+  localStorage.setItem(GAME_KEY, gameSel.value);
+  await loadMe();
+  await loadMarket();
+  await loadMyCollection();
+  await loadMine();
+});
 
 const subTop = document.getElementById("subTop");
 const moneyEl = document.getElementById("money");
@@ -281,6 +301,10 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
+function gameTag(g){
+  return (g === "onepiece") ? "🟥 One Piece" : "🟨 Pokémon";
+}
+
 function fmtCardLine(x){
   const setName = x.setName || x.set || "";
   return `${x.name} • ${setName} • Grade ${x.grade}${x.mint ? " (MINT)" : ""}`;
@@ -289,7 +313,7 @@ function fmtCardLine(x){
 async function loadMe(){
   me = await api("/api/me", { method:"GET", headers:{} });
   moneyEl.textContent = me.money ?? 0;
-  subTop.textContent = `Connecté • ${me.name} • Code ami: ${me.friendCode}`;
+  subTop.textContent = `Connecté • ${me.name} • Code ami: ${me.friendCode} • ${gameTag(currentGame())}`;
 }
 
 async function loadMarket(){
@@ -310,10 +334,13 @@ async function loadMarket(){
   listings.forEach(l => {
     const el = document.createElement("div");
     el.className = "cardBox";
+    const g = l.game || currentGame();
+
     el.innerHTML = `
       <div class="cImg" style="background-image:url('${l.image}')"></div>
+      <div class="small" style="opacity:.75;">${gameTag(g)}</div>
       <div><b>${escapeHtml(l.name)}</b></div>
-      <div class="small">${escapeHtml(l.setName)}</div>
+      <div class="small">${escapeHtml(l.setName || "")}</div>
       <div class="row">
         <span class="pill">Grade ${escapeHtml(l.grade)}${l.mint ? " • MINT" : ""}</span>
         <span class="pill">Stock: ${escapeHtml(l.qty)}</span>
@@ -348,7 +375,6 @@ async function loadMarket(){
 }
 
 async function loadMyCollection(){
-  // on s’appuie sur /api/collection
   const data = await api("/api/collection", { method:"GET", headers:{} });
   myItems = data.items || [];
   myCollectionGrid.innerHTML = "";
@@ -361,10 +387,13 @@ async function loadMyCollection(){
   myItems.forEach(x => {
     const el = document.createElement("div");
     el.className = "cardBox clickable";
+    const g = x.game || currentGame();
+
     el.innerHTML = `
       <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div class="small" style="opacity:.75;">${gameTag(g)}</div>
       <div><b>${escapeHtml(x.name)}</b></div>
-      <div class="small">${escapeHtml(x.set)}</div>
+      <div class="small">${escapeHtml(x.set || x.setName || "")}</div>
       <div class="row">
         <span class="pill">Grade ${escapeHtml(x.grade)}${x.mint ? " • MINT" : ""}</span>
         <span class="pill">×${escapeHtml(x.count)}</span>
@@ -376,11 +405,10 @@ async function loadMyCollection(){
       btnList.disabled = false;
       selectedEl.textContent = "Sélection : " + fmtCardLine({
         name: x.name,
-        setName: x.set,
+        setName: x.set || x.setName || "",
         grade: x.grade,
         mint: x.mint
       }) + ` • Dispo: ×${x.count}`;
-      // clamp qty
       const q = Math.max(1, Math.min(Number(qtyEl.value||1)|0, x.count));
       qtyEl.value = String(q);
       show(msgSell, "");
@@ -404,11 +432,13 @@ async function loadMine(){
   listings.forEach(l => {
     const row = document.createElement("div");
     row.className = "itemRow";
+    const g = l.game || currentGame();
+
     row.innerHTML = `
       <div class="thumb" style="background-image:url('${l.image}')"></div>
       <div>
-        <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName)}</span></div>
-        <div class="small">Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix ${escapeHtml(l.price)}💵 • Stock ${escapeHtml(l.qty)}</div>
+        <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName || "")}</span></div>
+        <div class="small">${gameTag(g)} • Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix ${escapeHtml(l.price)}💵 • Stock ${escapeHtml(l.qty)}</div>
       </div>
       <div class="spacer"></div>
       <button class="cancelBtn">Annuler…</button>

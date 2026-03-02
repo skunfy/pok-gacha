@@ -345,6 +345,17 @@ button{
 const TOKEN = localStorage.getItem("gacha_token_v1");
 if(!TOKEN) location.href="/login.html";
 
+// --- GAME ---
+const GAME_KEY = "gacha_game_v1";
+function currentGame(){
+  const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  return (g === "onepiece") ? "onepiece" : "pokemon";
+}
+function setGame(g){
+  const safe = (String(g).toLowerCase() === "onepiece") ? "onepiece" : "pokemon";
+  localStorage.setItem(GAME_KEY, safe);
+}
+
 const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
@@ -364,16 +375,46 @@ if(!friendCode){
   sub.textContent = "❌ Code ami manquant.";
 }
 
-async function loadFriendCollection(){
-  sub.textContent = friendCode ? `Code: ${friendCode}` : "";
+// ---- Injecteur UI: select jeu dans la topbar (sans toucher ton HTML) ----
+(function addGameSelect(){
+  const controls = document.querySelector(".controls");
+  if(!controls) return;
 
-  const r = await fetch(`/api/friends/${encodeURIComponent(friendCode)}/collection`, {
+  const sel = document.createElement("select");
+  sel.id = "gameSel";
+  sel.innerHTML = `
+    <option value="pokemon">Pokémon</option>
+    <option value="onepiece">One Piece</option>
+  `;
+  sel.value = currentGame();
+
+  sel.addEventListener("change", () => {
+    setGame(sel.value);
+    loadFriendCollection();
+  });
+
+  // on le met avant le bouton retour
+  const backBtn = controls.querySelector("button");
+  if(backBtn) controls.insertBefore(sel, backBtn);
+  else controls.appendChild(sel);
+})();
+
+async function loadFriendCollection(){
+  const g = currentGame();
+  sub.textContent = friendCode ? `Code: ${friendCode} • Jeu: ${g === "onepiece" ? "One Piece" : "Pokémon"}` : "";
+
+  // ✅ IMPORTANT: on ajoute ?game=
+  const url = `/api/friends/${encodeURIComponent(friendCode)}/collection?game=${encodeURIComponent(g)}`;
+
+  const r = await fetch(url, {
     headers:{ Authorization:"Bearer "+TOKEN }
   });
 
   const data = await r.json().catch(()=> ({}));
   if(!r.ok){
     sub.textContent = "❌ " + (data.error || "Erreur");
+    allItems = [];
+    render([]);
     return;
   }
 
@@ -407,6 +448,8 @@ function applyFilters(){
 
 function openZoom(x){
   let img = x.image;
+
+  // si c'est une image low.webp, on tente high.webp
   if (img && img.includes("/low.webp")) img = img.replace("/low.webp", "/high.webp");
 
   zoomImg.style.backgroundImage = `url('${img}')`;
