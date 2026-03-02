@@ -96,7 +96,6 @@ button{cursor:pointer}
   content:"";
   position:absolute;
   inset:0;
-  /* voile sombre pour garder la lisibilité */
   background: linear-gradient(90deg,
     rgba(5,6,13,.88) 0%,
     rgba(5,6,13,.72) 35%,
@@ -114,15 +113,18 @@ button{cursor:pointer}
 
 .profileRow{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
 
-/* ✅ AVATAR + GLOW */
+/* ✅ AVATAR + GLOW (piloté par variables) */
 .avatar{
+  --glow: rgba(120,170,255,.18);
+  --glow2: rgba(190,120,255,.25);
+
   width:90px; height:90px; border-radius:18px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
   position:relative;
   box-shadow:
     0 0 0 1px rgba(255,255,255,.10),
-    0 0 30px rgba(120,170,255,.18);
+    0 0 34px var(--glow);
 }
 .avatar::after{
   content:"";
@@ -130,8 +132,8 @@ button{cursor:pointer}
   border-radius:20px;
   pointer-events:none;
   background:
-    radial-gradient(circle at 30% 30%, rgba(120,170,255,.35), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(190,120,255,.25), transparent 55%);
+    radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--glow2), transparent 55%);
   filter: blur(8px);
   opacity:.55;
 }
@@ -205,6 +207,45 @@ button{cursor:pointer}
 }
 .statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
 .statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
+
+/* ✅ XP UI */
+.levelRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+.lvlPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:1000;
+  font-size:12px;
+}
+.xpBar{
+  width:min(320px, 86vw);
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.xpFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background: rgba(120,170,255,.85);
+  transition: width .25s ease;
+}
+.xpText{
+  font-size:12px;
+  opacity:.75;
+}
 
 /* ✅ MODAL ZOOM (slab) */
 .modal{
@@ -293,7 +334,6 @@ button{cursor:pointer}
   </div>
 
   <div class="grid2">
-    <!-- ✅ Panel profil avec bannière -->
     <div class="panel profilePanel">
       <div class="profileBanner" id="bannerPreview" style="display:none;"></div>
 
@@ -306,6 +346,17 @@ button{cursor:pointer}
               Code ami: <span id="pcode">----</span>
               <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button>
             </div>
+          </div>
+        </div>
+
+        <!-- ✅ LVL + XP -->
+        <div class="levelRow" aria-label="Niveau et XP">
+          <div class="lvlPill">LVL <span id="lvl">1</span></div>
+          <div>
+            <div class="xpBar" aria-label="Barre XP">
+              <div class="xpFill" id="xpFill"></div>
+            </div>
+            <div class="xpText" id="xpText">0 / 100 XP</div>
           </div>
         </div>
 
@@ -327,12 +378,10 @@ button{cursor:pointer}
 
         <div class="msg" id="msg"></div>
 
-        <!-- ✅ Edit zone (cachée en mode ami) -->
         <div id="editZone">
           <div style="margin-top:12px" class="small">Avatar (URL d’image)</div>
           <input id="avatarUrl" placeholder="https://..." />
 
-          <!-- ✅ NEW: Bannière -->
           <div style="margin-top:12px" class="small">Bannière (URL d’image)</div>
           <input id="bannerUrl" placeholder="https://... (ou /data/monbanner.jpg)" />
 
@@ -373,7 +422,6 @@ button{cursor:pointer}
   </div>
 </div>
 
-<!-- ✅ MODAL ZOOM -->
 <div class="modal" id="zoomModal" aria-hidden="true">
   <div class="zoomCard" role="dialog" aria-modal="true">
     <div class="zoomHead">
@@ -411,7 +459,6 @@ async function api(path, opts={}){
   return data;
 }
 
-// ✅ helper pour appeler les endpoints game-filtered
 async function apiGame(path, game, opts={}){
   const sep = path.includes("?") ? "&" : "?";
   return api(path + sep + "game=" + encodeURIComponent(game), opts);
@@ -438,13 +485,17 @@ const colGrid = document.getElementById("colGrid");
 const search = document.getElementById("search");
 const gameFilter = document.getElementById("gameFilter");
 
-const myCollectionPanel = document.getElementById("myCollectionPanel");
 const collectionTitle = document.getElementById("collectionTitle");
 
 /* ✅ STATS elements */
 const statPokemon = document.getElementById("statPokemon");
 const statOnepiece = document.getElementById("statOnepiece");
 const statTotal = document.getElementById("statTotal");
+
+/* ✅ XP elements */
+const lvlEl = document.getElementById("lvl");
+const xpFill = document.getElementById("xpFill");
+const xpText = document.getElementById("xpText");
 
 /* ✅ ZOOM elements */
 const zoomModal = document.getElementById("zoomModal");
@@ -456,7 +507,7 @@ const zoomMint = document.getElementById("zoomMint");
 const zoomImg = document.getElementById("zoomImg");
 
 let favorites = new Set();
-let allItems = []; // merged pokemon + onepiece
+let allItems = [];
 
 function show(t){ msg.textContent = t || ""; }
 function escapeHtml(s){
@@ -486,6 +537,42 @@ function setBanner(url){
 
 function gameLabel(g){
   return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+}
+
+/* ✅ XP math (doit matcher backend levelForXp) */
+function xpForLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+  return 100 * Math.pow(l - 1, 2);
+}
+function applyXpUi(xp, level){
+  const l = Math.max(1, Number(level) || 1);
+  const curNeed = xpForLevel(l);
+  const nextNeed = xpForLevel(l + 1);
+
+  const x = Math.max(0, Number(xp) || 0);
+  const inLevel = Math.max(0, x - curNeed);
+  const span = Math.max(1, nextNeed - curNeed);
+  const pct = Math.max(0, Math.min(100, (inLevel / span) * 100));
+
+  lvlEl.textContent = String(l);
+  xpFill.style.width = pct.toFixed(1) + "%";
+  xpText.textContent = `${inLevel} / ${span} XP`;
+}
+
+/* ✅ Glow selon level */
+function setAvatarGlowByLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+
+  let glow = "rgba(120,170,255,.18)";
+  let glow2 = "rgba(190,120,255,.25)";
+
+  if (l >= 5)  { glow = "rgba(120,255,200,.18)"; glow2 = "rgba(120,255,200,.28)"; }
+  if (l >= 10) { glow = "rgba(255,210,120,.20)"; glow2 = "rgba(255,180,90,.30)"; }
+  if (l >= 20) { glow = "rgba(255,120,220,.22)"; glow2 = "rgba(190,120,255,.30)"; }
+  if (l >= 35) { glow = "rgba(255,80,80,.22)";  glow2 = "rgba(255,130,90,.30)"; }
+
+  avatarPreview.style.setProperty("--glow", glow);
+  avatarPreview.style.setProperty("--glow2", glow2);
 }
 
 /* ✅ calc stats */
@@ -631,7 +718,6 @@ async function load(){
   const friendCode = getFriendCodeFromUrl();
   const isFriendView = !!friendCode;
 
-  // profil
   const p = isFriendView
     ? await api("/api/profile/" + encodeURIComponent(friendCode), { method:"GET", headers:{} })
     : await api("/api/profile/me", { method:"GET", headers:{} });
@@ -642,7 +728,10 @@ async function load(){
   setAvatar(p.avatar || "");
   setBanner(p.banner || "");
 
-  // Edit fields
+  // ✅ LVL / XP + glow
+  applyXpUi(p.xp || 0, p.level || 1);
+  setAvatarGlowByLevel(p.level || 1);
+
   if(isFriendView){
     editZone.style.display = "none";
     collectionTitle.textContent = "Collection de ton ami";
@@ -656,9 +745,6 @@ async function load(){
 
   favorites = new Set((p.favorites||[]).map(x=>x.idKey));
 
-  // ✅ collection: on merge pokemon + onepiece
-  // - pour toi: /api/collection
-  // - pour ami: /api/friends/:friendCode/collection
   const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
   const baseO = baseP;
 
@@ -674,13 +760,7 @@ async function load(){
 
   updateStats(allItems);
   renderFavs(allItems);
-
-  // en vue ami, on ne permet pas de modifier les favoris
   renderCollection(filteredItems(), !isFriendView);
-
-  // en vue ami, je masque aussi le panel “Ta collection” si tu veux uniquement voir les favs
-  // (si tu veux le garder, supprime ces 2 lignes)
-  // myCollectionPanel.style.display = "block";
 }
 
 if(bio){
