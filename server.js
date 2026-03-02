@@ -1520,7 +1520,7 @@ app.get("/api/profile/:friendCode", auth, async (req, res) => {
   // autorisation : seulement si c’est dans ta liste d’amis
   const q = await pool.query(
     `
-    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio
+    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio, u.banner
     FROM friends f
     JOIN users u ON u.id = f.friend_user_id
     WHERE f.user_id=$1 AND u.friendCode=$2
@@ -1547,6 +1547,7 @@ app.get("/api/profile/:friendCode", auth, async (req, res) => {
     friendCode: u.friendcode || u.friendCode,
     avatar: u.avatar || "",
     bio: u.bio || "",
+    banner: u.banner || "",
     favorites: favQ.rows.map(r => ({
       idKey: r.idkey || r.idKey,
       name: r.name,

@@ -32,6 +32,48 @@ body{
   border:1px solid rgba(255,255,255,.10);
   padding:20px;
   backdrop-filter:blur(10px);
+  overflow:hidden; /* ✅ pour couper la bannière si besoin */
+}
+
+/* ✅ BANNIÈRE */
+.banner{
+  width:100%;
+  height:180px;
+  border-radius:16px;
+  background:
+    radial-gradient(900px 420px at 15% 20%, rgba(80,130,255,.20), transparent 60%),
+    radial-gradient(900px 520px at 80% 35%, rgba(255,80,220,.16), transparent 62%),
+    rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.10);
+  position:relative;
+  overflow:hidden;
+}
+
+/* image réelle en cover */
+.banner.hasImg{
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+
+/* petit voile pour que le texte reste lisible */
+.banner::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
+  pointer-events:none;
+}
+
+/* contenu par-dessus la bannière */
+.bannerInner{
+  position:relative;
+  z-index:2;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:12px;
+  padding:12px;
 }
 
 .profileRow{
@@ -80,9 +122,9 @@ body{
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
-
 @media (max-width: 900px){
   .grid{grid-template-columns:repeat(2,1fr);}
+  .banner{height:160px;}
 }
 
 /* ✅ cards + hover */
@@ -229,29 +271,34 @@ button:active{ transform: translateY(0px) scale(.99); }
   <div class="panel">
     <button onclick="history.back()">← Retour</button>
 
-    <div class="profileRow" style="margin-top:16px">
-      <div class="avatar" id="avatar"></div>
-      <div>
-        <div style="font-size:20px;font-weight:1000" id="name">...</div>
-        <div class="badge" id="code">----</div>
-        <div class="msg" id="bio" style="margin-top:10px"></div>
-
-        <!-- ✅ STATS (maintenant basées sur la collection complète) -->
-        <div class="statsGrid" aria-label="Statistiques">
-          <div class="statCard">
-            <div class="k">TOTAL POKÉMON</div>
-            <div class="v" id="statPokemon">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL ONE PIECE</div>
-            <div class="v" id="statOnepiece">0</div>
-          </div>
-          <div class="statCard" style="grid-column:1 / -1;">
-            <div class="k">TOTAL CARTES</div>
-            <div class="v" id="statTotal">0</div>
+    <!-- ✅ BANNIÈRE -->
+    <div class="banner" id="banner" style="margin-top:16px">
+      <div class="bannerInner">
+        <div class="profileRow">
+          <div class="avatar" id="avatar"></div>
+          <div>
+            <div style="font-size:20px;font-weight:1000" id="name">...</div>
+            <div class="badge" id="code">----</div>
           </div>
         </div>
+      </div>
+    </div>
 
+    <div class="msg" id="bio" style="margin-top:14px"></div>
+
+    <!-- ✅ STATS -->
+    <div class="statsGrid" aria-label="Statistiques" style="margin-top:12px">
+      <div class="statCard">
+        <div class="k">TOTAL POKÉMON</div>
+        <div class="v" id="statPokemon">0</div>
+      </div>
+      <div class="statCard">
+        <div class="k">TOTAL ONE PIECE</div>
+        <div class="v" id="statOnepiece">0</div>
+      </div>
+      <div class="statCard" style="grid-column:1 / -1;">
+        <div class="k">TOTAL CARTES</div>
+        <div class="v" id="statTotal">0</div>
       </div>
     </div>
   </div>
@@ -357,24 +404,36 @@ const params = new URLSearchParams(location.search);
 const friendCode = (params.get("code")||"").toUpperCase();
 
 async function load(){
-  // profil + favoris (comme avant)
   const data = await api("/api/profile/"+encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
   document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
   document.getElementById("bio").textContent = data.bio || "";
 
+  // ✅ avatar
   if(data.avatar){
     document.getElementById("avatar").style.backgroundImage =
       `url('${data.avatar.replace(/'/g,"\\'")}')`;
+  } else {
+    document.getElementById("avatar").style.backgroundImage = "none";
   }
 
-  // ✅ collection complète pour stats (pokemon + onepiece)
+  // ✅ bannière
+  const bannerEl = document.getElementById("banner");
+  const b = String(data.banner || "").trim();
+  if(b){
+    bannerEl.classList.add("hasImg");
+    bannerEl.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
+  } else {
+    bannerEl.classList.remove("hasImg");
+    bannerEl.style.backgroundImage = "";
+  }
+
+  // ✅ stats (pokemon + onepiece)
   const [cP, cO] = await Promise.all([
     api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=pokemon").catch(()=> ({ items: [] })),
     api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=onepiece").catch(()=> ({ items: [] })),
   ]);
-
   updateStatsFromCollection(cP.items || [], cO.items || []);
 
   // render favoris
