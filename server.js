@@ -857,6 +857,9 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
   const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
   if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
 
+  const game = getGame(req); // ✅ pokemon / onepiece
+
+  // autorisation : seulement si c’est dans ta liste d’amis
   const q = await pool.query(
     `
     SELECT u.id
@@ -871,16 +874,19 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
   if (!friend) return res.status(403).json({ error: "Pas dans tes amis" });
 
   const items = await pool.query(
-    `SELECT idKey, name, setName, image, grade, mint, count, lastAt
-     FROM collection
-     WHERE user_id=$1
-     ORDER BY lastAt DESC`,
-    [friend.id]
+    `
+    SELECT idKey, game, name, setName, image, grade, mint, count, lastAt
+    FROM collection
+    WHERE user_id=$1 AND game=$2
+    ORDER BY lastAt DESC
+    `,
+    [friend.id, game]
   );
 
   res.json({
     items: items.rows.map((x) => ({
       idKey: x.idkey || x.idKey,
+      game: x.game || "pokemon",
       name: x.name,
       setName: x.setname || x.setName,
       image: x.image,

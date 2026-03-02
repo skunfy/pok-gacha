@@ -101,6 +101,7 @@ body{
   display:flex;
   gap:10px;
   align-items:center;
+  flex-wrap:wrap;
 }
 input, select{
   padding:8px 10px;
@@ -182,7 +183,6 @@ button{
   will-change: transform;
 }
 
-/* Shine blanc très léger */
 .foilShine{
   background:
     radial-gradient(circle at 30% 30%,
@@ -194,7 +194,6 @@ button{
   transform: translate(-20px,-10px);
 }
 
-/* Glare blanc directionnel */
 .foilGlare{
   background:
     linear-gradient(120deg,
@@ -223,7 +222,7 @@ button{
     rgba(180,0,255,.25)
   );
 
-  mix-blend-mode: soft-light;   /* plus visible que color-dodge */
+  mix-blend-mode: soft-light;
   filter: blur(18px);
   will-change: transform;
 }
@@ -235,15 +234,13 @@ button{
 }
 
 .modal.open .foilRainbow{
-  opacity: .30;   /* ← plus visible */
+  opacity: .30;
   animation: foilMoveRainbow 4s ease-in-out infinite;
 }
 
-/* Visible seulement quand zoom ouvert */
 .modal.open .foilShine{ opacity:.35; }
 .modal.open .foilGlare{ opacity:.25; }
 
-/* Animation automatique */
 @keyframes foilMoveShine{
   0%   { transform: translate(-35px,-25px) scale(1); }
   50%  { transform: translate(35px,25px) scale(1.05); }
@@ -258,38 +255,23 @@ button{
 .modal.open .foilShine{ animation: foilMoveShine 2.8s ease-in-out infinite; }
 .modal.open .foilGlare{ animation: foilMoveGlare 3.6s ease-in-out infinite; }
 
-/* ===== Scrollbar dark style (Collection) ===== */
-
-/* Firefox */
+/* Scrollbar dark */
 .gridWrap{
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
 }
-
-/* Chrome / Edge / Safari */
-.gridWrap::-webkit-scrollbar{
-  width: 10px;
-}
-
+.gridWrap::-webkit-scrollbar{ width: 10px; }
 .gridWrap::-webkit-scrollbar-track{
   background: rgba(255,255,255,.06);
   border-radius: 999px;
 }
-
 .gridWrap::-webkit-scrollbar-thumb{
   background: rgba(255,255,255,.18);
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,.25);
 }
-
-.gridWrap::-webkit-scrollbar-thumb:hover{
-  background: rgba(255,255,255,.28);
-}
-
-/* évite le décalage du contenu quand la scroll apparaît */
-.gridWrap{
-  scrollbar-gutter: stable both-edges;
-}
+.gridWrap::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
+.gridWrap{ scrollbar-gutter: stable both-edges; }
 </style>
 </head>
 
@@ -299,13 +281,22 @@ button{
 
   <div class="topbar">
     <div><b>POKÉGACHA</b> — Collection</div>
+
     <div class="controls">
+      <!-- ✅ FILTRE JEU -->
+      <select id="gameSel" title="Jeu">
+        <option value="pokemon">Pokémon</option>
+        <option value="onepiece">One Piece</option>
+      </select>
+
       <input id="search" placeholder="Rechercher...">
+
       <select id="sort">
         <option value="recent">Dernières obtenues</option>
         <option value="grade">Meilleure note</option>
         <option value="name">Nom A-Z</option>
       </select>
+
       <button onclick="location.href='/market.html'">MARKET</button>
       <button onclick="location.href='/friends.html'">FRIENDS</button>
       <button onclick="location.href='/'">← Retour</button>
@@ -341,12 +332,40 @@ button{
 </div>
 
 <script>
-const TOKEN = localStorage.getItem("gacha_token_v1");
+const TOKEN_KEY = "gacha_token_v1";
+const GAME_KEY  = "gacha_game_v1";
+
+const TOKEN = localStorage.getItem(TOKEN_KEY);
 if(!TOKEN) location.href="/login.html";
+
+function currentGame(){
+  const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  return (g === "onepiece") ? "onepiece" : "pokemon";
+}
+
+async function api(path, opts = {}){
+  const g = encodeURIComponent(currentGame());
+  const sep = path.includes("?") ? "&" : "?";
+  const url = path + sep + "game=" + g;
+
+  const r = await fetch(url, {
+    ...opts,
+    headers: {
+      ...(opts.headers || {}),
+      Authorization: "Bearer " + TOKEN,
+      "Content-Type": "application/json",
+    }
+  });
+
+  const data = await r.json().catch(() => ({}));
+  if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
+}
 
 const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
+const gameSel = document.getElementById("gameSel");
 
 const modal = document.getElementById("modal");
 const zoomSlab = document.getElementById("zoomSlab");
@@ -357,6 +376,12 @@ const zoomMint = document.getElementById("zoomMint");
 
 let allItems = [];
 
+gameSel.value = currentGame();
+gameSel.addEventListener("change", async () => {
+  localStorage.setItem(GAME_KEY, gameSel.value);
+  await loadCollection();
+});
+
 function tierFromGrade(g){
   if(g >= 10) return "g";
   if(g >= 7) return "v";
@@ -365,18 +390,14 @@ function tierFromGrade(g){
 }
 
 async function loadCollection(){
-  const r = await fetch("/api/collection", {
-    headers:{ Authorization:"Bearer "+TOKEN }
-  });
-
-  if(!r.ok){
+  try{
+    const data = await api("/api/collection");
+    allItems = data.items || [];
+    applyFilters();
+  }catch(e){
+    localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
-    return;
   }
-
-  const data = await r.json();
-  allItems = data.items || [];
-  applyFilters();
 }
 
 function applyFilters(){
@@ -386,7 +407,7 @@ function applyFilters(){
   if(q){
     items = items.filter(item =>
       (item.name || "").toLowerCase().includes(q) ||
-      (item.set || "").toLowerCase().includes(q) ||
+      (item.set || item.setName || "").toLowerCase().includes(q) ||
       String(item.grade || "").includes(q)
     );
   }
@@ -406,13 +427,13 @@ function applyFilters(){
 function openZoom(x){
   let img = x.image;
 
-  // si c'est une image low.webp, on tente high.webp
-  if (img && img.includes("/low.webp")) {
+  // ✅ seulement Pokémon: low.webp -> high.webp
+  if (currentGame() === "pokemon" && img && img.includes("/low.webp")) {
     img = img.replace("/low.webp", "/high.webp");
   }
 
   zoomImg.style.backgroundImage = `url('${img}')`;
-  zoomTitle.textContent = `${x.name} • ${x.set}`;
+  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
   zoomGrade.textContent = x.grade;
 
   zoomSlab.dataset.tier = tierFromGrade(x.grade);
@@ -427,10 +448,14 @@ function render(items){
   items.forEach(x=>{
     const el=document.createElement("div");
     el.className="cardBox";
+
+    const gameTag = (x.game || currentGame()) === "onepiece" ? "🟥 One Piece" : "🟨 Pokémon";
+
     el.innerHTML=`
       <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div style="opacity:.75;font-size:12px;">${gameTag}</div>
       <div><b>${x.name}</b></div>
-      <div>${x.set}</div>
+      <div>${x.set || x.setName || ""}</div>
       <div>Grade ${x.grade} ${x.mint?"(MINT)":""} ×${x.count}</div>
       <button class="sellBtn">VENDRE +1💵</button>
     `;
@@ -438,15 +463,13 @@ function render(items){
     el.querySelector(".cImg").onclick = () => openZoom(x);
 
     el.querySelector(".sellBtn").onclick = async () => {
-      await fetch("/api/sell",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:"Bearer "+TOKEN
-        },
-        body:JSON.stringify({idKey:x.idKey})
-      });
-      loadCollection();
+      try{
+        await api("/api/sell",{
+          method:"POST",
+          body: JSON.stringify({ idKey: x.idKey })
+        });
+        await loadCollection();
+      }catch{}
     };
 
     grid.appendChild(el);
