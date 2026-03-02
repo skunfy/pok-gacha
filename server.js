@@ -124,7 +124,9 @@ async function initDb() {
     );
   `);
 
-  // colonnes profil
+  // =========================
+  // COLONNES PROFIL (SAFE)
+  // =========================
   await pool.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS avatar TEXT,
@@ -132,13 +134,20 @@ async function initDb() {
     ADD COLUMN IF NOT EXISTS banner TEXT;
   `);
 
-  // migration safe si la DB existe déjà
+  // =========================
+  // XP (SAFE, une seule fois)
+  // =========================
   await pool.query(`
     ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS friendCode TEXT UNIQUE;
+    ADD COLUMN IF NOT EXISTS xp BIGINT;
   `);
+  await pool.query(`UPDATE users SET xp = 0 WHERE xp IS NULL;`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN xp SET DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN xp SET NOT NULL;`);
 
-  // friends
+  // =========================
+  // FRIENDS
+  // =========================
   await pool.query(`
     CREATE TABLE IF NOT EXISTS friends (
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -148,7 +157,9 @@ async function initDb() {
     );
   `);
 
-  // market
+  // =========================
+  // MARKET
+  // =========================
   await pool.query(`
     CREATE TABLE IF NOT EXISTS market_listings (
       id SERIAL PRIMARY KEY,
@@ -172,7 +183,9 @@ async function initDb() {
     ON market_listings(seller_user_id);
   `);
 
-  // notifications
+  // =========================
+  // NOTIFICATIONS
+  // =========================
   await pool.query(`
     CREATE TABLE IF NOT EXISTS notifications (
       id SERIAL PRIMARY KEY,
@@ -192,7 +205,9 @@ async function initDb() {
     ON notifications(user_id, is_read);
   `);
 
-  // favorites
+  // =========================
+  // FAVORITES
+  // =========================
   await pool.query(`
     CREATE TABLE IF NOT EXISTS favorites (
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -219,7 +234,7 @@ async function initDb() {
 
   console.log("✅ Postgres DB ready");
 }
-
+  
 
 // =========================
 // HELPERS
@@ -257,6 +272,22 @@ async function notify(userId, type, title, body, meta = null) {
 function getGame(req){
   const g = String(req.query.game || "pokemon").toLowerCase();
   return (g === "onepiece") ? "onepiece" : "pokemon";
+}
+
+function levelForXp(xp){
+  const x = Math.max(0, Number(xp) || 0);
+  // courbe simple: lvl 1 -> 0 xp, lvl 2 -> 100 xp, lvl 3 -> 300 xp, etc.
+  // (100 * (lvl-1)^2)
+  return Math.floor(Math.sqrt(x / 100)) + 1;
+}
+
+function xpForOpen(){
+  return 5; // tu peux changer
+}
+
+function xpForSell(unitPrice, qty){
+  // logique simple: tu gagnes autant d'XP que d'argent (ou *2 si tu veux)
+  return Math.max(1, (Number(unitPrice) || 1) * (Number(qty) || 1));
 }
 
 // ----- PAY LOOP (server-side) -----
@@ -620,7 +651,7 @@ app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
   const userQ = await pool.query(
-    `SELECT name, money, friendCode FROM users WHERE id=$1`,
+    `SELECT name, money, friendCode, xp FROM users WHERE id=$1`,
     [req.user.id]
   );
   const u = userQ.rows[0];
@@ -667,6 +698,9 @@ app.get("/api/me", auth, async (req, res) => {
     v: s.v || 0,
     g10: s.g10 || 0,
     mint: s.mint || 0,
+    xp: Number(u?.xp || 0),
+    level: levelForXp(u?.xp || 0)
+    
   });
 });
 
@@ -689,6 +723,10 @@ app.post("/api/open", auth, async (req, res) => {
     await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
     return res.status(502).json({ error: "Erreur image (réessaie)" });
   }
+
+      // ✅ XP SELL
+  const xpAdd = xpForOpen();
+  await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
   const grade = rollGrade();
   const mint = rollMintForGrade(grade);
@@ -730,6 +768,8 @@ app.post("/api/open", auth, async (req, res) => {
     mint: Boolean(mint),
   },
 });
+
+
 });
 
 app.get("/api/collection", auth, async (req, res) => {
@@ -792,7 +832,7 @@ app.post("/api/sell", auth, async (req, res) => {
   if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
   const client = await pool.connect();
-  try{
+  try {
     await client.query("BEGIN");
 
     const itemQ = await client.query(
@@ -829,23 +869,39 @@ app.post("/api/sell", auth, async (req, res) => {
       );
     }
 
+    // money
     await client.query(
       `UPDATE users SET money = money + $1 WHERE id=$2`,
       [total, req.user.id]
     );
 
+    // xp
+    const xpAdd = xpForSell(unitPrice, qty);
+    await client.query(
+      `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+      [xpAdd, req.user.id]
+    );
+
     await client.query("COMMIT");
 
-    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-    res.json({ ok: true, money: me.rows[0]?.money || 0, unitPrice, total });
+    const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
+    res.json({
+      ok: true,
+      money: me.rows[0]?.money || 0,
+      xp: Number(me.rows[0]?.xp || 0),
+      unitPrice,
+      total,
+      xpAdd
+    });
 
-  } catch(e){
+  } catch (e) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Sell failed" });
   } finally {
     client.release();
   }
 });
+// SELL BULK//
 
 app.post("/api/sell_bulk", auth, async (req, res) => {
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
@@ -860,7 +916,7 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
   if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
 
   const client = await pool.connect();
-  try{
+  try {
     await client.query("BEGIN");
 
     const keys = clean.map(x => x.idKey);
@@ -876,13 +932,16 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
 
     let total = 0;
+    let xpTotal = 0;
 
-    for (const it of clean){
+    // 1) check + compute totals
+    for (const it of clean) {
       const row = byKey.get(it.idKey);
       if (!row) {
         await client.query("ROLLBACK");
         return res.status(404).json({ error: "Not owned: " + it.idKey });
       }
+
       const owned = Number(row.count) || 0;
       if (owned < it.qty) {
         await client.query("ROLLBACK");
@@ -891,13 +950,17 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
 
       const unit = sellPriceFor(row.grade, Number(row.mint) === 1);
       total += unit * it.qty;
+
+      // ✅ XP bulk
+      xpTotal += xpForSell(unit, it.qty);
     }
 
-    for (const it of clean){
+    // 2) update/remove cards
+    for (const it of clean) {
       const row = byKey.get(it.idKey);
       const owned = Number(row.count) || 0;
 
-      if (owned === it.qty){
+      if (owned === it.qty) {
         await client.query(
           `DELETE FROM collection WHERE user_id=$1 AND idKey=$2`,
           [req.user.id, it.idKey]
@@ -910,23 +973,38 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
       }
     }
 
+    // 3) add money + xp
     await client.query(
       `UPDATE users SET money = money + $1 WHERE id=$2`,
       [total, req.user.id]
     );
 
+    if (xpTotal > 0) {
+      await client.query(
+        `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+        [xpTotal, req.user.id]
+      );
+    }
+
     await client.query("COMMIT");
 
-    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-    res.json({ ok:true, money: me.rows[0]?.money || 0, total });
+    const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
+    res.json({
+      ok: true,
+      money: me.rows[0]?.money || 0,
+      xp: Number(me.rows[0]?.xp || 0),
+      total,
+      xpTotal
+    });
 
-  } catch(e){
+  } catch (e) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Sell bulk failed" });
   } finally {
     client.release();
   }
 });
+
 // =========================
 // FRIENDS ROUTES
 // =========================
