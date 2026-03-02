@@ -128,7 +128,7 @@ async function initDb() {
   await pool.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS avatar TEXT,
-    ADD COLUMN IF NOT EXISTS bio TEXT;
+    ADD COLUMN IF NOT EXISTS bio TEXT,
     ADD COLUMN IF NOT EXISTS banner TEXT;
   `);
 
