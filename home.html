@@ -34,12 +34,13 @@
     }
 
     .card {
-      width: 220px;
-      padding: 20px;
+      width: 240px;
+      padding: 25px;
       border-radius: 20px;
       cursor: pointer;
       transition: 0.3s;
       box-shadow: 0 0 20px rgba(255,255,255,0.1);
+      text-align: center;
     }
 
     .card:hover {
@@ -56,13 +57,23 @@
       background: linear-gradient(135deg, #d60000, #800000);
     }
 
-    .card h2 {
-      margin: 0 0 10px;
+    /* 🔥 Logo style */
+    .gameLogo {
+      width: 160px;
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 15px;
+      transition: 0.3s;
+    }
+
+    .card:hover .gameLogo {
+      transform: scale(1.08);
     }
 
     .card p {
       font-size: 0.9rem;
       opacity: 0.9;
+      margin: 0;
     }
 
     footer {
@@ -80,13 +91,13 @@
     <div class="games">
 
       <div class="card pokemon" onclick="goGame('pokemon')">
-        <h2>🟡 Pokémon</h2>
-        <p>Ouvre des boosters Pokémon, collectionne et trade.</p>
+        <img src="International_Pokémon_logo.png" alt="Pokémon" class="gameLogo">
+        <p>Ouvre des cartes Pokémon, collectionne et trade.</p>
       </div>
 
       <div class="card onepiece" onclick="goGame('onepiece')">
-        <h2>🔴 One Piece</h2>
-        <p>Ouvre des boosters One Piece et domine le marché.</p>
+        <img src="One_Piece_Logo.png" alt="One Piece" class="gameLogo">
+        <p>Ouvre des cartes One Piece et domine le marché.</p>
       </div>
 
     </div>
