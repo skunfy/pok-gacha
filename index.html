@@ -33,13 +33,11 @@
   }
 
   .cornerLogo{
-    position: fixed;
-    top: 18px;
-    left: 18px;
-    width: 180px;
-    z-index: 10000;
+  position: static;     /* plus fixed */
+  width: 44px;          /* petit logo dans la barre */
+  flex: 0 0 auto;
   }
-  .cornerLogo img{width:100%; height:auto; display:block}
+.cornerLogo img{width:100%; height:auto; display:block}
 
   .wrap{
     width:min(1100px,94vw);
@@ -65,12 +63,12 @@
   }
 
   .brandRow{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    min-width:260px;
-    flex:0 0 auto;
-  }
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;      /* IMPORTANT: autorise à rétrécir */
+  flex:0 1 auto;    /* autorise le shrink */
+}
   .brand{display:flex; flex-direction:column; gap:4px}
   .brand b{letter-spacing:.7px}
   .brand small{opacity:.75; font-size:12px}
@@ -557,16 +555,42 @@
   @media (max-width:480px){
     .gameBtn img{ height:24px; max-width:120px; }
   }
+
+  @media (max-width: 520px){
+  .topbar{
+    flex-wrap: wrap;         /* les éléments peuvent passer à la ligne */
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .rightTop{
+    width: 100%;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    overflow-x: auto;        /* scroll horizontal si trop d’items */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .rightTop::-webkit-scrollbar{ display:none; }
+
+  .stats{
+    flex: 0 0 auto;
+    overflow: visible;       /* évite une coupe bizarre */
+  }
+
+  .stat span{ max-width: 90px; } /* optionnel, compresse un peu */
+}
   </style>
 </head>
 
 <body>
-  <a class="cornerLogo" href="/" aria-label="Accueil">
-    <img src="poke.png" alt="Logo" />
-  </a>
+  
 
   <div class="wrap">
     <div class="topbar">
+      <a class="cornerLogo" href="/" aria-label="Accueil">
+      <img src="poke.png" alt="Logo" />
+      </a>
       <div class="brandRow">
         <div class="brand">
           <b>Gachax</b>
