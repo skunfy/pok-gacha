@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Profil Ami — Pokégacha</title>
+<title>Profil Ami — Gachax</title>
 
 <style>
 :root{ --bg1:#05060d; --bg2:#090b18; }
@@ -41,12 +41,28 @@ body{
   flex-wrap:wrap;
 }
 
+/* ✅ avatar + glow */
 .avatar{
   width:110px;
   height:110px;
   border-radius:20px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
+  position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 34px rgba(120,170,255,.18);
+}
+.avatar::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:22px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(120,170,255,.35), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(190,120,255,.25), transparent 55%);
+  filter: blur(8px);
+  opacity:.55;
 }
 
 .badge{
@@ -69,6 +85,7 @@ body{
   .grid{grid-template-columns:repeat(2,1fr);}
 }
 
+/* ✅ cards + hover */
 .cardBox{
   background:rgba(255,255,255,.06);
   border-radius:14px;
@@ -77,16 +94,24 @@ body{
   display:flex;
   flex-direction:column;
   gap:8px;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.cardBox:hover{
+  transform: translateY(-2px);
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.18);
 }
 
 .cImg{
   height:180px;
   background:center/contain no-repeat;
   border-radius:10px;
+  cursor:pointer;
 }
 
 .small{font-size:12px; opacity:.75}
 .msg{opacity:.85;font-size:13px}
+
 button{
   padding:8px 12px;
   border-radius:12px;
@@ -95,6 +120,104 @@ button{
   color:#fff;
   font-weight:900;
   cursor:pointer;
+  transition: transform .12s ease, background .12s ease;
+}
+button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
+button:active{ transform: translateY(0px) scale(.99); }
+
+/* ✅ STATS */
+.statsGrid{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.statCard{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.20);
+}
+.statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
+.statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
+
+/* ✅ MODAL ZOOM */
+.modal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  place-items:center;
+  z-index:99999;
+  padding:24px;
+}
+.modal.open{display:grid}
+
+.zoomCard{
+  width:min(520px, 92vw);
+  border-radius:18px;
+  background:rgba(15,17,26,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 22px 70px rgba(0,0,0,.55);
+  padding:14px;
+  backdrop-filter: blur(10px);
+}
+
+.zoomHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:10px;
+}
+.zoomTitle{ font-weight:1000; letter-spacing:.3px; }
+.zoomSub{ opacity:.75; font-size:12px; margin-top:2px; }
+.zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+
+.gameTag{
+  display:inline-flex;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-size:11px;
+  font-weight:900;
+  opacity:.85;
+}
+
+.mintBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,80,80,.12);
+  border: 1px solid rgba(255,80,80,.55);
+  color: rgba(255,80,80,.95);
+}
+.gradeBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.zoomImg{
+  width:100%;
+  height:min(64vh, 560px);
+  border-radius:14px;
+  background:center/contain no-repeat;
+  background-color: rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.zoomHint{
+  margin-top:10px;
+  opacity:.7;
+  font-size:12px;
+  text-align:center;
 }
 </style>
 </head>
@@ -103,24 +226,63 @@ button{
 
 <div class="wrap">
 
-<div class="panel">
-  <button onclick="history.back()">← Retour</button>
+  <div class="panel">
+    <button onclick="history.back()">← Retour</button>
 
-  <div class="profileRow" style="margin-top:16px">
-    <div class="avatar" id="avatar"></div>
-    <div>
-      <div style="font-size:20px;font-weight:1000" id="name">...</div>
-      <div class="badge" id="code">----</div>
-      <div class="msg" id="bio" style="margin-top:10px"></div>
+    <div class="profileRow" style="margin-top:16px">
+      <div class="avatar" id="avatar"></div>
+      <div>
+        <div style="font-size:20px;font-weight:1000" id="name">...</div>
+        <div class="badge" id="code">----</div>
+        <div class="msg" id="bio" style="margin-top:10px"></div>
+
+        <!-- ✅ STATS -->
+        <div class="statsGrid" aria-label="Statistiques">
+          <div class="statCard">
+            <div class="k">TOTAL POKÉMON</div>
+            <div class="v" id="statPokemon">0</div>
+          </div>
+          <div class="statCard">
+            <div class="k">TOTAL ONE PIECE</div>
+            <div class="v" id="statOnepiece">0</div>
+          </div>
+          <div class="statCard" style="grid-column:1 / -1;">
+            <div class="k">TOTAL CARTES</div>
+            <div class="v" id="statTotal">0</div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
+
+  <div class="panel">
+    <b>Cartes favorites</b>
+    <div class="grid" id="favGrid" style="margin-top:12px"></div>
+    <div class="small" style="margin-top:10px;opacity:.65;">
+      Note: si l’API renvoie seulement les favoris, les stats sont basées sur ces favoris.
+    </div>
+  </div>
+
 </div>
 
-<div class="panel">
-  <b>Cartes favorites</b>
-  <div class="grid" id="favGrid" style="margin-top:12px"></div>
-</div>
-
+<!-- ✅ MODAL ZOOM -->
+<div class="modal" id="zoomModal" aria-hidden="true">
+  <div class="zoomCard" role="dialog" aria-modal="true">
+    <div class="zoomHead">
+      <div style="min-width:0">
+        <div class="zoomTitle" id="zoomTitle">...</div>
+        <div class="zoomSub" id="zoomSub">...</div>
+      </div>
+      <div class="zoomBadges">
+        <span class="gameTag" id="zoomGameTag">POKÉMON</span>
+        <span class="gradeBadge" id="zoomGrade">Grade ?</span>
+        <span class="mintBadge" id="zoomMint" style="display:none;">MINT</span>
+      </div>
+    </div>
+    <div class="zoomImg" id="zoomImg"></div>
+    <div class="zoomHint">Clique en dehors pour fermer • ESC</div>
+  </div>
 </div>
 
 <script>
@@ -145,14 +307,66 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
+function gameLabel(g){
+  return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+}
+
+/* ✅ STATS (basé sur les favoris présents dans data.favorites) */
+function updateStatsFromFavorites(favs){
+  let p = 0, o = 0;
+  for(const x of (favs || [])){
+    const c = Number(x.count || 1) || 1; // si pas de count -> 1 par favori
+    const g = (x.game || "pokemon");
+    if(g === "onepiece") o += c;
+    else p += c;
+  }
+  document.getElementById("statPokemon").textContent = String(p);
+  document.getElementById("statOnepiece").textContent = String(o);
+  document.getElementById("statTotal").textContent = String(p + o);
+}
+
+/* ✅ ZOOM */
+const zoomModal = document.getElementById("zoomModal");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomSub = document.getElementById("zoomSub");
+const zoomGameTag = document.getElementById("zoomGameTag");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+const zoomImg = document.getElementById("zoomImg");
+
+function openZoomCard(x){
+  zoomTitle.textContent = x.name || "";
+  zoomSub.textContent = `${x.setName || x.set || ""}`.trim();
+  zoomGameTag.textContent = gameLabel(x.game || "pokemon");
+  zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
+  zoomMint.style.display = x.mint ? "inline-flex" : "none";
+
+  const img = (x.imageHigh || x.image || "").trim();
+  zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
+
+  zoomModal.classList.add("open");
+  zoomModal.setAttribute("aria-hidden","false");
+}
+function closeZoom(){
+  zoomModal.classList.remove("open");
+  zoomModal.setAttribute("aria-hidden","true");
+  zoomImg.style.backgroundImage = "none";
+}
+zoomModal.addEventListener("click", (e)=>{
+  if(e.target === zoomModal) closeZoom();
+});
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom();
+});
+
 const params = new URLSearchParams(location.search);
 const code = (params.get("code")||"").toUpperCase();
 
 async function load(){
   const data = await api("/api/profile/"+encodeURIComponent(code));
 
-  document.getElementById("name").textContent = data.name;
-  document.getElementById("code").textContent = "Code ami: "+data.friendCode;
+  document.getElementById("name").textContent = data.name || "...";
+  document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
   document.getElementById("bio").textContent = data.bio || "";
 
   if(data.avatar){
@@ -163,12 +377,15 @@ async function load(){
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
-  if(!data.favorites.length){
+  const favs = (data.favorites || []);
+  updateStatsFromFavorites(favs);
+
+  if(!favs.length){
     grid.innerHTML = `<div class="small">Aucune carte favorite.</div>`;
     return;
   }
 
-  data.favorites.forEach(x=>{
+  favs.forEach(x=>{
     const el = document.createElement("div");
     el.className="cardBox";
     el.innerHTML=`
@@ -177,6 +394,9 @@ async function load(){
       <div class="small">${escapeHtml(x.setName)}</div>
       <div class="small">Grade ${x.grade}${x.mint?" • MINT":""}</div>
     `;
+
+    el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
+
     grid.appendChild(el);
   });
 }

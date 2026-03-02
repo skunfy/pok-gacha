@@ -82,11 +82,29 @@ button{cursor:pointer}
 @media (max-width: 900px){ .grid2{grid-template-columns:1fr;} }
 
 .profileRow{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+
+/* ✅ AVATAR + GLOW */
 .avatar{
   width:90px; height:90px; border-radius:18px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
+  position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 30px rgba(120,170,255,.18);
 }
+.avatar::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:20px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(120,170,255,.35), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(190,120,255,.25), transparent 55%);
+  filter: blur(8px);
+  opacity:.55;
+}
+
 .badge{
   display:inline-flex; align-items:center; gap:8px;
   padding:8px 10px; border-radius:999px;
@@ -106,8 +124,19 @@ button{cursor:pointer}
   padding:12px;
   border:1px solid rgba(255,255,255,.12);
   display:flex; flex-direction:column; gap:8px;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
-.cImg{height:190px; background:center/contain no-repeat; border-radius:10px;}
+.cardBox:hover{
+  transform: translateY(-2px);
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.18);
+}
+.cImg{
+  height:190px;
+  background:center/contain no-repeat;
+  border-radius:10px;
+  cursor:pointer;
+}
 .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
 .small{font-size:12px; opacity:.75}
 .star{
@@ -129,6 +158,96 @@ button{cursor:pointer}
   font-weight:900;
   opacity:.85;
 }
+
+/* ✅ STATS */
+.statsGrid{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.statCard{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.20);
+}
+.statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
+.statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
+
+/* ✅ MODAL ZOOM (slab) */
+.modal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.72);
+  display:none;
+  place-items:center;
+  z-index:99999;
+  padding:24px;
+}
+.modal.open{display:grid}
+
+.zoomCard{
+  width:min(520px, 92vw);
+  border-radius:18px;
+  background:rgba(15,17,26,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 22px 70px rgba(0,0,0,.55);
+  padding:14px;
+  backdrop-filter: blur(10px);
+}
+
+.zoomHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:10px;
+}
+.zoomTitle{
+  font-weight:1000;
+  letter-spacing:.3px;
+}
+.zoomSub{
+  opacity:.75;
+  font-size:12px;
+  margin-top:2px;
+}
+.zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+.mintBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,80,80,.12);
+  border: 1px solid rgba(255,80,80,.55);
+  color: rgba(255,80,80,.95);
+}
+.gradeBadge{
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.6px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.zoomImg{
+  width:100%;
+  height:min(64vh, 560px);
+  border-radius:14px;
+  background:center/contain no-repeat;
+  background-color: rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.10);
+}
+
+.zoomHint{
+  margin-top:10px;
+  opacity:.7;
+  font-size:12px;
+  text-align:center;
+}
 </style>
 </head>
 <body>
@@ -149,6 +268,22 @@ button{cursor:pointer}
         <div>
           <div style="font-size:18px;font-weight:1000" id="pname">...</div>
           <div class="badge">Code ami: <span id="pcode">----</span> <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button></div>
+        </div>
+      </div>
+
+      <!-- ✅ STATS -->
+      <div class="statsGrid" aria-label="Statistiques">
+        <div class="statCard">
+          <div class="k">TOTAL POKÉMON</div>
+          <div class="v" id="statPokemon">0</div>
+        </div>
+        <div class="statCard">
+          <div class="k">TOTAL ONE PIECE</div>
+          <div class="v" id="statOnepiece">0</div>
+        </div>
+        <div class="statCard" style="grid-column:1 / -1;">
+          <div class="k">TOTAL CARTES</div>
+          <div class="v" id="statTotal">0</div>
         </div>
       </div>
 
@@ -189,6 +324,25 @@ button{cursor:pointer}
       </div>
     </div>
     <div class="grid" id="colGrid" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ✅ MODAL ZOOM -->
+<div class="modal" id="zoomModal" aria-hidden="true">
+  <div class="zoomCard" role="dialog" aria-modal="true">
+    <div class="zoomHead">
+      <div style="min-width:0">
+        <div class="zoomTitle" id="zoomTitle">...</div>
+        <div class="zoomSub" id="zoomSub">...</div>
+      </div>
+      <div class="zoomBadges">
+        <span class="gameTag" id="zoomGameTag">POKÉMON</span>
+        <span class="gradeBadge" id="zoomGrade">Grade ?</span>
+        <span class="mintBadge" id="zoomMint" style="display:none;">MINT</span>
+      </div>
+    </div>
+    <div class="zoomImg" id="zoomImg"></div>
+    <div class="zoomHint">Clique en dehors pour fermer • ESC</div>
   </div>
 </div>
 
@@ -233,6 +387,20 @@ const colGrid = document.getElementById("colGrid");
 const search = document.getElementById("search");
 const gameFilter = document.getElementById("gameFilter");
 
+/* ✅ STATS elements */
+const statPokemon = document.getElementById("statPokemon");
+const statOnepiece = document.getElementById("statOnepiece");
+const statTotal = document.getElementById("statTotal");
+
+/* ✅ ZOOM elements */
+const zoomModal = document.getElementById("zoomModal");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomSub = document.getElementById("zoomSub");
+const zoomGameTag = document.getElementById("zoomGameTag");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+const zoomImg = document.getElementById("zoomImg");
+
 let favorites = new Set();
 let allItems = []; // merged pokemon + onepiece
 
@@ -255,6 +423,47 @@ function gameLabel(g){
   return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
 }
 
+/* ✅ calc stats */
+function updateStats(items){
+  let p = 0, o = 0;
+  for(const x of items){
+    const c = Number(x.count || 0) || 0;
+    const g = (x.game || "pokemon");
+    if(g === "onepiece") o += c;
+    else p += c;
+  }
+  statPokemon.textContent = String(p);
+  statOnepiece.textContent = String(o);
+  statTotal.textContent = String(p + o);
+}
+
+/* ✅ zoom open/close */
+function openZoomCard(x){
+  zoomTitle.textContent = x.name || "";
+  zoomSub.textContent = `${x.set || ""}`.trim();
+  zoomGameTag.textContent = gameLabel(x.game || "pokemon");
+  zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
+  zoomMint.style.display = x.mint ? "inline-flex" : "none";
+
+  const img = (x.imageHigh || x.image || "").trim();
+  zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
+
+  zoomModal.classList.add("open");
+  zoomModal.setAttribute("aria-hidden","false");
+}
+function closeZoom(){
+  zoomModal.classList.remove("open");
+  zoomModal.setAttribute("aria-hidden","true");
+  zoomImg.style.backgroundImage = "none";
+}
+
+zoomModal.addEventListener("click", (e)=>{
+  if(e.target === zoomModal) closeZoom();
+});
+window.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom();
+});
+
 function renderFavs(items){
   favGrid.innerHTML = "";
   const favs = items.filter(x => favorites.has(x.idKey)).slice(0,12);
@@ -274,6 +483,10 @@ function renderFavs(items){
       <div class="small">${escapeHtml(x.set)}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
+
+    /* ✅ click image => zoom */
+    el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
+
     favGrid.appendChild(el);
   });
 }
@@ -299,6 +512,9 @@ function renderCollection(items){
       </div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""} • ×${escapeHtml(x.count)}</div>
     `;
+
+    /* ✅ click image => zoom */
+    el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
 
     el.querySelector(".star").onclick = async (e) => {
       e.preventDefault();
@@ -364,6 +580,7 @@ async function load(){
 
   allItems = [...itemsP, ...itemsO];
 
+  updateStats(allItems);
   renderFavs(allItems);
   renderCollection(filteredItems());
 }
