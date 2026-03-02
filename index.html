@@ -17,7 +17,14 @@
     --tM: rgba(255,80,80,.95);
   }
 
-  *{box-sizing:border-box}
+  /* ===== Base / Fix overflow ===== */
+  *{ box-sizing:border-box; }
+
+  html, body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden; /* anti micro scroll */
+  }
 
   body{
     margin:0;
@@ -28,30 +35,25 @@
       radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
       radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
       linear-gradient(180deg,var(--bg1),var(--bg2));
-    overflow-x:hidden;
     display:block;
   }
 
-  .cornerLogo{
-  position: static;     /* plus fixed */
-  width: 80px;          /* petit logo dans la barre */
-  flex: 0 0 auto;
+  /* ===== Layout container ===== */
+  .wrap{
+    width:100%;
+    max-width:1100px;
+    padding: 0 16px;
+    margin: 70px auto 40px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:50px;
   }
-.cornerLogo img{width:100%; height:auto; display:block}
 
- .wrap{
-  width:100%;
-  max-width:1100px;
-  padding: 0 16px;
-  margin: 70px auto 40px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:50px;
-}
-
+  /* ===== Topbar ===== */
   .topbar{
     width:100%;
+    max-width:100%;
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -62,15 +64,26 @@
     border:1px solid rgba(255,255,255,.10);
     backdrop-filter: blur(10px);
     box-shadow: 0 18px 60px rgba(0,0,0,.35);
+
+    /* safe-area iOS notch */
+    padding-top: calc(12px + env(safe-area-inset-top));
   }
 
+  /* Logo dans la topbar */
+  .cornerLogo{
+    position: static;
+    width: 80px;
+    flex: 0 0 auto;
+  }
+  .cornerLogo img{ width:100%; height:auto; display:block; }
+
   .brandRow{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;      /* IMPORTANT: autorise à rétrécir */
-  flex:0 1 auto;    /* autorise le shrink */
-}
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;      /* autorise à rétrécir */
+    flex:0 1 auto;    /* autorise le shrink */
+  }
   .brand{display:flex; flex-direction:column; gap:4px}
   .brand b{letter-spacing:.7px}
   .brand small{opacity:.75; font-size:12px}
@@ -147,6 +160,7 @@
   .topLink:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
   .topLink:active{transform: translateY(0px) scale(.99)}
 
+  /* ===== Buttons row ===== */
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:920px}
   button{
     padding:10px 14px;border-radius:12px;
@@ -162,6 +176,7 @@
   .hint{opacity:.72;font-size:13px;text-align:center}
   .scene{perspective:900px}
 
+  /* ===== Slab ===== */
   .slab{
     width:320px;height:460px;border-radius:22px;position:relative;
     transform-style:preserve-3d;will-change:transform;user-select:none;cursor:grab;
@@ -251,6 +266,7 @@
     transform:translateZ(12px); pointer-events:none;
   }
 
+  /* tiers */
   .slab[data-tier="w"] .shell{
     box-shadow: 0 30px 90px rgba(0,0,0,.55),
                 0 0 0 1px rgba(255,255,255,.22),
@@ -311,15 +327,16 @@
     75%{transform:translateZ(0) translateX(-1px)}
   }
 
+  /* ===== Log ===== */
   .logWrap{
-  width:100%;
-  max-width:980px;
-  border-radius:18px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
-  padding:10px;
-}
+    width:100%;
+    max-width:980px;
+    border-radius:18px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
+    padding:10px;
+  }
   .logTitle{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px 6px}
   .logTitle b{font-size:13px;letter-spacing:.4px}
   .logTitle small{opacity:.7}
@@ -364,6 +381,7 @@
   .tag.g{color:var(--tG); border-color:rgba(255,210,110,.35)}
   .tag.m{color:var(--tM); border-color:rgba(255,80,80,.55)}
 
+  /* ===== Modal zoom ===== */
   .modal{
     position:fixed; inset:0;
     background:rgba(0,0,0,.72);
@@ -385,6 +403,7 @@
   }
   .zoomSlab .label{ width: min(360px, 86vw); }
 
+  /* ===== Footer ===== */
   .footerSignature{
     margin-top: 80px;
     text-align: center;
@@ -395,6 +414,7 @@
   }
   .footerSignature b{ font-weight:700; }
 
+  /* ===== Notifs ===== */
   .notifContainer{ position:relative; display:inline-block; }
   .notifBtn{
     background:none;
@@ -487,7 +507,7 @@
 
   .notifFooter{ padding:10px 12px; }
 
-  /* ========= Scrollbars dark ========= */
+  /* ===== Scrollbars dark ===== */
   *{
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
@@ -505,7 +525,7 @@
   *::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
   .logRow, .notifList{ scrollbar-gutter: stable both-edges; }
 
-  /* ===== GAME PICKER (après login) ===== */
+  /* ===== Game Picker ===== */
   .gameModal{
     position:fixed; inset:0;
     background:rgba(0,0,0,.72);
@@ -534,56 +554,72 @@
     font-weight:1000;
     cursor:pointer;
     min-width:170px;
-  }
-  .gameBtn:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
-  .gameHint{opacity:.75; font-size:12px; text-align:center; margin-top:10px}
 
-  /* ===== Logos dans le Game Picker ===== */
-  .gameBtn{
     display:flex;
     align-items:center;
     justify-content:center;
     gap:10px;
   }
+  .gameBtn:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
+  .gameHint{opacity:.75; font-size:12px; text-align:center; margin-top:10px}
 
   .gameBtn img{
-    height:28px;              /* taille du logo */
+    height:28px;
     max-width:140px;
     width:auto;
     display:block;
     filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
   }
 
-  /* optionnel : logos un peu plus petits sur mobile */
+  /* ===== Mobile adjustments ===== */
+  @media (max-width: 520px){
+    .topbar{
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+    }
+
+    .cornerLogo{ width: 64px; }
+
+    .brand b{ font-size: 14px; }
+    .brand small{ font-size: 11px; }
+
+    .rightTop{
+      width: 100%;
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      gap: 8px;
+
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .rightTop::-webkit-scrollbar{ display:none; }
+
+    .stats{ flex: 0 0 auto; overflow: visible; }
+    .stat span{ max-width: 90px; }
+
+    .topLink{
+      padding: 10px 12px; /* meilleur “tap” */
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 420px){
+    .slab{ width:300px; height:440px; }
+    .label{ width:260px; }
+    .cardImg{ width:240px; height:320px; }
+  }
+
   @media (max-width:480px){
     .gameBtn img{ height:24px; max-width:120px; }
   }
 
-  @media (max-width: 520px){
-  .topbar{
-    flex-wrap: wrap;         /* les éléments peuvent passer à la ligne */
-    gap: 10px;
-    padding: 10px 12px;
-  }
+  /* mobile: moins de tap/zoom chelou */
+  button, a, .cardImg{ touch-action: manipulation; }
+</style>
 
-  .rightTop{
-    width: 100%;
-    flex: 1 1 100%;
-    justify-content: flex-start;
-    overflow-x: auto;        /* scroll horizontal si trop d’items */
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .rightTop::-webkit-scrollbar{ display:none; }
-
-  .stats{
-    flex: 0 0 auto;
-    overflow: visible;       /* évite une coupe bizarre */
-  }
-
-  .stat span{ max-width: 90px; } /* optionnel, compresse un peu */
-}
-  </style>
 </head>
 
 <body>
