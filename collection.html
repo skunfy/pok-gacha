@@ -120,6 +120,7 @@ button{
   font-weight:800;
   cursor:pointer;
 }
+button:disabled{opacity:.55;cursor:not-allowed}
 .gridWrap{
   border-radius:16px;
   background:rgba(255,255,255,.05);
@@ -151,6 +152,42 @@ button{
 .sellBtn{
   margin-top:auto;
 }
+
+.selRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.selLabel{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  opacity:.9;
+  user-select:none;
+}
+.priceTag{
+  font-size:12px;
+  font-weight:900;
+  opacity:.9;
+}
+.qtyRow{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.qtyInput{
+  width:88px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:800;
+}
+
+/* Modal */
 .modal{
   position:fixed;
   inset:0;
@@ -297,6 +334,10 @@ button{
         <option value="name">Nom A-Z</option>
       </select>
 
+      <!-- ✅ NEW: bulk sell controls -->
+      <button id="sellSelectedBtn" disabled>VENDRE SÉLECTION (0)</button>
+      <button id="clearSelBtn" disabled>VIDER</button>
+
       <button onclick="location.href='/market.html'">MARKET</button>
       <button onclick="location.href='/friends.html'">FRIENDS</button>
       <button onclick="location.href='/'">← Retour</button>
@@ -367,6 +408,12 @@ const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
 
+const sellSelectedBtn = document.getElementById("sellSelectedBtn");
+const clearSelBtn = document.getElementById("clearSelBtn");
+
+// selection: idKey -> qty
+const selected = new Map();
+
 const modal = document.getElementById("modal");
 const zoomSlab = document.getElementById("zoomSlab");
 const zoomImg = document.getElementById("zoomImg");
@@ -379,6 +426,8 @@ let allItems = [];
 gameSel.value = currentGame();
 gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
+  selected.clear();
+  refreshSelUI();
   await loadCollection();
 });
 
@@ -388,6 +437,48 @@ function tierFromGrade(g){
   if(g >= 5) return "b";
   return "w";
 }
+
+// affichage prix côté UI (le serveur reste la source de vérité)
+function sellPriceLabel(grade, mint){
+  if (mint) return 20;
+  const g = Number(grade) || 0;
+  if (g >= 10) return 10;
+  if (g >= 7) return 5;
+  if (g >= 5) return 2;
+  return 1;
+}
+
+function refreshSelUI(){
+  let totalQty = 0;
+  for (const q of selected.values()) totalQty += (Number(q) || 0);
+  sellSelectedBtn.disabled = totalQty === 0;
+  clearSelBtn.disabled = totalQty === 0;
+  sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty})`;
+}
+
+clearSelBtn.addEventListener("click", () => {
+  selected.clear();
+  applyFilters();
+  refreshSelUI();
+});
+
+sellSelectedBtn.addEventListener("click", async () => {
+  if (!selected.size) return;
+
+  const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
+
+  try{
+    await api("/api/sell_bulk",{
+      method:"POST",
+      body: JSON.stringify({ items: payload })
+    });
+    selected.clear();
+    await loadCollection();
+    refreshSelUI();
+  }catch(e){
+    // silent, tu peux afficher un toast si tu veux
+  }
+});
 
 async function loadCollection(){
   try{
@@ -422,6 +513,7 @@ function applyFilters(){
   }
 
   render(items);
+  refreshSelUI();
 }
 
 function openZoom(x){
@@ -450,24 +542,79 @@ function render(items){
     el.className="cardBox";
 
     const gameTag = (x.game || currentGame()) === "onepiece" ? "🟥 One Piece" : "🟨 Pokémon";
+    const unit = sellPriceLabel(x.grade || 0, !!x.mint);
+
+    const wasSelected = selected.has(x.idKey);
+    const selQty = selected.get(x.idKey) || 1;
 
     el.innerHTML=`
       <div class="cImg" style="background-image:url('${x.image}')"></div>
-      <div style="opacity:.75;font-size:12px;">${gameTag}</div>
+
+      <div class="selRow">
+        <div style="opacity:.75;font-size:12px;">${gameTag}</div>
+
+        <label class="selLabel">
+          <input class="selBox" type="checkbox" ${wasSelected ? "checked" : ""}>
+          Sélection
+        </label>
+      </div>
+
       <div><b>${x.name}</b></div>
       <div>${x.set || x.setName || ""}</div>
-      <div>Grade ${x.grade} ${x.mint?"(MINT)":""} ×${x.count}</div>
-      <button class="sellBtn">VENDRE +1💵</button>
+
+      <div class="selRow">
+        <div>Grade ${x.grade} ${x.mint?"(MINT)":""} ×${x.count}</div>
+        <div class="priceTag">${unit}💵 / carte</div>
+      </div>
+
+      <div class="qtyRow">
+        <input class="qtyInput" type="number" min="1" max="${x.count}" value="${Math.max(1, Math.min(x.count, Number(selQty)||1))}">
+        <button class="sellBtn">VENDRE 1</button>
+      </div>
     `;
 
     el.querySelector(".cImg").onclick = () => openZoom(x);
+
+    const box = el.querySelector(".selBox");
+    const qtyInput = el.querySelector(".qtyInput");
+
+    function clampQty(){
+      const q = Math.max(1, Math.min(Number(x.count) || 1, Number(qtyInput.value) || 1));
+      qtyInput.value = String(q);
+      return q;
+    }
+
+    box.onchange = () => {
+      if (box.checked){
+        const q = clampQty();
+        selected.set(x.idKey, q);
+      } else {
+        selected.delete(x.idKey);
+      }
+      refreshSelUI();
+    };
+
+    qtyInput.oninput = () => {
+      const q = clampQty();
+      if (box.checked){
+        selected.set(x.idKey, q);
+        refreshSelUI();
+      }
+    };
 
     el.querySelector(".sellBtn").onclick = async () => {
       try{
         await api("/api/sell",{
           method:"POST",
-          body: JSON.stringify({ idKey: x.idKey })
+          body: JSON.stringify({ idKey: x.idKey, qty: 1 })
         });
+        // si cette carte était sélectionnée, on réduit éventuellement sa sélection
+        if (selected.has(x.idKey)){
+          const prev = selected.get(x.idKey) || 1;
+          const next = Math.max(1, prev - 1);
+          // on garde la sélection, mais elle sera recadrée au prochain render si count baisse
+          selected.set(x.idKey, next);
+        }
         await loadCollection();
       }catch{}
     };
