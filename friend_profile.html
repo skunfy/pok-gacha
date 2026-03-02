@@ -236,7 +236,7 @@ button:active{ transform: translateY(0px) scale(.99); }
         <div class="badge" id="code">----</div>
         <div class="msg" id="bio" style="margin-top:10px"></div>
 
-        <!-- ✅ STATS -->
+        <!-- ✅ STATS (maintenant basées sur la collection complète) -->
         <div class="statsGrid" aria-label="Statistiques">
           <div class="statCard">
             <div class="k">TOTAL POKÉMON</div>
@@ -259,9 +259,6 @@ button:active{ transform: translateY(0px) scale(.99); }
   <div class="panel">
     <b>Cartes favorites</b>
     <div class="grid" id="favGrid" style="margin-top:12px"></div>
-    <div class="small" style="margin-top:10px;opacity:.65;">
-      Note: si l’API renvoie seulement les favoris, les stats sont basées sur ces favoris.
-    </div>
   </div>
 
 </div>
@@ -308,18 +305,15 @@ function escapeHtml(s){
 }
 
 function gameLabel(g){
-  return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+  return (String(g).toLowerCase() === "onepiece") ? "ONE PIECE" : "POKÉMON";
 }
 
-/* ✅ STATS (basé sur les favoris présents dans data.favorites) */
-function updateStatsFromFavorites(favs){
+/* ✅ STATS exactes depuis la collection */
+function updateStatsFromCollection(itemsP, itemsO){
   let p = 0, o = 0;
-  for(const x of (favs || [])){
-    const c = Number(x.count || 1) || 1; // si pas de count -> 1 par favori
-    const g = (x.game || "pokemon");
-    if(g === "onepiece") o += c;
-    else p += c;
-  }
+  for(const x of (itemsP || [])) p += Number(x.count || 0) || 0;
+  for(const x of (itemsO || [])) o += Number(x.count || 0) || 0;
+
   document.getElementById("statPokemon").textContent = String(p);
   document.getElementById("statOnepiece").textContent = String(o);
   document.getElementById("statTotal").textContent = String(p + o);
@@ -360,10 +354,11 @@ window.addEventListener("keydown", (e)=>{
 });
 
 const params = new URLSearchParams(location.search);
-const code = (params.get("code")||"").toUpperCase();
+const friendCode = (params.get("code")||"").toUpperCase();
 
 async function load(){
-  const data = await api("/api/profile/"+encodeURIComponent(code));
+  // profil + favoris (comme avant)
+  const data = await api("/api/profile/"+encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
   document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
@@ -374,12 +369,19 @@ async function load(){
       `url('${data.avatar.replace(/'/g,"\\'")}')`;
   }
 
+  // ✅ collection complète pour stats (pokemon + onepiece)
+  const [cP, cO] = await Promise.all([
+    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=pokemon").catch(()=> ({ items: [] })),
+    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=onepiece").catch(()=> ({ items: [] })),
+  ]);
+
+  updateStatsFromCollection(cP.items || [], cO.items || []);
+
+  // render favoris
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
   const favs = (data.favorites || []);
-  updateStatsFromFavorites(favs);
-
   if(!favs.length){
     grid.innerHTML = `<div class="small">Aucune carte favorite.</div>`;
     return;
@@ -396,7 +398,6 @@ async function load(){
     `;
 
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
-
     grid.appendChild(el);
   });
 }
