@@ -434,7 +434,9 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // =========================
 // DRAW CARD (MULTI GAME)
 // =========================
-// ----- ONE PIECE ONLINE -----
+async function drawCard(game) {
+  // ----- ONE PIECE ONLINE -----
+  // ----- ONE PIECE ONLINE -----
 if (game === "onepiece") {
   const list = await getOpBriefList();
 
