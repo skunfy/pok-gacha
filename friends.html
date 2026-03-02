@@ -169,134 +169,157 @@
   </div>
 
   <script>
-    const TOKEN_KEY = "gacha_token_v1";
-    const token = localStorage.getItem(TOKEN_KEY);
-    if(!token) location.href="/login.html";
+  const TOKEN_KEY = "gacha_token_v1";
+  const token = localStorage.getItem(TOKEN_KEY);
+  if(!token) location.href="/login.html";
 
-    async function api(path, opts={}){
-      const r = await fetch(path, {
-        ...opts,
-        headers: {
-          ...(opts.headers || {}),
-          "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY),
-          "Content-Type": "application/json"
-        }
+  async function api(path, opts={}){
+    const r = await fetch(path, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY),
+        "Content-Type": "application/json"
+      }
+    });
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+    return data;
+  }
+
+  const myCodeEl = document.getElementById("myCode");
+  const copyMyCodeBtn = document.getElementById("copyMyCode");
+  const msgMe = document.getElementById("msgMe");
+
+  const addCodeEl = document.getElementById("addCode");
+  const addBtn = document.getElementById("addBtn");
+  const msgAdd = document.getElementById("msgAdd");
+
+  const list = document.getElementById("list");
+  const msgList = document.getElementById("msgList");
+
+  function show(el, t){ el.textContent = t || ""; }
+
+  function escapeHtml(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  /* ✅ VERSION CORRIGÉE */
+  function friendRow(f){
+    const wrap = document.createElement("div");
+    wrap.className = "friendItem";
+
+    wrap.innerHTML = `
+      <div><b>${escapeHtml(f.name || "Ami")}</b></div>
+      <div class="badge">${escapeHtml(f.friendCode || "----")}</div>
+      <div class="spacer"></div>
+      <button class="smallBtn viewProfileBtn" type="button">Profil</button>
+      <button class="smallBtn viewCollectionBtn" type="button">Voir collection</button>
+    `;
+
+    const code = encodeURIComponent((f.friendCode || "").trim());
+
+    const profileBtn = wrap.querySelector(".viewProfileBtn");
+    const collectionBtn = wrap.querySelector(".viewCollectionBtn");
+
+    /* 🔒 stopPropagation empêche le clic de remonter */
+    profileBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      location.href = "/friend_profile.html?code=" + code;
+    });
+
+    collectionBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      location.href = "/friend_collection.html?code=" + code;
+    });
+
+    /* 🎯 Optionnel : clic sur la ligne = profil */
+    wrap.addEventListener("click", () => {
+      location.href = "/friend_profile.html?code=" + code;
+    });
+
+    return wrap;
+  }
+
+  async function loadMe(){
+    try{
+      const me = await api("/api/me");
+      myCodeEl.textContent = me.friendCode || "----";
+      show(msgMe, me.friendCode ? "✅ OK" : "⚠️ Friend code manquant (réessaie / refresh)");
+    }catch(e){
+      show(msgMe, "Erreur: " + e.message);
+    }
+  }
+
+  async function loadFriends(){
+    list.innerHTML = "";
+    show(msgList, "Chargement...");
+    try{
+      const data = await api("/api/friends");
+      const friends = data.friends || [];
+      if(!friends.length){
+        show(msgList, "Aucun ami pour l’instant.");
+        return;
+      }
+      show(msgList, "");
+      friends.forEach(f => list.appendChild(friendRow(f)));
+    }catch(e){
+      show(msgList, "Erreur: " + e.message);
+    }
+  }
+
+  async function addFriend(){
+    show(msgAdd, "");
+    addBtn.disabled = true;
+
+    try{
+      const friendCode = (addCodeEl.value || "").trim().toUpperCase();
+      if(!friendCode){
+        show(msgAdd, "Entre un code.");
+        return;
+      }
+
+      await api("/api/friends/add", {
+        method:"POST",
+        body: JSON.stringify({ friendCode })
       });
-      const data = await r.json().catch(()=> ({}));
-      if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
-      return data;
-    }
 
-    const myCodeEl = document.getElementById("myCode");
-    const copyMyCodeBtn = document.getElementById("copyMyCode");
-    const msgMe = document.getElementById("msgMe");
-
-    const addCodeEl = document.getElementById("addCode");
-    const addBtn = document.getElementById("addBtn");
-    const msgAdd = document.getElementById("msgAdd");
-
-    const list = document.getElementById("list");
-    const msgList = document.getElementById("msgList");
-
-    function show(el, t){ el.textContent = t || ""; }
-
-    function friendRow(f){
-  const wrap = document.createElement("div");
-  wrap.className = "friendItem";
-  wrap.innerHTML = `
-    <div><b>${escapeHtml(f.name || "Ami")}</b></div>
-    <div class="badge">${escapeHtml(f.friendCode || "----")}</div>
-    <div class="spacer"></div>
-    <button class="smallBtn viewProfileBtn">Profil</button>
-    <button class="smallBtn viewCollectionBtn">Voir collection</button>
-  `;
-
-  wrap.querySelector(".viewCollectionBtn").onclick = () => {
-    location.href = "/friend_collection.html?code=" + encodeURIComponent(f.friendCode);
-  };
-
-  wrap.querySelector(".viewProfileBtn").onclick = () => {
-    location.href = "/friend_profile.html?code=" + encodeURIComponent(f.friendCode);
-  };
-
-  return wrap;
-}
-
-    function escapeHtml(s){
-      return String(s || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    async function loadMe(){
-      try{
-        const me = await api("/api/me", { method:"GET", headers:{} });
-        myCodeEl.textContent = me.friendCode || "----";
-        show(msgMe, me.friendCode ? "✅ OK" : "⚠️ Friend code manquant (réessaie / refresh)");
-      }catch(e){
-        show(msgMe, "Erreur: " + e.message);
-      }
-    }
-
-    async function loadFriends(){
-      list.innerHTML = "";
-      show(msgList, "Chargement...");
-      try{
-        const data = await api("/api/friends", { method:"GET", headers:{} });
-        const friends = data.friends || [];
-        if(!friends.length){
-          show(msgList, "Aucun ami pour l’instant.");
-          return;
-        }
-        show(msgList, "");
-        friends.forEach(f => list.appendChild(friendRow(f)));
-      }catch(e){
-        show(msgList, "Erreur: " + e.message);
-      }
-    }
-
-    async function addFriend(){
-      show(msgAdd, "");
-      addBtn.disabled = true;
-
-      try{
-        const friendCode = (addCodeEl.value || "").trim().toUpperCase();
-        if(!friendCode) { show(msgAdd, "Entre un code."); return; }
-
-        await api("/api/friends/add", {
-          method:"POST",
-          body: JSON.stringify({ friendCode })
-        });
-
-        show(msgAdd, "✅ Ami ajouté !");
-        addCodeEl.value = "";
-        await loadFriends();
-      }catch(e){
-        show(msgAdd, "❌ " + e.message);
-      }finally{
-        addBtn.disabled = false;
-      }
-    }
-
-    addBtn.onclick = addFriend;
-    addCodeEl.addEventListener("keydown", (e)=>{ if(e.key==="Enter") addFriend(); });
-
-    copyMyCodeBtn.onclick = async () => {
-      try{
-        await navigator.clipboard.writeText(myCodeEl.textContent);
-        show(msgMe, "✅ Copié !");
-      }catch{
-        show(msgMe, "Copie manuelle: sélectionne le code et Ctrl+C");
-      }
-    };
-
-    (async () => {
-      await loadMe();
+      show(msgAdd, "✅ Ami ajouté !");
+      addCodeEl.value = "";
       await loadFriends();
-    })();
-  </script>
+
+    }catch(e){
+      show(msgAdd, "❌ " + e.message);
+    }finally{
+      addBtn.disabled = false;
+    }
+  }
+
+  addBtn.onclick = addFriend;
+  addCodeEl.addEventListener("keydown", (e)=>{
+    if(e.key==="Enter") addFriend();
+  });
+
+  copyMyCodeBtn.onclick = async () => {
+    try{
+      await navigator.clipboard.writeText(myCodeEl.textContent);
+      show(msgMe, "✅ Copié !");
+    }catch{
+      show(msgMe, "Copie manuelle: sélectionne le code et Ctrl+C");
+    }
+  };
+
+  (async () => {
+    await loadMe();
+    await loadFriends();
+  })();
+</script>
 </body>
 </html>
