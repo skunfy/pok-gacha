@@ -544,14 +544,12 @@
 
       <div class="rightTop">
         <div class="stats">
-          <div class="stat"><span class="dot money"></span><span>Pokédollars:</span><b id="money">0</b></div>
-          <div class="stat"><span class="dot"></span><span>Tirages:</span><b id="stTotal">0</b></div>
-          <div class="stat"><span class="dot w"></span><span>1–4:</span><b id="stW">0</b></div>
-          <div class="stat"><span class="dot b"></span><span>5–6:</span><b id="stB">0</b></div>
-          <div class="stat"><span class="dot v"></span><span>7–9:</span><b id="stV">0</b></div>
-          <div class="stat"><span class="dot g"></span><span>10:</span><b id="st10">0</b></div>
-          <div class="stat"><span class="dot m"></span><span>Mint:</span><b id="stM">0</b></div>
-        </div>
+  <div class="stat">
+    <span class="dot money"></span>
+    <span>Pokédollars:</span>
+    <b id="money">0</b>
+  </div>
+</div>
 
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
@@ -707,17 +705,20 @@
     let zoomDragging = false;
 
     const COST_ONE = 5;
-
+    
     function updateTopUI(me){
-      stTotal.textContent = me.total;
-      stW.textContent = me.w;
-      stB.textContent = me.b;
-      stV.textContent = me.v;
-      st10.textContent = me.g10;
-      stM.textContent = me.mint;
       moneyEl.textContent = String(me.money);
+
+      // mises à jour optionnelles si elles existent encore dans le DOM
+      if (stTotal) stTotal.textContent = me.total;
+      if (stW) stW.textContent = me.w;
+      if (stB) stB.textContent = me.b;
+      if (stV) stV.textContent = me.v;
+      if (st10) st10.textContent = me.g10;
+      if (stM) stM.textContent = me.mint;
+
       btnOpen.disabled = me.money < COST_ONE;
-    }
+}
 
     function tierFromGrade(grade){
       if (grade >= 10) return "g";
