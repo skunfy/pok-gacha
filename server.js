@@ -379,8 +379,13 @@ async function getOpCardDetail(cardId) {
   const data = await r.json().catch(() => null);
   if (!data) throw new Error("OPTCG detail invalid");
 
-  opDetailCache.set(cardId, { at: now, data });
-  return data;
+  // ✅ l’API renvoie souvent un ARRAY -> on prend une variante (random)
+  const picked = Array.isArray(data)
+    ? (data[Math.floor(Math.random() * data.length)] || data[0])
+    : data;
+
+  opDetailCache.set(cardId, { at: now, data: picked });
+  return picked;
 }
 
 // Essayez plusieurs clés possibles (API peut varier selon les cartes)
@@ -429,58 +434,58 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // =========================
 // DRAW CARD (MULTI GAME)
 // =========================
-async function drawCard(game) {
-  // ----- ONE PIECE ONLINE -----
-  if (game === "onepiece") {
-    const list = await getOpBriefList();
+// ----- ONE PIECE ONLINE -----
+if (game === "onepiece") {
+  const list = await getOpBriefList();
 
-    // On tente plusieurs fois de trouver une carte avec image
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const pick = list[Math.floor(Math.random() * list.length)] || {};
+  // On tente plusieurs fois de trouver une carte valide avec image
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const pick = list[Math.floor(Math.random() * list.length)] || {};
 
-      // selon l'API / les objets, ça peut être card_id / cardId / id
-      const cardId =
-        pickFirst(pick, ["card_id", "cardId", "id", "cardID"]) ||
-        null;
+    // L’API utilise souvent card_set_id
+    const cardId =
+      pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) ||
+      null;
 
-      if (!cardId) continue;
+    if (!cardId) continue;
 
-      let d;
-      try {
-        d = await getOpCardDetail(cardId);
-      } catch {
-        continue;
-      }
-
-      const image =
-        pickFirst(d, ["image_url", "imageUrl", "image", "img"]) ||
-        pickFirst(pick, ["image_url", "imageUrl", "image", "img"]);
-
-      const name =
-        pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
-        pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
-        "Unknown";
-
-      const setName =
-        pickFirst(d, ["set_name", "setName", "set", "series"]) ||
-        pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
-        "One Piece";
-
-      if (!image) continue;
-
-      console.log("🌐 source=OPTCG (cached)");
-
-      return {
-        name,
-        set: setName,
-        rarity: pickFirst(d, ["rarity"]) || "",
-        image,        // pas de low/high => on renvoie la même
-        imageHigh: image
-      };
+    let d;
+    try {
+      d = await getOpCardDetail(cardId); // déjà array-safe
+    } catch {
+      continue;
     }
 
-    throw new Error("One Piece: impossible de trouver une carte avec image");
+    // ⚠️ OPTCG utilise souvent card_image
+    const image =
+      pickFirst(d, ["card_image", "image_url", "imageUrl", "image", "img"]) ||
+      pickFirst(pick, ["card_image", "image_url", "imageUrl", "image", "img"]);
+
+    const name =
+      pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
+      pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
+      "Unknown";
+
+    const setName =
+      pickFirst(d, ["set_name", "setName", "set", "series"]) ||
+      pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
+      "One Piece";
+
+    if (!image) continue;
+
+    console.log("🌐 source=OPTCG (working)");
+
+    return {
+      name,
+      set: setName,
+      rarity: pickFirst(d, ["rarity"]) || "",
+      image,
+      imageHigh: image
+    };
   }
+
+  throw new Error("One Piece: impossible de trouver une carte avec image");
+}
 
   // ----- POKEMON ONLINE (TCGDEX) -----
   // Si tu veux "obligatoirement online", tu peux désactiver FORCE_OFFLINE ici
