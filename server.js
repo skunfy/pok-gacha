@@ -244,6 +244,7 @@ function sellPriceFor(grade, mint){
   if (g >= 5) return 2;
   return 1;
 }
+
 async function notify(userId, type, title, body, meta = null) {
   await pool.query(
     `INSERT INTO notifications (user_id, type, title, body, meta, is_read, createdAt)
@@ -786,30 +787,64 @@ app.get("/api/pulls", auth, async (req, res) => {
 
 app.post("/api/sell", auth, async (req, res) => {
   const idKey = String(req.body?.idKey || "");
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
   if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
-  const item = await pool.query(
-    `SELECT count FROM collection WHERE user_id=$1 AND idKey=$2`,
-    [req.user.id, idKey]
-  );
-  const it = item.rows[0];
-  if (!it) return res.status(404).json({ error: "Not owned" });
+  const client = await pool.connect();
+  try{
+    await client.query("BEGIN");
 
-  if (it.count <= 1) {
-    await pool.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
-  } else {
-    await pool.query(
-      `UPDATE collection SET count = count - 1 WHERE user_id=$1 AND idKey=$2`,
+    const itemQ = await client.query(
+      `SELECT count, grade, mint FROM collection
+       WHERE user_id=$1 AND idKey=$2
+       FOR UPDATE`,
       [req.user.id, idKey]
     );
+
+    const it = itemQ.rows[0];
+    if (!it) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Not owned" });
+    }
+
+    const owned = Number(it.count) || 0;
+    if (owned < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité insuffisante" });
+    }
+
+    const unitPrice = sellPriceFor(it.grade, Number(it.mint) === 1);
+    const total = unitPrice * qty;
+
+    if (owned === qty) {
+      await client.query(
+        `DELETE FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
+    } else {
+      await client.query(
+        `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty]
+      );
+    }
+
+    await client.query(
+      `UPDATE users SET money = money + $1 WHERE id=$2`,
+      [total, req.user.id]
+    );
+
+    await client.query("COMMIT");
+
+    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    res.json({ ok: true, money: me.rows[0]?.money || 0, unitPrice, total });
+
+  } catch(e){
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Sell failed" });
+  } finally {
+    client.release();
   }
-
-  await pool.query(`UPDATE users SET money = money + 1 WHERE id=$1`, [req.user.id]);
-
-  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-  res.json({ ok: true, money: me.rows[0]?.money || 0 });
 });
-
 // =========================
 // FRIENDS ROUTES
 // =========================
