@@ -71,6 +71,7 @@ select{
 }
 textarea{font-weight:700; resize:none; min-height:90px; width:100%}
 button{cursor:pointer}
+
 .panel{
   border-radius:16px;
   background:rgba(255,255,255,.05);
@@ -78,6 +79,36 @@ button{cursor:pointer}
   padding:16px;
   backdrop-filter:blur(10px);
 }
+
+/* ✅ Banner support (cover) */
+.profilePanel{
+  position:relative;
+  overflow:hidden;
+}
+.profileBanner{
+  position:absolute;
+  inset:0;
+  background:center/cover no-repeat;
+  transform: translateZ(0);
+  opacity:.95;
+}
+.profileBanner::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  /* voile sombre pour garder la lisibilité */
+  background: linear-gradient(90deg,
+    rgba(5,6,13,.88) 0%,
+    rgba(5,6,13,.72) 35%,
+    rgba(5,6,13,.38) 70%,
+    rgba(5,6,13,.18) 100%
+  );
+}
+.profileContent{
+  position:relative;
+  z-index:1;
+}
+
 .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
 @media (max-width: 900px){ .grid2{grid-template-columns:1fr;} }
 
@@ -262,42 +293,57 @@ button{cursor:pointer}
   </div>
 
   <div class="grid2">
-    <div class="panel">
-      <div class="profileRow">
-        <div class="avatar" id="avatarPreview"></div>
-        <div>
-          <div style="font-size:18px;font-weight:1000" id="pname">...</div>
-          <div class="badge">Code ami: <span id="pcode">----</span> <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button></div>
+    <!-- ✅ Panel profil avec bannière -->
+    <div class="panel profilePanel">
+      <div class="profileBanner" id="bannerPreview" style="display:none;"></div>
+
+      <div class="profileContent">
+        <div class="profileRow">
+          <div class="avatar" id="avatarPreview"></div>
+          <div>
+            <div style="font-size:18px;font-weight:1000" id="pname">...</div>
+            <div class="badge">
+              Code ami: <span id="pcode">----</span>
+              <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- ✅ STATS -->
-      <div class="statsGrid" aria-label="Statistiques">
-        <div class="statCard">
-          <div class="k">TOTAL POKÉMON</div>
-          <div class="v" id="statPokemon">0</div>
+        <!-- ✅ STATS -->
+        <div class="statsGrid" aria-label="Statistiques">
+          <div class="statCard">
+            <div class="k">TOTAL POKÉMON</div>
+            <div class="v" id="statPokemon">0</div>
+          </div>
+          <div class="statCard">
+            <div class="k">TOTAL ONE PIECE</div>
+            <div class="v" id="statOnepiece">0</div>
+          </div>
+          <div class="statCard" style="grid-column:1 / -1;">
+            <div class="k">TOTAL CARTES</div>
+            <div class="v" id="statTotal">0</div>
+          </div>
         </div>
-        <div class="statCard">
-          <div class="k">TOTAL ONE PIECE</div>
-          <div class="v" id="statOnepiece">0</div>
+
+        <div class="msg" id="msg"></div>
+
+        <!-- ✅ Edit zone (cachée en mode ami) -->
+        <div id="editZone">
+          <div style="margin-top:12px" class="small">Avatar (URL d’image)</div>
+          <input id="avatarUrl" placeholder="https://..." />
+
+          <!-- ✅ NEW: Bannière -->
+          <div style="margin-top:12px" class="small">Bannière (URL d’image)</div>
+          <input id="bannerUrl" placeholder="https://... (ou /data/monbanner.jpg)" />
+
+          <div style="margin-top:12px" class="small">Description (max 140)</div>
+          <textarea id="bio" maxlength="140" placeholder="Une petite description..."></textarea>
+
+          <div class="row" style="margin-top:12px">
+            <button id="save">ENREGISTRER</button>
+            <div class="small" id="bioCount"></div>
+          </div>
         </div>
-        <div class="statCard" style="grid-column:1 / -1;">
-          <div class="k">TOTAL CARTES</div>
-          <div class="v" id="statTotal">0</div>
-        </div>
-      </div>
-
-      <div class="msg" id="msg"></div>
-
-      <div style="margin-top:12px" class="small">Avatar (URL d’image)</div>
-      <input id="avatarUrl" placeholder="https://..." />
-
-      <div style="margin-top:12px" class="small">Description (max 140)</div>
-      <textarea id="bio" maxlength="140" placeholder="Une petite description..."></textarea>
-
-      <div class="row" style="margin-top:12px">
-        <button id="save">ENREGISTRER</button>
-        <div class="small" id="bioCount"></div>
       </div>
     </div>
 
@@ -311,9 +357,9 @@ button{cursor:pointer}
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="myCollectionPanel">
     <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
-      <b>Ta collection (clic ⭐ pour favori)</b>
+      <b id="collectionTitle">Ta collection (clic ⭐ pour favori)</b>
       <div class="row">
         <select id="gameFilter" title="Filtrer par jeu">
           <option value="all">Tous</option>
@@ -372,11 +418,16 @@ async function apiGame(path, game, opts={}){
 }
 
 const avatarPreview = document.getElementById("avatarPreview");
+const bannerPreview = document.getElementById("bannerPreview");
+
 const pname = document.getElementById("pname");
 const pcode = document.getElementById("pcode");
 const msg = document.getElementById("msg");
 
+const editZone = document.getElementById("editZone");
+
 const avatarUrl = document.getElementById("avatarUrl");
+const bannerUrl = document.getElementById("bannerUrl");
 const bio = document.getElementById("bio");
 const saveBtn = document.getElementById("save");
 const bioCount = document.getElementById("bioCount");
@@ -386,6 +437,9 @@ const favGrid = document.getElementById("favGrid");
 const colGrid = document.getElementById("colGrid");
 const search = document.getElementById("search");
 const gameFilter = document.getElementById("gameFilter");
+
+const myCollectionPanel = document.getElementById("myCollectionPanel");
+const collectionTitle = document.getElementById("collectionTitle");
 
 /* ✅ STATS elements */
 const statPokemon = document.getElementById("statPokemon");
@@ -417,6 +471,17 @@ function escapeHtml(s){
 function setAvatar(url){
   const u = (url||"").trim();
   avatarPreview.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
+}
+
+function setBanner(url){
+  const u = (url||"").trim();
+  if(!u){
+    bannerPreview.style.display = "none";
+    bannerPreview.style.backgroundImage = "none";
+    return;
+  }
+  bannerPreview.style.display = "block";
+  bannerPreview.style.backgroundImage = `url("${u.replace(/"/g,'\\"')}")`;
 }
 
 function gameLabel(g){
@@ -484,14 +549,12 @@ function renderFavs(items){
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
 
-    /* ✅ click image => zoom */
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
-
     favGrid.appendChild(el);
   });
 }
 
-function renderCollection(items){
+function renderCollection(items, canEditFavs){
   colGrid.innerHTML = "";
   items.forEach(x=>{
     const el = document.createElement("div");
@@ -508,30 +571,31 @@ function renderCollection(items){
           </div>
           <div class="small">${escapeHtml(x.set)}</div>
         </div>
-        <button class="star ${isOn ? "on" : ""}" title="Favori">${isOn ? "⭐" : "☆"}</button>
+        ${canEditFavs ? `<button class="star ${isOn ? "on" : ""}" title="Favori">${isOn ? "⭐" : "☆"}</button>` : ""}
       </div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""} • ×${escapeHtml(x.count)}</div>
     `;
 
-    /* ✅ click image => zoom */
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
 
-    el.querySelector(".star").onclick = async (e) => {
-      e.preventDefault();
-      try{
-        const r = await api("/api/favorites/toggle", {
-          method:"POST",
-          body: JSON.stringify({ idKey: x.idKey })
-        });
-        if(r.isFav) favorites.add(x.idKey);
-        else favorites.delete(x.idKey);
+    if(canEditFavs){
+      el.querySelector(".star").onclick = async (e) => {
+        e.preventDefault();
+        try{
+          const r = await api("/api/favorites/toggle", {
+            method:"POST",
+            body: JSON.stringify({ idKey: x.idKey })
+          });
+          if(r.isFav) favorites.add(x.idKey);
+          else favorites.delete(x.idKey);
 
-        renderFavs(allItems);
-        renderCollection(filteredItems());
-      }catch(err){
-        alert("❌ " + err.message);
-      }
-    };
+          renderFavs(allItems);
+          renderCollection(filteredItems(), true);
+        }catch(err){
+          alert("❌ " + err.message);
+        }
+      };
+    }
 
     colGrid.appendChild(el);
   });
@@ -556,52 +620,95 @@ function filteredItems(){
   );
 }
 
+/* ✅ mode ami si param ?friendCode=XXXX-XXXX */
+function getFriendCodeFromUrl(){
+  const u = new URL(location.href);
+  const v = (u.searchParams.get("friendCode") || u.searchParams.get("code") || "").trim();
+  return v ? v.toUpperCase() : "";
+}
+
 async function load(){
+  const friendCode = getFriendCodeFromUrl();
+  const isFriendView = !!friendCode;
+
   // profil
-  const p = await api("/api/profile/me", { method:"GET", headers:{} });
+  const p = isFriendView
+    ? await api("/api/profile/" + encodeURIComponent(friendCode), { method:"GET", headers:{} })
+    : await api("/api/profile/me", { method:"GET", headers:{} });
+
   pname.textContent = p.name || "...";
   pcode.textContent = p.friendCode || "----";
-  avatarUrl.value = p.avatar || "";
-  bio.value = p.bio || "";
+
   setAvatar(p.avatar || "");
-  bioCount.textContent = `${bio.value.length}/140`;
+  setBanner(p.banner || "");
+
+  // Edit fields
+  if(isFriendView){
+    editZone.style.display = "none";
+    collectionTitle.textContent = "Collection de ton ami";
+  }else{
+    editZone.style.display = "block";
+    avatarUrl.value = p.avatar || "";
+    bannerUrl.value = p.banner || "";
+    bio.value = p.bio || "";
+    bioCount.textContent = `${bio.value.length}/140`;
+  }
 
   favorites = new Set((p.favorites||[]).map(x=>x.idKey));
 
   // ✅ collection: on merge pokemon + onepiece
+  // - pour toi: /api/collection
+  // - pour ami: /api/friends/:friendCode/collection
+  const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
+  const baseO = baseP;
+
   const [cP, cO] = await Promise.all([
-    apiGame("/api/collection", "pokemon", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame("/api/collection", "onepiece", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseP, "pokemon", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "onepiece", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
   ]);
 
-  // chaque item doit avoir .game pour l'affichage
-  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon" }));
-  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece" }));
+  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon", set: x.set || x.setName || "" }));
+  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece", set: x.set || x.setName || "" }));
 
   allItems = [...itemsP, ...itemsO];
 
   updateStats(allItems);
   renderFavs(allItems);
-  renderCollection(filteredItems());
+
+  // en vue ami, on ne permet pas de modifier les favoris
+  renderCollection(filteredItems(), !isFriendView);
+
+  // en vue ami, je masque aussi le panel “Ta collection” si tu veux uniquement voir les favs
+  // (si tu veux le garder, supprime ces 2 lignes)
+  // myCollectionPanel.style.display = "block";
 }
 
-bio.addEventListener("input", ()=>{ bioCount.textContent = `${bio.value.length}/140`; });
-avatarUrl.addEventListener("input", ()=>{ setAvatar(avatarUrl.value); });
+if(bio){
+  bio.addEventListener("input", ()=>{ bioCount.textContent = `${bio.value.length}/140`; });
+}
+if(avatarUrl){
+  avatarUrl.addEventListener("input", ()=>{ setAvatar(avatarUrl.value); });
+}
+if(bannerUrl){
+  bannerUrl.addEventListener("input", ()=>{ setBanner(bannerUrl.value); });
+}
 
-saveBtn.onclick = async () => {
-  try{
-    saveBtn.disabled = true;
-    await api("/api/profile/update", {
-      method:"POST",
-      body: JSON.stringify({ avatar: avatarUrl.value, bio: bio.value })
-    });
-    show("✅ Profil enregistré !");
-  }catch(e){
-    show("❌ " + e.message);
-  }finally{
-    saveBtn.disabled = false;
-  }
-};
+if(saveBtn){
+  saveBtn.onclick = async () => {
+    try{
+      saveBtn.disabled = true;
+      await api("/api/profile/update", {
+        method:"POST",
+        body: JSON.stringify({ avatar: avatarUrl.value, banner: bannerUrl.value, bio: bio.value })
+      });
+      show("✅ Profil enregistré !");
+    }catch(e){
+      show("❌ " + e.message);
+    }finally{
+      saveBtn.disabled = false;
+    }
+  };
+}
 
 copyCode.onclick = async () => {
   try{
@@ -612,8 +719,8 @@ copyCode.onclick = async () => {
   }
 };
 
-search.addEventListener("input", ()=>{ renderCollection(filteredItems()); });
-gameFilter.addEventListener("change", ()=>{ renderCollection(filteredItems()); });
+search.addEventListener("input", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
+gameFilter.addEventListener("change", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
 
 load().catch(()=>{
   localStorage.removeItem(TOKEN_KEY);

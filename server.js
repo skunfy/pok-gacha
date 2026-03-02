@@ -129,6 +129,7 @@ async function initDb() {
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS avatar TEXT,
     ADD COLUMN IF NOT EXISTS bio TEXT;
+    ADD COLUMN IF NOT EXISTS banner TEXT;
   `);
 
   // migration safe si la DB existe déjà
@@ -1433,7 +1434,7 @@ app.post("/api/notifications/read_all", auth, async (req, res) => {
 
 app.get("/api/profile/me", auth, async (req, res) => {
   const uQ = await pool.query(
-    `SELECT name, friendCode, avatar, bio FROM users WHERE id=$1`,
+    `SELECT name, friendCode, avatar, bio, banner FROM users WHERE id=$1`,
     [req.user.id]
   );
   const u = uQ.rows[0];
@@ -1455,6 +1456,7 @@ app.get("/api/profile/me", auth, async (req, res) => {
     friendCode: u.friendcode || u.friendCode,
     avatar: u.avatar || "",
     bio: u.bio || "",
+    banner: u.banner || "",
     favorites: favQ.rows.map(r => ({
       idKey: r.idkey || r.idKey,
       name: r.name,
@@ -1469,11 +1471,12 @@ app.get("/api/profile/me", auth, async (req, res) => {
 app.post("/api/profile/update", auth, async (req, res) => {
   const avatar = String(req.body?.avatar || "").trim();
   const bio = String(req.body?.bio || "").trim().slice(0, 140); // limite safe
+  const banner = String(req.body?.banner || "").trim().slice(0, 500);
 
   await pool.query(
-    `UPDATE users SET avatar=$1, bio=$2 WHERE id=$3`,
-    [avatar || null, bio || null, req.user.id]
-  );
+  `UPDATE users SET avatar=$1, bio=$2, banner=$3 WHERE id=$4`,
+  [avatar || null, bio || null, banner || null, req.user.id]
+);
 
   res.json({ ok: true });
 });
