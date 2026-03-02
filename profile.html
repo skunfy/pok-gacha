@@ -26,11 +26,48 @@ body{
   backdrop-filter:blur(10px);
 }
 .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-button,input,textarea,select{
-  padding:10px 12px; border-radius:12px;
+button,
+input,
+textarea,
+select{
+  padding:10px 12px;
+  border-radius:12px;
   border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.06);
-  color:#fff; font-weight:900; outline:none;
+  color:#fff;
+  font-weight:900;
+  outline:none;
+  transition: all .15s ease;
+}
+
+/* Hover */
+button:hover,
+select:hover{
+  background:rgba(255,255,255,.10);
+  border-color:rgba(255,255,255,.25);
+}
+
+/* Focus */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:rgba(255,255,255,.35);
+  box-shadow:0 0 0 3px rgba(255,255,255,.08);
+}
+
+/* Options du select (liste déroulante) */
+select option{
+  background:#0f1116;
+  color:#fff;
+}
+
+/* Supprime le style bleu natif */
+select{
+  appearance:none;
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  cursor:pointer;
 }
 textarea{font-weight:700; resize:none; min-height:90px; width:100%}
 button{cursor:pointer}
