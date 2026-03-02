@@ -41,7 +41,6 @@
   }
   .cornerLogo img{width:100%; height:auto; display:block}
 
-  /* ✅ IMPORTANT : wrap en flex (stable) */
   .wrap{
     width:min(1100px,94vw);
     margin: 70px auto 40px;
@@ -51,9 +50,8 @@
     gap:50px;
   }
 
-  /* ✅ TOPBAR PLUS LONGUE SANS SCROLLBAR */
   .topbar{
-    width:100%;              /* 👈 prend exactement la largeur de .wrap */
+    width:100%;
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -64,7 +62,7 @@
     border:1px solid rgba(255,255,255,.10);
     backdrop-filter: blur(10px);
     box-shadow: 0 18px 60px rgba(0,0,0,.35);
-}
+  }
 
   .brandRow{
     display:flex;
@@ -77,7 +75,6 @@
   .brand b{letter-spacing:.7px}
   .brand small{opacity:.75; font-size:12px}
 
-  /* ✅ 1 seule ligne : stats compressent un peu si besoin */
   .rightTop{
     display:flex;
     align-items:center;
@@ -88,7 +85,6 @@
     flex-wrap:nowrap;
   }
 
-  /* ✅ SANS SCROLLBAR : on laisse WRAP si ça ne tient pas, mais on réduit d'abord */
   .stats{
     display:flex;
     align-items:center;
@@ -97,7 +93,7 @@
     flex:1;
     min-width:0;
     flex-wrap:nowrap;
-    overflow:hidden;   /* ✅ pas de scrollbar */
+    overflow:hidden;
   }
 
   .stat{
@@ -112,11 +108,10 @@
     opacity:.92;
     user-select:none;
     white-space:nowrap;
-    flex:0 1 auto;     /* ✅ autorise un léger shrink */
+    flex:0 1 auto;
     min-width:0;
   }
 
-  /* ✅ si vraiment trop long, on coupe le texte plutôt que scrollbar */
   .stat span{
     overflow:hidden;
     text-overflow:ellipsis;
@@ -399,7 +394,6 @@
   }
   .footerSignature b{ font-weight:700; }
 
-  /* ---- Notifications (inchangé, juste sans doublons) ---- */
   .notifContainer{ position:relative; display:inline-block; }
   .notifBtn{
     background:none;
@@ -492,40 +486,24 @@
 
   .notifFooter{ padding:10px 12px; }
 
-  /* ========= Scrollbars dark (Historique / Notifs / tout le site) ========= */
-
-/* Firefox */
-*{
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
-}
-
-/* Chrome / Edge / Safari */
-*::-webkit-scrollbar{
-  width: 10px;
-  height: 10px;
-}
-
-*::-webkit-scrollbar-track{
-  background: rgba(255,255,255,.06);
-  border-radius: 999px;
-}
-
-*::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.18);
-  border-radius: 999px;
-  border: 2px solid rgba(0,0,0,.25); /* donne un effet "pill" */
-}
-
-*::-webkit-scrollbar-thumb:hover{
-  background: rgba(255,255,255,.28);
-}
-
-/* Optionnel : évite l'effet "barre collée" dans tes blocs glass */
-.logRow, .notifList{
-  scrollbar-gutter: stable both-edges; /* garde la place sans décaler le contenu */
-}
-</style>
+  /* ========= Scrollbars dark ========= */
+  *{
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
+  }
+  *::-webkit-scrollbar{ width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track{
+    background: rgba(255,255,255,.06);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,.18);
+    border-radius: 999px;
+    border: 2px solid rgba(0,0,0,.25);
+  }
+  *::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
+  .logRow, .notifList{ scrollbar-gutter: stable both-edges; }
+  </style>
 </head>
 
 <body>
@@ -544,42 +522,41 @@
 
       <div class="rightTop">
         <div class="stats">
-  <div class="stat">
-    <span class="dot money"></span>
-    <span>Pokédollars:</span>
-    <b id="money">0</b>
-  </div>
-</div>
+          <div class="stat">
+            <span class="dot money"></span>
+            <span>Pokédollars:</span>
+            <b id="money">0</b>
+          </div>
+        </div>
 
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
         <a class="topLink" href="/profile.html">PROFIL</a>
 
-       <div class="notifContainer" id="notifWrap">
-        <button id="notifBtn" class="topLink notifBtn" type="button" aria-label="Notifications">
-          🔔
-          <span id="notifBadge" class="notifBadge"></span>
-        </button>
+        <div class="notifContainer" id="notifWrap">
+          <button id="notifBtn" class="topLink notifBtn" type="button" aria-label="Notifications">
+            🔔
+            <span id="notifBadge" class="notifBadge"></span>
+          </button>
 
-        <div class="notifMenu" id="notifMenu">
-          <div class="notifHeader">
-            <b>Notifications</b>
-            <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
-          </div>
+          <div class="notifMenu" id="notifMenu">
+            <div class="notifHeader">
+              <b>Notifications</b>
+              <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
+            </div>
 
-          <div class="notifList" id="notifList"></div>
+            <div class="notifList" id="notifList"></div>
 
-          <div class="notifFooter">
-            <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+            <div class="notifFooter">
+              <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+            </div>
           </div>
         </div>
-      </div>
 
         <a class="topLink" href="#" id="logout">LOGOUT</a>
       </div>
     </div>
-
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
@@ -692,12 +669,14 @@
     const btnClear = document.getElementById("clear");
     const btnLogout = document.getElementById("logout");
 
+    // ⚠️ ces éléments n’existent plus dans ton HTML, donc ils seront null (et c’est OK)
     const stTotal = document.getElementById("stTotal");
     const stW = document.getElementById("stW");
     const stB = document.getElementById("stB");
     const stV = document.getElementById("stV");
     const st10 = document.getElementById("st10");
     const stM = document.getElementById("stM");
+
     const moneyEl = document.getElementById("money");
     const subTop = document.getElementById("subTop");
 
@@ -705,11 +684,10 @@
     let zoomDragging = false;
 
     const COST_ONE = 5;
-    
-    function updateTopUI(me){
-      moneyEl.textContent = String(me.money);
 
-      // mises à jour optionnelles si elles existent encore dans le DOM
+    function updateTopUI(me){
+      if (moneyEl) moneyEl.textContent = String(me.money);
+
       if (stTotal) stTotal.textContent = me.total;
       if (stW) stW.textContent = me.w;
       if (stB) stB.textContent = me.b;
@@ -717,8 +695,8 @@
       if (st10) st10.textContent = me.g10;
       if (stM) stM.textContent = me.mint;
 
-      btnOpen.disabled = me.money < COST_ONE;
-}
+      btnOpen.disabled = (me.money < COST_ONE);
+    }
 
     function tierFromGrade(grade){
       if (grade >= 10) return "g";
@@ -829,11 +807,8 @@
       if (!bg || bg.includes("linear-gradient")) return;
 
       const high = card.dataset.high;
-      if (high) {
-      zoomCard.style.backgroundImage = `url("${high}")`;
-      } else {
-      zoomCard.style.backgroundImage = bg;
-      }
+      zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
+
       zoomTitle.textContent = title.textContent;
       zoomSubtitle.textContent = subtitle.textContent;
       zoomGrade.textContent = gradeEl.textContent;
@@ -864,6 +839,7 @@
 
     async function openOne(){
       btnOpen.disabled = true;
+
       slab.classList.remove("shake");
       void slab.offsetWidth;
       slab.classList.add("shake");
@@ -878,49 +854,44 @@
         const data = await api("/api/open", { method:"POST" });
         const c = data.card;
 
-        const img = new Image();
-        img.onload = () => {
-          card.style.backgroundImage = `url("${img.src}")`;
-
-          // 🔥 on stocke aussi la version HD si dispo
-           card.dataset.high = c.imageHigh || "";
-
-          slab.dataset.tier = c.tier;
-          slab.dataset.mint = c.mint ? "1" : "0";
-          slab.classList.add("reveal");
-          setTimeout(() => slab.classList.remove("reveal"), 450);
-          };
-          img.onerror = () => { subtitle.textContent = "Image introuvable"; };
-          img.src = c.image; // low.webp
-
+        // Mets le titre/sous-titre tout de suite (même si l'image met 200ms)
         title.textContent = `POKÉMON • GRADE ${c.grade}`;
         subtitle.textContent = `${c.name} • ${c.set}`;
         gradeEl.textContent = c.grade;
         mintTag.style.display = c.mint ? "inline-flex" : "none";
 
-        updateTopUI({
-          total: Number(stTotal.textContent) + 1,
-          w: Number(stW.textContent),
-          b: Number(stB.textContent),
-          v: Number(stV.textContent),
-          g10: Number(st10.textContent),
-          mint: Number(stM.textContent),
-          money: data.money
-});
+        // charge image
+        const img = new Image();
+        img.onload = () => {
+          card.style.backgroundImage = `url("${img.src}")`;
+          card.dataset.high = c.imageHigh || "";
+          slab.dataset.tier = c.tier;
+          slab.dataset.mint = c.mint ? "1" : "0";
+          slab.classList.add("reveal");
+          setTimeout(() => slab.classList.remove("reveal"), 450);
+        };
+        img.onerror = () => { subtitle.textContent = "Image introuvable"; };
+        img.src = c.image;
+
+        // Ajout immédiat dans l'historique
         addLog(c.name, c.set, c.grade, c.mint, c.image);
 
-      }catch(e){
-        subtitle.textContent = e.message.includes("Not enough") ? "Pas assez de Pokédollars 💵" : "Problème temporaire, réessaie";
+        // ✅ vérité serveur => plus de bug + bouton open cohérent
         await loadMe();
-      }finally{
-        btnOpen.disabled = false;
+        await loadPulls();
+
+      }catch(e){
+        subtitle.textContent = e.message.includes("Not enough")
+          ? "Pas assez de Pokédollars 💵"
+          : "Problème temporaire, réessaie";
+        await loadMe();
       }
+      // pas de finally qui remet false: loadMe() décide selon l'argent
     }
 
     btnOpen.onclick = openOne;
 
     btnClear.onclick = async () => {
-      // Reset "soft": juste visuel local (on ne reset pas la DB ici)
       log.innerHTML = "";
       title.textContent = "POKÉMON • SLAB";
       subtitle.textContent = "Clique “OPEN”";
@@ -953,8 +924,8 @@
       }
     })();
 
+    // ---------- NOTIFS ----------
     const notifBadge = document.getElementById("notifBadge");
-
     async function loadNotifCount(){
       try{
         const data = await api("/api/notifications?limit=1&unread=1");
@@ -964,107 +935,108 @@
       }catch{}
     }
 
-    setInterval(loadNotifCount, 12000);
-    loadNotifCount();
-
     const notifWrap = document.getElementById("notifWrap");
-const notifBtn = document.getElementById("notifBtn");
-const notifMenu = document.getElementById("notifMenu");
-const notifList = document.getElementById("notifList");
-const notifEmpty = document.getElementById("notifEmpty");
-const notifReadAll = document.getElementById("notifReadAll");
+    const notifBtn = document.getElementById("notifBtn");
+    const notifMenu = document.getElementById("notifMenu");
+    const notifList = document.getElementById("notifList");
+    const notifEmpty = document.getElementById("notifEmpty");
+    const notifReadAll = document.getElementById("notifReadAll");
 
-function fmtTime(ts){
-  try{
-    const d = new Date(ts);
-    return d.toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
-  }catch{ return ""; }
-}
-
-function setBadge(n){
-  notifBadge.textContent = n ? String(n) : "";
-  notifBadge.style.display = n ? "inline-flex" : "none";
-}
-
-// 🔐 protège contre injection HTML
-function escapeHtml(s){
-  return String(s||"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-async function loadNotifList(){
-  try{
-    const data = await api("/api/notifications?limit=10");
-    const notifs = data.notifications || [];
-    setBadge(data.unread || 0);
-
-    notifList.innerHTML = "";
-    if(!notifs.length){
-      notifEmpty.style.display = "block";
-      return;
+    function fmtTime(ts){
+      try{
+        const d = new Date(ts);
+        return d.toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
+      }catch{ return ""; }
     }
-    notifEmpty.style.display = "none";
 
-    for(const n of notifs){
-      const item = document.createElement("div");
-      item.className = "notifItem";
-      item.innerHTML = `
-        <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
-        <div class="notifBody">${escapeHtml(n.body)}</div>
-        <div class="notifMeta">
-          <span>${escapeHtml(n.type || "")}</span>
-          <span>${fmtTime(n.createdAt)}</span>
-        </div>
-      `;
+    function setBadge(n){
+      notifBadge.textContent = n ? String(n) : "";
+      notifBadge.style.display = n ? "inline-flex" : "none";
+    }
 
-      item.onclick = async () => {
-        // marque comme lu
-        if(!n.isRead){
-          try{ await api("/api/notifications/read", { method:"POST", body: JSON.stringify({ id: n.id }) }); }catch{}
+    function escapeHtml(s){
+      return String(s||"")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    async function loadNotifList(){
+      try{
+        const data = await api("/api/notifications?limit=10");
+        const notifs = data.notifications || [];
+        setBadge(data.unread || 0);
+
+        notifList.innerHTML = "";
+        if(!notifs.length){
+          notifEmpty.style.display = "block";
+          return;
         }
-        await loadNotifList();
-      };
+        notifEmpty.style.display = "none";
 
-      notifList.appendChild(item);
+        for(const n of notifs){
+          const item = document.createElement("div");
+          item.className = "notifItem";
+          item.innerHTML = `
+            <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
+            <div class="notifBody">${escapeHtml(n.body)}</div>
+            <div class="notifMeta">
+              <span>${escapeHtml(n.type || "")}</span>
+              <span>${fmtTime(n.createdAt)}</span>
+            </div>
+          `;
+
+          item.onclick = async () => {
+            if(!n.isRead){
+              try{
+                await api("/api/notifications/read", {
+                  method:"POST",
+                  headers: { "Content-Type":"application/json" },
+                  body: JSON.stringify({ id: n.id })
+                });
+              }catch{}
+            }
+            await loadNotifList();
+          };
+
+          notifList.appendChild(item);
+        }
+      }catch{
+        notifList.innerHTML = "";
+        notifEmpty.style.display = "block";
+      }
     }
-  }catch{
-    notifList.innerHTML = "";
-    notifEmpty.style.display = "block";
-  }
-}
 
-function toggleNotifMenu(){
-  const open = notifMenu.classList.toggle("open");
-  if(open) loadNotifList();
-}
+    function toggleNotifMenu(){
+      const open = notifMenu.classList.toggle("open");
+      if(open) loadNotifList();
+    }
 
-notifBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  toggleNotifMenu();
-});
+    notifBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleNotifMenu();
+    });
 
-document.addEventListener("click", (e) => {
-  if(!notifWrap.contains(e.target)) notifMenu.classList.remove("open");
-});
+    document.addEventListener("click", (e) => {
+      if(!notifWrap.contains(e.target)) notifMenu.classList.remove("open");
+    });
 
-notifReadAll.addEventListener("click", async (e) => {
-  e.preventDefault();
-  try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
-  await loadNotifList();
-});
+    notifReadAll.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
+      await loadNotifList();
+    });
 
-// Poll count
-setInterval(loadNotifCount, 12000);
-loadNotifCount();
-
+    // ✅ UN SEUL interval (tu l'avais en double)
+    loadNotifCount();
+    setInterval(loadNotifCount, 12000);
   </script>
+
   <div class="footerSignature">
-  Powered by <b>Matthieu Charton</b>
-</div>
+    Powered by <b>Matthieu Charton</b>
+  </div>
 </body>
 </html>
