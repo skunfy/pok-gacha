@@ -39,14 +39,16 @@
   }
 .cornerLogo img{width:100%; height:auto; display:block}
 
-  .wrap{
-    width:min(1100px,94vw);
-    margin: 70px auto 40px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:50px;
-  }
+ .wrap{
+  width:100%;
+  max-width:1100px;
+  padding: 0 16px;
+  margin: 70px auto 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:50px;
+}
 
   .topbar{
     width:100%;
@@ -310,13 +312,14 @@
   }
 
   .logWrap{
-    width:min(980px, 94vw);
-    border-radius:18px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    backdrop-filter: blur(10px);
-    padding:10px;
-  }
+  width:100%;
+  max-width:980px;
+  border-radius:18px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+  padding:10px;
+}
   .logTitle{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px 6px}
   .logTitle b{font-size:13px;letter-spacing:.4px}
   .logTitle small{opacity:.7}
