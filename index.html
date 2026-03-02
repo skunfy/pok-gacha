@@ -665,7 +665,6 @@
 
     <div class="row">
       <button id="open">OPEN (1 slab) — 5💵</button>
-      <button id="clear">Reset (toi)</button>
     </div>
 
     <div class="hint">💵 +10 dollax toutes les 15 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom</div>
@@ -782,7 +781,6 @@
     const zoomMintTag = document.getElementById("zoomMintTag");
 
     const btnOpen = document.getElementById("open");
-    const btnClear = document.getElementById("clear");
     const btnLogout = document.getElementById("logout");
     const btnChangeGame = document.getElementById("changeGame");
 
@@ -1023,19 +1021,6 @@
     }
 
     btnOpen.onclick = openOne;
-
-    btnClear.onclick = async () => {
-      log.innerHTML = "";
-      title.textContent = `${gameLabel(currentGame())} • SLAB`;
-      subtitle.textContent = "Clique “OPEN”";
-      gradeEl.textContent = "?";
-      slab.dataset.tier = "";
-      slab.dataset.mint = "0";
-      mintTag.style.display = "none";
-      card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
-      await loadPulls();
-      await loadMe();
-    };
 
     btnLogout.onclick = async (e) => {
       e.preventDefault();
