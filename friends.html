@@ -168,7 +168,7 @@
     </div>
   </div>
 
-  <script>
+<script>
   const TOKEN_KEY = "gacha_token_v1";
   const token = localStorage.getItem(TOKEN_KEY);
   if(!token) location.href="/login.html";
@@ -209,7 +209,6 @@
       .replaceAll("'","&#039;");
   }
 
-  /* ✅ VERSION CORRIGÉE */
   function friendRow(f){
     const wrap = document.createElement("div");
     wrap.className = "friendItem";
@@ -227,21 +226,25 @@
     const profileBtn = wrap.querySelector(".viewProfileBtn");
     const collectionBtn = wrap.querySelector(".viewCollectionBtn");
 
-    /* 🔒 stopPropagation empêche le clic de remonter */
+    // ✅ Sécurité anti-bug mobile
     profileBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       location.href = "/friend_profile.html?code=" + code;
     });
 
     collectionBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation();
       location.href = "/friend_collection.html?code=" + code;
     });
 
-    /* 🎯 Optionnel : clic sur la ligne = profil */
-    wrap.addEventListener("click", () => {
+    // ✅ clic sur la row = profil, MAIS pas si on clique un bouton
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && (t.tagName === "BUTTON" || t.closest("button"))) return;
       location.href = "/friend_profile.html?code=" + code;
     });
 
