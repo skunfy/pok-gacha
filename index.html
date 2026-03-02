@@ -53,8 +53,7 @@
 
   /* ✅ TOPBAR PLUS LONGUE SANS SCROLLBAR */
   .topbar{
-    width:min(1600px, 98vw); /* plus longue */
-    margin:0 auto;
+    width:100%;              /* 👈 prend exactement la largeur de .wrap */
     display:flex;
     align-items:center;
     justify-content:space-between;
@@ -65,7 +64,7 @@
     border:1px solid rgba(255,255,255,.10);
     backdrop-filter: blur(10px);
     box-shadow: 0 18px 60px rgba(0,0,0,.35);
-  }
+}
 
   .brandRow{
     display:flex;
