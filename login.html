@@ -136,7 +136,7 @@
 
     // Déjà connecté ? -> index
     if(localStorage.getItem(TOKEN_KEY)){
-      window.location.href = "/index.html";
+      window.location.href = "/home.html";
     }
 
     function showMsg(t){ msgEl.textContent = t || ""; }
@@ -174,7 +174,7 @@
         }
 
         // Compte existant -> on va direct
-        window.location.href = "/index.html";
+        window.location.href = "/home.html";
 
       }catch(e){
         showMsg("Erreur réseau. Réessaie.");

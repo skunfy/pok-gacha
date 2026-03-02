@@ -503,6 +503,39 @@
   }
   *::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
   .logRow, .notifList{ scrollbar-gutter: stable both-edges; }
+
+  /* ===== GAME PICKER (après login) ===== */
+  .gameModal{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.72);
+    display:none; place-items:center;
+    z-index:100000;
+    padding:24px;
+  }
+  .gameModal.open{display:grid}
+  .gameCard{
+    width:min(520px, 94vw);
+    border-radius:18px;
+    background:rgba(15,17,26,.96);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 22px 70px rgba(0,0,0,.55);
+    padding:16px;
+  }
+  .gameHead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px}
+  .gameHead b{font-size:14px; letter-spacing:.4px}
+  .gameBtns{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding-top:8px}
+  .gameBtn{
+    padding:14px 18px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    font-weight:1000;
+    cursor:pointer;
+    min-width:170px;
+  }
+  .gameBtn:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
+  .gameHint{opacity:.75; font-size:12px; text-align:center; margin-top:10px}
   </style>
 </head>
 
@@ -528,6 +561,9 @@
             <b id="money">0</b>
           </div>
         </div>
+
+        <!-- ✅ bouton pour changer de jeu (ouvre le picker) -->
+        <a class="topLink" href="#" id="changeGame">JEU 🎮</a>
 
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
@@ -623,22 +659,52 @@
     </div>
   </div>
 
+  <!-- ✅ GAME PICKER (après login) -->
+  <div class="gameModal" id="gameModal">
+    <div class="gameCard">
+      <div class="gameHead">
+        <b>🎮 Choisis ton jeu</b>
+        <span style="opacity:.75;font-size:12px;" id="gameCurrentLabel"></span>
+      </div>
+      <div class="gameBtns">
+        <button class="gameBtn" type="button" onclick="setGameAndClose('pokemon')">🟡 Pokémon</button>
+        <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')">🔴 One Piece</button>
+      </div>
+      <div class="gameHint">Tu peux rechanger à tout moment avec “JEU 🎮” en haut.</div>
+    </div>
+  </div>
+
   <script>
     // --------- AUTH ---------
     const TOKEN_KEY = "gacha_token_v1";
+    const GAME_KEY  = "gacha_game_v1";
+
     const token = localStorage.getItem(TOKEN_KEY);
     if(!token){
       window.location.href = "/login.html";
     }
 
+    function currentGame(){
+      return (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+    }
+    function gameLabel(g){
+      return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+    }
+
     async function api(path, opts={}){
-      const r = await fetch(path, {
+      const g = encodeURIComponent(currentGame());
+      const sep = path.includes("?") ? "&" : "?";
+      const url = path + sep + "game=" + g;
+
+      const r = await fetch(url, {
         ...opts,
         headers: {
           ...(opts.headers || {}),
-          "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY)
+          "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY),
+          "Content-Type":"application/json"
         }
       });
+
       const data = await r.json().catch(()=> ({}));
       if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
       return data;
@@ -668,17 +734,45 @@
     const btnOpen = document.getElementById("open");
     const btnClear = document.getElementById("clear");
     const btnLogout = document.getElementById("logout");
-
-    // ⚠️ ces éléments n’existent plus dans ton HTML, donc ils seront null (et c’est OK)
-    const stTotal = document.getElementById("stTotal");
-    const stW = document.getElementById("stW");
-    const stB = document.getElementById("stB");
-    const stV = document.getElementById("stV");
-    const st10 = document.getElementById("st10");
-    const stM = document.getElementById("stM");
+    const btnChangeGame = document.getElementById("changeGame");
 
     const moneyEl = document.getElementById("money");
     const subTop = document.getElementById("subTop");
+
+    // GAME PICKER
+    const gameModal = document.getElementById("gameModal");
+    const gameCurrentLabel = document.getElementById("gameCurrentLabel");
+
+    function openGamePicker(){
+      gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
+      gameModal.classList.add("open");
+    }
+    function closeGamePicker(){
+      gameModal.classList.remove("open");
+    }
+    function applyGameToUI(){
+      const g = currentGame();
+      title.textContent = `${gameLabel(g)} • SLAB`;
+      zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
+      // (subtitle reste pareil)
+    }
+
+    // exposée au onclick HTML
+    window.setGameAndClose = async function(g){
+      localStorage.setItem(GAME_KEY, (g === "onepiece") ? "onepiece" : "pokemon");
+      closeGamePicker();
+      applyGameToUI();
+      // recharge les données du bon jeu
+      try{
+        await loadMe();
+        await loadPulls();
+      }catch{}
+    }
+
+    btnChangeGame.onclick = (e) => {
+      e.preventDefault();
+      openGamePicker();
+    }
 
     let dragging = false;
     let zoomDragging = false;
@@ -687,14 +781,6 @@
 
     function updateTopUI(me){
       if (moneyEl) moneyEl.textContent = String(me.money);
-
-      if (stTotal) stTotal.textContent = me.total;
-      if (stW) stW.textContent = me.w;
-      if (stB) stB.textContent = me.b;
-      if (stV) stV.textContent = me.v;
-      if (st10) st10.textContent = me.g10;
-      if (stM) stM.textContent = me.mint;
-
       btnOpen.disabled = (me.money < COST_ONE);
     }
 
@@ -725,7 +811,7 @@
       el.addEventListener("click", () => {
         card.style.backgroundImage = `url("${imageUrl}")`;
 
-        title.textContent = `POKÉMON • GRADE ${grade}`;
+        title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
         subtitle.textContent = `${name} • ${setName}`;
         gradeEl.textContent = grade;
 
@@ -824,7 +910,7 @@
 
     async function loadMe(){
       const me = await api("/api/me");
-      subTop.textContent = `Connecté • ${me.name}`;
+      subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
       updateTopUI(me);
       return me;
     }
@@ -854,18 +940,18 @@
         const data = await api("/api/open", { method:"POST" });
         const c = data.card;
 
-        // Mets le titre/sous-titre tout de suite (même si l'image met 200ms)
-        title.textContent = `POKÉMON • GRADE ${c.grade}`;
+        const tier = tierFromGrade(c.grade);
+
+        title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
         subtitle.textContent = `${c.name} • ${c.set}`;
         gradeEl.textContent = c.grade;
         mintTag.style.display = c.mint ? "inline-flex" : "none";
 
-        // charge image
         const img = new Image();
         img.onload = () => {
           card.style.backgroundImage = `url("${img.src}")`;
           card.dataset.high = c.imageHigh || "";
-          slab.dataset.tier = c.tier;
+          slab.dataset.tier = tier;
           slab.dataset.mint = c.mint ? "1" : "0";
           slab.classList.add("reveal");
           setTimeout(() => slab.classList.remove("reveal"), 450);
@@ -873,10 +959,8 @@
         img.onerror = () => { subtitle.textContent = "Image introuvable"; };
         img.src = c.image;
 
-        // Ajout immédiat dans l'historique
         addLog(c.name, c.set, c.grade, c.mint, c.image);
 
-        // ✅ vérité serveur => plus de bug + bouton open cohérent
         await loadMe();
         await loadPulls();
 
@@ -886,14 +970,13 @@
           : "Problème temporaire, réessaie";
         await loadMe();
       }
-      // pas de finally qui remet false: loadMe() décide selon l'argent
     }
 
     btnOpen.onclick = openOne;
 
     btnClear.onclick = async () => {
       log.innerHTML = "";
-      title.textContent = "POKÉMON • SLAB";
+      title.textContent = `${gameLabel(currentGame())} • SLAB`;
       subtitle.textContent = "Clique “OPEN”";
       gradeEl.textContent = "?";
       slab.dataset.tier = "";
@@ -916,6 +999,11 @@
 
     (async () => {
       try{
+        // ✅ si aucun jeu choisi (première fois), on force le picker
+        if(!localStorage.getItem(GAME_KEY)){
+          openGamePicker();
+        }
+        applyGameToUI();
         await loadMe();
         await loadPulls();
       }catch(e){
@@ -1030,7 +1118,6 @@
       await loadNotifList();
     });
 
-    // ✅ UN SEUL interval (tu l'avais en double)
     loadNotifCount();
     setInterval(loadNotifCount, 12000);
   </script>
