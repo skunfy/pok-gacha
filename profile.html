@@ -26,7 +26,7 @@ body{
   backdrop-filter:blur(10px);
 }
 .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-button,input,textarea{
+button,input,textarea,select{
   padding:10px 12px; border-radius:12px;
   border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.06);
@@ -82,6 +82,16 @@ button{cursor:pointer}
   cursor:pointer;
 }
 .star.on{border-color: rgba(255,210,110,.45); box-shadow:0 0 40px rgba(255,210,110,.12)}
+.gameTag{
+  display:inline-flex;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-size:11px;
+  font-weight:900;
+  opacity:.85;
+}
 </style>
 </head>
 <body>
@@ -133,6 +143,11 @@ button{cursor:pointer}
     <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
       <b>Ta collection (clic ⭐ pour favori)</b>
       <div class="row">
+        <select id="gameFilter" title="Filtrer par jeu">
+          <option value="all">Tous</option>
+          <option value="pokemon">Pokémon</option>
+          <option value="onepiece">One Piece</option>
+        </select>
         <input id="search" placeholder="Rechercher...">
       </div>
     </div>
@@ -159,6 +174,12 @@ async function api(path, opts={}){
   return data;
 }
 
+// ✅ helper pour appeler les endpoints game-filtered
+async function apiGame(path, game, opts={}){
+  const sep = path.includes("?") ? "&" : "?";
+  return api(path + sep + "game=" + encodeURIComponent(game), opts);
+}
+
 const avatarPreview = document.getElementById("avatarPreview");
 const pname = document.getElementById("pname");
 const pcode = document.getElementById("pcode");
@@ -173,9 +194,10 @@ const copyCode = document.getElementById("copyCode");
 const favGrid = document.getElementById("favGrid");
 const colGrid = document.getElementById("colGrid");
 const search = document.getElementById("search");
+const gameFilter = document.getElementById("gameFilter");
 
 let favorites = new Set();
-let allItems = [];
+let allItems = []; // merged pokemon + onepiece
 
 function show(t){ msg.textContent = t || ""; }
 function escapeHtml(s){
@@ -192,6 +214,10 @@ function setAvatar(url){
   avatarPreview.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
 }
 
+function gameLabel(g){
+  return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+}
+
 function renderFavs(items){
   favGrid.innerHTML = "";
   const favs = items.filter(x => favorites.has(x.idKey)).slice(0,12);
@@ -204,6 +230,9 @@ function renderFavs(items){
     el.className = "cardBox";
     el.innerHTML = `
       <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div class="row">
+        <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
+      </div>
       <div><b>${escapeHtml(x.name)}</b></div>
       <div class="small">${escapeHtml(x.set)}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
@@ -223,7 +252,10 @@ function renderCollection(items){
       <div class="cImg" style="background-image:url('${x.image}')"></div>
       <div class="row">
         <div style="min-width:0">
-          <div><b>${escapeHtml(x.name)}</b></div>
+          <div class="row" style="gap:8px">
+            <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
+            <div><b>${escapeHtml(x.name)}</b></div>
+          </div>
           <div class="small">${escapeHtml(x.set)}</div>
         </div>
         <button class="star ${isOn ? "on" : ""}" title="Favori">${isOn ? "⭐" : "☆"}</button>
@@ -254,8 +286,17 @@ function renderCollection(items){
 
 function filteredItems(){
   const q = (search.value||"").toLowerCase().trim();
-  if(!q) return allItems;
-  return allItems.filter(x =>
+  const gf = gameFilter.value || "all";
+
+  let items = allItems;
+
+  if(gf !== "all"){
+    items = items.filter(x => (x.game || "pokemon") === gf);
+  }
+
+  if(!q) return items;
+
+  return items.filter(x =>
     (x.name||"").toLowerCase().includes(q) ||
     (x.set||"").toLowerCase().includes(q) ||
     String(x.grade||"").includes(q)
@@ -274,21 +315,24 @@ async function load(){
 
   favorites = new Set((p.favorites||[]).map(x=>x.idKey));
 
-  // collection
-  const c = await api("/api/collection", { method:"GET", headers:{} });
-  allItems = (c.items||[]);
+  // ✅ collection: on merge pokemon + onepiece
+  const [cP, cO] = await Promise.all([
+    apiGame("/api/collection", "pokemon", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame("/api/collection", "onepiece", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+  ]);
+
+  // chaque item doit avoir .game pour l'affichage
+  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon" }));
+  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece" }));
+
+  allItems = [...itemsP, ...itemsO];
 
   renderFavs(allItems);
   renderCollection(filteredItems());
 }
 
-bio.addEventListener("input", ()=>{
-  bioCount.textContent = `${bio.value.length}/140`;
-});
-
-avatarUrl.addEventListener("input", ()=>{
-  setAvatar(avatarUrl.value);
-});
+bio.addEventListener("input", ()=>{ bioCount.textContent = `${bio.value.length}/140`; });
+avatarUrl.addEventListener("input", ()=>{ setAvatar(avatarUrl.value); });
 
 saveBtn.onclick = async () => {
   try{
@@ -314,9 +358,8 @@ copyCode.onclick = async () => {
   }
 };
 
-search.addEventListener("input", ()=>{
-  renderCollection(filteredItems());
-});
+search.addEventListener("input", ()=>{ renderCollection(filteredItems()); });
+gameFilter.addEventListener("change", ()=>{ renderCollection(filteredItems()); });
 
 load().catch(()=>{
   localStorage.removeItem(TOKEN_KEY);
