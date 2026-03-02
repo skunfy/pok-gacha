@@ -82,7 +82,9 @@ async function initDb() {
     client.release();
   }
 
-  // tables de base
+  // =========================
+  // TABLES DE BASE
+  // =========================
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -98,6 +100,7 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS collection (
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       idKey TEXT NOT NULL,
+      game TEXT, -- ✅ présent sur DB neuve
       name TEXT NOT NULL,
       setName TEXT NOT NULL,
       image TEXT NOT NULL,
@@ -111,6 +114,7 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS pulls (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      game TEXT, -- ✅ présent sur DB neuve
       name TEXT NOT NULL,
       setName TEXT NOT NULL,
       image TEXT NOT NULL,
@@ -120,11 +124,12 @@ async function initDb() {
     );
   `);
 
+  // colonnes profil
   await pool.query(`
-  ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS avatar TEXT,
-  ADD COLUMN IF NOT EXISTS bio TEXT;
-`);
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS avatar TEXT,
+    ADD COLUMN IF NOT EXISTS bio TEXT;
+  `);
 
   // migration safe si la DB existe déjà
   await pool.query(`
@@ -132,7 +137,7 @@ async function initDb() {
     ADD COLUMN IF NOT EXISTS friendCode TEXT UNIQUE;
   `);
 
-  // table friends
+  // friends
   await pool.query(`
     CREATE TABLE IF NOT EXISTS friends (
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -141,61 +146,79 @@ async function initDb() {
       PRIMARY KEY(user_id, friend_user_id)
     );
   `);
+
+  // market
   await pool.query(`
-  CREATE TABLE IF NOT EXISTS market_listings (
-    id SERIAL PRIMARY KEY,
-    seller_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    idKey TEXT NOT NULL,
-    name TEXT NOT NULL,
-    setName TEXT NOT NULL,
-    image TEXT NOT NULL,
-    grade INTEGER NOT NULL,
-    mint INTEGER NOT NULL DEFAULT 0,
-    price INTEGER NOT NULL,
-    qty INTEGER NOT NULL,
-    createdAt BIGINT NOT NULL
-  );
+    CREATE TABLE IF NOT EXISTS market_listings (
+      id SERIAL PRIMARY KEY,
+      seller_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
+      game TEXT, -- ✅ présent sur DB neuve
+      name TEXT NOT NULL,
+      setName TEXT NOT NULL,
+      image TEXT NOT NULL,
+      grade INTEGER NOT NULL,
+      mint INTEGER NOT NULL DEFAULT 0,
+      price INTEGER NOT NULL,
+      qty INTEGER NOT NULL,
+      createdAt BIGINT NOT NULL
+    );
 
-  CREATE INDEX IF NOT EXISTS idx_market_listings_created 
-  ON market_listings(createdAt DESC);
+    CREATE INDEX IF NOT EXISTS idx_market_listings_created
+    ON market_listings(createdAt DESC);
 
-  CREATE INDEX IF NOT EXISTS idx_market_listings_seller 
-  ON market_listings(seller_user_id);
-`);
+    CREATE INDEX IF NOT EXISTS idx_market_listings_seller
+    ON market_listings(seller_user_id);
+  `);
 
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS notifications (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    meta JSONB,
-    is_read INTEGER NOT NULL DEFAULT 0,
-    createdAt BIGINT NOT NULL
-  );
+  // notifications
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      meta JSONB,
+      is_read INTEGER NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL
+    );
 
-  CREATE INDEX IF NOT EXISTS idx_notifications_user_time
-  ON notifications(user_id, createdAt DESC);
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_time
+    ON notifications(user_id, createdAt DESC);
 
-  CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
-  ON notifications(user_id, is_read);
-`);
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+    ON notifications(user_id, is_read);
+  `);
 
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS favorites (
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    idKey TEXT NOT NULL,
-    createdAt BIGINT NOT NULL,
-    PRIMARY KEY(user_id, idKey)
-  );
+  // favorites
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
+      createdAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, idKey)
+    );
 
-  CREATE INDEX IF NOT EXISTS idx_favorites_user
-  ON favorites(user_id);
-`);
+    CREATE INDEX IF NOT EXISTS idx_favorites_user
+    ON favorites(user_id);
+  `);
+
+  // =========================
+  // MIGRATION SAFE: game column (DB déjà existante)
+  // =========================
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS game TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS game TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS game TEXT;`);
+
+  // défaut pour l'existant
+  await pool.query(`UPDATE collection SET game='pokemon' WHERE game IS NULL;`);
+  await pool.query(`UPDATE pulls SET game='pokemon' WHERE game IS NULL;`);
+  await pool.query(`UPDATE market_listings SET game='pokemon' WHERE game IS NULL;`);
 
   console.log("✅ Postgres DB ready");
 }
+
 
 // =========================
 // HELPERS
@@ -218,6 +241,11 @@ async function notify(userId, type, title, body, meta = null) {
      VALUES ($1,$2,$3,$4,$5,0,$6)`,
     [userId, type, title, body, meta ? JSON.stringify(meta) : null, Date.now()]
   );
+}
+
+function getGame(req){
+  const g = String(req.query.game || "pokemon").toLowerCase();
+  return (g === "onepiece") ? "onepiece" : "pokemon";
 }
 
 // ----- PAY LOOP (server-side) -----
@@ -312,6 +340,59 @@ async function getCardDetailById(id) {
 }
 
 // =========================
+// ONE PIECE (OPTCG) ONLINE CACHE
+// =========================
+const OP_LIST_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
+const OP_DETAIL_TTL_MS = 24 * 60 * 60 * 1000;   // 24h
+
+let opBriefCache = { at: 0, list: [] };
+const opDetailCache = new Map();
+
+async function getOpBriefList() {
+  const now = Date.now();
+  if (opBriefCache.list.length && now - opBriefCache.at < OP_LIST_TTL_MS) {
+    return opBriefCache.list;
+  }
+
+  const r = await fetchWithTimeout("https://optcgapi.com/api/allSetCards/", 20000);
+  if (!r.ok) throw new Error("OPTCG list failed");
+
+  const list = await r.json().catch(() => null);
+  if (!Array.isArray(list) || !list.length) throw new Error("OPTCG list empty");
+
+  opBriefCache = { at: now, list };
+  console.log(`🌐 cached One Piece list: ${list.length} cards`);
+  return list;
+}
+
+async function getOpCardDetail(cardId) {
+  const now = Date.now();
+  const cached = opDetailCache.get(cardId);
+  if (cached && now - cached.at < OP_DETAIL_TTL_MS) return cached.data;
+
+  const r = await fetchWithTimeout(
+    `https://optcgapi.com/api/sets/card/${encodeURIComponent(cardId)}/`,
+    20000
+  );
+  if (!r.ok) throw new Error("OPTCG detail failed");
+
+  const data = await r.json().catch(() => null);
+  if (!data) throw new Error("OPTCG detail invalid");
+
+  opDetailCache.set(cardId, { at: now, data });
+  return data;
+}
+
+// Essayez plusieurs clés possibles (API peut varier selon les cartes)
+function pickFirst(obj, keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+// =========================
 // IMAGE URL NORMALIZATION
 // low.webp pour afficher vite, high.webp pour zoom
 // =========================
@@ -345,7 +426,64 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // =========================
 // DRAW CARD
 // =========================
-async function drawCard() {
+// =========================
+// DRAW CARD (MULTI GAME)
+// =========================
+async function drawCard(game) {
+  // ----- ONE PIECE ONLINE -----
+  if (game === "onepiece") {
+    const list = await getOpBriefList();
+
+    // On tente plusieurs fois de trouver une carte avec image
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const pick = list[Math.floor(Math.random() * list.length)] || {};
+
+      // selon l'API / les objets, ça peut être card_id / cardId / id
+      const cardId =
+        pickFirst(pick, ["card_id", "cardId", "id", "cardID"]) ||
+        null;
+
+      if (!cardId) continue;
+
+      let d;
+      try {
+        d = await getOpCardDetail(cardId);
+      } catch {
+        continue;
+      }
+
+      const image =
+        pickFirst(d, ["image_url", "imageUrl", "image", "img"]) ||
+        pickFirst(pick, ["image_url", "imageUrl", "image", "img"]);
+
+      const name =
+        pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
+        pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
+        "Unknown";
+
+      const setName =
+        pickFirst(d, ["set_name", "setName", "set", "series"]) ||
+        pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
+        "One Piece";
+
+      if (!image) continue;
+
+      console.log("🌐 source=OPTCG (cached)");
+
+      return {
+        name,
+        set: setName,
+        rarity: pickFirst(d, ["rarity"]) || "",
+        image,        // pas de low/high => on renvoie la même
+        imageHigh: image
+      };
+    }
+
+    throw new Error("One Piece: impossible de trouver une carte avec image");
+  }
+
+  // ----- POKEMON ONLINE (TCGDEX) -----
+  // Si tu veux "obligatoirement online", tu peux désactiver FORCE_OFFLINE ici
   if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
@@ -390,6 +528,7 @@ async function drawCard() {
     };
   }
 
+  // Si tu veux 100% online, supprime carrément ce bloc fallback :
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if (c?.image) {
@@ -400,6 +539,7 @@ async function drawCard() {
 
   throw new Error("No card available (TCGdex + offline empty)");
 }
+
 
 // ----- GRADES -----
 function rollGrade() {
@@ -514,7 +654,7 @@ app.get("/api/me", auth, async (req, res) => {
 
 app.post("/api/open", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
-
+  const game = getGame(req);
   const { rows } = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
   const money = rows[0]?.money ?? 0;
 
@@ -526,7 +666,7 @@ app.post("/api/open", auth, async (req, res) => {
 
   let c;
   try {
-    c = await drawCard();
+    c = await drawCard(game);
   } catch (e) {
     await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
     return res.status(502).json({ error: "Erreur image (réessaie)" });
@@ -536,53 +676,56 @@ app.post("/api/open", auth, async (req, res) => {
   const mint = rollMintForGrade(grade);
   const now = Date.now();
 
-  const idKey = `${c.name}__${c.set}__${c.image}`;
+  const idKey = `${game}__${c.name}__${c.set}__${c.image}`;
+
+ await pool.query(
+  `INSERT INTO pulls (user_id, game, name, setName, image, grade, mint, at)
+   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+  [req.user.id, game, c.name, c.set, c.image, grade, mint, now]
+);
 
   await pool.query(
-    `INSERT INTO pulls (user_id, name, setName, image, grade, mint, at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-    [req.user.id, c.name, c.set, c.image, grade, mint, now]
-  );
-
-  await pool.query(
-    `
-    INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,1,$8)
-    ON CONFLICT (user_id, idKey)
-    DO UPDATE SET
-      count = collection.count + 1,
-      grade = GREATEST(collection.grade, EXCLUDED.grade),
-      mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-      lastAt = EXCLUDED.lastAt
-    `,
-    [req.user.id, idKey, c.name, c.set, c.image, grade, mint, now]
-  );
+  `
+  INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,$9)
+  ON CONFLICT (user_id, idKey)
+  DO UPDATE SET
+    count = collection.count + 1,
+    grade = GREATEST(collection.grade, EXCLUDED.grade),
+    mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+    lastAt = EXCLUDED.lastAt
+  `,
+  [req.user.id, idKey, game, c.name, c.set, c.image, grade, mint, now]
+);
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
   res.json({
-    money: me.rows[0]?.money || 0,
-    card: {
-      name: c.name,
-      set: c.set,
-      image: c.image, // low.webp
-      imageHigh: c.imageHigh, // optionnel pour zoom
-      grade,
-      mint: Boolean(mint),
-    },
-  });
+  money: me.rows[0]?.money || 0,
+  card: {
+    game,                 // 👈 AJOUT
+    name: c.name,
+    set: c.set,
+    image: c.image,
+    imageHigh: c.imageHigh,
+    grade,
+    mint: Boolean(mint),
+  },
+});
 });
 
 app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
+  const game = getGame(req);
+
   const items = await pool.query(
-    `SELECT idKey, name, setName, image, grade, mint, count, lastAt
-     FROM collection
-     WHERE user_id=$1
-     ORDER BY lastAt DESC`,
-    [req.user.id]
-  );
+  `SELECT idKey, game, name, setName, image, grade, mint, count, lastAt
+   FROM collection
+   WHERE user_id=$1 AND game=$2
+   ORDER BY lastAt DESC`,
+  [req.user.id, game]
+);
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
@@ -602,14 +745,16 @@ app.get("/api/collection", auth, async (req, res) => {
 });
 
 app.get("/api/pulls", auth, async (req, res) => {
+  const game = getGame(req);
+
   const rows = await pool.query(
-    `SELECT name, setName, image, grade, mint, at
-     FROM pulls
-     WHERE user_id=$1
-     ORDER BY at DESC
-     LIMIT 80`,
-    [req.user.id]
-  );
+  `SELECT game, name, setName, image, grade, mint, at
+   FROM pulls
+   WHERE user_id=$1 AND game=$2
+   ORDER BY at DESC
+   LIMIT 80`,
+  [req.user.id, game]
+);
 
   res.json({
     pulls: rows.rows.map((r) => ({
@@ -744,17 +889,22 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
 // =========================
 
 // GET market listings
+// =========================
+// MARKETPLACE ROUTES (MULTI GAME OK)
+// =========================
 
+// GET market listings
 app.get("/api/market", auth, async (req, res) => {
   const q = String(req.query.search || "").toLowerCase().trim();
   const sort = String(req.query.sort || "recent");
+  const game = getGame(req); // filtre par jeu (pokemon/onepiece)
 
-  let where = "";
-  const params = [];
+  const params = [game];
+  let where = `WHERE m.game = $1`;
+
   if (q) {
     params.push(`%${q}%`);
-    where = `WHERE LOWER(m.name) LIKE $${params.length}
-             OR LOWER(m.setName) LIKE $${params.length}`;
+    where += ` AND (LOWER(m.name) LIKE $2 OR LOWER(m.setName) LIKE $2)`;
   }
 
   let order = "m.createdAt DESC";
@@ -769,6 +919,7 @@ app.get("/api/market", auth, async (req, res) => {
       m.seller_user_id AS "sellerUserId",
       u.name AS "sellerName",
       m.idKey,
+      m.game,
       m.name,
       m.setName,
       m.image,
@@ -787,13 +938,14 @@ app.get("/api/market", auth, async (req, res) => {
   );
 
   res.json({
-    listings: rows.map(r => ({
+    listings: rows.map((r) => ({
       ...r,
+      game: r.game || "pokemon",
       mint: Boolean(r.mint),
       idKey: r.idkey || r.idKey,
       setName: r.setname || r.setName,
-      sellerName: r.sellerName || r.sellername
-    }))
+      sellerName: r.sellerName || r.sellername,
+    })),
   });
 });
 
@@ -805,12 +957,16 @@ app.post("/api/market/list", auth, async (req, res) => {
 
   if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
+  // game vient de l'idKey (game__...)
+  const game = String(idKey.split("__")[0] || "pokemon").toLowerCase();
+  const safeGame = game === "onepiece" ? "onepiece" : "pokemon";
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     const cQ = await client.query(
-      `SELECT name, setName, image, grade, mint, count
+      `SELECT game, name, setName, image, grade, mint, count
        FROM collection
        WHERE user_id=$1 AND idKey=$2
        FOR UPDATE`,
@@ -828,7 +984,10 @@ app.post("/api/market/list", auth, async (req, res) => {
     }
 
     if (it.count === qty) {
-      await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
+      await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [
+        req.user.id,
+        idKey,
+      ]);
     } else {
       await client.query(
         `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
@@ -839,10 +998,22 @@ app.post("/api/market/list", auth, async (req, res) => {
     const now = Date.now();
     const ins = await client.query(
       `INSERT INTO market_listings
-        (seller_user_id, idKey, name, setName, image, grade, mint, price, qty, createdAt)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        (seller_user_id, idKey, game, name, setName, image, grade, mint, price, qty, createdAt)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING id`,
-      [req.user.id, idKey, it.name, it.setname || it.setName, it.image, it.grade, it.mint ? 1 : 0, price, qty, now]
+      [
+        req.user.id,
+        idKey,
+        it.game || safeGame,
+        it.name,
+        it.setname || it.setName,
+        it.image,
+        it.grade,
+        it.mint ? 1 : 0,
+        price,
+        qty,
+        now,
+      ]
     );
 
     await client.query("COMMIT");
@@ -868,7 +1039,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
     await client.query("BEGIN");
 
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, name, setName, image, grade, mint, price, qty
+      `SELECT id, seller_user_id, idKey, game, name, setName, image, grade, mint, price, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -902,10 +1073,12 @@ app.post("/api/market/buy", auth, async (req, res) => {
     await client.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [total, l.seller_user_id]);
 
     const now = Date.now();
+
+    // IMPORTANT: remettre game dans collection
     await client.query(
       `
-      INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       ON CONFLICT (user_id, idKey)
       DO UPDATE SET
         count = collection.count + EXCLUDED.count,
@@ -913,7 +1086,18 @@ app.post("/api/market/buy", auth, async (req, res) => {
         mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
         lastAt = EXCLUDED.lastAt
       `,
-      [req.user.id, l.idkey || l.idKey, l.name, l.setname || l.setName, l.image, l.grade, l.mint ? 1 : 0, qty, now]
+      [
+        req.user.id,
+        l.idkey || l.idKey,
+        l.game || "pokemon",
+        l.name,
+        l.setname || l.setName,
+        l.image,
+        l.grade,
+        l.mint ? 1 : 0,
+        qty,
+        now,
+      ]
     );
 
     if (l.qty === qty) {
@@ -924,16 +1108,10 @@ app.post("/api/market/buy", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    await notify(
-    l.seller_user_id,
-    "sale",
-    "💰 Vente réussie !",
-    `${qty}× ${l.name} vendu pour ${total}💵`
-  );
+    await notify(l.seller_user_id, "sale", "💰 Vente réussie !", `${qty}× ${l.name} vendu pour ${total}💵`);
 
     const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
     res.json({ ok: true, money: me.rows[0]?.money || 0 });
-
   } catch {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Buy failed" });
@@ -951,6 +1129,7 @@ app.get("/api/market/mine", auth, async (req, res) => {
       m.seller_user_id AS "sellerUserId",
       u.name AS "sellerName",
       m.idKey,
+      m.game,
       m.name,
       m.setName,
       m.image,
@@ -969,16 +1148,16 @@ app.get("/api/market/mine", auth, async (req, res) => {
   );
 
   res.json({
-    listings: rows.map(r => ({
+    listings: rows.map((r) => ({
       ...r,
+      game: r.game || "pokemon",
       mint: Boolean(r.mint),
       idKey: r.idkey || r.idKey,
       setName: r.setname || r.setName,
-      sellerName: r.sellerName || r.sellername
-    }))
+      sellerName: r.sellerName || r.sellername,
+    })),
   });
 });
-
 
 // POST cancel listing (return cards to seller)
 app.post("/api/market/cancel", auth, async (req, res) => {
@@ -991,7 +1170,7 @@ app.post("/api/market/cancel", auth, async (req, res) => {
     await client.query("BEGIN");
 
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, name, setName, image, grade, mint, qty
+      `SELECT id, seller_user_id, idKey, game, name, setName, image, grade, mint, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -999,17 +1178,26 @@ app.post("/api/market/cancel", auth, async (req, res) => {
     );
     const l = lQ.rows[0];
 
-    if (!l) { await client.query("ROLLBACK"); return res.status(404).json({ error: "Listing introuvable" }); }
-    if (l.seller_user_id !== req.user.id) { await client.query("ROLLBACK"); return res.status(403).json({ error: "Interdit" }); }
-    if (l.qty < qty) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Quantité invalide" }); }
+    if (!l) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Listing introuvable" });
+    }
+    if (l.seller_user_id !== req.user.id) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({ error: "Interdit" });
+    }
+    if (l.qty < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité invalide" });
+    }
 
     const now = Date.now();
 
-    // return cards to seller collection
+    // IMPORTANT: remettre game dans collection
     await client.query(
       `
-      INSERT INTO collection (user_id, idKey, name, setName, image, grade, mint, count, lastAt)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       ON CONFLICT (user_id, idKey)
       DO UPDATE SET
         count = collection.count + EXCLUDED.count,
@@ -1017,10 +1205,20 @@ app.post("/api/market/cancel", auth, async (req, res) => {
         mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
         lastAt = EXCLUDED.lastAt
       `,
-      [req.user.id, l.idkey || l.idKey, l.name, l.setname || l.setName, l.image, l.grade, l.mint ? 1 : 0, qty, now]
+      [
+        req.user.id,
+        l.idkey || l.idKey,
+        l.game || "pokemon",
+        l.name,
+        l.setname || l.setName,
+        l.image,
+        l.grade,
+        l.mint ? 1 : 0,
+        qty,
+        now,
+      ]
     );
 
-    // reduce or delete listing
     if (l.qty === qty) {
       await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
     } else {
@@ -1036,6 +1234,7 @@ app.post("/api/market/cancel", auth, async (req, res) => {
     client.release();
   }
 });
+
 // GET notifications (latest)
 app.get("/api/notifications", auth, async (req, res) => {
   const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20) | 0));
