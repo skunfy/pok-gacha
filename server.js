@@ -1512,14 +1512,14 @@ app.post("/api/notifications/read_all", auth, async (req, res) => {
 
 app.get("/api/profile/me", auth, async (req, res) => {
   const uQ = await pool.query(
-    `SELECT name, friendCode, avatar, bio, banner FROM users WHERE id=$1`,
+    `SELECT name, friendCode, avatar, bio, banner, xp FROM users WHERE id=$1`,
     [req.user.id]
   );
   const u = uQ.rows[0];
 
   const favQ = await pool.query(
     `
-    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint, c.game
     FROM favorites f
     JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
     WHERE f.user_id=$1
@@ -1529,14 +1529,19 @@ app.get("/api/profile/me", auth, async (req, res) => {
     [req.user.id]
   );
 
+  const xp = Number(u?.xp || 0);
+
   res.json({
     name: u.name,
     friendCode: u.friendcode || u.friendCode,
     avatar: u.avatar || "",
     bio: u.bio || "",
     banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
     favorites: favQ.rows.map(r => ({
       idKey: r.idkey || r.idKey,
+      game: r.game || "pokemon",
       name: r.name,
       setName: r.setname || r.setName,
       image: r.image,
@@ -1595,22 +1600,22 @@ app.get("/api/profile/:friendCode", auth, async (req, res) => {
   const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
   if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
 
-  // autorisation : seulement si c’est dans ta liste d’amis
   const q = await pool.query(
     `
-    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio, u.banner
+    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio, u.banner, u.xp
     FROM friends f
     JOIN users u ON u.id = f.friend_user_id
     WHERE f.user_id=$1 AND u.friendCode=$2
     `,
     [req.user.id, friendCode]
   );
+
   const u = q.rows[0];
   if (!u) return res.status(403).json({ error: "Pas dans tes amis" });
 
   const favQ = await pool.query(
     `
-    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint, c.game
     FROM favorites f
     JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
     WHERE f.user_id=$1
@@ -1620,14 +1625,19 @@ app.get("/api/profile/:friendCode", auth, async (req, res) => {
     [u.id]
   );
 
+  const xp = Number(u?.xp || 0);
+
   res.json({
     name: u.name,
     friendCode: u.friendcode || u.friendCode,
     avatar: u.avatar || "",
     bio: u.bio || "",
     banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
     favorites: favQ.rows.map(r => ({
       idKey: r.idkey || r.idKey,
+      game: r.game || "pokemon",
       name: r.name,
       setName: r.setname || r.setName,
       image: r.image,
