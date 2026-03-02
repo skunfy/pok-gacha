@@ -536,6 +536,27 @@
   }
   .gameBtn:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
   .gameHint{opacity:.75; font-size:12px; text-align:center; margin-top:10px}
+
+  /* ===== Logos dans le Game Picker ===== */
+  .gameBtn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .gameBtn img{
+    height:28px;              /* taille du logo */
+    max-width:140px;
+    width:auto;
+    display:block;
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,.35));
+  }
+
+  /* optionnel : logos un peu plus petits sur mobile */
+  @media (max-width:480px){
+    .gameBtn img{ height:24px; max-width:120px; }
+  }
   </style>
 </head>
 
@@ -663,13 +684,18 @@
   <div class="gameModal" id="gameModal">
     <div class="gameCard">
       <div class="gameHead">
-        <b>🎮 Choisis ton jeu</b>
+        <b> Choisis ton TCG</b>
         <span style="opacity:.75;font-size:12px;" id="gameCurrentLabel"></span>
       </div>
       <div class="gameBtns">
-        <button class="gameBtn" type="button" onclick="setGameAndClose('pokemon')">🟡 Pokémon</button>
-        <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')">🔴 One Piece</button>
-      </div>
+      <button class="gameBtn" type="button" onclick="setGameAndClose('pokemon')" aria-label="Pokémon">
+        <img src="International_Pokémon_logo.png" alt="Pokémon">
+      </button>
+
+      <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')" aria-label="One Piece">
+        <img src="One_Piece_Logo.png" alt="One Piece">
+      </button>
+</div>
       <div class="gameHint">Tu peux rechanger à tout moment avec “JEU 🎮” en haut.</div>
     </div>
   </div>
