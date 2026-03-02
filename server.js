@@ -845,6 +845,87 @@ app.post("/api/sell", auth, async (req, res) => {
     client.release();
   }
 });
+
+app.post("/api/sell_bulk", auth, async (req, res) => {
+  const items = Array.isArray(req.body?.items) ? req.body.items : [];
+  const clean = items
+    .map(x => ({
+      idKey: String(x?.idKey || ""),
+      qty: Math.max(1, Number(x?.qty || 1) | 0),
+    }))
+    .filter(x => x.idKey);
+
+  if (!clean.length) return res.status(400).json({ error: "Empty selection" });
+  if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
+
+  const client = await pool.connect();
+  try{
+    await client.query("BEGIN");
+
+    const keys = clean.map(x => x.idKey);
+
+    const q = await client.query(
+      `SELECT idKey, count, grade, mint
+       FROM collection
+       WHERE user_id=$1 AND idKey = ANY($2::text[])
+       FOR UPDATE`,
+      [req.user.id, keys]
+    );
+
+    const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
+
+    let total = 0;
+
+    for (const it of clean){
+      const row = byKey.get(it.idKey);
+      if (!row) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Not owned: " + it.idKey });
+      }
+      const owned = Number(row.count) || 0;
+      if (owned < it.qty) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Quantité insuffisante: " + it.idKey });
+      }
+
+      const unit = sellPriceFor(row.grade, Number(row.mint) === 1);
+      total += unit * it.qty;
+    }
+
+    for (const it of clean){
+      const row = byKey.get(it.idKey);
+      const owned = Number(row.count) || 0;
+
+      if (owned === it.qty){
+        await client.query(
+          `DELETE FROM collection WHERE user_id=$1 AND idKey=$2`,
+          [req.user.id, it.idKey]
+        );
+      } else {
+        await client.query(
+          `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
+          [req.user.id, it.idKey, it.qty]
+        );
+      }
+    }
+
+    await client.query(
+      `UPDATE users SET money = money + $1 WHERE id=$2`,
+      [total, req.user.id]
+    );
+
+    await client.query("COMMIT");
+
+    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    res.json({ ok:true, money: me.rows[0]?.money || 0, total });
+
+  } catch(e){
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Sell bulk failed" });
+  } finally {
+    client.release();
+  }
+});
 // =========================
 // FRIENDS ROUTES
 // =========================
