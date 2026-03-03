@@ -823,7 +823,35 @@
     }
     .cardPlaceholder img{ width:120px; }
   }
-</style>  
+
+  /* ICONE PROFILE LOGGOUT ET NOTIF LA ZONE */
+
+  /* bloc gauche (icone + texte) */
+  .profileItem .itemLeft{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+
+  /* icones PNG */
+  .profileItem .menuIcon{
+    width:18px;
+    height:18px;
+    object-fit:contain;
+    flex:0 0 auto;
+    opacity:.92;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  }
+
+  /* optionnel : un peu plus petit sur mobile */
+  @media (max-width:520px){
+    .profileItem .menuIcon{
+      width:17px;
+      height:17px;
+    }
+  }
+  </style>  
 
 
 </head>
@@ -874,10 +902,18 @@
               <small id="profileSub">Connecté</small>
             </div>
 
-            <a class="profileItem" href="/profile.html" role="menuitem">👤 Profil</a>
+            <a class="profileItem" href="/profile.html" role="menuitem">
+            <span class="itemLeft">
+              <img class="menuIcon" src="icons/profile.png" alt="" aria-hidden="true">
+              <span>Profil</span>
+            </span>
+            </a>
 
             <button class="profileItem" id="profileNotifBtn" type="button" role="menuitem">
-              🔔 Notifications
+              <span class="itemLeft">
+                <img class="menuIcon" src="notif.png" alt="" aria-hidden="true">
+                <span>Notifications</span>
+              </span>
               <span class="profilePill" id="profileNotifPill" style="display:none;">0</span>
             </button>
 
@@ -897,7 +933,10 @@
             <div class="profileSep"></div>
 
             <button class="profileItem danger" id="logout" type="button" role="menuitem">
-              🚪 Déconnexion
+              <span class="itemLeft">
+                <img class="menuIcon" src="loggout.png" alt="" aria-hidden="true">
+                <span>Déconnexion</span>
+              </span>
             </button>
           </div>
         </div>
