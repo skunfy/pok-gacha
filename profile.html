@@ -355,7 +355,7 @@ button{cursor:pointer}
 }
 
 /* =========================================================
-   ✅ APERÇU PUBLIC (copie du "profil ami" dans profile.html)
+   ✅ APERÇU PUBLIC (remplacé par un bouton)
    ========================================================= */
 .publicHead{
   display:flex;
@@ -367,121 +367,35 @@ button{cursor:pointer}
 }
 .publicHint{opacity:.75; font-size:12px}
 
-.pubBanner{
-  width:100%;
-  height:180px;
+.publicCard{
   border-radius:16px;
-  background:
-    radial-gradient(900px 420px at 15% 20%, rgba(80,130,255,.20), transparent 60%),
-    radial-gradient(900px 520px at 80% 35%, rgba(255,80,220,.16), transparent 62%),
-    rgba(0,0,0,.25);
-  border:1px solid rgba(255,255,255,.10);
-  position:relative;
-  overflow:hidden;
-}
-.pubBanner.hasImg{
-  background-position:center;
-  background-size:cover;
-  background-repeat:no-repeat;
-}
-.pubBanner::after{
-  content:"";
-  position:absolute; inset:0;
-  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
-  pointer-events:none;
-}
-.pubInner{
-  position:relative;
-  z-index:2;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
-  gap:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.18);
   padding:12px;
 }
-.pubRow{
+.publicRow{
   display:flex;
-  gap:18px;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.publicMeta{
+  display:flex;
+  gap:10px;
   align-items:center;
   flex-wrap:wrap;
 }
-.pubAvatar{
-  --glow: rgba(120,170,255,.18);
-  --glow2: rgba(190,120,255,.25);
-
-  width:110px;
-  height:110px;
-  border-radius:20px;
+.publicAvatarMini{
+  width:46px;
+  height:46px;
+  border-radius:14px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
-  position:relative;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.10),
-    0 0 34px var(--glow);
 }
-.pubAvatar::after{
-  content:"";
-  position:absolute; inset:-2px;
-  border-radius:22px;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
-    radial-gradient(circle at 70% 70%, var(--glow2), transparent 55%);
-  filter: blur(8px);
-  opacity:.55;
-}
-
-.pubBadge{
-  display:inline-flex;
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  font-weight:900;
-  font-size:12px;
-}
-
-.pubLevelRow{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-  flex-wrap:wrap;
-}
-.pubLvlPill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  font-weight:1000;
-  font-size:12px;
-}
-.pubXpBar{
-  width:min(320px, 86vw);
-  height:10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.12);
-  overflow:hidden;
-}
-.pubXpFill{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  background: rgba(120,170,255,.85);
-  transition: width .25s ease;
-}
-.pubXpText{
-  font-size:12px;
-  opacity:.75;
-}
-
-.pubBio{ opacity:.85; font-size:13px; margin-top:12px; white-space:pre-line; }
-
+.publicText b{ font-weight:1000; }
+.publicText .small{ opacity:.8; }
+.publicBtns{ display:flex; gap:10px; flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -564,53 +478,32 @@ button{cursor:pointer}
 
     <!-- ===========================
          ✅ COLONNE DROITE
-         - Aperçu public (amis)
+         - Bouton profil public
          - Cartes favorites
          =========================== -->
     <div style="display:grid; gap:16px;">
-      <!-- ✅ APERÇU PUBLIC -->
+      <!-- ✅ PROFIL PUBLIC (bouton) -->
       <div class="panel" id="publicPanel">
         <div class="publicHead">
-          <b>Aperçu public</b>
-          <span class="publicHint">Ce que tes amis voient</span>
+          <b>Profil public</b>
+          <span class="publicHint">Ouvre la vue “amis”</span>
         </div>
 
-        <div class="pubBanner" id="pubBanner">
-          <div class="pubInner">
-            <div class="pubRow">
-              <div class="pubAvatar" id="pubAvatar"></div>
-              <div>
-                <div style="font-size:20px;font-weight:1000" id="pubName">...</div>
-                <div class="pubBadge" id="pubCode">Code ami: ----</div>
-
-                <div class="pubLevelRow" aria-label="Niveau et XP">
-                  <div class="pubLvlPill">LVL <span id="pubLvl">1</span></div>
-                  <div>
-                    <div class="pubXpBar"><div class="pubXpFill" id="pubXpFill"></div></div>
-                    <div class="pubXpText" id="pubXpText">0 / 100 XP</div>
-                  </div>
-                </div>
-
+        <div class="publicCard">
+          <div class="publicRow">
+            <div class="publicMeta">
+              <div class="publicAvatarMini" id="publicAvatarMini"></div>
+              <div class="publicText">
+                <div><b id="publicName">...</b></div>
+                <div class="small">Code ami: <span id="publicFriendCode">----</span></div>
               </div>
             </div>
+            <div class="publicBtns">
+              <button id="openPublic">VOIR</button>
+              <button id="copyPublicLink">COPIER LE LIEN</button>
+            </div>
           </div>
-        </div>
-
-        <div class="pubBio" id="pubBio"></div>
-
-        <div class="statsGrid" aria-label="Statistiques publiques" style="margin-top:12px">
-          <div class="statCard">
-            <div class="k">TOTAL POKÉMON</div>
-            <div class="v" id="pubStatPokemon">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL ONE PIECE</div>
-            <div class="v" id="pubStatOnepiece">0</div>
-          </div>
-          <div class="statCard" style="grid-column:1 / -1;">
-            <div class="k">TOTAL CARTES</div>
-            <div class="v" id="pubStatTotal">0</div>
-          </div>
+          <div class="small" id="publicLinkHint" style="margin-top:10px; opacity:.8;"></div>
         </div>
       </div>
 
@@ -719,21 +612,17 @@ const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
 const zoomImg = document.getElementById("zoomImg");
 
-/* ✅ public preview DOM */
-const pubBanner = document.getElementById("pubBanner");
-const pubAvatar = document.getElementById("pubAvatar");
-const pubName = document.getElementById("pubName");
-const pubCode = document.getElementById("pubCode");
-const pubLvl = document.getElementById("pubLvl");
-const pubXpFill = document.getElementById("pubXpFill");
-const pubXpText = document.getElementById("pubXpText");
-const pubBio = document.getElementById("pubBio");
-const pubStatPokemon = document.getElementById("pubStatPokemon");
-const pubStatOnepiece = document.getElementById("pubStatOnepiece");
-const pubStatTotal = document.getElementById("pubStatTotal");
+/* ✅ profil public (bouton) DOM */
+const publicAvatarMini = document.getElementById("publicAvatarMini");
+const publicName = document.getElementById("publicName");
+const publicFriendCode = document.getElementById("publicFriendCode");
+const openPublic = document.getElementById("openPublic");
+const copyPublicLink = document.getElementById("copyPublicLink");
+const publicLinkHint = document.getElementById("publicLinkHint");
 
 let favorites = new Set();
 let allItems = [];
+let myFriendCode = "";
 
 function show(t){ msg.textContent = t || ""; }
 function escapeHtml(s){
@@ -775,11 +664,6 @@ function updateStats(items){
   statPokemon.textContent = String(p);
   statOnepiece.textContent = String(o);
   statTotal.textContent = String(p + o);
-
-  /* ✅ public preview stats = identiques */
-  pubStatPokemon.textContent = String(p);
-  pubStatOnepiece.textContent = String(o);
-  pubStatTotal.textContent = String(p + o);
 }
 
 /* ✅ zoom */
@@ -910,15 +794,6 @@ function applyXpUi(xp, level){
   document.getElementById("xpLabel").textContent = `${Math.min(x, next)} / ${next} XP`;
   document.getElementById("xpFill").style.width = `${Math.round(prog*100)}%`;
   document.getElementById("lvlRing").style.setProperty("--p", String(prog));
-
-  /* ✅ XP UI (aperçu public) — version "profil ami" */
-  const inLevel = Math.max(0, x - prev);
-  const span = Math.max(1, next - prev);
-  const pct = clamp((inLevel / span) * 100, 0, 100);
-
-  pubLvl.textContent = String(lvl);
-  pubXpFill.style.width = pct.toFixed(1) + "%";
-  pubXpText.textContent = `${inLevel} / ${span} XP`;
 }
 
 /* ✅ Level theme + glow */
@@ -962,29 +837,41 @@ function applyLevelTheme(level){
 
   if (l >= 50) profilePanel.classList.add("starsOn");
   else profilePanel.classList.remove("starsOn");
-
-  /* aperçu public (droite) */
-  pubAvatar.style.setProperty("--glow",  hexToRgba(t.glow, 0.18 + intensity*0.22));
-  pubAvatar.style.setProperty("--glow2", hexToRgba(t.glow2,0.22 + intensity*0.22));
 }
 
-/* ✅ Public preview (copie du rendu ami) */
-function renderPublicPreview(p){
-  pubName.textContent = p.name || "...";
-  pubCode.textContent = "Code ami: " + (p.friendCode || "----");
-  pubBio.textContent = p.bio || "";
+/* ✅ Profil public (bouton) */
+function publicUrlFor(friendCode){
+  // Si tu as déjà une page dédiée : /friend.html?code=XXXX-XXXX
+  // Sinon, tu peux aussi utiliser /profile.html?code=XXXX-XXXX (ton profil gère la vue ami)
+  return `/friend.html?code=${encodeURIComponent(friendCode)}`;
+}
+function renderPublicButton(p){
+  myFriendCode = (p.friendCode || "").trim().toUpperCase();
+
+  publicName.textContent = p.name || "...";
+  publicFriendCode.textContent = myFriendCode || "----";
+  publicLinkHint.textContent = myFriendCode
+    ? `Lien: ${location.origin}${publicUrlFor(myFriendCode)}`
+    : "";
 
   const av = String(p.avatar || "").trim();
-  pubAvatar.style.backgroundImage = av ? `url('${av.replace(/'/g,"\\'")}')` : "none";
+  publicAvatarMini.style.backgroundImage = av ? `url("${av.replace(/"/g,'\\"')}")` : "none";
 
-  const b = String(p.banner || "").trim();
-  if(b){
-    pubBanner.classList.add("hasImg");
-    pubBanner.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
-  }else{
-    pubBanner.classList.remove("hasImg");
-    pubBanner.style.backgroundImage = "";
-  }
+  openPublic.onclick = () => {
+    if(!myFriendCode) return;
+    location.href = publicUrlFor(myFriendCode);
+  };
+
+  copyPublicLink.onclick = async () => {
+    if(!myFriendCode) return;
+    const link = location.origin + publicUrlFor(myFriendCode);
+    try{
+      await navigator.clipboard.writeText(link);
+      show("✅ Lien du profil public copié !");
+    }catch{
+      show("Copie manuelle: " + link);
+    }
+  };
 }
 
 async function load(){
@@ -1001,11 +888,17 @@ async function load(){
   setAvatar(p.avatar || "");
   setBanner(p.banner || "");
 
-  /* ✅ aperçu public = même data */
-  renderPublicPreview(p);
-
   applyXpUi(p.xp || 0, p.level || 1);
   applyLevelTheme(p.level || 1);
+
+  // ✅ bouton profil public seulement sur "mon profil"
+  if(!isFriendView){
+    renderPublicButton(p);
+  }else{
+    // si tu arrives en vue ami, tu peux cacher le panel
+    const publicPanel = document.getElementById("publicPanel");
+    if(publicPanel) publicPanel.style.display = "none";
+  }
 
   if(isFriendView){
     editZone.style.display = "none";
@@ -1041,28 +934,22 @@ async function load(){
 if(bio){
   bio.addEventListener("input", ()=>{
     bioCount.textContent = `${bio.value.length}/140`;
-    /* ✅ live update aperçu public */
-    pubBio.textContent = bio.value || "";
   });
 }
+
 if(avatarUrl){
   avatarUrl.addEventListener("input", ()=>{
     setAvatar(avatarUrl.value);
     const u = String(avatarUrl.value||"").trim();
-    pubAvatar.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
+    if(publicAvatarMini){
+      publicAvatarMini.style.backgroundImage = u ? `url("${u.replace(/"/g,'\\"')}")` : "none";
+    }
   });
 }
+
 if(bannerUrl){
   bannerUrl.addEventListener("input", ()=>{
     setBanner(bannerUrl.value);
-    const b = String(bannerUrl.value||"").trim();
-    if(b){
-      pubBanner.classList.add("hasImg");
-      pubBanner.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
-    }else{
-      pubBanner.classList.remove("hasImg");
-      pubBanner.style.backgroundImage = "";
-    }
   });
 }
 
