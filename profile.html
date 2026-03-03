@@ -925,8 +925,11 @@ async function load(){
   apiGame(baseO, "lorcana",  { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
 ]);
 
-  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana", set: x.set || x.setName || "" }));
-  allItems = [...itemsP, ...itemsO, ...itemsL];
+    const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",  set: x.set || x.setName || "" }));
+    const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece", set: x.set || x.setName || "" }));
+    const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",  set: x.set || x.setName || "" }));
+
+    allItems = [...itemsP, ...itemsO, ...itemsL];
 
   updateStats(allItems);
   renderFavs(allItems);
