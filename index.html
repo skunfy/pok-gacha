@@ -1078,6 +1078,13 @@
   return "POKÉMON";
   }
 
+  function toHighImage(url){
+  const u = String(url || "");
+  // règle simple: low.webp -> high.webp
+  if (u.includes("/low.webp")) return u.replace("/low.webp", "/high.webp");
+  return u;
+  }
+
   async function api(path, opts={}){
     const g = encodeURIComponent(currentGame());
     const sep = path.includes("?") ? "&" : "?";
@@ -1212,7 +1219,7 @@
     const el = document.createElement("div");
     el.className = "pill";
     el.innerHTML = `
-      <div class="thumb" style="background-image:url('${imageUrl.replace(/'/g,"\\'")}')"></div>
+      <div class="thumb" style="background-image:url('${toHighImage(imageUrl).replace(/'/g,"\\'")}')"></div>
       <div class="meta">
         <div class="line1">${isMint ? "MINT" : `Grade ${grade}`} • ${name}</div>
         <div class="line2">${setName}</div>
@@ -1418,20 +1425,29 @@
       gradeEl.textContent = c.grade;
       mintTag.style.display = c.mint ? "inline-flex" : "none";
 
+           // ✅ on force une image "high" quand c'est possible (Pokémon / Lorcana)
+      const high = toHighImage(c.imageHigh || c.image);
+      const low  = c.image;
+
       const img = new Image();
       img.onload = () => {
-        // ✅ une vraie carte => on cache le placeholder
         setPlaceholderVisible(false);
 
-        card.style.backgroundImage = `url("${img.src}")`;
-        card.dataset.high = c.imageHigh || "";
+        // ✅ Tirage: on affiche directement la high si dispo
+        card.style.backgroundImage = `url("${high}")`;
+
+        // ✅ Zoom: garde aussi la high
+        card.dataset.high = high;
+
         slab.dataset.tier = tier;
         slab.dataset.mint = c.mint ? "1" : "0";
         slab.classList.add("reveal");
         setTimeout(() => slab.classList.remove("reveal"), 450);
       };
       img.onerror = () => { subtitle.textContent = "Image introuvable"; };
-      img.src = c.image;
+
+      // on essaie de précharger la high (sinon fallback low)
+      img.src = high || low;
 
       addLog(c.name, c.set, c.grade, c.mint, c.image);
 

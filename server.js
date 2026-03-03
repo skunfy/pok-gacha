@@ -232,6 +232,11 @@ async function initDb() {
   await pool.query(`UPDATE pulls SET game='pokemon' WHERE game IS NULL;`);
   await pool.query(`UPDATE market_listings SET game='pokemon' WHERE game IS NULL;`);
 
+  // ✅ imageHigh (zoom HD)
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -434,10 +439,12 @@ async function getLorcanaCardsForSet(code){
 }
 
 function pickImageLorcana(card){
-  // Lorcast renvoie souvent image_uris.digital.small/normal/large (avif) :contentReference[oaicite:2]{index=2}
   const u = card?.image_uris?.digital || card?.image_uris || null;
-  const low  = u?.small  || u?.normal || u?.large || null;
+
+  // ✅ on évite "small" comme image principale (souvent trop petite)
+  const low  = u?.normal || u?.large || u?.small || null;
   const high = u?.large  || u?.normal || u?.small || null;
+
   return { low, high };
 }
 
@@ -856,23 +863,24 @@ app.post("/api/open", auth, async (req, res) => {
   const idKey = `${game}__${c.name}__${c.set}__${c.image}`;
 
  await pool.query(
-  `INSERT INTO pulls (user_id, game, name, setName, image, grade, mint, at)
-   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-  [req.user.id, game, c.name, c.set, c.image, grade, mint, now]
+  `INSERT INTO pulls (user_id, game, name, setName, image, imageHigh, grade, mint, at)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+  [req.user.id, game, c.name, c.set, c.image, c.imageHigh || c.image, grade, mint, now]
 );
 
   await pool.query(
   `
-  INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
+  INSERT INTO collection (user_id, idKey, game, name, setName, image, imageHigh, grade, mint, count, lastAt)
   VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,$9)
   ON CONFLICT (user_id, idKey)
   DO UPDATE SET
-    count = collection.count + 1,
-    grade = GREATEST(collection.grade, EXCLUDED.grade),
-    mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-    lastAt = EXCLUDED.lastAt
+  count = collection.count + 1,
+  grade = GREATEST(collection.grade, EXCLUDED.grade),
+  mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+  imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+  lastAt = EXCLUDED.lastAt
   `,
-  [req.user.id, idKey, game, c.name, c.set, c.image, grade, mint, now]
+  [req.user.id, idKey, game, c.name, c.set, c.image, (c.imageHigh || c.image), grade, mint, now]
 );
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
@@ -899,7 +907,7 @@ app.get("/api/collection", auth, async (req, res) => {
   const game = getGame(req);
 
   const items = await pool.query(
-  `SELECT idKey, game, name, setName, image, grade, mint, count, lastAt
+  `SELECT idKey, game, name, setName, image, imageHigh, grade, mint, count, lastAt
    FROM collection
    WHERE user_id=$1 AND game=$2
    ORDER BY lastAt DESC`,
@@ -916,6 +924,7 @@ app.get("/api/collection", auth, async (req, res) => {
       name: x.name,
       set: x.setname || x.setName,
       image: x.image,
+      imageHigh: x.imagehigh || x.imageHigh || null,
       grade: x.grade,
       mint: Boolean(x.mint),
       count: x.count,
@@ -941,6 +950,7 @@ app.get("/api/pulls", auth, async (req, res) => {
       name: r.name,
       set: r.setname || r.setName,
       image: r.image,
+      imageHigh: r.imagehigh || r.imageHigh || null,
       grade: r.grade,
       mint: Boolean(r.mint),
       at: Number(r.at),
