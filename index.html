@@ -981,9 +981,6 @@
 
 </head>
 
-<audio id="sfxOpen" src="open.mp3" preload="auto"></audio>
-<!-- optionnel : son “reveal” -->
-
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -1178,6 +1175,9 @@
     <div class="fxParticles" id="fxParticles"></div>
     <div class="fxConfetti" id="fxConfetti"></div>
   </div>
+
+  <audio id="sfxOpen" src="open.mp3" preload="auto"></audio>
+<!-- optionnel : son “reveal” -->
 </body>
 
 
@@ -1231,7 +1231,6 @@
 
   // ---------- DOM ----------
   const sfxOpen = document.getElementById("sfxOpen");
-  const sfxReveal = document.getElementById("sfxReveal");
 
   function playSfx(a, volume = 0.8){
     if(!a) return;
@@ -1634,8 +1633,16 @@
 
   async function openOne(){
     btnOpen.disabled = true;
-    playSfx(sfxOpen, 0.8);
-    a.playbackRate = 0.96 + Math.random()*0.10;
+    function playSfx(a, volume = 0.8){
+    if(!a) return;
+    try{
+      a.pause();
+      a.currentTime = 0;
+      a.volume = volume;
+      a.playbackRate = 0.96 + Math.random()*0.10; // ✅ ici
+      a.play().catch(()=>{});
+    }catch{}
+   }
 
     slab.classList.remove("shake");
     void slab.offsetWidth;
