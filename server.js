@@ -399,18 +399,16 @@ const lorSetCardsCache = new Map(); // code -> {at, list}
 
 async function getLorcanaSets(){
   const now = Date.now();
-  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) {
-    return lorSetsCache.list;
-  }
+  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) return lorSetsCache.list;
 
   const r = await fetchWithTimeout(`${LORCANA_BASE}/sets`, 20000);
-  if (!r.ok) throw new Error("LORCAST sets failed");
+  if (!r.ok) throw new Error("LORCAST sets failed HTTP " + r.status);
 
-  const list = await r.json().catch(()=> null);
+  const json = await r.json().catch(()=> null);
+  const list = Array.isArray(json) ? json : (json?.data || json?.sets || []);
   if (!Array.isArray(list) || !list.length) throw new Error("LORCAST sets empty");
 
   lorSetsCache = { at: now, list };
-  console.log(`🌐 cached Lorcana sets: ${list.length}`);
   return list;
 }
 
@@ -420,13 +418,13 @@ async function getLorcanaCardsForSet(code){
   if (cached?.list?.length && now - cached.at < LORCANA_CARDS_TTL_MS) return cached.list;
 
   const r = await fetchWithTimeout(`${LORCANA_BASE}/sets/${encodeURIComponent(code)}/cards`, 20000);
-  if (!r.ok) throw new Error("LORCAST set cards failed");
+  if (!r.ok) throw new Error("LORCAST set cards failed HTTP " + r.status);
 
-  const list = await r.json().catch(()=> null);
+  const json = await r.json().catch(()=> null);
+  const list = Array.isArray(json) ? json : (json?.data || json?.cards || []);
   if (!Array.isArray(list) || !list.length) throw new Error("LORCAST set cards empty");
 
   lorSetCardsCache.set(code, { at: now, list });
-  console.log(`🌐 cached Lorcana set ${code}: ${list.length} cards`);
   return list;
 }
 
@@ -597,9 +595,8 @@ if (game === "onepiece") {
     // On tente plusieurs sets si jamais une réponse est vide
     for (let attempt = 0; attempt < 8; attempt++) {
       const s = sets[Math.floor(Math.random() * sets.length)] || {};
-      const setCode =
-        pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
-        null;
+      const sets = await getLorcanaSets();
+      console.log("LORCANA set sample keys:", Object.keys(sets[0] || {}), sets[0]);
 
       if (!setCode) continue;
 
@@ -826,10 +823,11 @@ app.post("/api/open", auth, async (req, res) => {
   let c;
   try {
     c = await drawCard(game);
-  } catch (e) {
+    } catch (e) {
+    console.error("❌ drawCard failed:", { game, message: e?.message, stack: e?.stack });
     await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
-    return res.status(502).json({ error: "Erreur image (réessaie)" });
-  }
+    return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
+}
 
       // ✅ XP SELL
 
@@ -1286,7 +1284,7 @@ app.post("/api/market/list", auth, async (req, res) => {
 
   // game vient de l'idKey (game__...)
   const game = String(idKey.split("__")[0] || "pokemon").toLowerCase();
-  const safeGame = game === "onepiece" ? "onepiece" : "pokemon";
+  const safeGame = (game === "onepiece") ? "onepiece" : (game === "lorcana") ? "lorcana" : "pokemon";
 
   const client = await pool.connect();
   try {
