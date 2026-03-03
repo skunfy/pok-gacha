@@ -864,21 +864,21 @@ app.post("/api/open", auth, async (req, res) => {
 
  await pool.query(
   `INSERT INTO pulls (user_id, game, name, setName, image, imageHigh, grade, mint, at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
   [req.user.id, game, c.name, c.set, c.image, c.imageHigh || c.image, grade, mint, now]
 );
 
   await pool.query(
   `
   INSERT INTO collection (user_id, idKey, game, name, setName, image, imageHigh, grade, mint, count, lastAt)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,1,$9)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,$10)
   ON CONFLICT (user_id, idKey)
   DO UPDATE SET
-  count = collection.count + 1,
-  grade = GREATEST(collection.grade, EXCLUDED.grade),
-  mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-  imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
-  lastAt = EXCLUDED.lastAt
+    count = collection.count + 1,
+    grade = GREATEST(collection.grade, EXCLUDED.grade),
+    mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+    imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+    lastAt = EXCLUDED.lastAt
   `,
   [req.user.id, idKey, game, c.name, c.set, c.image, (c.imageHigh || c.image), grade, mint, now]
 );
@@ -937,7 +937,7 @@ app.get("/api/pulls", auth, async (req, res) => {
   const game = getGame(req);
 
   const rows = await pool.query(
-  `SELECT game, name, setName, image, grade, mint, at
+  `SELECT game, name, setName, image, imageHigh, grade, mint, at
    FROM pulls
    WHERE user_id=$1 AND game=$2
    ORDER BY at DESC
