@@ -330,11 +330,55 @@ th{
 .profileBtn:active{ transform: translateY(0px) scale(.99); }
 
 /* highlight me */
+/* ===== ME (super visible) ===== */
 .meHighlight td{
-  background: linear-gradient(90deg, rgba(120,170,255,.14), rgba(190,120,255,.08));
+  background:
+    linear-gradient(90deg,
+      rgba(120,170,255,.22) 0%,
+      rgba(190,120,255,.12) 55%,
+      rgba(0,0,0,0) 100%);
 }
+
+.meHighlight{
+  position:relative;
+}
+
+.meHighlight::before{
+  content:"";
+  position:absolute;
+  left:0; top:0; bottom:0;
+  width:4px;
+  background: linear-gradient(180deg, rgba(120,170,255,.95), rgba(190,120,255,.95));
+  box-shadow: 0 0 22px rgba(120,170,255,.35);
+}
+
+.meHighlight td:first-child{
+  border-top-left-radius:14px;
+  border-bottom-left-radius:14px;
+}
+.meHighlight td:last-child{
+  border-top-right-radius:14px;
+  border-bottom-right-radius:14px;
+}
+
 .meHighlight:hover td{
-  background: linear-gradient(90deg, rgba(120,170,255,.18), rgba(190,120,255,.10));
+  background:
+    linear-gradient(90deg,
+      rgba(120,170,255,.28) 0%,
+      rgba(190,120,255,.16) 55%,
+      rgba(0,0,0,0) 100%);
+}
+
+.meTag{
+  margin-left:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  border:1px solid rgba(120,170,255,.35);
+  background: rgba(120,170,255,.14);
+  color:#fff;
+  box-shadow: 0 0 18px rgba(120,170,255,.18);
 }
 
 /* ===== MOBILE ===== */
@@ -476,7 +520,10 @@ function rowHtml(x, myRank){
       <td>
         <div class="nameCell">
           <div class="avatar" style="background-image:url('${av.replace(/'/g,"\\'")}')"></div>
-          <div class="nameText">${esc(x.name)}</div>
+          <div class="nameText">
+            ${esc(x.name)}
+            ${x.rank === myRank ? `<span class="meTag">TOI</span>` : ``}
+          </div>
           <button class="profileBtn" type="button" onclick="openProfile('${esc(go)}')">Profil</button>
         </div>
       </td>

@@ -1787,14 +1787,14 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
 
   // Top joueurs
   const topQ = await pool.query(
-    `
-    SELECT id, name, xp, avatar
-    FROM users
-    ORDER BY xp DESC, createdAt ASC, id ASC
-    LIMIT $1
-    `,
-    [limit]
-  );
+  `
+  SELECT id, name, xp, avatar, friendCode
+  FROM users
+  ORDER BY xp DESC, createdAt ASC, id ASC
+  LIMIT $1
+  `,
+  [limit]
+);
 
   // Rang du joueur connecté (global)
   const meRankQ = await pool.query(
@@ -1814,8 +1814,9 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
     name: u.name,
     xp: Number(u.xp || 0),
     level: levelForXp(u.xp || 0),
-    avatar: u.avatar || ""
-  }));
+    avatar: u.avatar || "",
+    friendCode: u.friendcode || u.friendCode || ""
+}));
 
   res.json({
     top,
