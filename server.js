@@ -281,9 +281,13 @@ function levelForXp(xp){
   return Math.floor(Math.sqrt(x / 100)) + 1;
 }
 
-function xpForOpen(){
-  return 5; // tu peux changer
+function xpForOpen(grade){
+  if (grade === 10) return 50;
+  if (grade >= 8) return 25;
+  if (grade >= 5) return 15;
+  return 10;
 }
+
 
 function xpForSell(unitPrice, qty){
   // logique simple: tu gagnes autant d'XP que d'argent (ou *2 si tu veux)
