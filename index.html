@@ -183,92 +183,57 @@
     font-size:11px;
   }
 }
+/* VERSION SANS CADRE */
 
-  .logoutIcon{
-    width:44px;
-    height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex:0 0 auto;
+.notifIcon,
+.logoutIcon{
+  position:relative;
+  width:36px;
+  height:36px;
 
-    border-radius:14px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    backdrop-filter: blur(10px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-    transition: transform .12s ease, background .12s ease, border-color .12s ease;
-    text-decoration:none;
-  }
+  background:transparent;
+  border:none;
+  backdrop-filter:none;
 
-  .logoutIcon img{
-    width:20px;
-    height:20px;
-    object-fit:contain;
-    opacity:.9;
-    filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
-  }
+  transition: transform .15s ease, opacity .15s ease;
+}
 
-  .logoutIcon:hover{
-    background:rgba(255,255,255,.10);
-    border-color: rgba(255,255,255,.20);
-    transform: translateY(-1px);
-  }
+.notifIcon img,
+.logoutIcon img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  opacity:.85;
 
-  .logoutIcon:active{
-    transform: translateY(0px) scale(.97);
-  }
+  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+}
 
-  .logoutIcon:hover img{
-    opacity:1;
-  }
+/* hover clean glow */
+.notifIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter:
+    drop-shadow(0 0 10px rgba(190,120,255,.6))
+    drop-shadow(0 0 20px rgba(120,170,255,.5));
+}
 
-  .notifIcon{
-    position:relative;
-    width:44px;
-    height:44px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex:0 0 auto;
+.logoutIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter:
+    drop-shadow(0 0 8px rgba(255,80,80,.55));
+}
 
-    border-radius:14px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    backdrop-filter: blur(10px);
+.notifIcon:active img,
+.logoutIcon:active img{
+  transform: scale(.92);
+}
 
-    transition: transform .12s ease, background .12s ease, border-color .12s ease;
-    cursor:pointer;
-  }
 
-  .notifIcon img{
-    width:20px;
-    height:20px;
-    object-fit:contain;
-    opacity:.9;
-
-    /* ton bleu/violet subtil */
-    filter:
-      drop-shadow(0 0 8px rgba(120,170,255,.35))
-      drop-shadow(0 0 14px rgba(190,120,255,.25));
-  }
-
-  .notifIcon:hover{
-    background:rgba(255,255,255,.10);
-    border-color: rgba(120,170,255,.35);
-    transform: translateY(-1px);
-  }
-
-  .notifIcon:active{
-    transform: translateY(0px) scale(.97);
-  }
-
-  .notifIcon:hover img{
-    opacity:1;
-    filter:
-      drop-shadow(0 0 12px rgba(120,170,255,.55))
-      drop-shadow(0 0 18px rgba(190,120,255,.45));
-  }
   /* Logo dans la topbar */
   .cornerLogo{
     position: static;
