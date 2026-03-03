@@ -655,9 +655,9 @@ app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
   const userQ = await pool.query(
-    `SELECT name, money, friendCode, xp FROM users WHERE id=$1`,
-    [req.user.id]
-  );
+  `SELECT name, money, friendCode, xp, avatar FROM users WHERE id=$1`,
+  [req.user.id]
+);
   const u = userQ.rows[0];
 
   // si ancien compte sans friendCode
@@ -703,7 +703,8 @@ app.get("/api/me", auth, async (req, res) => {
     g10: s.g10 || 0,
     mint: s.mint || 0,
     xp: Number(u?.xp || 0),
-    level: levelForXp(u?.xp || 0)
+    level: levelForXp(u?.xp || 0),
+    avatar: u?.avatar || "",
     
   });
 });
