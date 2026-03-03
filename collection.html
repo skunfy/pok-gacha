@@ -27,10 +27,11 @@ body{
 }
 
 .wrap{
-  width:min(1500px,95vw);
+  width:min(1200px,95vw);
   margin:24px auto;
   display:grid;
   gap:16px;
+  min-height:100vh;
 }
 
 /* ===== Topbar ===== */
@@ -89,8 +90,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.10);
   padding:20px;
-  max-height:820px;
-  overflow:auto;
+  flex:1;
 }
 
 /* grid responsive auto */
