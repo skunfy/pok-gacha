@@ -475,6 +475,12 @@ function tierFromGrade(g){
   return "w";
 }
 
+function toHighImage(url){
+  const u = String(url || "");
+  if (u.includes("/low.webp")) return u.replace("/low.webp", "/high.webp");
+  return u;
+}
+
 // affichage prix côté UI (le serveur reste la source de vérité)
 function sellPriceLabel(grade, mint){
   if (mint) return 20;
@@ -594,8 +600,13 @@ function render(items){
     const wasSelected = selected.has(x.idKey);
     const selQty = selected.get(x.idKey) || 1;
 
+     const imgForCard =
+      (currentGame() === "pokemon" || currentGame() === "lorcana")
+        ? toHighImage(x.image)
+        : x.image;
+
     el.innerHTML=`
-      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div class="cImg" style="background-image:url('${imgForCard}')"></div>
 
       <div class="selRow" style="margin-top:10px;">
         <div style="opacity:.75;font-size:12px;">${gameTag}</div>
