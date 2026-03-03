@@ -32,7 +32,7 @@ body{
   border:1px solid rgba(255,255,255,.10);
   padding:20px;
   backdrop-filter:blur(10px);
-  overflow:hidden; /* ✅ pour couper la bannière si besoin */
+  overflow:hidden;
 }
 
 /* ✅ BANNIÈRE */
@@ -48,23 +48,17 @@ body{
   position:relative;
   overflow:hidden;
 }
-
-/* image réelle en cover */
 .banner.hasImg{
   background-position:center;
   background-size:cover;
   background-repeat:no-repeat;
 }
-
-/* petit voile pour que le texte reste lisible */
 .banner::after{
   content:"";
   position:absolute; inset:0;
   background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
   pointer-events:none;
 }
-
-/* contenu par-dessus la bannière */
 .bannerInner{
   position:relative;
   z-index:2;
@@ -83,8 +77,11 @@ body{
   flex-wrap:wrap;
 }
 
-/* ✅ avatar + glow */
+/* ✅ avatar + glow via variables */
 .avatar{
+  --glow: rgba(120,170,255,.18);
+  --glow2: rgba(190,120,255,.25);
+
   width:110px;
   height:110px;
   border-radius:20px;
@@ -93,7 +90,7 @@ body{
   position:relative;
   box-shadow:
     0 0 0 1px rgba(255,255,255,.10),
-    0 0 34px rgba(120,170,255,.18);
+    0 0 34px var(--glow);
 }
 .avatar::after{
   content:"";
@@ -101,8 +98,8 @@ body{
   border-radius:22px;
   pointer-events:none;
   background:
-    radial-gradient(circle at 30% 30%, rgba(120,170,255,.35), transparent 55%),
-    radial-gradient(circle at 70% 70%, rgba(190,120,255,.25), transparent 55%);
+    radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--glow2), transparent 55%);
   filter: blur(8px);
   opacity:.55;
 }
@@ -182,6 +179,45 @@ button:active{ transform: translateY(0px) scale(.99); }
 }
 .statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
 .statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
+
+/* ✅ LVL + XP */
+.levelRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.lvlPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:1000;
+  font-size:12px;
+}
+.xpBar{
+  width:min(320px, 86vw);
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.xpFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background: rgba(120,170,255,.85);
+  transition: width .25s ease;
+}
+.xpText{
+  font-size:12px;
+  opacity:.75;
+}
 
 /* ✅ MODAL ZOOM */
 .modal{
@@ -271,7 +307,6 @@ button:active{ transform: translateY(0px) scale(.99); }
   <div class="panel">
     <button onclick="history.back()">← Retour</button>
 
-    <!-- ✅ BANNIÈRE -->
     <div class="banner" id="banner" style="margin-top:16px">
       <div class="bannerInner">
         <div class="profileRow">
@@ -279,6 +314,16 @@ button:active{ transform: translateY(0px) scale(.99); }
           <div>
             <div style="font-size:20px;font-weight:1000" id="name">...</div>
             <div class="badge" id="code">----</div>
+
+            <!-- ✅ LVL + XP dans la bannière -->
+            <div class="levelRow" aria-label="Niveau et XP">
+              <div class="lvlPill">LVL <span id="lvl">1</span></div>
+              <div>
+                <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+                <div class="xpText" id="xpText">0 / 100 XP</div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -286,7 +331,6 @@ button:active{ transform: translateY(0px) scale(.99); }
 
     <div class="msg" id="bio" style="margin-top:14px"></div>
 
-    <!-- ✅ STATS -->
     <div class="statsGrid" aria-label="Statistiques" style="margin-top:12px">
       <div class="statCard">
         <div class="k">TOTAL POKÉMON</div>
@@ -310,7 +354,6 @@ button:active{ transform: translateY(0px) scale(.99); }
 
 </div>
 
-<!-- ✅ MODAL ZOOM -->
 <div class="modal" id="zoomModal" aria-hidden="true">
   <div class="zoomCard" role="dialog" aria-modal="true">
     <div class="zoomHead">
@@ -353,6 +396,43 @@ function escapeHtml(s){
 
 function gameLabel(g){
   return (String(g).toLowerCase() === "onepiece") ? "ONE PIECE" : "POKÉMON";
+}
+
+/* ✅ XP math (doit matcher backend levelForXp) */
+function xpForLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+  return 100 * Math.pow(l - 1, 2);
+}
+function applyXpUi(xp, level){
+  const l = Math.max(1, Number(level) || 1);
+  const curNeed = xpForLevel(l);
+  const nextNeed = xpForLevel(l + 1);
+
+  const x = Math.max(0, Number(xp) || 0);
+  const inLevel = Math.max(0, x - curNeed);
+  const span = Math.max(1, nextNeed - curNeed);
+  const pct = Math.max(0, Math.min(100, (inLevel / span) * 100));
+
+  document.getElementById("lvl").textContent = String(l);
+  document.getElementById("xpFill").style.width = pct.toFixed(1) + "%";
+  document.getElementById("xpText").textContent = `${inLevel} / ${span} XP`;
+}
+
+/* ✅ Glow selon level */
+function setAvatarGlowByLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+  const av = document.getElementById("avatar");
+
+  let glow = "rgba(120,170,255,.18)";
+  let glow2 = "rgba(190,120,255,.25)";
+
+  if (l >= 5)  { glow = "rgba(120,255,200,.18)"; glow2 = "rgba(120,255,200,.28)"; }
+  if (l >= 10) { glow = "rgba(255,210,120,.20)"; glow2 = "rgba(255,180,90,.30)"; }
+  if (l >= 20) { glow = "rgba(255,120,220,.22)"; glow2 = "rgba(190,120,255,.30)"; }
+  if (l >= 35) { glow = "rgba(255,80,80,.22)";  glow2 = "rgba(255,130,90,.30)"; }
+
+  av.style.setProperty("--glow", glow);
+  av.style.setProperty("--glow2", glow2);
 }
 
 /* ✅ STATS exactes depuis la collection */
@@ -404,6 +484,12 @@ const params = new URLSearchParams(location.search);
 const friendCode = (params.get("code")||"").toUpperCase();
 
 async function load(){
+  if(!friendCode){
+    alert("Code ami manquant dans l’URL ?code=XXXX-XXXX");
+    history.back();
+    return;
+  }
+
   const data = await api("/api/profile/"+encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
@@ -411,11 +497,11 @@ async function load(){
   document.getElementById("bio").textContent = data.bio || "";
 
   // ✅ avatar
+  const av = document.getElementById("avatar");
   if(data.avatar){
-    document.getElementById("avatar").style.backgroundImage =
-      `url('${data.avatar.replace(/'/g,"\\'")}')`;
+    av.style.backgroundImage = `url('${String(data.avatar).replace(/'/g,"\\'")}')`;
   } else {
-    document.getElementById("avatar").style.backgroundImage = "none";
+    av.style.backgroundImage = "none";
   }
 
   // ✅ bannière
@@ -429,6 +515,10 @@ async function load(){
     bannerEl.style.backgroundImage = "";
   }
 
+  // ✅ lvl/xp + glow
+  applyXpUi(data.xp || 0, data.level || 1);
+  setAvatarGlowByLevel(data.level || 1);
+
   // ✅ stats (pokemon + onepiece)
   const [cP, cO] = await Promise.all([
     api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=pokemon").catch(()=> ({ items: [] })),
@@ -436,7 +526,7 @@ async function load(){
   ]);
   updateStatsFromCollection(cP.items || [], cO.items || []);
 
-  // render favoris
+  // favoris
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
@@ -453,7 +543,7 @@ async function load(){
       <div class="cImg" style="background-image:url('${x.image}')"></div>
       <div><b>${escapeHtml(x.name)}</b></div>
       <div class="small">${escapeHtml(x.setName)}</div>
-      <div class="small">Grade ${x.grade}${x.mint?" • MINT":""}</div>
+      <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
 
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
