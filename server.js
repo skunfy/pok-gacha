@@ -390,7 +390,7 @@ async function getCardDetailById(id) {
 // =========================
 // LORCANA (LORCAST) ONLINE CACHE
 // =========================
-const LORCANA_BASE = "https://lorcast.com/api/v0"; // docs: Lorcast API :contentReference[oaicite:1]{index=1}
+const LORCANA_BASE = "https://api.lorcast.com/v0"; // docs: Lorcast API :contentReference[oaicite:1]{index=1}
 const LORCANA_SETS_TTL_MS  = 6 * 60 * 60 * 1000;   // 6h
 const LORCANA_CARDS_TTL_MS = 6 * 60 * 60 * 1000;   // 6h (par set)
 
@@ -399,16 +399,21 @@ const lorSetCardsCache = new Map(); // code -> {at, list}
 
 async function getLorcanaSets(){
   const now = Date.now();
-  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) return lorSetsCache.list;
+  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) {
+    return lorSetsCache.list;
+  }
 
   const r = await fetchWithTimeout(`${LORCANA_BASE}/sets`, 20000);
-  if (!r.ok) throw new Error("LORCAST sets failed HTTP " + r.status);
+  if (!r.ok) throw new Error(`LORCAST sets failed HTTP ${r.status}`);
 
-  const json = await r.json().catch(()=> null);
-  const list = Array.isArray(json) ? json : (json?.data || json?.sets || []);
+  const data = await r.json().catch(()=> null);
+
+  // ✅ /sets -> { results: [...] }
+  const list = Array.isArray(data) ? data : (data?.results || []);
   if (!Array.isArray(list) || !list.length) throw new Error("LORCAST sets empty");
 
   lorSetsCache = { at: now, list };
+  console.log(`🌐 cached Lorcana sets: ${list.length}`);
   return list;
 }
 
