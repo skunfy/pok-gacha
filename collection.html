@@ -417,7 +417,8 @@ if(!TOKEN) location.href="/login.html";
 
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  return (g === "onepiece") ? "onepiece" : "pokemon";
+  if (g === "pokemon" || g === "onepiece" || g === "lorcana") return g;
+  return "pokemon";
 }
 
 async function api(path, opts = {}){
@@ -578,7 +579,11 @@ function render(items){
     const el=document.createElement("div");
     el.className="cardBox";
 
-    const gameTag = (x.game || currentGame()) === "onepiece" ? "🟥 One Piece" : "🟨 Pokémon";
+    const g = (x.game || currentGame());
+    const gameTag =
+    g === "onepiece" ? "🟥 One Piece" :
+    g === "lorcana" ? "🟦 Lorcana" :
+    "🟨 Pokémon";
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 
     const wasSelected = selected.has(x.idKey);
