@@ -1633,6 +1633,7 @@
 
   async function openOne(){
     btnOpen.disabled = true;
+    playSfx(sfxOpen, 0.8); // ✅ AJOUTE ÇA
     function playSfx(a, volume = 0.8){
     if(!a) return;
     try{
