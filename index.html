@@ -820,15 +820,13 @@
 <audio id="sfxOpen" src="open.mp3" preload="auto"></audio>
 <!-- optionnel : son “reveal” -->
 
-
 <body>
-  
-
   <div class="wrap">
     <div class="topbar">
       <a class="cornerLogo" href="/" aria-label="Accueil">
-      <img src="poke.png" alt="Logo" />
+        <img src="poke.png" alt="Logo" />
       </a>
+
       <div class="brandRow">
         <div class="brand">
           <b>Gachax</b>
@@ -851,48 +849,49 @@
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
-        <a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
-          <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
-          <span class="lvlBubble" id="miniLvl">1</span>
-        </a>
 
-        <!-- ✅ PROFILE DROPDOWN (remplace notif + logout visibles) -->
-  <div class="profileWrap" id="profileWrap">
-    <!-- on réutilise ton miniProfileLink mais sans navigation directe -->
-    <button class="miniProfileLink" id="profileBtn" type="button" aria-label="Menu profil" aria-expanded="false">
-      <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
-      <span class="lvlBubble" id="miniLvl">1</span>
-    </button>
+        <!-- ✅ PROFILE DROPDOWN (avatar = bouton) -->
+        <div class="profileWrap" id="profileWrap">
+          <button class="miniProfileLink" id="profileBtn" type="button" aria-label="Menu profil" aria-expanded="false">
+            <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+            <span class="lvlBubble" id="miniLvl">1</span>
+          </button>
 
-    <div class="profileMenu" id="profileMenu" role="menu" aria-label="Menu profil">
-      <div class="profileHeader">
-        <b id="profileName">Mon compte</b>
-        <small id="profileSub">Connecté</small>
-      </div>
+          <div class="profileMenu" id="profileMenu" role="menu" aria-label="Menu profil">
+            <div class="profileHeader">
+              <b id="profileName">Mon compte</b>
+              <small id="profileSub">Connecté</small>
+            </div>
 
-      <a class="profileItem" href="/profile.html" role="menuitem">👤 Profil</a>
+            <a class="profileItem" href="/profile.html" role="menuitem">👤 Profil</a>
 
-      <button class="profileItem" id="profileNotifBtn" type="button" role="menuitem">
-        🔔 Notifications
-        <span class="profilePill" id="profileNotifPill" style="display:none;">0</span>
-      </button>
+            <button class="profileItem" id="profileNotifBtn" type="button" role="menuitem">
+              🔔 Notifications
+              <span class="profilePill" id="profileNotifPill" style="display:none;">0</span>
+            </button>
 
-      <div class="profileNotifArea" id="profileNotifArea" style="display:none;">
-        <div class="profileNotifHead">
-          <b>Dernières</b>
-          <button class="notifSmallBtn" id="notifReadAll" type="button">Tout lire</button>
+            <div class="profileNotifArea" id="profileNotifArea" style="display:none;">
+              <div class="profileNotifHead">
+                <b>Dernières</b>
+                <button class="notifSmallBtn" id="notifReadAll" type="button">Tout lire</button>
+              </div>
+
+              <div class="notifList" id="notifList"></div>
+
+              <div class="notifFooter">
+                <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+              </div>
+            </div>
+
+            <div class="profileSep"></div>
+
+            <button class="profileItem danger" id="logout" type="button" role="menuitem">
+              🚪 Déconnexion
+            </button>
+          </div>
         </div>
-        <div class="notifList" id="notifList"></div>
-        <div class="notifFooter">
-          <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
-        </div>
       </div>
-
-      <div class="profileSep"></div>
-
-      <button class="profileItem danger" id="logout" type="button" role="menuitem">🚪 Déconnexion</button>
     </div>
-  </div>
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
@@ -918,7 +917,7 @@
           <img src="poke.png" alt="">
         </div>
 
-<div class="edge"></div>
+        <div class="edge"></div>
         <div class="flash"></div>
       </div>
     </div>
@@ -967,21 +966,25 @@
   <div class="gameModal" id="gameModal">
     <div class="gameCard">
       <div class="gameHead">
-        <b> Choisis ton TCG</b>
+        <b>Choisis ton TCG</b>
         <span style="opacity:.75;font-size:12px;" id="gameCurrentLabel"></span>
       </div>
-      <div class="gameBtns">
-      <button class="gameBtn" type="button" onclick="setGameAndClose('pokemon')" aria-label="Pokémon">
-        <img src="International_Pokémon_logo.png" alt="Pokémon">
-      </button>
 
-      <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')" aria-label="One Piece">
-        <img src="One_Piece_Logo.png" alt="One Piece">
-      </button>
-</div>
+      <div class="gameBtns">
+        <button class="gameBtn" type="button" onclick="setGameAndClose('pokemon')" aria-label="Pokémon">
+          <img src="International_Pokémon_logo.png" alt="Pokémon">
+        </button>
+
+        <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')" aria-label="One Piece">
+          <img src="One_Piece_Logo.png" alt="One Piece">
+        </button>
+      </div>
+
       <div class="gameHint">Tu peux rechanger à tout moment avec “TCG” en haut.</div>
     </div>
-</div>
+  </div>
+</body>
+
 
 <script>
   // --------- AUTH ---------
