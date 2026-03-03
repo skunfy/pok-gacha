@@ -851,6 +851,16 @@
       height:17px;
     }
   }
+
+  .moneyIcon{
+  width:16px;
+  height:16px;
+  object-fit:contain;
+  display:inline-block;
+  vertical-align:-3px; /* aligne mieux avec le texte */
+  margin:0 2px;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+}
   </style>  
 
 
@@ -876,7 +886,7 @@
       <div class="rightTop">
         <div class="stats">
           <div class="stat">
-            <span class="dot money"></span>
+            <img class="moneyIcon" src="dollax.png" alt="Dollax">
             <span>Dollax:</span>
             <b id="money">0</b>
           </div>
@@ -973,10 +983,15 @@
     </div>
 
     <div class="row">
-      <button id="open">OPEN (1 slab) — 5💵</button>
+      <button id="open">
+        OPEN (1 slab) — 5 <img class="moneyIcon" src="dollax.png" alt="Dollax">
+      </button>
     </div>
 
-    <div class="hint">💵 +10 dollax toutes les 15 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom</div>
+    <div class="hint">
+      <img class="moneyIcon" src="dollax.png" alt="Dollax">
+      +10 dollax toutes les 15 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom
+    </div>
 
     <div class="logWrap">
       <div class="logTitle">
@@ -1413,9 +1428,9 @@
       await loadMe();
 
     }catch(e){
-      subtitle.textContent = e.message.includes("Not enough")
-        ? "Pas assez de Pokédollars 💵"
-        : "Problème temporaire, réessaie";
+      subtitle.innerHTML = e.message.includes("Not enough")
+      ? `Pas assez de Pokédollars <img class="moneyIcon" src="dollax.png" alt="Dollax">`
+      : "Problème temporaire, réessaie";
       await loadMe();
     }
   }
