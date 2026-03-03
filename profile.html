@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Profil — Pokégacha</title>
+<title>Profil — Gachax</title>
 <style>
 :root{ --bg1:#05060d; --bg2:#090b18; }
 *{box-sizing:border-box}
@@ -353,6 +353,135 @@ button{cursor:pointer}
   font-size:12px;
   text-align:center;
 }
+
+/* =========================================================
+   ✅ APERÇU PUBLIC (copie du "profil ami" dans profile.html)
+   ========================================================= */
+.publicHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.publicHint{opacity:.75; font-size:12px}
+
+.pubBanner{
+  width:100%;
+  height:180px;
+  border-radius:16px;
+  background:
+    radial-gradient(900px 420px at 15% 20%, rgba(80,130,255,.20), transparent 60%),
+    radial-gradient(900px 520px at 80% 35%, rgba(255,80,220,.16), transparent 62%),
+    rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.10);
+  position:relative;
+  overflow:hidden;
+}
+.pubBanner.hasImg{
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+.pubBanner::after{
+  content:"";
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
+  pointer-events:none;
+}
+.pubInner{
+  position:relative;
+  z-index:2;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:12px;
+  padding:12px;
+}
+.pubRow{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.pubAvatar{
+  --glow: rgba(120,170,255,.18);
+  --glow2: rgba(190,120,255,.25);
+
+  width:110px;
+  height:110px;
+  border-radius:20px;
+  background:rgba(0,0,0,.25) center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.12);
+  position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 34px var(--glow);
+}
+.pubAvatar::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:22px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--glow2), transparent 55%);
+  filter: blur(8px);
+  opacity:.55;
+}
+
+.pubBadge{
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:900;
+  font-size:12px;
+}
+
+.pubLevelRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.pubLvlPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:1000;
+  font-size:12px;
+}
+.pubXpBar{
+  width:min(320px, 86vw);
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.pubXpFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background: rgba(120,170,255,.85);
+  transition: width .25s ease;
+}
+.pubXpText{
+  font-size:12px;
+  opacity:.75;
+}
+
+.pubBio{ opacity:.85; font-size:13px; margin-top:12px; white-space:pre-line; }
+
 </style>
 </head>
 <body>
@@ -367,6 +496,9 @@ button{cursor:pointer}
   </div>
 
   <div class="grid2">
+    <!-- =======================
+         ✅ TON PROFIL (édition)
+         ======================= -->
     <div class="panel profilePanel" id="profilePanel">
       <div class="profileBanner" id="bannerPreview" style="display:none;"></div>
       <div class="bannerStars" aria-hidden="true"></div>
@@ -392,7 +524,6 @@ button{cursor:pointer}
                 <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
               </div>
             </div>
-
           </div>
         </div>
 
@@ -431,16 +562,71 @@ button{cursor:pointer}
       </div>
     </div>
 
-    <div class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
-        <b>Cartes favorites</b>
-        <span class="small">Max 12</span>
+    <!-- ===========================
+         ✅ COLONNE DROITE
+         - Aperçu public (amis)
+         - Cartes favorites
+         =========================== -->
+    <div style="display:grid; gap:16px;">
+      <!-- ✅ APERÇU PUBLIC -->
+      <div class="panel" id="publicPanel">
+        <div class="publicHead">
+          <b>Aperçu public</b>
+          <span class="publicHint">Ce que tes amis voient</span>
+        </div>
+
+        <div class="pubBanner" id="pubBanner">
+          <div class="pubInner">
+            <div class="pubRow">
+              <div class="pubAvatar" id="pubAvatar"></div>
+              <div>
+                <div style="font-size:20px;font-weight:1000" id="pubName">...</div>
+                <div class="pubBadge" id="pubCode">Code ami: ----</div>
+
+                <div class="pubLevelRow" aria-label="Niveau et XP">
+                  <div class="pubLvlPill">LVL <span id="pubLvl">1</span></div>
+                  <div>
+                    <div class="pubXpBar"><div class="pubXpFill" id="pubXpFill"></div></div>
+                    <div class="pubXpText" id="pubXpText">0 / 100 XP</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pubBio" id="pubBio"></div>
+
+        <div class="statsGrid" aria-label="Statistiques publiques" style="margin-top:12px">
+          <div class="statCard">
+            <div class="k">TOTAL POKÉMON</div>
+            <div class="v" id="pubStatPokemon">0</div>
+          </div>
+          <div class="statCard">
+            <div class="k">TOTAL ONE PIECE</div>
+            <div class="v" id="pubStatOnepiece">0</div>
+          </div>
+          <div class="statCard" style="grid-column:1 / -1;">
+            <div class="k">TOTAL CARTES</div>
+            <div class="v" id="pubStatTotal">0</div>
+          </div>
+        </div>
       </div>
-      <div class="msg small">Ajoute/enlève des ⭐ depuis ta collection en bas.</div>
-      <div class="grid" id="favGrid" style="margin-top:12px"></div>
+
+      <!-- ✅ FAVORIS -->
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
+          <b>Cartes favorites</b>
+          <span class="small">Max 12</span>
+        </div>
+        <div class="msg small">Ajoute/enlève des ⭐ depuis ta collection en bas.</div>
+        <div class="grid" id="favGrid" style="margin-top:12px"></div>
+      </div>
     </div>
   </div>
 
+  <!-- ✅ COLLECTION -->
   <div class="panel" id="myCollectionPanel">
     <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
       <b id="collectionTitle">Ta collection (clic ⭐ pour favori)</b>
@@ -457,6 +643,7 @@ button{cursor:pointer}
   </div>
 </div>
 
+<!-- ✅ ZOOM -->
 <div class="modal" id="zoomModal" aria-hidden="true">
   <div class="zoomCard" role="dialog" aria-modal="true">
     <div class="zoomHead">
@@ -532,6 +719,19 @@ const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
 const zoomImg = document.getElementById("zoomImg");
 
+/* ✅ public preview DOM */
+const pubBanner = document.getElementById("pubBanner");
+const pubAvatar = document.getElementById("pubAvatar");
+const pubName = document.getElementById("pubName");
+const pubCode = document.getElementById("pubCode");
+const pubLvl = document.getElementById("pubLvl");
+const pubXpFill = document.getElementById("pubXpFill");
+const pubXpText = document.getElementById("pubXpText");
+const pubBio = document.getElementById("pubBio");
+const pubStatPokemon = document.getElementById("pubStatPokemon");
+const pubStatOnepiece = document.getElementById("pubStatOnepiece");
+const pubStatTotal = document.getElementById("pubStatTotal");
+
 let favorites = new Set();
 let allItems = [];
 
@@ -549,7 +749,6 @@ function setAvatar(url){
   const u = (url||"").trim();
   avatarPreview.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
 }
-
 function setBanner(url){
   const u = (url||"").trim();
   if(!u){
@@ -576,6 +775,11 @@ function updateStats(items){
   statPokemon.textContent = String(p);
   statOnepiece.textContent = String(o);
   statTotal.textContent = String(p + o);
+
+  /* ✅ public preview stats = identiques */
+  pubStatPokemon.textContent = String(p);
+  pubStatOnepiece.textContent = String(o);
+  pubStatTotal.textContent = String(p + o);
 }
 
 /* ✅ zoom */
@@ -689,7 +893,7 @@ function getFriendCodeFromUrl(){
   return v ? v.toUpperCase() : "";
 }
 
-/* ✅ XP UI */
+/* ✅ XP UI (profil) */
 function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
 function prevXpForLevel(lvl){ return 100 * Math.pow(Math.max(0,lvl-1), 2); }
 function nextXpForLevel(lvl){ return 100 * Math.pow(Math.max(1,lvl), 2); }
@@ -706,9 +910,18 @@ function applyXpUi(xp, level){
   document.getElementById("xpLabel").textContent = `${Math.min(x, next)} / ${next} XP`;
   document.getElementById("xpFill").style.width = `${Math.round(prog*100)}%`;
   document.getElementById("lvlRing").style.setProperty("--p", String(prog));
+
+  /* ✅ XP UI (aperçu public) — version "profil ami" */
+  const inLevel = Math.max(0, x - prev);
+  const span = Math.max(1, next - prev);
+  const pct = clamp((inLevel / span) * 100, 0, 100);
+
+  pubLvl.textContent = String(lvl);
+  pubXpFill.style.width = pct.toFixed(1) + "%";
+  pubXpText.textContent = `${inLevel} / ${span} XP`;
 }
 
-/* ✅ Level theme + glow + stars */
+/* ✅ Level theme + glow */
 function hexToRgba(hex, a){
   const h = String(hex||"").replace("#","").trim();
   const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
@@ -739,6 +952,7 @@ function applyLevelTheme(level){
   const t = themeForLevel(l);
   const intensity = intensityForLevel(l);
 
+  /* profil (gauche) */
   avatarPreview.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
   avatarPreview.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
 
@@ -748,6 +962,29 @@ function applyLevelTheme(level){
 
   if (l >= 50) profilePanel.classList.add("starsOn");
   else profilePanel.classList.remove("starsOn");
+
+  /* aperçu public (droite) */
+  pubAvatar.style.setProperty("--glow",  hexToRgba(t.glow, 0.18 + intensity*0.22));
+  pubAvatar.style.setProperty("--glow2", hexToRgba(t.glow2,0.22 + intensity*0.22));
+}
+
+/* ✅ Public preview (copie du rendu ami) */
+function renderPublicPreview(p){
+  pubName.textContent = p.name || "...";
+  pubCode.textContent = "Code ami: " + (p.friendCode || "----");
+  pubBio.textContent = p.bio || "";
+
+  const av = String(p.avatar || "").trim();
+  pubAvatar.style.backgroundImage = av ? `url('${av.replace(/'/g,"\\'")}')` : "none";
+
+  const b = String(p.banner || "").trim();
+  if(b){
+    pubBanner.classList.add("hasImg");
+    pubBanner.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
+  }else{
+    pubBanner.classList.remove("hasImg");
+    pubBanner.style.backgroundImage = "";
+  }
 }
 
 async function load(){
@@ -763,6 +1000,9 @@ async function load(){
 
   setAvatar(p.avatar || "");
   setBanner(p.banner || "");
+
+  /* ✅ aperçu public = même data */
+  renderPublicPreview(p);
 
   applyXpUi(p.xp || 0, p.level || 1);
   applyLevelTheme(p.level || 1);
@@ -799,13 +1039,31 @@ async function load(){
 }
 
 if(bio){
-  bio.addEventListener("input", ()=>{ bioCount.textContent = `${bio.value.length}/140`; });
+  bio.addEventListener("input", ()=>{
+    bioCount.textContent = `${bio.value.length}/140`;
+    /* ✅ live update aperçu public */
+    pubBio.textContent = bio.value || "";
+  });
 }
 if(avatarUrl){
-  avatarUrl.addEventListener("input", ()=>{ setAvatar(avatarUrl.value); });
+  avatarUrl.addEventListener("input", ()=>{
+    setAvatar(avatarUrl.value);
+    const u = String(avatarUrl.value||"").trim();
+    pubAvatar.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
+  });
 }
 if(bannerUrl){
-  bannerUrl.addEventListener("input", ()=>{ setBanner(bannerUrl.value); });
+  bannerUrl.addEventListener("input", ()=>{
+    setBanner(bannerUrl.value);
+    const b = String(bannerUrl.value||"").trim();
+    if(b){
+      pubBanner.classList.add("hasImg");
+      pubBanner.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
+    }else{
+      pubBanner.classList.remove("hasImg");
+      pubBanner.style.backgroundImage = "";
+    }
+  });
 }
 
 if(saveBtn){
