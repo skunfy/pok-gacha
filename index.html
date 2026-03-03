@@ -183,57 +183,45 @@
     font-size:11px;
   }
 }
-/* VERSION SANS CADRE */
 
-.notifIcon,
 .logoutIcon{
-  position:relative;
-  width:36px;
-  height:36px;
-
+  width:44px;
+  height:44px;
   display:flex;
   align-items:center;
   justify-content:center;
+  flex:0 0 auto;
 
-  background:transparent;
-  border:none;
-  backdrop-filter:none;
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
 
-  transition: transform .15s ease, opacity .15s ease;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  text-decoration:none;
 }
 
-.notifIcon img,
 .logoutIcon img{
-  width:22px;
-  height:22px;
+  width:20px;
+  height:20px;
   object-fit:contain;
-  opacity:.85;
-
-  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+  opacity:.9;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
 }
 
-/* hover clean glow */
-.notifIcon:hover img{
-  opacity:1;
+.logoutIcon:hover{
+  background:rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.20);
   transform: translateY(-1px);
-  filter:
-    drop-shadow(0 0 10px rgba(190,120,255,.6))
-    drop-shadow(0 0 20px rgba(120,170,255,.5));
+}
+
+.logoutIcon:active{
+  transform: translateY(0px) scale(.97);
 }
 
 .logoutIcon:hover img{
   opacity:1;
-  transform: translateY(-1px);
-  filter:
-    drop-shadow(0 0 8px rgba(255,80,80,.55));
 }
-
-.notifIcon:active img,
-.logoutIcon:active img{
-  transform: scale(.92);
-}
-
-
   /* Logo dans la topbar */
   .cornerLogo{
     position: static;
@@ -831,6 +819,56 @@
   }
   .cardPlaceholder img{ width:120px; }
 }
+/* VERSION SANS CADRE */
+
+.notifIcon,
+.logoutIcon{
+  position:relative;
+  width:36px;
+  height:36px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:transparent;
+  border:none;
+  backdrop-filter:none;
+
+  transition: transform .15s ease, opacity .15s ease;
+}
+
+.notifIcon img,
+.logoutIcon img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  opacity:.85;
+
+  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+}
+
+/* hover clean glow */
+.notifIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter:
+    drop-shadow(0 0 10px rgba(190,120,255,.6))
+    drop-shadow(0 0 20px rgba(120,170,255,.5));
+}
+
+.logoutIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter:
+    drop-shadow(0 0 8px rgba(255,80,80,.55));
+}
+
+.notifIcon:active img,
+.logoutIcon:active img{
+  transform: scale(.92);
+}
+
 </style>
 
 </head>
@@ -871,7 +909,7 @@
         </a>
 
         <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
-        <img src="notif.png" alt="">
+        <img src="no" alt="">
         <span id="notifBadge" class="notifBadge"></span>
         </button>
 
