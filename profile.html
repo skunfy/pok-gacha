@@ -843,7 +843,7 @@ function applyLevelTheme(level){
 function publicUrlFor(friendCode){
   // Si tu as déjà une page dédiée : /friend.html?code=XXXX-XXXX
   // Sinon, tu peux aussi utiliser /profile.html?code=XXXX-XXXX (ton profil gère la vue ami)
-  return `/friend_profile.html?code=${encodeURIComponent(friendCode)}`;
+  return `/profile.html?code=${encodeURIComponent(friendCode)}`;
 }
 function renderPublicButton(p){
   myFriendCode = (p.friendCode || "").trim().toUpperCase();
