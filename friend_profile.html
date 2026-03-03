@@ -374,14 +374,15 @@ button:active{ transform: translateY(0px) scale(.99); }
 
 <script>
 const TOKEN = localStorage.getItem("gacha_token_v1");
-if(!TOKEN) location.href="/login.html";
+/* ✅ PUBLIC: pas de redirect login ici */
 
 async function api(path){
-  const r = await fetch(path,{
-    headers:{ Authorization:"Bearer "+TOKEN }
-  });
+  const headers = {};
+  if (TOKEN) headers.Authorization = "Bearer " + TOKEN;
+
+  const r = await fetch(path, { headers });
   const data = await r.json().catch(()=> ({}));
-  if(!r.ok) throw new Error(data.error||"Erreur");
+  if(!r.ok) throw new Error(data.error||("HTTP "+r.status));
   return data;
 }
 
@@ -435,15 +436,15 @@ function setAvatarGlowByLevel(level){
   av.style.setProperty("--glow2", glow2);
 }
 
-/* ✅ STATS exactes depuis la collection */
-function updateStatsFromCollection(itemsP, itemsO){
-  let p = 0, o = 0;
-  for(const x of (itemsP || [])) p += Number(x.count || 0) || 0;
-  for(const x of (itemsO || [])) o += Number(x.count || 0) || 0;
+/* ✅ STATS */
+function setStats(pokemon, onepiece, lorcana){
+  const p = Number(pokemon||0)||0;
+  const o = Number(onepiece||0)||0;
+  const l = Number(lorcana||0)||0;
 
   document.getElementById("statPokemon").textContent = String(p);
   document.getElementById("statOnepiece").textContent = String(o);
-  document.getElementById("statTotal").textContent = String(p + o);
+  document.getElementById("statTotal").textContent = String(p + o + l);
 }
 
 /* ✅ ZOOM */
@@ -473,17 +474,12 @@ function closeZoom(){
   zoomModal.setAttribute("aria-hidden","true");
   zoomImg.style.backgroundImage = "none";
 }
-zoomModal.addEventListener("click", (e)=>{
-  if(e.target === zoomModal) closeZoom();
-});
-window.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom();
-});
+zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(); });
+window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
 
 const params = new URLSearchParams(location.search);
 const friendCode = (params.get("code")||"").toUpperCase();
 
-/* ✅ MODIF: si le code = mon propre friendCode, on affiche mon profil public via /api/profile/me */
 async function load(){
   if(!friendCode){
     alert("Code ami manquant dans l’URL ?code=XXXX-XXXX");
@@ -491,23 +487,12 @@ async function load(){
     return;
   }
 
-  // 1) Essaie de récupérer mon profil
-  let me = null;
-  try{
-    me = await api("/api/profile/me");
-  }catch{
-    me = null;
-  }
-
-  const isSelf = !!me && String(me.friendCode || "").toUpperCase() === friendCode;
-
-  // 2) data: moi => /me, sinon => /profile/:code (ami)
-  const data = isSelf
-    ? me
-    : await api("/api/profile/"+encodeURIComponent(friendCode));
+  // ✅ PUBLIC: profil via /api/profile_public/:friendCode
+  // (doit être sans auth côté serveur si tu veux vraiment public)
+  const data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
-  document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
+  document.getElementById("code").textContent = "Code ami: " + (data.friendCode || "----");
   document.getElementById("bio").textContent = data.bio || "";
 
   // avatar
@@ -533,25 +518,23 @@ async function load(){
   applyXpUi(data.xp || 0, data.level || 1);
   setAvatarGlowByLevel(data.level || 1);
 
-  // 3) stats: moi => /api/collection ; ami => /api/friends/:code/collection
-  const base = isSelf
-    ? "/api/collection"
-    : ("/api/friends/"+encodeURIComponent(friendCode)+"/collection");
+  // ✅ stats depuis la route publique (recommandé)
+  if (data.stats){
+    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana);
+  } else {
+    // fallback si ton backend n’a pas encore stats intégré
+    setStats(0,0,0);
+  }
 
-  const [cP, cO] = await Promise.all([
-    api(base+"?game=pokemon").catch(()=> ({ items: [] })),
-    api(base+"?game=onepiece").catch(()=> ({ items: [] })),
-  ]);
-
-  updateStatsFromCollection(cP.items || [], cO.items || []);
-
-  // favoris
+  // ✅ favoris : publics seulement si le backend les renvoie (sinon on affiche “privé”)
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
-  const favs = (data.favorites || []);
+  const favs = Array.isArray(data.favorites) ? data.favorites : [];
   if(!favs.length){
-    grid.innerHTML = `<div class="small">Aucune carte favorite.</div>`;
+    grid.innerHTML = `<div class="small" style="opacity:.85;">
+      Aucune carte favorite publique (ou favoris privés).
+    </div>`;
     return;
   }
 
@@ -564,13 +547,13 @@ async function load(){
       <div class="small">${escapeHtml(x.setName || x.set || "")}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
-
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
     grid.appendChild(el);
   });
 }
 
-load().catch(()=>{
+load().catch((e)=>{
+  console.error(e);
   alert("Impossible de charger le profil");
   history.back();
 });

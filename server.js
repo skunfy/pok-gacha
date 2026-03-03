@@ -1825,6 +1825,54 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
     }
   });
 });
+
+// =========================
+// PROFILE PUBLIC (for leaderboard)
+// Accessible to everyone (auth required)
+// =========================
+app.get("/api/profile_public/:friendCode", async (req, res) => {
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const uQ = await pool.query(
+    `SELECT id, name, friendCode, avatar, bio, banner, xp
+     FROM users
+     WHERE friendCode=$1
+     LIMIT 1`,
+    [friendCode]
+  );
+
+  const u = uQ.rows[0];
+  if (!u) return res.status(404).json({ error: "Profil introuvable" });
+
+  const [pQ, oQ, lQ] = await Promise.all([
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
+  ]);
+
+  const pokemon = pQ.rows[0]?.total || 0;
+  const onepiece = oQ.rows[0]?.total || 0;
+  const lorcana = lQ.rows[0]?.total || 0;
+
+  const xp = Number(u?.xp || 0);
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
+    stats: {
+      pokemon,
+      onepiece,
+      lorcana,
+      total: pokemon + onepiece + lorcana
+    }
+  });
+});
 // =========================
 // START
 // =========================
