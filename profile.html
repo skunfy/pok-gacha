@@ -39,15 +39,11 @@ select{
   outline:none;
   transition: all .15s ease;
 }
-
-/* Hover */
 button:hover,
 select:hover{
   background:rgba(255,255,255,.10);
   border-color:rgba(255,255,255,.25);
 }
-
-/* Focus */
 button:focus,
 input:focus,
 textarea:focus,
@@ -55,20 +51,8 @@ select:focus{
   border-color:rgba(255,255,255,.35);
   box-shadow:0 0 0 3px rgba(255,255,255,.08);
 }
-
-/* Options du select (liste déroulante) */
-select option{
-  background:#0f1116;
-  color:#fff;
-}
-
-/* Supprime le style bleu natif */
-select{
-  appearance:none;
-  -webkit-appearance:none;
-  -moz-appearance:none;
-  cursor:pointer;
-}
+select option{ background:#0f1116; color:#fff; }
+select{ appearance:none; -webkit-appearance:none; -moz-appearance:none; cursor:pointer; }
 textarea{font-weight:700; resize:none; min-height:90px; width:100%}
 button{cursor:pointer}
 
@@ -81,10 +65,7 @@ button{cursor:pointer}
 }
 
 /* ✅ Banner support (cover) */
-.profilePanel{
-  position:relative;
-  overflow:hidden;
-}
+.profilePanel{ position:relative; overflow:hidden; }
 .profileBanner{
   position:absolute;
   inset:0;
@@ -103,9 +84,74 @@ button{cursor:pointer}
     rgba(5,6,13,.18) 100%
   );
 }
-.profileContent{
-  position:relative;
+.profileContent{ position:relative; z-index:2; }
+
+/* ✅ LVL THEME + GLOW (banner + stars) */
+.profilePanel{
+  --bGlow: rgba(120,170,255,.22);
+  --bGlow2: rgba(190,120,255,.22);
+  --bIntensity: 0.25;
+}
+.profilePanel::before{
+  content:"";
+  position:absolute;
+  inset:-3px;
+  border-radius:18px;
+  pointer-events:none;
+  opacity: calc(.25 + var(--bIntensity) * .75);
+  filter: blur(calc(10px + var(--bIntensity) * 18px));
+  background:
+    radial-gradient(circle at 18% 22%, color-mix(in oklab, var(--bGlow) 80%, transparent), transparent 55%),
+    radial-gradient(circle at 82% 65%, color-mix(in oklab, var(--bGlow2) 70%, transparent), transparent 55%);
+  z-index:0;
+}
+.profilePanel{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08),
+    0 0 calc(18px + var(--bIntensity) * 42px) color-mix(in oklab, var(--bGlow) 70%, transparent);
+}
+
+.bannerStars{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  transition: opacity .25s ease;
   z-index:1;
+  mix-blend-mode: screen;
+}
+.bannerStars::before,
+.bannerStars::after{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background-repeat:repeat;
+  transform: translateZ(0);
+  opacity: calc(.10 + var(--bIntensity) * .35);
+  filter: blur(.2px);
+  animation: starsFloat 10s linear infinite;
+}
+.bannerStars::before{
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.85) 0 1px, transparent 2px),
+    radial-gradient(circle, rgba(255,255,255,.55) 0 1px, transparent 2px);
+  background-size: 120px 120px, 180px 180px;
+  background-position: 0 0, 40px 70px;
+}
+.bannerStars::after{
+  background-image:
+    radial-gradient(circle, color-mix(in oklab, var(--bGlow) 70%, rgba(255,255,255,.95)) 0 1.4px, transparent 3px),
+    radial-gradient(circle, color-mix(in oklab, var(--bGlow2) 70%, rgba(255,255,255,.95)) 0 1.8px, transparent 3.6px);
+  background-size: 260px 260px, 340px 340px;
+  background-position: 20px 20px, 140px 120px;
+  animation-duration: 14s;
+}
+@keyframes starsFloat{
+  from{ transform: translate3d(0,0,0) }
+  to  { transform: translate3d(-80px, 60px, 0) }
+}
+.profilePanel.starsOn .bannerStars{
+  opacity: calc(.18 + var(--bIntensity) * .70);
 }
 
 .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
@@ -113,10 +159,10 @@ button{cursor:pointer}
 
 .profileRow{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
 
-/* ✅ AVATAR + GLOW (piloté par variables) */
+/* ✅ AVATAR + GLOW (vars) */
 .avatar{
-  --glow: rgba(120,170,255,.18);
-  --glow2: rgba(190,120,255,.25);
+  --glow: rgba(120,170,255,.22);
+  --glow2: rgba(190,120,255,.22);
 
   width:90px; height:90px; border-radius:18px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
@@ -124,7 +170,7 @@ button{cursor:pointer}
   position:relative;
   box-shadow:
     0 0 0 1px rgba(255,255,255,.10),
-    0 0 34px var(--glow);
+    0 0 30px var(--glow);
 }
 .avatar::after{
   content:"";
@@ -146,6 +192,43 @@ button{cursor:pointer}
   font-size:12px; font-weight:900;
 }
 .msg{opacity:.85; font-size:13px; white-space:pre-line; margin-top:10px}
+
+/* ✅ LVL UI */
+.lvlRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px; }
+.lvlRing{
+  --p: 0;
+  width:44px; height:44px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:
+    conic-gradient(from 180deg, rgba(255,255,255,.70) calc(var(--p) * 1turn), rgba(255,255,255,.10) 0);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow: 0 0 26px rgba(255,255,255,.10);
+  position:relative;
+}
+.lvlRing::before{
+  content:"";
+  position:absolute; inset:4px;
+  border-radius:999px;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.10);
+}
+.lvlRing b{ position:relative; z-index:1; font-size:13px; }
+.xpWrap{ min-width:220px; flex:1; }
+.xpTop{
+  display:flex; justify-content:space-between; gap:10px;
+  font-size:12px; opacity:.85; font-weight:900;
+}
+.xpBar{
+  margin-top:6px;
+  height:10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.xpFill{ height:100%; width:0%; border-radius:999px; background: rgba(255,255,255,.70); }
 
 .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
 @media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
@@ -208,46 +291,7 @@ button{cursor:pointer}
 .statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
 .statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
 
-/* ✅ XP UI */
-.levelRow{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:12px;
-  flex-wrap:wrap;
-}
-.lvlPill{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  font-weight:1000;
-  font-size:12px;
-}
-.xpBar{
-  width:min(320px, 86vw);
-  height:10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.12);
-  overflow:hidden;
-}
-.xpFill{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  background: rgba(120,170,255,.85);
-  transition: width .25s ease;
-}
-.xpText{
-  font-size:12px;
-  opacity:.75;
-}
-
-/* ✅ MODAL ZOOM (slab) */
+/* ✅ MODAL ZOOM */
 .modal{
   position:fixed; inset:0;
   background:rgba(0,0,0,.72);
@@ -257,7 +301,6 @@ button{cursor:pointer}
   padding:24px;
 }
 .modal.open{display:grid}
-
 .zoomCard{
   width:min(520px, 92vw);
   border-radius:18px;
@@ -267,7 +310,6 @@ button{cursor:pointer}
   padding:14px;
   backdrop-filter: blur(10px);
 }
-
 .zoomHead{
   display:flex;
   justify-content:space-between;
@@ -275,15 +317,8 @@ button{cursor:pointer}
   gap:12px;
   margin-bottom:10px;
 }
-.zoomTitle{
-  font-weight:1000;
-  letter-spacing:.3px;
-}
-.zoomSub{
-  opacity:.75;
-  font-size:12px;
-  margin-top:2px;
-}
+.zoomTitle{ font-weight:1000; letter-spacing:.3px; }
+.zoomSub{ opacity:.75; font-size:12px; margin-top:2px; }
 .zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
 .mintBadge{
   padding:5px 9px;
@@ -304,7 +339,6 @@ button{cursor:pointer}
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.18);
 }
-
 .zoomImg{
   width:100%;
   height:min(64vh, 560px);
@@ -313,7 +347,6 @@ button{cursor:pointer}
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.10);
 }
-
 .zoomHint{
   margin-top:10px;
   opacity:.7;
@@ -334,33 +367,35 @@ button{cursor:pointer}
   </div>
 
   <div class="grid2">
-    <div class="panel profilePanel">
+    <div class="panel profilePanel" id="profilePanel">
       <div class="profileBanner" id="bannerPreview" style="display:none;"></div>
+      <div class="bannerStars" aria-hidden="true"></div>
 
       <div class="profileContent">
         <div class="profileRow">
           <div class="avatar" id="avatarPreview"></div>
-          <div>
+          <div style="min-width:240px">
             <div style="font-size:18px;font-weight:1000" id="pname">...</div>
             <div class="badge">
               Code ami: <span id="pcode">----</span>
               <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button>
             </div>
-          </div>
-        </div>
 
-        <!-- ✅ LVL + XP -->
-        <div class="levelRow" aria-label="Niveau et XP">
-          <div class="lvlPill">LVL <span id="lvl">1</span></div>
-          <div>
-            <div class="xpBar" aria-label="Barre XP">
-              <div class="xpFill" id="xpFill"></div>
+            <!-- ✅ LVL + XP -->
+            <div class="lvlRow">
+              <div class="lvlRing" id="lvlRing" title="Progression niveau"><b id="lvlNum">1</b></div>
+              <div class="xpWrap">
+                <div class="xpTop">
+                  <span id="lvlLabel">Niveau 1</span>
+                  <span id="xpLabel">0 / 100 XP</span>
+                </div>
+                <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+              </div>
             </div>
-            <div class="xpText" id="xpText">0 / 100 XP</div>
+
           </div>
         </div>
 
-        <!-- ✅ STATS -->
         <div class="statsGrid" aria-label="Statistiques">
           <div class="statCard">
             <div class="k">TOTAL POKÉMON</div>
@@ -458,7 +493,6 @@ async function api(path, opts={}){
   if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
   return data;
 }
-
 async function apiGame(path, game, opts={}){
   const sep = path.includes("?") ? "&" : "?";
   return api(path + sep + "game=" + encodeURIComponent(game), opts);
@@ -466,13 +500,13 @@ async function apiGame(path, game, opts={}){
 
 const avatarPreview = document.getElementById("avatarPreview");
 const bannerPreview = document.getElementById("bannerPreview");
+const profilePanel = document.getElementById("profilePanel");
 
 const pname = document.getElementById("pname");
 const pcode = document.getElementById("pcode");
 const msg = document.getElementById("msg");
 
 const editZone = document.getElementById("editZone");
-
 const avatarUrl = document.getElementById("avatarUrl");
 const bannerUrl = document.getElementById("bannerUrl");
 const bio = document.getElementById("bio");
@@ -486,18 +520,10 @@ const search = document.getElementById("search");
 const gameFilter = document.getElementById("gameFilter");
 
 const collectionTitle = document.getElementById("collectionTitle");
-
-/* ✅ STATS elements */
 const statPokemon = document.getElementById("statPokemon");
 const statOnepiece = document.getElementById("statOnepiece");
 const statTotal = document.getElementById("statTotal");
 
-/* ✅ XP elements */
-const lvlEl = document.getElementById("lvl");
-const xpFill = document.getElementById("xpFill");
-const xpText = document.getElementById("xpText");
-
-/* ✅ ZOOM elements */
 const zoomModal = document.getElementById("zoomModal");
 const zoomTitle = document.getElementById("zoomTitle");
 const zoomSub = document.getElementById("zoomSub");
@@ -539,43 +565,6 @@ function gameLabel(g){
   return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
 }
 
-/* ✅ XP math (doit matcher backend levelForXp) */
-function xpForLevel(level){
-  const l = Math.max(1, Number(level) || 1);
-  return 100 * Math.pow(l - 1, 2);
-}
-function applyXpUi(xp, level){
-  const l = Math.max(1, Number(level) || 1);
-  const curNeed = xpForLevel(l);
-  const nextNeed = xpForLevel(l + 1);
-
-  const x = Math.max(0, Number(xp) || 0);
-  const inLevel = Math.max(0, x - curNeed);
-  const span = Math.max(1, nextNeed - curNeed);
-  const pct = Math.max(0, Math.min(100, (inLevel / span) * 100));
-
-  lvlEl.textContent = String(l);
-  xpFill.style.width = pct.toFixed(1) + "%";
-  xpText.textContent = `${inLevel} / ${span} XP`;
-}
-
-/* ✅ Glow selon level */
-function setAvatarGlowByLevel(level){
-  const l = Math.max(1, Number(level) || 1);
-
-  let glow = "rgba(120,170,255,.18)";
-  let glow2 = "rgba(190,120,255,.25)";
-
-  if (l >= 5)  { glow = "rgba(120,255,200,.18)"; glow2 = "rgba(120,255,200,.28)"; }
-  if (l >= 10) { glow = "rgba(255,210,120,.20)"; glow2 = "rgba(255,180,90,.30)"; }
-  if (l >= 20) { glow = "rgba(255,120,220,.22)"; glow2 = "rgba(190,120,255,.30)"; }
-  if (l >= 35) { glow = "rgba(255,80,80,.22)";  glow2 = "rgba(255,130,90,.30)"; }
-
-  avatarPreview.style.setProperty("--glow", glow);
-  avatarPreview.style.setProperty("--glow2", glow2);
-}
-
-/* ✅ calc stats */
 function updateStats(items){
   let p = 0, o = 0;
   for(const x of items){
@@ -589,7 +578,7 @@ function updateStats(items){
   statTotal.textContent = String(p + o);
 }
 
-/* ✅ zoom open/close */
+/* ✅ zoom */
 function openZoomCard(x){
   zoomTitle.textContent = x.name || "";
   zoomSub.textContent = `${x.set || ""}`.trim();
@@ -608,13 +597,8 @@ function closeZoom(){
   zoomModal.setAttribute("aria-hidden","true");
   zoomImg.style.backgroundImage = "none";
 }
-
-zoomModal.addEventListener("click", (e)=>{
-  if(e.target === zoomModal) closeZoom();
-});
-window.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom();
-});
+zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(); });
+window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
 
 function renderFavs(items){
   favGrid.innerHTML = "";
@@ -635,7 +619,6 @@ function renderFavs(items){
       <div class="small">${escapeHtml(x.set)}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
-
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
     favGrid.appendChild(el);
   });
@@ -683,7 +666,6 @@ function renderCollection(items, canEditFavs){
         }
       };
     }
-
     colGrid.appendChild(el);
   });
 }
@@ -691,15 +673,9 @@ function renderCollection(items, canEditFavs){
 function filteredItems(){
   const q = (search.value||"").toLowerCase().trim();
   const gf = gameFilter.value || "all";
-
   let items = allItems;
-
-  if(gf !== "all"){
-    items = items.filter(x => (x.game || "pokemon") === gf);
-  }
-
+  if(gf !== "all") items = items.filter(x => (x.game || "pokemon") === gf);
   if(!q) return items;
-
   return items.filter(x =>
     (x.name||"").toLowerCase().includes(q) ||
     (x.set||"").toLowerCase().includes(q) ||
@@ -707,11 +683,71 @@ function filteredItems(){
   );
 }
 
-/* ✅ mode ami si param ?friendCode=XXXX-XXXX */
 function getFriendCodeFromUrl(){
   const u = new URL(location.href);
   const v = (u.searchParams.get("friendCode") || u.searchParams.get("code") || "").trim();
   return v ? v.toUpperCase() : "";
+}
+
+/* ✅ XP UI */
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+function prevXpForLevel(lvl){ return 100 * Math.pow(Math.max(0,lvl-1), 2); }
+function nextXpForLevel(lvl){ return 100 * Math.pow(Math.max(1,lvl), 2); }
+function applyXpUi(xp, level){
+  const x = Math.max(0, Number(xp)||0);
+  const lvl = clamp(Number(level)||1, 1, 100);
+  const prev = prevXpForLevel(lvl);
+  const next = nextXpForLevel(lvl);
+  const need = Math.max(1, next - prev);
+  const prog = clamp((x - prev) / need, 0, 1);
+
+  document.getElementById("lvlNum").textContent = String(lvl);
+  document.getElementById("lvlLabel").textContent = `Niveau ${lvl}`;
+  document.getElementById("xpLabel").textContent = `${Math.min(x, next)} / ${next} XP`;
+  document.getElementById("xpFill").style.width = `${Math.round(prog*100)}%`;
+  document.getElementById("lvlRing").style.setProperty("--p", String(prog));
+}
+
+/* ✅ Level theme + glow + stars */
+function hexToRgba(hex, a){
+  const h = String(hex||"").replace("#","").trim();
+  const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
+  const r = parseInt(full.slice(0,2),16) || 0;
+  const g = parseInt(full.slice(2,4),16) || 0;
+  const b = parseInt(full.slice(4,6),16) || 0;
+  return `rgba(${r},${g},${b},${clamp(Number(a)||0,0,1)})`;
+}
+function themeForLevel(level){
+  const l = clamp(Number(level)||1, 1, 100);
+  if (l >= 100) return { glow:"#ff5b5b", glow2:"#ffd36a" };
+  if (l >= 50)  return { glow:"#ff78dc", glow2:"#8b7bff" };
+  if (l >= 25)  return { glow:"#ffd36a", glow2:"#ff9a5c" };
+  if (l >= 10)  return { glow:"#78ffc8", glow2:"#52d7ff" };
+  return          { glow:"#78aaff", glow2:"#be78ff" };
+}
+function intensityForLevel(level){
+  const l = clamp(Number(level)||1, 1, 100);
+  if (l < 50){
+    const t = (l - 1) / 49;
+    return 0.15 + t * 0.40;
+  }
+  const t = (l - 50) / 50;
+  return 0.55 + t * 0.45;
+}
+function applyLevelTheme(level){
+  const l = clamp(Number(level)||1, 1, 100);
+  const t = themeForLevel(l);
+  const intensity = intensityForLevel(l);
+
+  avatarPreview.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
+  avatarPreview.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
+
+  profilePanel.style.setProperty("--bGlow", hexToRgba(t.glow, 0.25 + intensity*0.30));
+  profilePanel.style.setProperty("--bGlow2", hexToRgba(t.glow2, 0.22 + intensity*0.28));
+  profilePanel.style.setProperty("--bIntensity", String(intensity));
+
+  if (l >= 50) profilePanel.classList.add("starsOn");
+  else profilePanel.classList.remove("starsOn");
 }
 
 async function load(){
@@ -728,9 +764,8 @@ async function load(){
   setAvatar(p.avatar || "");
   setBanner(p.banner || "");
 
-  // ✅ LVL / XP + glow
   applyXpUi(p.xp || 0, p.level || 1);
-  setAvatarGlowByLevel(p.level || 1);
+  applyLevelTheme(p.level || 1);
 
   if(isFriendView){
     editZone.style.display = "none";
