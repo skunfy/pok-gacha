@@ -9,9 +9,21 @@
 :root{
   --bg1:#05060d;
   --bg2:#090b18;
+
+  --panel: rgba(255,255,255,.05);
+  --panelB: rgba(255,255,255,.10);
+
+  --text: rgba(255,255,255,.95);
+  --muted: rgba(255,255,255,.72);
+
+  --gold: rgba(255,210,110,.98);
+  --silver: rgba(190,205,255,.95);
+  --bronze: rgba(205,127,50,.95);
+
+  --shadow: 0 18px 60px rgba(0,0,0,.35);
 }
 
-*{box-sizing:border-box}
+*{ box-sizing:border-box; }
 
 body{
   margin:0;
@@ -22,6 +34,7 @@ body{
     radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
     radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
+  overflow-x:hidden;
 }
 
 .wrap{
@@ -36,103 +49,247 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(10px);
-  box-shadow:0 18px 60px rgba(0,0,0,.35);
+  padding:14px 16px;
+  border-radius:18px;
+  background:var(--panel);
+  border:1px solid var(--panelB);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+
+  position: sticky;
+  top: 14px;
+  z-index: 50;
+  gap:12px;
 }
 
 .controls{
   display:flex;
   gap:10px;
   align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
 }
 
-select,button{
+select, button{
   padding:8px 12px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);
   background:rgba(255,255,255,.08);
-  color:#3a3a3a;
-  font-weight:900;
+  color:#fff;
+  font-weight:1000;
   cursor:pointer;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
+select:hover, button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
+select:active, button:active{ transform: translateY(0px) scale(.99); }
 
-/* ===== PANEL ===== */
+/* ===== PANELS ===== */
 .panel{
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  padding:16px;
+  border-radius:18px;
+  background:var(--panel);
+  border:1px solid var(--panelB);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 16px 55px rgba(0,0,0,.25);
+  overflow:hidden;
 }
 
-/* ===== PODIUM ===== */
+.panelInner{
+  padding:14px 16px;
+}
+
+.meRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.pill{
+  padding:9px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  font-weight:1000;
+  font-size:13px;
+  opacity:.95;
+  white-space:nowrap;
+}
+
+.pill.soft{
+  opacity:.85;
+}
+
+/* ===== PODIUM PREMIUM ===== */
+.podiumWrap{
+  position:relative;
+  padding:18px 12px 10px;
+  overflow:hidden;
+}
+
+.podiumBg{
+  position:absolute;
+  inset:-30%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,210,110,.12), transparent 55%),
+    radial-gradient(circle at 70% 55%, rgba(190,205,255,.10), transparent 58%),
+    radial-gradient(circle at 45% 75%, rgba(205,127,50,.10), transparent 58%);
+  filter: blur(20px);
+  opacity:.9;
+  pointer-events:none;
+}
+
 .podium{
+  position:relative;
   display:flex;
   justify-content:center;
   align-items:flex-end;
-  gap:30px;
+  gap:34px;
   flex-wrap:wrap;
-  padding:10px 0 20px 0;
+  padding:10px 0 18px 0;
 }
 
 .podiumItem{
+  position:relative;
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:8px;
+  gap:10px;
+  transition: transform .22s ease;
+  user-select:none;
 }
+
+.podiumItem:hover{ transform: translateY(-5px); }
 
 .podiumAvatar{
-  width:110px;
-  height:110px;
-  border-radius:24px;
+  border-radius:26px;
   background:center/cover no-repeat;
-  border:2px solid rgba(255,255,255,.2);
-  box-shadow:0 20px 50px rgba(0,0,0,.45);
+  border:2px solid rgba(255,255,255,.22);
+  box-shadow: 0 22px 70px rgba(0,0,0,.55);
+  transition: transform .22s ease, box-shadow .22s ease, filter .22s ease;
+  position:relative;
+  overflow:hidden;
 }
 
-.podiumItem.rank2 .podiumAvatar{ width:95px;height:95px; }
-.podiumItem.rank3 .podiumAvatar{ width:85px;height:85px; }
+/* shine overlay */
+.podiumAvatar::after{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.30), transparent 55%);
+  transform: rotate(25deg);
+  opacity:.55;
+  pointer-events:none;
+}
+
+.podiumItem:hover .podiumAvatar{ transform: scale(1.02); filter: brightness(1.05); }
+
+/* sizes */
+.podiumItem.rank1 .podiumAvatar{ width:132px; height:132px; }
+.podiumItem.rank2 .podiumAvatar{ width:104px; height:104px; }
+.podiumItem.rank3 .podiumAvatar{ width:94px; height:94px; }
+
+/* medals glow */
+@keyframes goldPulse{
+  0%{ box-shadow: 0 0 0 2px rgba(255,210,110,.55), 0 0 40px rgba(255,210,110,.35), 0 22px 70px rgba(0,0,0,.55); }
+  50%{ box-shadow: 0 0 0 2px rgba(255,210,110,.72), 0 0 62px rgba(255,210,110,.55), 0 22px 70px rgba(0,0,0,.55); }
+  100%{ box-shadow: 0 0 0 2px rgba(255,210,110,.55), 0 0 40px rgba(255,210,110,.35), 0 22px 70px rgba(0,0,0,.55); }
+}
+
+.podiumItem.rank1 .podiumAvatar{
+  border-color: rgba(255,210,110,.55);
+  animation: goldPulse 2.6s ease-in-out infinite;
+}
+
+.podiumItem.rank2 .podiumAvatar{
+  border-color: rgba(190,205,255,.45);
+  box-shadow:
+    0 0 0 2px rgba(190,205,255,.38),
+    0 0 44px rgba(190,205,255,.28),
+    0 22px 70px rgba(0,0,0,.55);
+}
+
+.podiumItem.rank3 .podiumAvatar{
+  border-color: rgba(205,127,50,.50);
+  box-shadow:
+    0 0 0 2px rgba(205,127,50,.40),
+    0 0 42px rgba(205,127,50,.25),
+    0 22px 70px rgba(0,0,0,.55);
+}
+
+.podiumBadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  font-weight:1000;
+  font-size:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+  letter-spacing:.2px;
+}
+
+.podiumBadge.gold{ border-color: rgba(255,210,110,.40); color: var(--gold); }
+.podiumBadge.silver{ border-color: rgba(190,205,255,.35); color: var(--silver); }
+.podiumBadge.bronze{ border-color: rgba(205,127,50,.35); color: var(--bronze); }
 
 .podiumName{
-  font-weight:1000;
+  font-weight:1100;
   font-size:14px;
   text-align:center;
+  max-width:160px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .podiumXp{
   font-size:12px;
-  opacity:.8;
+  opacity:.78;
+  margin-top:-6px;
 }
 
 .crown{
-  font-size:20px;
+  position:absolute;
+  top:-18px;
+  font-size:18px;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.6));
 }
 
 /* ===== TABLE ===== */
+.tableWrap{
+  overflow:auto;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
+  min-width:780px;
 }
 
-th,td{
+th, td{
   padding:12px 10px;
   border-bottom:1px solid rgba(255,255,255,.08);
   font-size:13px;
 }
 
-th{opacity:.7;text-align:left}
+th{
+  opacity:.75;
+  text-align:left;
+  font-weight:1000;
+}
 
-.rank{width:60px;font-weight:1000}
-.right{text-align:right;font-variant-numeric:tabular-nums}
+.rank{ width:60px; font-weight:1100; }
+.right{ text-align:right; font-variant-numeric: tabular-nums; }
+.rowHover:hover td{ background: rgba(255,255,255,.04); }
 
 .nameCell{
   display:flex;
   align-items:center;
   gap:10px;
+  min-width:0;
 }
 
 .avatar{
@@ -140,20 +297,52 @@ th{opacity:.7;text-align:left}
   border-radius:12px;
   background:center/cover no-repeat;
   border:1px solid rgba(255,255,255,.15);
+  box-shadow: 0 10px 26px rgba(0,0,0,.35);
+  flex:0 0 auto;
 }
 
+.nameText{
+  font-weight:1000;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:360px;
+}
+
+/* premium profile button */
 .profileBtn{
-  padding:4px 8px;
-  border-radius:8px;
+  margin-left:8px;
+  padding:5px 10px;
+  border-radius:10px;
   font-size:11px;
-  font-weight:900;
-  border:1px solid rgba(255,255,255,.15);
+  font-weight:1000;
+  border:1px solid rgba(255,255,255,.16);
   background:rgba(255,255,255,.08);
+  color:#fff;
   cursor:pointer;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  white-space:nowrap;
+}
+.profileBtn:hover{
+  background:rgba(255,255,255,.12);
+  transform: translateY(-1px);
+}
+.profileBtn:active{ transform: translateY(0px) scale(.99); }
+
+/* highlight me */
+.meHighlight td{
+  background: linear-gradient(90deg, rgba(120,170,255,.14), rgba(190,120,255,.08));
+}
+.meHighlight:hover td{
+  background: linear-gradient(90deg, rgba(120,170,255,.18), rgba(190,120,255,.10));
 }
 
-.meHighlight{
-  background:rgba(120,170,255,.08);
+/* ===== MOBILE ===== */
+@media (max-width: 520px){
+  .podium{ gap:18px; }
+  .podiumItem.rank1 .podiumAvatar{ width:118px; height:118px; }
+  .podiumItem.rank2 .podiumAvatar{ width:94px; height:94px; }
+  .podiumItem.rank3 .podiumAvatar{ width:86px; height:86px; }
 }
 </style>
 </head>
@@ -161,92 +350,134 @@ th{opacity:.7;text-align:left}
 <body>
 <div class="wrap">
 
-<div class="topbar">
-  <div><b>Gachax</b> — Leaderboard XP</div>
-  <div class="controls">
-    <select id="limitSel">
-      <option value="50">Top 50</option>
-      <option value="100">Top 100</option>
-    </select>
-    <button onclick="location.href='/'">← Retour</button>
+  <div class="topbar">
+    <div><b>Gachax</b> — Leaderboard XP</div>
+    <div class="controls">
+      <select id="limitSel" title="Top">
+        <option value="50">Top 50</option>
+        <option value="100">Top 100</option>
+      </select>
+      <button onclick="location.href='/'">← Retour</button>
+    </div>
   </div>
-</div>
 
-<div class="panel">
-  <div id="meRank">Ton rang : ...</div>
-</div>
+  <div class="panel">
+    <div class="panelInner meRow">
+      <div class="pill" id="meRank">Ton rang : …</div>
+      <div class="pill soft" id="updated">Mis à jour : …</div>
+    </div>
+  </div>
 
-<div class="panel">
-  <div class="podium" id="podium"></div>
-</div>
+  <div class="panel">
+    <div class="podiumWrap">
+      <div class="podiumBg"></div>
+      <div class="podium" id="podium"></div>
+    </div>
+  </div>
 
-<div class="panel">
-  <table>
-    <thead>
-      <tr>
-        <th class="rank">#</th>
-        <th>Joueur</th>
-        <th class="right">Niveau</th>
-        <th class="right">XP</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
-</div>
+  <div class="panel">
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="rank">#</th>
+            <th>Joueur</th>
+            <th class="right">Niveau</th>
+            <th class="right">XP</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="4" style="opacity:.75;padding:14px;">Chargement…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
 
 <script>
-const TOKEN_KEY="gacha_token_v1";
-const token=localStorage.getItem(TOKEN_KEY);
+const TOKEN_KEY = "gacha_token_v1";
+const token = localStorage.getItem(TOKEN_KEY);
 if(!token) location.href="/login.html";
 
 async function api(path){
-  const r=await fetch(path,{
+  const r = await fetch(path, {
     headers:{
-      "Authorization":"Bearer "+token,
+      "Authorization":"Bearer " + token,
       "Content-Type":"application/json"
     }
   });
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error||("HTTP "+r.status));
+  const data = await r.json().catch(()=> ({}));
+  if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
   return data;
 }
 
-const tbody=document.getElementById("tbody");
-const podium=document.getElementById("podium");
-const meRank=document.getElementById("meRank");
-const limitSel=document.getElementById("limitSel");
+const limitSel = document.getElementById("limitSel");
+const podium = document.getElementById("podium");
+const tbody = document.getElementById("tbody");
+const meRank = document.getElementById("meRank");
+const updated = document.getElementById("updated");
 
-function fmt(n){return (Number(n)||0).toLocaleString("fr-FR");}
+function fmt(n){ return (Number(n)||0).toLocaleString("fr-FR"); }
+
+function esc(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function openProfile(friendCodeOrName){
+  // NOTE: idéal = friendCode. Sinon fallback name.
+  location.href = "/profile.html?u=" + encodeURIComponent(friendCodeOrName);
+}
+
+function podiumItemHtml(p, rank){
+  const av = (p.avatar || "").trim() || "poke.png";
+  const medalClass = rank===1 ? "gold" : (rank===2 ? "silver" : "bronze");
+  const medalText  = rank===1 ? "🥇 1er" : (rank===2 ? "🥈 2e" : "🥉 3e");
+
+  return `
+    <div class="podiumItem rank${rank}">
+      ${rank===1 ? `<div class="crown">👑</div>` : ``}
+      <div class="podiumAvatar" style="background-image:url('${av.replace(/'/g,"\\'")}')"></div>
+      <div class="podiumBadge ${medalClass}">${medalText}</div>
+      <div class="podiumName">${esc(p.name)}</div>
+      <div class="podiumXp">${fmt(p.xp)} XP • Niv. ${fmt(p.level)}</div>
+      <button class="profileBtn" type="button" onclick="openProfile('${esc(p.friendCode || p.name)}')">Profil</button>
+    </div>
+  `;
+}
 
 function buildPodium(top){
-  podium.innerHTML="";
-  const order=[1,0,2]; // 2e, 1er, 3e pour centrer
-  order.forEach(i=>{
-    if(!top[i]) return;
-    const p=top[i];
-    const div=document.createElement("div");
-    div.className="podiumItem rank"+(i+1);
-    div.innerHTML=`
-      ${i===0?'<div class="crown">👑</div>':''}
-      <div class="podiumAvatar" style="background-image:url('${p.avatar||"poke.png"}')"></div>
-      <div class="podiumName">${p.name}</div>
-      <div class="podiumXp">${fmt(p.xp)} XP</div>
-    `;
-    podium.appendChild(div);
+  podium.innerHTML = "";
+  const t = top.slice(0,3);
+
+  // on centre le 1er: ordre = 2e, 1er, 3e
+  const order = [1,0,2];
+  order.forEach(idx=>{
+    const p = t[idx];
+    if(!p) return;
+    const rank = idx+1;
+    podium.insertAdjacentHTML("beforeend", podiumItemHtml(p, rank));
   });
 }
 
-function rowHtml(x,me){
+function rowHtml(x, myRank){
+  const av = (x.avatar || "").trim() || "poke.png";
+  const highlight = (Number(x.rank) === Number(myRank)) ? "meHighlight" : "";
+  const go = x.friendCode || x.name;
+
   return `
-    <tr class="${x.rank===me?'meHighlight':''}">
+    <tr class="rowHover ${highlight}">
       <td class="rank">${x.rank}</td>
       <td>
         <div class="nameCell">
-          <div class="avatar" style="background-image:url('${x.avatar||"poke.png"}')"></div>
-          <div>${x.name}</div>
-          <button class="profileBtn" onclick="openProfile('${x.friendCode||x.name}')">Profil</button>
+          <div class="avatar" style="background-image:url('${av.replace(/'/g,"\\'")}')"></div>
+          <div class="nameText">${esc(x.name)}</div>
+          <button class="profileBtn" type="button" onclick="openProfile('${esc(go)}')">Profil</button>
         </div>
       </td>
       <td class="right">${fmt(x.level)}</td>
@@ -255,23 +486,35 @@ function rowHtml(x,me){
   `;
 }
 
-function openProfile(id){
-  location.href="/profile.html?u="+encodeURIComponent(id);
-}
-
 async function load(){
-  tbody.innerHTML="<tr><td colspan='4'>Chargement...</td></tr>";
-  const limit=Number(limitSel.value)||50;
-  const data=await api("/api/leaderboard/xp?limit="+limit);
+  tbody.innerHTML = `<tr><td colspan="4" style="opacity:.75;padding:14px;">Chargement…</td></tr>`;
 
-  buildPodium(data.top.slice(0,3));
+  try{
+    const limit = Number(limitSel.value) || 50;
+    const data = await api(`/api/leaderboard/xp?limit=${limit}`);
 
-  meRank.textContent="Ton rang : #"+(data.me?.rank||"—");
+    const my = Number(data?.me?.rank || 0);
+    meRank.textContent = "Ton rang : " + (my ? "#" + my : "—");
+    updated.textContent = "Mis à jour : " + new Date().toLocaleString("fr-FR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
 
-  tbody.innerHTML=data.top.map(x=>rowHtml(x,data.me?.rank)).join("");
+    const top = Array.isArray(data.top) ? data.top : [];
+    buildPodium(top);
+
+    if(!top.length){
+      tbody.innerHTML = `<tr><td colspan="4" style="opacity:.75;padding:14px;">Aucun joueur.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = top.map(x => rowHtml(x, my)).join("");
+  }catch(e){
+    tbody.innerHTML = `<tr><td colspan="4" style="opacity:.75;padding:14px;">Erreur: ${esc(e.message || e)}</td></tr>`;
+    meRank.textContent = "Ton rang : —";
+    updated.textContent = "Mis à jour : —";
+    podium.innerHTML = "";
+  }
 }
 
-limitSel.addEventListener("change",load);
+limitSel.addEventListener("change", load);
 load();
 </script>
 
