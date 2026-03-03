@@ -491,8 +491,9 @@ function esc(s){
 }
 
 function openProfile(friendCodeOrName){
-  // NOTE: idéal = friendCode. Sinon fallback name.
-  location.href = "/friend_profile.html?code=" + encodeURIComponent(u.friendCode);
+  const code = String(friendCodeOrName || "").trim().toUpperCase();
+  if(!code) return;
+  location.href = "/friend_profile.html?code=" + encodeURIComponent(code);
 }
 
 function podiumItemHtml(p, rank){
