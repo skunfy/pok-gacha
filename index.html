@@ -101,24 +101,18 @@
 
   /* AVATAR */
   .miniAvatar{
-    --glow: rgba(120,170,255,.35);
-    --glow2: rgba(190,120,255,.35);
+  width:50px;
+  height:50px;
+  border-radius:18px;
 
-    width:50px;
-    height:50px;
-    border-radius:18px;
+  /* au lieu de cover */
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
 
-    background: rgba(0,0,0,.25) center/cover no-repeat;
-    border:1px solid rgba(255,255,255,.18);
-
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.12),
-      0 0 32px var(--glow);
-
-    position:relative;
-    transition: box-shadow .25s ease;
-  }
-
+  /* pour éviter que ça fasse vide autour */
+  background-color: rgba(0,0,0,.25);
+}
   /* glow secondaire dynamique */
   .miniAvatar::after{
     content:"";
