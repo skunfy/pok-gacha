@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gachax</title>
 
-  <style>
+<style>
   :root{
     --bg1:#05060d; --bg2:#090b18;
     --shadow: 0 35px 120px rgba(0,0,0,.65);
@@ -70,120 +70,119 @@
   }
 
   /* ===== Mini profile (avatar + lvl) ===== */
-/* ===== MINI PROFILE 50px PREMIUM ===== */
+  /* ===== MINI PROFILE 50px PREMIUM ===== */
 
-.miniProfileLink{
-  position:relative;
-  width:50px;
-  height:46px; /* on garde la hauteur visuelle de la topbar */
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
-  text-decoration:none;
-  overflow:visible; /* important pour le glow */
-
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
-
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-
-.miniProfileLink:hover{
-  background:rgba(255,255,255,.10);
-  transform: translateY(-1px);
-  border-color: rgba(255,255,255,.20);
-}
-
-.miniProfileLink:active{
-  transform: translateY(0px) scale(.98);
-}
-
-/* AVATAR */
-.miniAvatar{
-  --glow: rgba(120,170,255,.35);
-  --glow2: rgba(190,120,255,.35);
-
-  width:50px;
-  height:50px;
-  border-radius:18px;
-
-  background: rgba(0,0,0,.25) center/cover no-repeat;
-  border:1px solid rgba(255,255,255,.18);
-
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.12),
-    0 0 32px var(--glow);
-
-  position:relative;
-  transition: box-shadow .25s ease;
-}
-
-/* glow secondaire dynamique */
-.miniAvatar::after{
-  content:"";
-  position:absolute;
-  inset:-3px;
-  border-radius:20px;
-  pointer-events:none;
-
-  background:
-    radial-gradient(circle at 30% 30%, var(--glow), transparent 60%),
-    radial-gradient(circle at 70% 70%, var(--glow2), transparent 60%);
-
-  filter: blur(10px);
-  opacity:.75;
-}
-
-/* BULLE LVL */
-.lvlBubble{
-  position:absolute;
-  left:-8px;
-  bottom:-8px;
-
-  min-width:26px;
-  height:26px;
-  padding:0 7px;
-
-  border-radius:999px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  font-size:13px;
-  font-weight:1000;
-  color:#fff;
-
-  background: linear-gradient(145deg, rgba(0,0,0,.85), rgba(0,0,0,.65));
-  border:1px solid rgba(255,255,255,.25);
-
-  box-shadow:
-    0 6px 18px rgba(0,0,0,.55),
-    0 0 12px rgba(255,255,255,.15);
-}
-
-/* MOBILE */
-@media (max-width:520px){
   .miniProfileLink{
-    width:46px;
-    height:44px;
+    position:relative;
+    width:50px;
+    height:46px; /* on garde la hauteur visuelle de la topbar */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    text-decoration:none;
+    overflow:visible; /* important pour le glow */
+
+    border-radius:16px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
+
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
   }
 
+  .miniProfileLink:hover{
+    background:rgba(255,255,255,.10);
+    transform: translateY(-1px);
+    border-color: rgba(255,255,255,.20);
+  }
+
+  .miniProfileLink:active{
+    transform: translateY(0px) scale(.98);
+  }
+
+  /* AVATAR */
   .miniAvatar{
-    width:44px;
-    height:44px;
+    --glow: rgba(120,170,255,.35);
+    --glow2: rgba(190,120,255,.35);
+
+    width:50px;
+    height:50px;
+    border-radius:18px;
+
+    background: rgba(0,0,0,.25) center/cover no-repeat;
+    border:1px solid rgba(255,255,255,.18);
+
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.12),
+      0 0 32px var(--glow);
+
+    position:relative;
+    transition: box-shadow .25s ease;
   }
 
+  /* glow secondaire dynamique */
+  .miniAvatar::after{
+    content:"";
+    position:absolute;
+    inset:-3px;
+    border-radius:20px;
+    pointer-events:none;
+
+    background:
+      radial-gradient(circle at 30% 30%, var(--glow), transparent 60%),
+      radial-gradient(circle at 70% 70%, var(--glow2), transparent 60%);
+
+    filter: blur(10px);
+    opacity:.75;
+  }
+
+  /* BULLE LVL */
   .lvlBubble{
-    min-width:22px;
-    height:22px;
-    font-size:11px;
-  }
-}
+    position:absolute;
+    left:-8px;
+    bottom:-8px;
 
+    min-width:26px;
+    height:26px;
+    padding:0 7px;
+
+    border-radius:999px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:13px;
+    font-weight:1000;
+    color:#fff;
+
+    background: linear-gradient(145deg, rgba(0,0,0,.85), rgba(0,0,0,.65));
+    border:1px solid rgba(255,255,255,.25);
+
+    box-shadow:
+      0 6px 18px rgba(0,0,0,.55),
+      0 0 12px rgba(255,255,255,.15);
+  }
+
+  /* MOBILE */
+  @media (max-width:520px){
+    .miniProfileLink{
+      width:46px;
+      height:44px;
+    }
+
+    .miniAvatar{
+      width:44px;
+      height:44px;
+    }
+
+    .lvlBubble{
+      min-width:22px;
+      height:22px;
+      font-size:11px;
+    }
+  }
 
   /* Logo dans la topbar */
   .cornerLogo{
@@ -530,57 +529,7 @@
   }
   .footerSignature b{ font-weight:700; }
 
-  /* ===== Notifs ===== */
-  .notifContainer{ position:relative; display:inline-block; }
-  .notifBtn{
-    background:none;
-    border:none;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-  .notifBadge{
-    position:absolute;
-    top:-6px;
-    right:-8px;
-    background:#ff3b3b;
-    color:#fff;
-    font-size:11px;
-    font-weight:900;
-    border-radius:999px;
-    min-width:18px;
-    height:18px;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:0 5px;
-  }
-
-  .notifMenu{
-    position:absolute;
-    right:0;
-    top:44px;
-    width:min(360px, 92vw);
-    border-radius:14px;
-    background:rgba(15,17,26,.96);
-    border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 22px 70px rgba(0,0,0,.55);
-    display:none;
-    overflow:hidden;
-    z-index:99999;
-  }
-  .notifMenu.open{ display:block; }
-
-  .notifHeader{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    padding:10px 12px;
-    border-bottom:1px solid rgba(255,255,255,.10);
-  }
-
+  /* ===== Notifs (réutilisé dans le dropdown profil) ===== */
   .notifSmallBtn{
     padding:7px 10px;
     border-radius:10px;
@@ -590,7 +539,6 @@
     font-weight:900;
     cursor:pointer;
   }
-
   .notifList{ max-height:320px; overflow:auto; }
 
   .notifItem{
@@ -622,6 +570,88 @@
   }
 
   .notifFooter{ padding:10px 12px; }
+
+  /* ===== Profile dropdown (OPTION 1) ===== */
+  .profileWrap{ position:relative; display:inline-block; }
+
+  .profileMenu{
+    position:absolute;
+    right:0;
+    top:56px;
+    width:min(320px, 92vw);
+    border-radius:16px;
+    background:rgba(15,17,26,.96);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 22px 70px rgba(0,0,0,.55);
+    display:none;
+    overflow:hidden;
+    z-index:99999;
+  }
+  .profileMenu.open{ display:block; }
+
+  .profileHeader{
+    padding:12px 12px 10px 12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .profileHeader b{ font-size:13px; letter-spacing:.3px; }
+  .profileHeader small{ opacity:.75; font-size:12px; }
+
+  .profileItem{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    background:transparent;
+    border:0;
+    color:#fff;
+    text-decoration:none;
+    cursor:pointer;
+    font-weight:900;
+    font-size:13px;
+    text-align:left;
+  }
+  .profileItem:hover{ background:rgba(255,255,255,.06); }
+
+  .profileItem.danger{ color: rgba(255,120,120,.95); }
+
+  .profileSep{
+    height:1px;
+    background: rgba(255,255,255,.10);
+    margin:6px 0;
+  }
+
+  .profilePill{
+    min-width:22px;
+    height:18px;
+    padding:0 6px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:1000;
+    background:rgba(255,80,80,.14);
+    border:1px solid rgba(255,80,80,.45);
+    color:#fff;
+  }
+
+  .profileNotifArea{
+    border-top:1px solid rgba(255,255,255,.08);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+
+  .profileNotifHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+  }
 
   /* ===== Scrollbars dark ===== */
   *{
@@ -736,108 +766,54 @@
   button, a, .cardImg{ touch-action: manipulation; }
 
   .cardPlaceholder{
-  position:absolute;
-  left:50%;
-  top:56%;
-  width:260px;
-  height:340px;
-  transform:translate(-50%,-50%) translateZ(19px);
-  border-radius:16px;
+    position:absolute;
+    left:50%;
+    top:56%;
+    width:260px;
+    height:340px;
+    transform:translate(-50%,-50%) translateZ(19px);
+    border-radius:16px;
 
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
 
-  pointer-events:none;
-  opacity:.85;
+    pointer-events:none;
+    opacity:.85;
 
-  /* petit “habillage” doux */
-  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%);
-}
-
-.cardPlaceholder img{
-  width: 280px;
-  max-width: 70%;
-  height:auto;
-  display:block;
-  filter: drop-shadow(0 10px 25px rgba(0,0,0,.45));
-  opacity:.95;
-}
-
-.cardPlaceholder .phText{
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.3px;
-  opacity:.75;
-  text-align:center;
-}
-
-/* Mobile (si tu as ton bloc @media 420px) */
-@media (max-width:420px){
-  .cardPlaceholder{
-    width:240px;
-    height:320px;
+    /* petit “habillage” doux */
+    background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%);
   }
-  .cardPlaceholder img{ width:120px; }
-}
 
-/* ===== ICON BUTTONS (sans cadre) ===== */
-.notifIcon,
-.logoutIcon{
-  width:36px;
-  height:36px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
+  .cardPlaceholder img{
+    width: 280px;
+    max-width: 70%;
+    height:auto;
+    display:block;
+    filter: drop-shadow(0 10px 25px rgba(0,0,0,.45));
+    opacity:.95;
+  }
 
-  background:transparent;
-  border:none;
-  padding:0;
-  border-radius:12px;
-  text-decoration:none;
+  .cardPlaceholder .phText{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.3px;
+    opacity:.75;
+    text-align:center;
+  }
 
-  cursor:pointer;
-  transition: transform .15s ease;
-}
-.notifIcon img{
-  filter: drop-shadow(0 0 8px rgba(190,120,255,.5));
-  opacity:.9;
-}
+  /* Mobile (si tu as ton bloc @media 420px) */
+  @media (max-width:420px){
+    .cardPlaceholder{
+      width:240px;
+      height:320px;
+    }
+    .cardPlaceholder img{ width:120px; }
+  }
+</style>  
 
-.notifIcon,
-.logoutIcon{
-  margin-left:4px;
-}
-.notifIcon img,
-.logoutIcon img{
-  width:36px;
-  height:36px;
-  object-fit:contain;
-  opacity:.9;
-  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
-}
-
-.notifIcon:hover img{
-  opacity:1;
-  transform: translateY(-1px);
-  filter: drop-shadow(0 0 10px rgba(190,120,255,.6))
-          drop-shadow(0 0 18px rgba(120,170,255,.45));
-}
-
-.logoutIcon:hover img{
-  opacity:1;
-  transform: translateY(-1px);
-  filter: drop-shadow(0 0 10px rgba(255,80,80,.55));
-}
-
-.notifIcon:active img,
-.logoutIcon:active img{
-  transform: scale(.92);
-}
-</style>
 
 </head>
 
@@ -880,31 +856,43 @@
           <span class="lvlBubble" id="miniLvl">1</span>
         </a>
 
-        <div class="notifContainer" id="notifWrap">
-          <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
-            <img src="notif.png" alt="">
-            <span id="notifBadge" class="notifBadge"></span>
-          </button>
+        <!-- ✅ PROFILE DROPDOWN (remplace notif + logout visibles) -->
+  <div class="profileWrap" id="profileWrap">
+    <!-- on réutilise ton miniProfileLink mais sans navigation directe -->
+    <button class="miniProfileLink" id="profileBtn" type="button" aria-label="Menu profil" aria-expanded="false">
+      <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+      <span class="lvlBubble" id="miniLvl">1</span>
+    </button>
 
-          <div class="notifMenu" id="notifMenu">
-            <div class="notifHeader">
-              <b>Notifications</b>
-              <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
-            </div>
+    <div class="profileMenu" id="profileMenu" role="menu" aria-label="Menu profil">
+      <div class="profileHeader">
+        <b id="profileName">Mon compte</b>
+        <small id="profileSub">Connecté</small>
+      </div>
 
-          <div class="notifList" id="notifList"></div>
+      <a class="profileItem" href="/profile.html" role="menuitem">👤 Profil</a>
 
-          <div class="notifFooter">
-            <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
-          </div>
+      <button class="profileItem" id="profileNotifBtn" type="button" role="menuitem">
+        🔔 Notifications
+        <span class="profilePill" id="profileNotifPill" style="display:none;">0</span>
+      </button>
+
+      <div class="profileNotifArea" id="profileNotifArea" style="display:none;">
+        <div class="profileNotifHead">
+          <b>Dernières</b>
+          <button class="notifSmallBtn" id="notifReadAll" type="button">Tout lire</button>
+        </div>
+        <div class="notifList" id="notifList"></div>
+        <div class="notifFooter">
+          <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
         </div>
       </div>
 
-        <a class="logoutIcon" href="#" id="logout" aria-label="Logout">
-        <img src="loggout.png" alt="">
-        </a>
-      </div>
+      <div class="profileSep"></div>
+
+      <button class="profileItem danger" id="logout" type="button" role="menuitem">🚪 Déconnexion</button>
     </div>
+  </div>
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
@@ -993,529 +981,563 @@
 </div>
       <div class="gameHint">Tu peux rechanger à tout moment avec “TCG” en haut.</div>
     </div>
-  </div>
+</div>
 
-  <script>
-    // --------- AUTH ---------
-    const TOKEN_KEY = "gacha_token_v1";
-    const GAME_KEY  = "gacha_game_v1";
+<script>
+  // --------- AUTH ---------
+  const TOKEN_KEY = "gacha_token_v1";
+  const GAME_KEY  = "gacha_game_v1";
 
-    const token = localStorage.getItem(TOKEN_KEY);
-    if(!token){
-      window.location.href = "/login.html";
+  const token = localStorage.getItem(TOKEN_KEY);
+  if(!token){
+    window.location.href = "/login.html";
+  }
+
+  function currentGame(){
+    return (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  }
+  function gameLabel(g){
+    return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+  }
+
+  async function api(path, opts={}){
+    const g = encodeURIComponent(currentGame());
+    const sep = path.includes("?") ? "&" : "?";
+    const url = path + sep + "game=" + g;
+
+    const r = await fetch(url, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY),
+        "Content-Type":"application/json"
+      }
+    });
+
+    const data = await r.json().catch(()=> ({}));
+    if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+    return data;
+  }
+
+  // ---------- DOM ----------
+  const sfxOpen = document.getElementById("sfxOpen");
+  const sfxReveal = document.getElementById("sfxReveal");
+
+  function playSfx(a, volume = 0.8){
+    if(!a) return;
+    try{
+      a.pause();
+      a.currentTime = 0;
+      a.volume = volume;
+      a.play().catch(()=>{});
+    }catch{}
+  }
+
+  const slab = document.getElementById("slab");
+  const shine = document.getElementById("shine");
+  const glare = document.getElementById("glare");
+  const card = document.getElementById("card");
+
+  // ✅ mini profile (dans le dropdown)
+  const miniAvatar = document.getElementById("miniAvatar");
+  const miniLvl = document.getElementById("miniLvl");
+
+  // ✅ Placeholder logo (ajout)
+  const cardPh = document.getElementById("cardPh");
+  function setPlaceholderVisible(v){
+    if(!cardPh) return;
+    cardPh.style.display = v ? "flex" : "none";
+  }
+
+  const title = document.getElementById("title");
+  const subtitle = document.getElementById("subtitle");
+  const gradeEl = document.getElementById("grade");
+  const mintTag = document.getElementById("mintTag");
+  const log = document.getElementById("log");
+
+  const modal = document.getElementById("modal");
+  const zoomSlab = document.getElementById("zoomSlab");
+  const zoomShine = document.getElementById("zoomShine");
+  const zoomGlare = document.getElementById("zoomGlare");
+  const zoomCard = document.getElementById("zoomCard");
+  const zoomTitle = document.getElementById("zoomTitle");
+  const zoomSubtitle = document.getElementById("zoomSubtitle");
+  const zoomGrade = document.getElementById("zoomGrade");
+  const zoomMintTag = document.getElementById("zoomMintTag");
+
+  const btnOpen = document.getElementById("open");
+  const btnLogout = document.getElementById("logout");
+  const btnChangeGame = document.getElementById("changeGame");
+
+  const moneyEl = document.getElementById("money");
+  const subTop = document.getElementById("subTop");
+
+  // ✅ header du dropdown profil
+  const profileName = document.getElementById("profileName");
+  const profileSub  = document.getElementById("profileSub");
+
+  // GAME PICKER
+  const gameModal = document.getElementById("gameModal");
+  const gameCurrentLabel = document.getElementById("gameCurrentLabel");
+
+  function openGamePicker(){
+    gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
+    gameModal.classList.add("open");
+  }
+  function closeGamePicker(){
+    gameModal.classList.remove("open");
+  }
+  function applyGameToUI(){
+    const g = currentGame();
+    title.textContent = `${gameLabel(g)} • SLAB`;
+    zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
+    // (subtitle reste pareil)
+  }
+
+  // exposée au onclick HTML
+  window.setGameAndClose = async function(g){
+    localStorage.setItem(GAME_KEY, (g === "onepiece") ? "onepiece" : "pokemon");
+    closeGamePicker();
+    applyGameToUI();
+    // recharge les données du bon jeu
+    try{ await loadMe(); }catch{}
+  }
+
+  btnChangeGame.onclick = (e) => {
+    e.preventDefault();
+    openGamePicker();
+  }
+
+  let dragging = false;
+  let zoomDragging = false;
+
+  const COST_ONE = 5;
+
+  function updateTopUI(me){
+    if (moneyEl) moneyEl.textContent = String(me.money);
+    btnOpen.disabled = (me.money < COST_ONE);
+  }
+
+  function tierFromGrade(grade){
+    if (grade >= 10) return "g";
+    if (grade >= 7) return "v";
+    if (grade >= 5) return "b";
+    return "w";
+  }
+
+  function tagClass(tier, isMint){ return isMint ? "m" : tier; }
+  function tagText(grade, isMint){ return isMint ? "MINT" : `G${grade}`; }
+
+  function addLog(name, setName, grade, isMint, imageUrl) {
+    const tier = tierFromGrade(grade);
+
+    const el = document.createElement("div");
+    el.className = "pill";
+    el.innerHTML = `
+      <div class="thumb" style="background-image:url('${imageUrl.replace(/'/g,"\\'")}')"></div>
+      <div class="meta">
+        <div class="line1">${isMint ? "MINT" : `Grade ${grade}`} • ${name}</div>
+        <div class="line2">${setName}</div>
+      </div>
+      <div class="tag ${tagClass(tier, isMint)}">${tagText(grade, isMint)}</div>
+    `;
+
+    el.addEventListener("click", () => {
+      // ✅ si on clique un log, on affiche une carte => on cache le placeholder
+      setPlaceholderVisible(false);
+
+      card.style.backgroundImage = `url("${imageUrl}")`;
+
+      title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
+      subtitle.textContent = `${name} • ${setName}`;
+      gradeEl.textContent = grade;
+
+      slab.dataset.tier = tier;
+      slab.dataset.mint = isMint ? "1" : "0";
+      mintTag.style.display = isMint ? "inline-flex" : "none";
+
+      slab.classList.add("reveal");
+      setTimeout(() => slab.classList.remove("reveal"), 450);
+    });
+
+    log.prepend(el);
+  }
+
+  // ---------- HOLO / TILT ----------
+  function setTilt(clientX, clientY) {
+    const r = slab.getBoundingClientRect();
+    const px = (clientX - r.left) / r.width;
+    const py = (clientY - r.top) / r.height;
+    const rx = (0.5 - py) * 18;
+    const ry = (px - 0.5) * 22;
+    slab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+    const x = Math.max(0, Math.min(1, px));
+    const y = Math.max(0, Math.min(1, py));
+
+    shine.style.opacity = "0.75";
+    glare.style.opacity = "0.45";
+    shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+    glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+  }
+
+  slab.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
+  slab.addEventListener("mouseenter", () => { shine.style.opacity = "0.75"; glare.style.opacity = "0.45"; });
+  slab.addEventListener("mouseleave", () => {
+    slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    shine.style.opacity = "0";
+    glare.style.opacity = "0";
+    shine.style.transform = `translateZ(0px)`;
+    glare.style.transform = `translateZ(0px)`;
+  });
+  slab.addEventListener("mousedown", () => dragging = true);
+  window.addEventListener("mouseup", () => dragging = false);
+  window.addEventListener("mousemove", (e) => { if (dragging) setTilt(e.clientX, e.clientY); });
+
+  function setZoomTilt(clientX, clientY){
+    const r = zoomSlab.getBoundingClientRect();
+    const px = (clientX - r.left) / r.width;
+    const py = (clientY - r.top) / r.height;
+
+    const rx = (0.5 - py) * 14;
+    const ry = (px - 0.5) * 18;
+    zoomSlab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+
+    const x = Math.max(0, Math.min(1, px));
+    const y = Math.max(0, Math.min(1, py));
+
+    zoomShine.style.opacity = "0.80";
+    zoomGlare.style.opacity = "0.50";
+    zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+    zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+  }
+
+  zoomSlab.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
+  zoomSlab.addEventListener("mouseenter", ()=>{ zoomShine.style.opacity="0.80"; zoomGlare.style.opacity="0.50"; });
+  zoomSlab.addEventListener("mouseleave", ()=>{
+    zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    zoomShine.style.opacity="0";
+    zoomGlare.style.opacity="0";
+    zoomShine.style.transform = `translateZ(0px)`;
+    zoomGlare.style.transform = `translateZ(0px)`;
+  });
+  zoomSlab.addEventListener("mousedown", ()=> zoomDragging = true);
+  window.addEventListener("mouseup", ()=> zoomDragging = false);
+  window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
+
+  function openZoomFromCurrent(){
+    const bg = card.style.backgroundImage;
+    if (!bg || bg.includes("linear-gradient")) return;
+
+    const high = card.dataset.high;
+    zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
+
+    zoomTitle.textContent = title.textContent;
+    zoomSubtitle.textContent = subtitle.textContent;
+    zoomGrade.textContent = gradeEl.textContent;
+
+    zoomSlab.dataset.tier = slab.dataset.tier || "";
+    zoomSlab.dataset.mint = slab.dataset.mint || "0";
+    zoomMintTag.style.display = (mintTag.style.display === "none") ? "none" : "inline-flex";
+
+    modal.classList.add("open");
+  }
+  card.addEventListener("click", openZoomFromCurrent);
+  modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
+
+  function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+
+  function hexToRgba(hex, a){
+    const h = String(hex||"").replace("#","").trim();
+    const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
+    const r = parseInt(full.slice(0,2),16) || 0;
+    const g = parseInt(full.slice(2,4),16) || 0;
+    const b = parseInt(full.slice(4,6),16) || 0;
+    return `rgba(${r},${g},${b},${clamp(Number(a)||0,0,1)})`;
+  }
+
+  function themeForLevel(level){
+    const l = clamp(Number(level)||1, 1, 100);
+    if (l >= 100) return { glow:"#ff5b5b", glow2:"#ffd36a" };
+    if (l >= 50)  return { glow:"#ff78dc", glow2:"#8b7bff" };
+    if (l >= 25)  return { glow:"#ffd36a", glow2:"#ff9a5c" };
+    if (l >= 10)  return { glow:"#78ffc8", glow2:"#52d7ff" };
+    return          { glow:"#78aaff", glow2:"#be78ff" };
+  }
+
+  function intensityForLevel(level){
+    const l = clamp(Number(level)||1, 1, 100);
+    if (l < 50){
+      const t = (l - 1) / 49;
+      return 0.15 + t * 0.40;
     }
+    const t = (l - 50) / 50;
+    return 0.55 + t * 0.45;
+  }
 
-    function currentGame(){
-      return (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  function applyMiniProfileTheme(level){
+    if(!miniAvatar) return;
+    const t = themeForLevel(level);
+    const intensity = intensityForLevel(level);
+    miniAvatar.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
+    miniAvatar.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
+  }
+
+  function setMiniAvatar(url){
+    if(!miniAvatar) return;
+    const u = String(url||"").trim();
+    // fallback si pas d’avatar => poke.png
+    miniAvatar.style.backgroundImage = `url("${u || "poke.png"}")`;
+  }
+
+  async function loadMe(){
+    const me = await api("/api/me");
+    subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
+    updateTopUI(me);
+
+    // ✅ mini profile
+    setMiniAvatar(me.avatar);
+    if(miniLvl) miniLvl.textContent = String(me.level || 1);
+    applyMiniProfileTheme(me.level || 1);
+
+    // ✅ header dropdown profil
+    if(profileName) profileName.textContent = me.name || "Mon compte";
+    if(profileSub)  profileSub.textContent  = "Niv. " + String(me.level || 1) + " • " + gameLabel(currentGame());
+
+    return me;
+  }
+
+  async function loadPulls(){
+    log.innerHTML = "";
+    const data = await api("/api/pulls");
+    for(const p of (data.pulls || []).slice().reverse()){
+      addLog(p.name, p.set, p.grade, p.mint, p.image);
     }
-    function gameLabel(g){
-      return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
-    }
+  }
 
-    async function api(path, opts={}){
-      const g = encodeURIComponent(currentGame());
-      const sep = path.includes("?") ? "&" : "?";
-      const url = path + sep + "game=" + g;
+  async function openOne(){
+    btnOpen.disabled = true;
+    playSfx(sfxOpen, 0.8);
 
-      const r = await fetch(url, {
-        ...opts,
-        headers: {
-          ...(opts.headers || {}),
-          "Authorization": "Bearer " + localStorage.getItem(TOKEN_KEY),
-          "Content-Type":"application/json"
-        }
-      });
+    slab.classList.remove("shake");
+    void slab.offsetWidth;
+    slab.classList.add("shake");
 
-      const data = await r.json().catch(()=> ({}));
-      if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
-      return data;
-    }
+    subtitle.textContent = "Invocation...";
+    gradeEl.textContent = "?";
+    slab.dataset.tier = "";
+    slab.dataset.mint = "0";
+    mintTag.style.display = "none";
 
-    // ---------- DOM ----------
-    const sfxOpen = document.getElementById("sfxOpen");
-    const sfxReveal = document.getElementById("sfxReveal");
+    try{
+      const data = await api("/api/open", { method:"POST" });
+      const c = data.card;
 
-    function playSfx(a, volume = 0.8){
-      if(!a) return;
-      try{
-        a.pause();
-        a.currentTime = 0;
-        a.volume = volume;
-        a.play().catch(()=>{});
-      }catch{}
-}
+      const tier = tierFromGrade(c.grade);
 
+      title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
+      subtitle.textContent = `${c.name} • ${c.set}`;
+      gradeEl.textContent = c.grade;
+      mintTag.style.display = c.mint ? "inline-flex" : "none";
 
-
-    const slab = document.getElementById("slab");
-    const shine = document.getElementById("shine");
-    const glare = document.getElementById("glare");
-    const card = document.getElementById("card");
-
-    const miniAvatar = document.getElementById("miniAvatar");
-    const miniLvl = document.getElementById("miniLvl");
-
-    // ✅ Placeholder logo (ajout)
-    const cardPh = document.getElementById("cardPh");
-    function setPlaceholderVisible(v){
-      if(!cardPh) return;
-      cardPh.style.display = v ? "flex" : "none";
-    }
-
-    const title = document.getElementById("title");
-    const subtitle = document.getElementById("subtitle");
-    const gradeEl = document.getElementById("grade");
-    const mintTag = document.getElementById("mintTag");
-    const log = document.getElementById("log");
-
-    const modal = document.getElementById("modal");
-    const zoomSlab = document.getElementById("zoomSlab");
-    const zoomShine = document.getElementById("zoomShine");
-    const zoomGlare = document.getElementById("zoomGlare");
-    const zoomCard = document.getElementById("zoomCard");
-    const zoomTitle = document.getElementById("zoomTitle");
-    const zoomSubtitle = document.getElementById("zoomSubtitle");
-    const zoomGrade = document.getElementById("zoomGrade");
-    const zoomMintTag = document.getElementById("zoomMintTag");
-
-    const btnOpen = document.getElementById("open");
-    const btnLogout = document.getElementById("logout");
-    const btnChangeGame = document.getElementById("changeGame");
-
-    const moneyEl = document.getElementById("money");
-    const subTop = document.getElementById("subTop");
-
-    // GAME PICKER
-    const gameModal = document.getElementById("gameModal");
-    const gameCurrentLabel = document.getElementById("gameCurrentLabel");
-
-    function openGamePicker(){
-      gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
-      gameModal.classList.add("open");
-    }
-    function closeGamePicker(){
-      gameModal.classList.remove("open");
-    }
-    function applyGameToUI(){
-      const g = currentGame();
-      title.textContent = `${gameLabel(g)} • SLAB`;
-      zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
-      // (subtitle reste pareil)
-    }
-
-    // exposée au onclick HTML
-    window.setGameAndClose = async function(g){
-      localStorage.setItem(GAME_KEY, (g === "onepiece") ? "onepiece" : "pokemon");
-      closeGamePicker();
-      applyGameToUI();
-      // recharge les données du bon jeu
-      try{
-        await loadMe();
-      }catch{}
-    }
-
-    btnChangeGame.onclick = (e) => {
-      e.preventDefault();
-      openGamePicker();
-    }
-
-    let dragging = false;
-    let zoomDragging = false;
-
-    const COST_ONE = 5;
-
-    function updateTopUI(me){
-      if (moneyEl) moneyEl.textContent = String(me.money);
-      btnOpen.disabled = (me.money < COST_ONE);
-    }
-
-    function tierFromGrade(grade){
-      if (grade >= 10) return "g";
-      if (grade >= 7) return "v";
-      if (grade >= 5) return "b";
-      return "w";
-    }
-
-    function tagClass(tier, isMint){ return isMint ? "m" : tier; }
-    function tagText(grade, isMint){ return isMint ? "MINT" : `G${grade}`; }
-
-    function addLog(name, setName, grade, isMint, imageUrl) {
-      const tier = tierFromGrade(grade);
-
-      const el = document.createElement("div");
-      el.className = "pill";
-      el.innerHTML = `
-        <div class="thumb" style="background-image:url('${imageUrl.replace(/'/g,"\\'")}')"></div>
-        <div class="meta">
-          <div class="line1">${isMint ? "MINT" : `Grade ${grade}`} • ${name}</div>
-          <div class="line2">${setName}</div>
-        </div>
-        <div class="tag ${tagClass(tier, isMint)}">${tagText(grade, isMint)}</div>
-      `;
-
-      el.addEventListener("click", () => {
-        // ✅ si on clique un log, on affiche une carte => on cache le placeholder
+      const img = new Image();
+      img.onload = () => {
+        // ✅ une vraie carte => on cache le placeholder
         setPlaceholderVisible(false);
 
-        card.style.backgroundImage = `url("${imageUrl}")`;
-
-        title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
-        subtitle.textContent = `${name} • ${setName}`;
-        gradeEl.textContent = grade;
-
+        card.style.backgroundImage = `url("${img.src}")`;
+        card.dataset.high = c.imageHigh || "";
         slab.dataset.tier = tier;
-        slab.dataset.mint = isMint ? "1" : "0";
-        mintTag.style.display = isMint ? "inline-flex" : "none";
-
+        slab.dataset.mint = c.mint ? "1" : "0";
         slab.classList.add("reveal");
         setTimeout(() => slab.classList.remove("reveal"), 450);
-      });
+      };
+      img.onerror = () => { subtitle.textContent = "Image introuvable"; };
+      img.src = c.image;
 
-      log.prepend(el);
+      addLog(c.name, c.set, c.grade, c.mint, c.image);
+
+      await loadMe();
+
+    }catch(e){
+      subtitle.textContent = e.message.includes("Not enough")
+        ? "Pas assez de Pokédollars 💵"
+        : "Problème temporaire, réessaie";
+      await loadMe();
     }
-
-    // ---------- HOLO / TILT ----------
-    function setTilt(clientX, clientY) {
-      const r = slab.getBoundingClientRect();
-      const px = (clientX - r.left) / r.width;
-      const py = (clientY - r.top) / r.height;
-      const rx = (0.5 - py) * 18;
-      const ry = (px - 0.5) * 22;
-      slab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-
-      const x = Math.max(0, Math.min(1, px));
-      const y = Math.max(0, Math.min(1, py));
-
-      shine.style.opacity = "0.75";
-      glare.style.opacity = "0.45";
-      shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-      glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
-    }
-
-    slab.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
-    slab.addEventListener("mouseenter", () => { shine.style.opacity = "0.75"; glare.style.opacity = "0.45"; });
-    slab.addEventListener("mouseleave", () => {
-      slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-      shine.style.opacity = "0";
-      glare.style.opacity = "0";
-      shine.style.transform = `translateZ(0px)`;
-      glare.style.transform = `translateZ(0px)`;
-    });
-    slab.addEventListener("mousedown", () => dragging = true);
-    window.addEventListener("mouseup", () => dragging = false);
-    window.addEventListener("mousemove", (e) => { if (dragging) setTilt(e.clientX, e.clientY); });
-
-    function setZoomTilt(clientX, clientY){
-      const r = zoomSlab.getBoundingClientRect();
-      const px = (clientX - r.left) / r.width;
-      const py = (clientY - r.top) / r.height;
-
-      const rx = (0.5 - py) * 14;
-      const ry = (px - 0.5) * 18;
-      zoomSlab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-
-      const x = Math.max(0, Math.min(1, px));
-      const y = Math.max(0, Math.min(1, py));
-
-      zoomShine.style.opacity = "0.80";
-      zoomGlare.style.opacity = "0.50";
-      zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-      zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
-    }
-
-    zoomSlab.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
-    zoomSlab.addEventListener("mouseenter", ()=>{ zoomShine.style.opacity="0.80"; zoomGlare.style.opacity="0.50"; });
-    zoomSlab.addEventListener("mouseleave", ()=>{
-      zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-      zoomShine.style.opacity="0";
-      zoomGlare.style.opacity="0";
-      zoomShine.style.transform = `translateZ(0px)`;
-      zoomGlare.style.transform = `translateZ(0px)`;
-    });
-    zoomSlab.addEventListener("mousedown", ()=> zoomDragging = true);
-    window.addEventListener("mouseup", ()=> zoomDragging = false);
-    window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
-
-    function openZoomFromCurrent(){
-      const bg = card.style.backgroundImage;
-      if (!bg || bg.includes("linear-gradient")) return;
-
-      const high = card.dataset.high;
-      zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
-
-      zoomTitle.textContent = title.textContent;
-      zoomSubtitle.textContent = subtitle.textContent;
-      zoomGrade.textContent = gradeEl.textContent;
-
-      zoomSlab.dataset.tier = slab.dataset.tier || "";
-      zoomSlab.dataset.mint = slab.dataset.mint || "0";
-      zoomMintTag.style.display = (mintTag.style.display === "none") ? "none" : "inline-flex";
-
-      modal.classList.add("open");
-    }
-    card.addEventListener("click", openZoomFromCurrent);
-    modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
-
-    function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
-
-function hexToRgba(hex, a){
-  const h = String(hex||"").replace("#","").trim();
-  const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
-  const r = parseInt(full.slice(0,2),16) || 0;
-  const g = parseInt(full.slice(2,4),16) || 0;
-  const b = parseInt(full.slice(4,6),16) || 0;
-  return `rgba(${r},${g},${b},${clamp(Number(a)||0,0,1)})`;
-}
-
-function themeForLevel(level){
-  const l = clamp(Number(level)||1, 1, 100);
-  if (l >= 100) return { glow:"#ff5b5b", glow2:"#ffd36a" };
-  if (l >= 50)  return { glow:"#ff78dc", glow2:"#8b7bff" };
-  if (l >= 25)  return { glow:"#ffd36a", glow2:"#ff9a5c" };
-  if (l >= 10)  return { glow:"#78ffc8", glow2:"#52d7ff" };
-  return          { glow:"#78aaff", glow2:"#be78ff" };
-}
-
-function intensityForLevel(level){
-  const l = clamp(Number(level)||1, 1, 100);
-  if (l < 50){
-    const t = (l - 1) / 49;
-    return 0.15 + t * 0.40;
   }
-  const t = (l - 50) / 50;
-  return 0.55 + t * 0.45;
-}
 
-function applyMiniProfileTheme(level){
-  if(!miniAvatar) return;
-  const t = themeForLevel(level);
-  const intensity = intensityForLevel(level);
-  miniAvatar.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
-  miniAvatar.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
-}
+  btnOpen.onclick = openOne;
 
-function setMiniAvatar(url){
-  if(!miniAvatar) return;
-  const u = String(url||"").trim();
-  // fallback si pas d’avatar => poke.png
-  miniAvatar.style.backgroundImage = `url("${u || "poke.png"}")`;
-}
+  // ✅ Logout dans dropdown
+  btnLogout.onclick = async (e) => {
+    e.preventDefault();
+    try{ await api("/api/logout", { method:"POST" }); }catch{}
+    localStorage.removeItem(TOKEN_KEY);
+    window.location.href = "/login.html";
+  };
 
-    async function loadMe(){
-  const me = await api("/api/me");
-  subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
-  updateTopUI(me);
+  // ---------- INIT ----------
+  card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
 
-  // ✅ mini profile
-  setMiniAvatar(me.avatar);
-  if(miniLvl) miniLvl.textContent = String(me.level || 1);
-  applyMiniProfileTheme(me.level || 1);
+  // ✅ au démarrage, aucune carte => placeholder visible
+  setPlaceholderVisible(true);
 
-  return me;
-}
-
-    async function loadPulls(){
-      log.innerHTML = "";
-      const data = await api("/api/pulls");
-      for(const p of (data.pulls || []).slice().reverse()){
-        addLog(p.name, p.set, p.grade, p.mint, p.image);
+  (async () => {
+    try{
+      // ✅ si aucun jeu choisi (première fois), on force le picker
+      if(!localStorage.getItem(GAME_KEY)){
+        openGamePicker();
       }
-    }
-
-    async function openOne(){
-      btnOpen.disabled = true;
-      playSfx(sfxOpen, 0.8);
-
-      slab.classList.remove("shake");
-      void slab.offsetWidth;
-      slab.classList.add("shake");
-
-      subtitle.textContent = "Invocation...";
-      gradeEl.textContent = "?";
-      slab.dataset.tier = "";
-      slab.dataset.mint = "0";
-      mintTag.style.display = "none";
-
-      try{
-        const data = await api("/api/open", { method:"POST" });
-        const c = data.card;
-
-        const tier = tierFromGrade(c.grade);
-
-        title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
-        subtitle.textContent = `${c.name} • ${c.set}`;
-        gradeEl.textContent = c.grade;
-        mintTag.style.display = c.mint ? "inline-flex" : "none";
-
-        const img = new Image();
-        img.onload = () => {
-          // ✅ une vraie carte => on cache le placeholder
-          setPlaceholderVisible(false);
-
-          card.style.backgroundImage = `url("${img.src}")`;
-          card.dataset.high = c.imageHigh || "";
-          slab.dataset.tier = tier;
-          slab.dataset.mint = c.mint ? "1" : "0";
-          slab.classList.add("reveal");
-          setTimeout(() => slab.classList.remove("reveal"), 450);
-        };
-        img.onerror = () => { subtitle.textContent = "Image introuvable"; };
-        img.src = c.image;
-
-        addLog(c.name, c.set, c.grade, c.mint, c.image);
-
-        await loadMe();
-        
-
-      }catch(e){
-        subtitle.textContent = e.message.includes("Not enough")
-          ? "Pas assez de Pokédollars 💵"
-          : "Problème temporaire, réessaie";
-        await loadMe();
-      }
-    }
-
-    btnOpen.onclick = openOne;
-
-    btnLogout.onclick = async (e) => {
-      e.preventDefault();
-      try{ await api("/api/logout", { method:"POST" }); }catch{}
+      applyGameToUI();
+      await loadMe();
+      await loadPulls();
+    }catch(e){
       localStorage.removeItem(TOKEN_KEY);
       window.location.href = "/login.html";
-    };
-
-    // ---------- INIT ----------
-    card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
-
-    // ✅ au démarrage, aucune carte => placeholder visible
-    setPlaceholderVisible(true);
-
-    (async () => {
-      try{
-        // ✅ si aucun jeu choisi (première fois), on force le picker
-        if(!localStorage.getItem(GAME_KEY)){
-          openGamePicker();
-        }
-        applyGameToUI();
-        await loadMe();
-        await loadPulls();
-      }catch(e){
-        localStorage.removeItem(TOKEN_KEY);
-        window.location.href = "/login.html";
-      }
-    })();
-
-    // ---------- NOTIFS ----------
-    const notifBadge = document.getElementById("notifBadge");
-    async function loadNotifCount(){
-      try{
-        const data = await api("/api/notifications?limit=1&unread=1");
-        const n = data.unread || 0;
-        notifBadge.textContent = n ? String(n) : "";
-        notifBadge.style.display = n ? "inline-flex" : "none";
-      }catch{}
     }
+  })();
 
-    const notifWrap = document.getElementById("notifWrap");
-    const notifBtn = document.getElementById("notifBtn");
-    const notifMenu = document.getElementById("notifMenu");
-    const notifList = document.getElementById("notifList");
-    const notifEmpty = document.getElementById("notifEmpty");
-    const notifReadAll = document.getElementById("notifReadAll");
+  // ---------- NOTIFS (dans dropdown profil) ----------
+  const notifList = document.getElementById("notifList");
+  const notifEmpty = document.getElementById("notifEmpty");
+  const notifReadAll = document.getElementById("notifReadAll");
 
-    function fmtTime(ts){
-      try{
-        const d = new Date(ts);
-        return d.toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
-      }catch{ return ""; }
-    }
+  // ✅ pill sur le bouton "Notifications"
+  const profileNotifPill = document.getElementById("profileNotifPill");
 
-    function setBadge(n){
-      notifBadge.textContent = n ? String(n) : "";
-      notifBadge.style.display = n ? "inline-flex" : "none";
-    }
+  function fmtTime(ts){
+    try{
+      const d = new Date(ts);
+      return d.toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
+    }catch{ return ""; }
+  }
 
-    function escapeHtml(s){
-      return String(s||"")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+  function setBadge(n){
+    if(!profileNotifPill) return;
+    profileNotifPill.textContent = String(n || 0);
+    profileNotifPill.style.display = n ? "inline-flex" : "none";
+  }
 
-    async function loadNotifList(){
-      try{
-        const data = await api("/api/notifications?limit=10");
-        const notifs = data.notifications || [];
-        setBadge(data.unread || 0);
+  function escapeHtml(s){
+    return String(s||"")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
 
-        notifList.innerHTML = "";
-        if(!notifs.length){
-          notifEmpty.style.display = "block";
-          return;
-        }
-        notifEmpty.style.display = "none";
+  async function loadNotifCount(){
+    try{
+      const data = await api("/api/notifications?limit=1&unread=1");
+      setBadge(data.unread || 0);
+    }catch{}
+  }
 
-        for(const n of notifs){
-          const item = document.createElement("div");
-          item.className = "notifItem";
-          item.innerHTML = `
-            <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
-            <div class="notifBody">${escapeHtml(n.body)}</div>
-            <div class="notifMeta">
-              <span>${escapeHtml(n.type || "")}</span>
-              <span>${fmtTime(n.createdAt)}</span>
-            </div>
-          `;
+  async function loadNotifList(){
+    try{
+      const data = await api("/api/notifications?limit=10");
+      const notifs = data.notifications || [];
+      setBadge(data.unread || 0);
 
-          item.onclick = async () => {
-            if(!n.isRead){
-              try{
-                await api("/api/notifications/read", {
-                  method:"POST",
-                  headers: { "Content-Type":"application/json" },
-                  body: JSON.stringify({ id: n.id })
-                });
-              }catch{}
-            }
-            await loadNotifList();
-          };
-
-          notifList.appendChild(item);
-        }
-      }catch{
-        notifList.innerHTML = "";
+      notifList.innerHTML = "";
+      if(!notifs.length){
         notifEmpty.style.display = "block";
+        return;
       }
+      notifEmpty.style.display = "none";
+
+      for(const n of notifs){
+        const item = document.createElement("div");
+        item.className = "notifItem";
+        item.innerHTML = `
+          <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
+          <div class="notifBody">${escapeHtml(n.body)}</div>
+          <div class="notifMeta">
+            <span>${escapeHtml(n.type || "")}</span>
+            <span>${fmtTime(n.createdAt)}</span>
+          </div>
+        `;
+
+        item.onclick = async () => {
+          if(!n.isRead){
+            try{
+              await api("/api/notifications/read", {
+                method:"POST",
+                headers: { "Content-Type":"application/json" },
+                body: JSON.stringify({ id: n.id })
+              });
+            }catch{}
+          }
+          await loadNotifList();
+        };
+
+        notifList.appendChild(item);
+      }
+    }catch{
+      notifList.innerHTML = "";
+      notifEmpty.style.display = "block";
     }
+  }
 
-    function toggleNotifMenu(){
-      const open = notifMenu.classList.toggle("open");
-      if(open) loadNotifList();
-    }
+  notifReadAll?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
+    await loadNotifList();
+  });
 
-    notifBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleNotifMenu();
-    });
+  loadNotifCount();
+  setInterval(loadNotifCount, 12000);
 
-    document.addEventListener("click", (e) => {
-      if(!notifWrap.contains(e.target)) notifMenu.classList.remove("open");
-    });
+  // ---------- PROFILE DROPDOWN ----------
+  const profileWrap = document.getElementById("profileWrap");
+  const profileBtn  = document.getElementById("profileBtn");
+  const profileMenu = document.getElementById("profileMenu");
 
-    notifReadAll.addEventListener("click", async (e) => {
-      e.preventDefault();
-      try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
-      await loadNotifList();
-    });
+  const profileNotifBtn  = document.getElementById("profileNotifBtn");
+  const profileNotifArea = document.getElementById("profileNotifArea");
 
-    loadNotifCount();
-    setInterval(loadNotifCount, 12000);
+  function closeProfileMenu(){
+    profileMenu?.classList.remove("open");
+    profileBtn?.setAttribute("aria-expanded", "false");
+    if(profileNotifArea) profileNotifArea.style.display = "none";
+  }
+
+  function toggleProfileMenu(){
+    if(!profileMenu || !profileBtn) return;
+    const open = profileMenu.classList.toggle("open");
+    profileBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if(!open && profileNotifArea) profileNotifArea.style.display = "none";
+  }
+
+  profileBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleProfileMenu();
+  });
+
+  document.addEventListener("click", (e) => {
+    if(profileWrap && !profileWrap.contains(e.target)) closeProfileMenu();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape") closeProfileMenu();
+  });
+
+  // Sous-menu Notifications (dans dropdown)
+  profileNotifBtn?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if(!profileNotifArea) return;
+
+    const visible = profileNotifArea.style.display !== "none";
+    profileNotifArea.style.display = visible ? "none" : "block";
+    if(!visible) await loadNotifList();
+  });
 </script>
 
-  <div class="footerSignature">
+<div class="footerSignature">
   Gachax est un fan site non officiel.  
   Ce site n’est affilié ni approuvé par The Pokémon Company, Nintendo, Game Freak, Creatures Inc., ou par les détenteurs officiels des droits de One Piece et du One Piece Card Game (Bandai).  
   Pokémon © Nintendo / Creatures Inc. / GAME FREAK.  
