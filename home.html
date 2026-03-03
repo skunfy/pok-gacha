@@ -57,6 +57,10 @@
       background: linear-gradient(135deg, #d60000, #800000);
     }
 
+    .lorcana{
+      background: linear-gradient(135deg, #2bd3ff, #6a5cff);
+    }
+
     /* 🔥 Logo style */
     .gameLogo {
       width: 160px;
@@ -86,7 +90,7 @@
 <body>
 
   <div class="container">
-    <h1>🎮 Choisis ton TCG</h1>
+    <h1> Choisis ton TCG</h1>
 
     <div class="games">
 
@@ -99,6 +103,11 @@
         <img src="One_Piece_Logo.png" alt="One Piece" class="gameLogo">
         <p>Ouvre des cartes One Piece et domine le marché.</p>
       </div>
+
+      <div class="card lorcana" onclick="goGame('lorcana')">
+        <img src="Lorcana_Logo.png" alt="Lorcana" class="gameLogo">
+        <p>Ouvre des cartes Lorcana, collectionne et trade.</p>
+    </div>
 
     </div>
 
