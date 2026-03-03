@@ -184,44 +184,91 @@
   }
 }
 
-.logoutIcon{
-  width:44px;
-  height:44px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
+  .logoutIcon{
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
 
-  border-radius:14px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter: blur(10px);
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
 
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-  text-decoration:none;
-}
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    text-decoration:none;
+  }
 
-.logoutIcon img{
-  width:20px;
-  height:20px;
-  object-fit:contain;
-  opacity:.9;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
-}
+  .logoutIcon img{
+    width:20px;
+    height:20px;
+    object-fit:contain;
+    opacity:.9;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
+  }
 
-.logoutIcon:hover{
-  background:rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.20);
-  transform: translateY(-1px);
-}
+  .logoutIcon:hover{
+    background:rgba(255,255,255,.10);
+    border-color: rgba(255,255,255,.20);
+    transform: translateY(-1px);
+  }
 
-.logoutIcon:active{
-  transform: translateY(0px) scale(.97);
-}
+  .logoutIcon:active{
+    transform: translateY(0px) scale(.97);
+  }
 
-.logoutIcon:hover img{
-  opacity:1;
-}
+  .logoutIcon:hover img{
+    opacity:1;
+  }
+
+  .notifIcon{
+    position:relative;
+    width:44px;
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+
+    border-radius:14px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
+
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    cursor:pointer;
+  }
+
+  .notifIcon img{
+    width:20px;
+    height:20px;
+    object-fit:contain;
+    opacity:.9;
+
+    /* ton bleu/violet subtil */
+    filter:
+      drop-shadow(0 0 8px rgba(120,170,255,.35))
+      drop-shadow(0 0 14px rgba(190,120,255,.25));
+  }
+
+  .notifIcon:hover{
+    background:rgba(255,255,255,.10);
+    border-color: rgba(120,170,255,.35);
+    transform: translateY(-1px);
+  }
+
+  .notifIcon:active{
+    transform: translateY(0px) scale(.97);
+  }
+
+  .notifIcon:hover img{
+    opacity:1;
+    filter:
+      drop-shadow(0 0 12px rgba(120,170,255,.55))
+      drop-shadow(0 0 18px rgba(190,120,255,.45));
+  }
   /* Logo dans la topbar */
   .cornerLogo{
     position: static;
@@ -858,11 +905,10 @@
           <span class="lvlBubble" id="miniLvl">1</span>
         </a>
 
-        <div class="notifContainer" id="notifWrap">
-          <button id="notifBtn" class="topLink notifBtn" type="button" aria-label="Notifications">
-            🔔
-            <span id="notifBadge" class="notifBadge"></span>
-          </button>
+        <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
+        <img src="notif.png" alt="">
+        <span id="notifBadge" class="notifBadge"></span>
+        </button>
 
           <div class="notifMenu" id="notifMenu">
             <div class="notifHeader">
