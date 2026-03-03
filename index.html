@@ -853,8 +853,8 @@
   }
 
   .moneyIcon{
-  width:16px;
-  height:16px;
+  width:32px;
+  height:32px;
   object-fit:contain;
   display:inline-block;
   vertical-align:-3px; /* aligne mieux avec le texte */
@@ -1503,6 +1503,11 @@
     }catch{}
   }
 
+  function replaceMoneyIcon(text){
+  return escapeHtml(text || "")
+    .replaceAll("💵", `<img class="moneyIcon" src="dollax.png" alt="Dollax">`);
+}
+
   async function loadNotifList(){
     try{
       const data = await api("/api/notifications?limit=10");
@@ -1521,7 +1526,7 @@
         item.className = "notifItem";
         item.innerHTML = `
           <div class="notifTitle">${n.isRead ? "" : `<span class="notifDot"></span>`}${escapeHtml(n.title)}</div>
-          <div class="notifBody">${escapeHtml(n.body)}</div>
+          <div class="notifBody">${replaceMoneyIcon(n.body)}</div>
           <div class="notifMeta">
             <span>${escapeHtml(n.type || "")}</span>
             <span>${fmtTime(n.createdAt)}</span>
