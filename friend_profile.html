@@ -315,7 +315,6 @@ button:active{ transform: translateY(0px) scale(.99); }
             <div style="font-size:20px;font-weight:1000" id="name">...</div>
             <div class="badge" id="code">----</div>
 
-            <!-- ✅ LVL + XP dans la bannière -->
             <div class="levelRow" aria-label="Niveau et XP">
               <div class="lvlPill">LVL <span id="lvl">1</span></div>
               <div>
@@ -373,16 +372,16 @@ button:active{ transform: translateY(0px) scale(.99); }
 </div>
 
 <script>
-const TOKEN = localStorage.getItem("gacha_token_v1");
-/* ✅ PUBLIC: pas de redirect login ici */
+const TOKEN = localStorage.getItem("gacha_token_v1"); // peut être null, c'est OK (public)
 
+/* ✅ API helper: met Authorization seulement si présent */
 async function api(path){
   const headers = {};
   if (TOKEN) headers.Authorization = "Bearer " + TOKEN;
 
   const r = await fetch(path, { headers });
   const data = await r.json().catch(()=> ({}));
-  if(!r.ok) throw new Error(data.error||("HTTP "+r.status));
+  if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
   return data;
 }
 
@@ -396,7 +395,10 @@ function escapeHtml(s){
 }
 
 function gameLabel(g){
-  return (String(g).toLowerCase() === "onepiece") ? "ONE PIECE" : "POKÉMON";
+  const gg = String(g||"").toLowerCase();
+  if (gg === "onepiece") return "ONE PIECE";
+  if (gg === "lorcana")  return "LORCANA";
+  return "POKÉMON";
 }
 
 /* ✅ XP math (doit matcher backend levelForXp) */
@@ -478,7 +480,7 @@ zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(
 window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
 
 const params = new URLSearchParams(location.search);
-const friendCode = (params.get("code")||"").toUpperCase();
+const friendCode = String(params.get("code") || "").trim().toUpperCase();
 
 async function load(){
   if(!friendCode){
@@ -488,7 +490,6 @@ async function load(){
   }
 
   // ✅ PUBLIC: profil via /api/profile_public/:friendCode
-  // (doit être sans auth côté serveur si tu veux vraiment public)
   const data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
@@ -497,18 +498,15 @@ async function load(){
 
   // avatar
   const av = document.getElementById("avatar");
-  if(data.avatar){
-    av.style.backgroundImage = `url('${String(data.avatar).replace(/'/g,"\\'")}')`;
-  } else {
-    av.style.backgroundImage = "none";
-  }
+  const avUrl = String(data.avatar || "").trim();
+  av.style.backgroundImage = avUrl ? `url("${avUrl.replace(/"/g,'\\"')}")` : "none";
 
   // bannière
   const bannerEl = document.getElementById("banner");
   const b = String(data.banner || "").trim();
   if(b){
     bannerEl.classList.add("hasImg");
-    bannerEl.style.backgroundImage = `url('${b.replace(/'/g,"\\'")}')`;
+    bannerEl.style.backgroundImage = `url("${b.replace(/"/g,'\\"')}")`;
   } else {
     bannerEl.classList.remove("hasImg");
     bannerEl.style.backgroundImage = "";
@@ -518,15 +516,14 @@ async function load(){
   applyXpUi(data.xp || 0, data.level || 1);
   setAvatarGlowByLevel(data.level || 1);
 
-  // ✅ stats depuis la route publique (recommandé)
+  // stats depuis route publique
   if (data.stats){
     setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana);
   } else {
-    // fallback si ton backend n’a pas encore stats intégré
     setStats(0,0,0);
   }
 
-  // ✅ favoris : publics seulement si le backend les renvoie (sinon on affiche “privé”)
+  // favoris: seulement si ton backend décide de les exposer (sinon "privés")
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
@@ -542,11 +539,15 @@ async function load(){
     const el = document.createElement("div");
     el.className="cardBox";
     el.innerHTML=`
-      <div class="cImg" style="background-image:url('${x.image}')"></div>
+      <div class="cImg" style="background-image:url('${String(x.image||"").replace(/'/g,"\\'")}')"></div>
+      <div class="row">
+        <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
+      </div>
       <div><b>${escapeHtml(x.name)}</b></div>
       <div class="small">${escapeHtml(x.setName || x.set || "")}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
+
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
     grid.appendChild(el);
   });

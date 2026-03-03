@@ -492,7 +492,7 @@ function esc(s){
 
 function openProfile(friendCodeOrName){
   // NOTE: idéal = friendCode. Sinon fallback name.
-  location.href = "/profile.html?u=" + encodeURIComponent(friendCodeOrName);
+  location.href = "/friend_profile.html?code=" + encodeURIComponent(u.friendCode);
 }
 
 function podiumItemHtml(p, rank){
