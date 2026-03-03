@@ -653,7 +653,7 @@
 
   .notifDot{
     width:8px;height:8px;border-radius:999px;
-    background:#ffffff;
+    background:#ff3b3b;
     display:inline-block;
     margin-right:6px;
   }
@@ -819,56 +819,6 @@
   }
   .cardPlaceholder img{ width:120px; }
 }
-/* VERSION SANS CADRE */
-
-.notifIcon,
-.logoutIcon{
-  position:relative;
-  width:36px;
-  height:36px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  background:transparent;
-  border:none;
-  backdrop-filter:none;
-
-  transition: transform .15s ease, opacity .15s ease;
-}
-
-.notifIcon img,
-.logoutIcon img{
-  width:22px;
-  height:22px;
-  object-fit:contain;
-  opacity:.85;
-
-  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
-}
-
-/* hover clean glow */
-.notifIcon:hover img{
-  opacity:1;
-  transform: translateY(-1px);
-  filter:
-    drop-shadow(0 0 10px rgba(190,120,255,.6))
-    drop-shadow(0 0 20px rgba(120,170,255,.5));
-}
-
-.logoutIcon:hover img{
-  opacity:1;
-  transform: translateY(-1px);
-  filter:
-    drop-shadow(0 0 8px rgba(255,80,80,.55));
-}
-
-.notifIcon:active img,
-.logoutIcon:active img{
-  transform: scale(.92);
-}
-
 </style>
 
 </head>
@@ -898,41 +848,41 @@
         </div>
 
         <!-- ✅ bouton pour changer de jeu (ouvre le picker) -->
-    <a class="topLink" href="#" id="changeGame">TCG</a>
+        <a class="topLink" href="#" id="changeGame">TCG</a>
 
-<a class="topLink" href="/collection.html">COLLECTION</a>
-<a class="topLink" href="/market.html">MARKET</a>
-<a class="topLink" href="/friends.html">FRIENDS</a>
+        <a class="topLink" href="/collection.html">COLLECTION</a>
+        <a class="topLink" href="/market.html">MARKET</a>
+        <a class="topLink" href="/friends.html">FRIENDS</a>
+        <a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
+          <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+          <span class="lvlBubble" id="miniLvl">1</span>
+        </a>
 
-<a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
-  <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
-  <span class="lvlBubble" id="miniLvl">1</span>
-</a>
+        <div class="notifContainer" id="notifWrap">
+          <button id="notifBtn" class="topLink notifBtn" type="button" aria-label="Notifications">
+            🔔
+            <span id="notifBadge" class="notifBadge"></span>
+          </button>
 
-<!-- ✅ NOTIFS (wrapper obligatoire) -->
-<div class="notifContainer" id="notifWrap">
-  <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
-    <img src="no" alt="">
-    <span id="notifBadge" class="notifBadge"></span>
-  </button>
+          <div class="notifMenu" id="notifMenu">
+            <div class="notifHeader">
+              <b>Notifications</b>
+              <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
+            </div>
 
-  <div class="notifMenu" id="notifMenu">
-    <div class="notifHeader">
-      <b>Notifications</b>
-      <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
+            <div class="notifList" id="notifList"></div>
+
+            <div class="notifFooter">
+              <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+            </div>
+          </div>
+        </div>
+
+        <a class="logoutIcon" href="#" id="logout" aria-label="Logout">
+        <img src="loggout.png" alt="">
+        </a>
+      </div>
     </div>
-
-    <div class="notifList" id="notifList"></div>
-
-    <div class="notifFooter">
-      <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
-    </div>
-  </div>
-</div>
-
-<a class="logoutIcon" href="#" id="logout" aria-label="Logout">
-  <img src="loggout.png" alt="">
-</a>
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
