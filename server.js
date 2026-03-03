@@ -271,7 +271,9 @@ async function notify(userId, type, title, body, meta = null) {
 
 function getGame(req){
   const g = String(req.query.game || "pokemon").toLowerCase();
-  return (g === "onepiece") ? "onepiece" : "pokemon";
+  if (g === "onepiece") return "onepiece";
+  if (g === "lorcana")  return "lorcana";
+  return "pokemon";
 }
 
 function levelForXp(xp){
@@ -386,6 +388,57 @@ async function getCardDetailById(id) {
 }
 
 // =========================
+// LORCANA (LORCAST) ONLINE CACHE
+// =========================
+const LORCANA_BASE = "https://lorcast.com/api/v0"; // docs: Lorcast API :contentReference[oaicite:1]{index=1}
+const LORCANA_SETS_TTL_MS  = 6 * 60 * 60 * 1000;   // 6h
+const LORCANA_CARDS_TTL_MS = 6 * 60 * 60 * 1000;   // 6h (par set)
+
+let lorSetsCache = { at: 0, list: [] };
+const lorSetCardsCache = new Map(); // code -> {at, list}
+
+async function getLorcanaSets(){
+  const now = Date.now();
+  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) {
+    return lorSetsCache.list;
+  }
+
+  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets`, 20000);
+  if (!r.ok) throw new Error("LORCAST sets failed");
+
+  const list = await r.json().catch(()=> null);
+  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST sets empty");
+
+  lorSetsCache = { at: now, list };
+  console.log(`🌐 cached Lorcana sets: ${list.length}`);
+  return list;
+}
+
+async function getLorcanaCardsForSet(code){
+  const now = Date.now();
+  const cached = lorSetCardsCache.get(code);
+  if (cached?.list?.length && now - cached.at < LORCANA_CARDS_TTL_MS) return cached.list;
+
+  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets/${encodeURIComponent(code)}/cards`, 20000);
+  if (!r.ok) throw new Error("LORCAST set cards failed");
+
+  const list = await r.json().catch(()=> null);
+  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST set cards empty");
+
+  lorSetCardsCache.set(code, { at: now, list });
+  console.log(`🌐 cached Lorcana set ${code}: ${list.length} cards`);
+  return list;
+}
+
+function pickImageLorcana(card){
+  // Lorcast renvoie souvent image_uris.digital.small/normal/large (avif) :contentReference[oaicite:2]{index=2}
+  const u = card?.image_uris?.digital || card?.image_uris || null;
+  const low  = u?.small  || u?.normal || u?.large || null;
+  const high = u?.large  || u?.normal || u?.small || null;
+  return { low, high };
+}
+
+// =========================
 // ONE PIECE (OPTCG) ONLINE CACHE
 // =========================
 const OP_LIST_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
@@ -481,7 +534,10 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // DRAW CARD (MULTI GAME)
 // =========================
 async function drawCard(game) {
-  // ----- ONE PIECE ONLINE -----
+ 
+
+
+
   // ----- ONE PIECE ONLINE -----
 if (game === "onepiece") {
   const list = await getOpBriefList();
@@ -534,6 +590,52 @@ if (game === "onepiece") {
 
   throw new Error("One Piece: impossible de trouver une carte avec image");
 }
+  // ----- LORCANA ONLINE (LORCAST) -----
+  if (game === "lorcana") {
+    const sets = await getLorcanaSets();
+
+    // On tente plusieurs sets si jamais une réponse est vide
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const s = sets[Math.floor(Math.random() * sets.length)] || {};
+      const setCode =
+        pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
+        null;
+
+      if (!setCode) continue;
+
+      let cards;
+      try {
+        cards = await getLorcanaCardsForSet(setCode);
+      } catch {
+        continue;
+      }
+
+      const c = cards[Math.floor(Math.random() * cards.length)] || {};
+      const name =
+        pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
+      const setName =
+        pickFirst(s, ["name", "set_name"]) ||
+        pickFirst(c, ["set_name", "setName"]) ||
+        `Set ${setCode}`;
+
+      const rarity = pickFirst(c, ["rarity"]) || "";
+
+      const { low, high } = pickImageLorcana(c);
+      if (!low) continue;
+
+      console.log("🌐 source=LORCAST");
+      return {
+        name,
+        set: setName,
+        rarity,
+        image: low,
+        imageHigh: high || low
+      };
+    }
+
+    throw new Error("Lorcana: impossible de trouver une carte avec image");
+  }
+
 
   // ----- POKEMON ONLINE (TCGDEX) -----
   // Si tu veux "obligatoirement online", tu peux désactiver FORCE_OFFLINE ici
@@ -730,12 +832,14 @@ app.post("/api/open", auth, async (req, res) => {
   }
 
       // ✅ XP SELL
-  const xpAdd = xpForOpen();
-  await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
   const grade = rollGrade();
   const mint = rollMintForGrade(grade);
   const now = Date.now();
+
+  // ✅ XP OPEN (avec grade)
+  const xpAdd = xpForOpen(grade);
+  await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
   const idKey = `${game}__${c.name}__${c.set}__${c.image}`;
 
@@ -796,6 +900,7 @@ app.get("/api/collection", auth, async (req, res) => {
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => ({
       idKey: x.idkey || x.idKey,
+      game: x.game || game, 
       name: x.name,
       set: x.setname || x.setName,
       image: x.image,

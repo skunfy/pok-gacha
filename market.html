@@ -160,6 +160,7 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
       <select id="gameSel" title="Jeu">
         <option value="pokemon">Pokémon</option>
         <option value="onepiece">One Piece</option>
+        <option value="lorcana">Lorcana</option>
       </select>
 
       <div class="pill">💵 <span id="money">0</span></div>
@@ -233,7 +234,9 @@ if(!TOKEN) location.href="/login.html";
 
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  return (g === "onepiece") ? "onepiece" : "pokemon";
+  if (g === "onepiece") return "onepiece";
+  if (g === "lorcana")  return "lorcana";
+  return "pokemon";
 }
 
 async function api(path, opts={}){
@@ -302,7 +305,9 @@ function escapeHtml(s){
 }
 
 function gameTag(g){
-  return (g === "onepiece") ? "🟥 One Piece" : "🟨 Pokémon";
+  if (g === "onepiece") return "🟥 One Piece";
+  if (g === "lorcana")  return "🟦 Lorcana";
+  return "🟨 Pokémon";
 }
 
 function fmtCardLine(x){

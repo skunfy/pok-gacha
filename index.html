@@ -1040,8 +1040,8 @@
           <img src="International_Pokémon_logo.png" alt="Pokémon">
         </button>
 
-        <button class="gameBtn" type="button" onclick="setGameAndClose('onepiece')" aria-label="One Piece">
-          <img src="One_Piece_Logo.png" alt="One Piece">
+        <button class="gameBtn" type="button" onclick="setGameAndClose('lorcana')" aria-label="Lorcana">
+          <img src="Lorcana_Logo.png" alt="Lorcana">
         </button>
       </div>
 
@@ -1062,10 +1062,15 @@
   }
 
   function currentGame(){
-    return (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  const g = (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+  if (g === "onepiece") return "onepiece";
+  if (g === "lorcana") return "lorcana";
+  return "pokemon";
   }
   function gameLabel(g){
-    return (g === "onepiece") ? "ONE PIECE" : "POKÉMON";
+  if (g === "onepiece") return "ONE PIECE";
+  if (g === "lorcana")  return "LORCANA";
+  return "POKÉMON";
   }
 
   async function api(path, opts={}){
@@ -1164,10 +1169,10 @@
 
   // exposée au onclick HTML
   window.setGameAndClose = async function(g){
-    localStorage.setItem(GAME_KEY, (g === "onepiece") ? "onepiece" : "pokemon");
+    const v = (g === "onepiece") ? "onepiece" : (g === "lorcana") ? "lorcana" : "pokemon";
+    localStorage.setItem(GAME_KEY, v);
     closeGamePicker();
     applyGameToUI();
-    // recharge les données du bon jeu
     try{ await loadMe(); }catch{}
   }
 
