@@ -1778,6 +1778,52 @@ app.get("/api/profile/:friendCode", auth, async (req, res) => {
     }))
   });
 });
+
+// =========================
+// LEADERBOARD XP
+// =========================
+app.get("/api/leaderboard/xp", auth, async (req, res) => {
+  const limit = Math.min(100, Math.max(5, Number(req.query.limit || 50) | 0));
+
+  // Top joueurs
+  const topQ = await pool.query(
+    `
+    SELECT id, name, xp, avatar
+    FROM users
+    ORDER BY xp DESC, createdAt ASC, id ASC
+    LIMIT $1
+    `,
+    [limit]
+  );
+
+  // Rang du joueur connecté (global)
+  const meRankQ = await pool.query(
+    `
+    SELECT r.rnk
+    FROM (
+      SELECT id, RANK() OVER (ORDER BY xp DESC, createdAt ASC, id ASC) AS rnk
+      FROM users
+    ) r
+    WHERE r.id = $1
+    `,
+    [req.user.id]
+  );
+
+  const top = topQ.rows.map((u, i) => ({
+    rank: i + 1,
+    name: u.name,
+    xp: Number(u.xp || 0),
+    level: levelForXp(u.xp || 0),
+    avatar: u.avatar || ""
+  }));
+
+  res.json({
+    top,
+    me: {
+      rank: Number(meRankQ.rows[0]?.rnk || 0),
+    }
+  });
+});
 // =========================
 // START
 // =========================
