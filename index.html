@@ -841,6 +841,10 @@
 
 </head>
 
+<audio id="sfxOpen" src="open.mp3" preload="auto"></audio>
+<!-- optionnel : son “reveal” -->
+
+
 <body>
   
 
@@ -1028,6 +1032,21 @@
     }
 
     // ---------- DOM ----------
+    const sfxOpen = document.getElementById("sfxOpen");
+    const sfxReveal = document.getElementById("sfxReveal");
+
+    function playSfx(a, volume = 0.8){
+      if(!a) return;
+      try{
+        a.pause();
+        a.currentTime = 0;
+        a.volume = volume;
+        a.play().catch(()=>{});
+      }catch{}
+}
+
+
+
     const slab = document.getElementById("slab");
     const shine = document.getElementById("shine");
     const glare = document.getElementById("glare");
@@ -1305,6 +1324,7 @@ function setMiniAvatar(url){
 
     async function openOne(){
       btnOpen.disabled = true;
+      playSfx(sfxOpen, 0.8);
 
       slab.classList.remove("shake");
       void slab.offsetWidth;
