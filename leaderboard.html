@@ -380,10 +380,13 @@ th{
 }
 
 /* IMPORTANT : on met les cellules au-dessus du fond */
+/* Fix: la ligne "TOI" doit rester alignée comme les autres */
 .meHighlight td{
-  position:relative;
-  z-index:2;
-  background: transparent !important;
+  text-align: left !important;
+}
+
+.meHighlight .nameCell{
+  justify-content: flex-start !important;
 }
 
 .meTag{
