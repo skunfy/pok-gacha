@@ -537,71 +537,73 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // DRAW CARD (MULTI GAME)
 // =========================
 async function drawCard(game) {
- 
-
-
 
   // ----- ONE PIECE ONLINE -----
-if (game === "onepiece") {
-  const list = await getOpBriefList();
+  if (game === "onepiece") {
+    const list = await getOpBriefList();
 
-  // On tente plusieurs fois de trouver une carte valide avec image
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const pick = list[Math.floor(Math.random() * list.length)] || {};
+    // On tente plusieurs fois de trouver une carte valide avec image
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const pick = list[Math.floor(Math.random() * list.length)] || {};
 
-    // L’API utilise souvent card_set_id
-    const cardId =
-      pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) ||
-      null;
+      const cardId =
+        pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) ||
+        null;
 
-    if (!cardId) continue;
+      if (!cardId) continue;
 
-    let d;
-    try {
-      d = await getOpCardDetail(cardId); // déjà array-safe
-    } catch {
-      continue;
+      let d;
+      try {
+        d = await getOpCardDetail(cardId); // déjà array-safe
+      } catch {
+        continue;
+      }
+
+      const image =
+        pickFirst(d, ["card_image", "image_url", "imageUrl", "image", "img"]) ||
+        pickFirst(pick, ["card_image", "image_url", "imageUrl", "image", "img"]);
+
+      const name =
+        pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
+        pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
+        "Unknown";
+
+      const setName =
+        pickFirst(d, ["set_name", "setName", "set", "series"]) ||
+        pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
+        "One Piece";
+
+      if (!image) continue;
+
+      console.log("🌐 source=OPTCG (working)");
+
+      return {
+        name,
+        set: setName,
+        rarity: pickFirst(d, ["rarity"]) || "",
+        image,
+        imageHigh: image
+      };
     }
 
-    // ⚠️ OPTCG utilise souvent card_image
-    const image =
-      pickFirst(d, ["card_image", "image_url", "imageUrl", "image", "img"]) ||
-      pickFirst(pick, ["card_image", "image_url", "imageUrl", "image", "img"]);
-
-    const name =
-      pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
-      pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
-      "Unknown";
-
-    const setName =
-      pickFirst(d, ["set_name", "setName", "set", "series"]) ||
-      pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
-      "One Piece";
-
-    if (!image) continue;
-
-    console.log("🌐 source=OPTCG (working)");
-
-    return {
-      name,
-      set: setName,
-      rarity: pickFirst(d, ["rarity"]) || "",
-      image,
-      imageHigh: image
-    };
+    throw new Error("One Piece: impossible de trouver une carte avec image");
   }
 
-  throw new Error("One Piece: impossible de trouver une carte avec image");
-}
   // ----- LORCANA ONLINE (LORCAST) -----
   if (game === "lorcana") {
+    // ✅ IMPORTANT: on récupère les sets UNE seule fois (pas de shadow "const sets" dans le loop)
     const sets = await getLorcanaSets();
+
+    // debug optionnel (à laisser 1 fois)
+    // console.log("LORCANA set sample keys:", Object.keys(sets[0] || {}), sets[0]);
 
     // On tente plusieurs sets si jamais une réponse est vide
     for (let attempt = 0; attempt < 8; attempt++) {
       const s = sets[Math.floor(Math.random() * sets.length)] || {};
-      const sets = await getLorcanaSets();
-      console.log("LORCANA set sample keys:", Object.keys(sets[0] || {}), sets[0]);
+
+      const setCode =
+        pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
+        null;
 
       if (!setCode) continue;
 
@@ -612,35 +614,41 @@ if (game === "onepiece") {
         continue;
       }
 
-      const c = cards[Math.floor(Math.random() * cards.length)] || {};
-      const name =
-        pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
-      const setName =
-        pickFirst(s, ["name", "set_name"]) ||
-        pickFirst(c, ["set_name", "setName"]) ||
-        `Set ${setCode}`;
+      if (!Array.isArray(cards) || !cards.length) continue;
 
-      const rarity = pickFirst(c, ["rarity"]) || "";
+      // On tente plusieurs cartes dans ce set pour être sûr d'avoir une image
+      for (let pickTry = 0; pickTry < 12; pickTry++) {
+        const c = cards[Math.floor(Math.random() * cards.length)] || {};
 
-      const { low, high } = pickImageLorcana(c);
-      if (!low) continue;
+        const name =
+          pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
 
-      console.log("🌐 source=LORCAST");
-      return {
-        name,
-        set: setName,
-        rarity,
-        image: low,
-        imageHigh: high || low
-      };
+        const setName =
+          pickFirst(s, ["name", "set_name"]) ||
+          pickFirst(c, ["set_name", "setName"]) ||
+          `Set ${setCode}`;
+
+        const rarity = pickFirst(c, ["rarity"]) || "";
+
+        const { low, high } = pickImageLorcana(c);
+        if (!low) continue;
+
+        console.log("🌐 source=LORCAST");
+
+        return {
+          name,
+          set: setName,
+          rarity,
+          image: low,
+          imageHigh: high || low
+        };
+      }
     }
 
     throw new Error("Lorcana: impossible de trouver une carte avec image");
   }
 
-
   // ----- POKEMON ONLINE (TCGDEX) -----
-  // Si tu veux "obligatoirement online", tu peux désactiver FORCE_OFFLINE ici
   if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
@@ -684,6 +692,7 @@ if (game === "onepiece") {
       imageHigh: imageHigh || null,
     };
   }
+
 
   // Si tu veux 100% online, supprime carrément ce bloc fallback :
   if (offlineCards?.length) {
