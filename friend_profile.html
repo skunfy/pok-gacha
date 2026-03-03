@@ -483,6 +483,7 @@ window.addEventListener("keydown", (e)=>{
 const params = new URLSearchParams(location.search);
 const friendCode = (params.get("code")||"").toUpperCase();
 
+/* ✅ MODIF: si le code = mon propre friendCode, on affiche mon profil public via /api/profile/me */
 async function load(){
   if(!friendCode){
     alert("Code ami manquant dans l’URL ?code=XXXX-XXXX");
@@ -490,13 +491,26 @@ async function load(){
     return;
   }
 
-  const data = await api("/api/profile/"+encodeURIComponent(friendCode));
+  // 1) Essaie de récupérer mon profil
+  let me = null;
+  try{
+    me = await api("/api/profile/me");
+  }catch{
+    me = null;
+  }
+
+  const isSelf = !!me && String(me.friendCode || "").toUpperCase() === friendCode;
+
+  // 2) data: moi => /me, sinon => /profile/:code (ami)
+  const data = isSelf
+    ? me
+    : await api("/api/profile/"+encodeURIComponent(friendCode));
 
   document.getElementById("name").textContent = data.name || "...";
   document.getElementById("code").textContent = "Code ami: "+(data.friendCode || "----");
   document.getElementById("bio").textContent = data.bio || "";
 
-  // ✅ avatar
+  // avatar
   const av = document.getElementById("avatar");
   if(data.avatar){
     av.style.backgroundImage = `url('${String(data.avatar).replace(/'/g,"\\'")}')`;
@@ -504,7 +518,7 @@ async function load(){
     av.style.backgroundImage = "none";
   }
 
-  // ✅ bannière
+  // bannière
   const bannerEl = document.getElementById("banner");
   const b = String(data.banner || "").trim();
   if(b){
@@ -515,15 +529,20 @@ async function load(){
     bannerEl.style.backgroundImage = "";
   }
 
-  // ✅ lvl/xp + glow
+  // lvl/xp + glow
   applyXpUi(data.xp || 0, data.level || 1);
   setAvatarGlowByLevel(data.level || 1);
 
-  // ✅ stats (pokemon + onepiece)
+  // 3) stats: moi => /api/collection ; ami => /api/friends/:code/collection
+  const base = isSelf
+    ? "/api/collection"
+    : ("/api/friends/"+encodeURIComponent(friendCode)+"/collection");
+
   const [cP, cO] = await Promise.all([
-    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=pokemon").catch(()=> ({ items: [] })),
-    api("/api/friends/"+encodeURIComponent(friendCode)+"/collection?game=onepiece").catch(()=> ({ items: [] })),
+    api(base+"?game=pokemon").catch(()=> ({ items: [] })),
+    api(base+"?game=onepiece").catch(()=> ({ items: [] })),
   ]);
+
   updateStatsFromCollection(cP.items || [], cO.items || []);
 
   // favoris
@@ -542,7 +561,7 @@ async function load(){
     el.innerHTML=`
       <div class="cImg" style="background-image:url('${x.image}')"></div>
       <div><b>${escapeHtml(x.name)}</b></div>
-      <div class="small">${escapeHtml(x.setName)}</div>
+      <div class="small">${escapeHtml(x.setName || x.set || "")}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
 
