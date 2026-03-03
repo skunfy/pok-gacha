@@ -782,6 +782,53 @@
   }
   .cardPlaceholder img{ width:120px; }
 }
+
+/* ===== ICON BUTTONS (sans cadre) ===== */
+.notifIcon,
+.logoutIcon{
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+
+  background:transparent;
+  border:none;
+  padding:0;
+  border-radius:12px;
+  text-decoration:none;
+
+  cursor:pointer;
+  transition: transform .15s ease;
+}
+
+.notifIcon img,
+.logoutIcon img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  opacity:.9;
+  transition: transform .2s ease, filter .2s ease, opacity .2s ease;
+}
+
+.notifIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 0 10px rgba(190,120,255,.6))
+          drop-shadow(0 0 18px rgba(120,170,255,.45));
+}
+
+.logoutIcon:hover img{
+  opacity:1;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 0 10px rgba(255,80,80,.55));
+}
+
+.notifIcon:active img,
+.logoutIcon:active img{
+  transform: scale(.92);
+}
 </style>
 
 </head>
