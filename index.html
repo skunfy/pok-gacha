@@ -183,6 +183,45 @@
     font-size:11px;
   }
 }
+
+.logoutIcon{
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  text-decoration:none;
+}
+
+.logoutIcon img{
+  width:20px;
+  height:20px;
+  object-fit:contain;
+  opacity:.9;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,.4));
+}
+
+.logoutIcon:hover{
+  background:rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.20);
+  transform: translateY(-1px);
+}
+
+.logoutIcon:active{
+  transform: translateY(0px) scale(.97);
+}
+
+.logoutIcon:hover img{
+  opacity:1;
+}
   /* Logo dans la topbar */
   .cornerLogo{
     position: static;
@@ -839,7 +878,9 @@
           </div>
         </div>
 
-        <a class="topLink" href="#" id="logout">LOGOUT</a>
+        <a class="logoutIcon" href="#" id="logout" aria-label="Logout">
+        <img src="loggout.png" alt="">
+        </a>
       </div>
     </div>
 
