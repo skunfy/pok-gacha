@@ -1,235 +1,279 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Leaderboard XP — Gachax</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Leaderboard XP — Gachax</title>
 
-  <style>
-    :root{
-      --bg1:#05060d; --bg2:#090b18;
-    }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto;
-      color:#fff;
-      background:
-        radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
-        radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
-        linear-gradient(180deg,var(--bg1),var(--bg2));
-      overflow-x:hidden;
-    }
-    .wrap{
-      width:min(1100px, 95vw);
-      margin:24px auto 60px;
-      display:grid;
-      gap:14px;
-    }
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:14px;
-      border-radius:16px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      backdrop-filter:blur(10px);
-      position: sticky;
-      top: 14px;
-      z-index: 50;
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-      gap:12px;
-    }
-    .controls{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    select, button{
-      padding:8px 12px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.08);
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .panel{
-      border-radius:16px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      padding:14px;
-    }
-    .meRow{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-    }
-    .pill{
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      font-weight:900;
-      font-size:13px;
-      opacity:.95;
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      overflow:hidden;
-      border-radius:14px;
-    }
-    th, td{
-      padding:12px 10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      text-align:left;
-      font-size:13px;
-    }
-    th{ opacity:.75; font-weight:1000; }
-    tr:hover td{ background: rgba(255,255,255,.04); }
-    .rank{
-      font-weight:1000;
-      width:70px;
-      opacity:.95;
-    }
-    .nameCell{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-    .avatar{
-      width:34px;height:34px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.25) center/cover no-repeat;
-      flex:0 0 auto;
-    }
-    .nameText{
-      font-weight:1000;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width:420px;
-    }
-    .muted{ opacity:.7; }
-    .right{
-      text-align:right;
-      white-space:nowrap;
-      font-variant-numeric: tabular-nums;
-    }
-    .error{ opacity:.75; }
-  </style>
+<style>
+:root{
+  --bg1:#05060d;
+  --bg2:#090b18;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  color:#fff;
+  background:
+    radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+
+.wrap{
+  width:min(1100px,95vw);
+  margin:24px auto 60px;
+  display:grid;
+  gap:16px;
+}
+
+/* ===== TOPBAR ===== */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter:blur(10px);
+  box-shadow:0 18px 60px rgba(0,0,0,.35);
+}
+
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+select,button{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+
+/* ===== PANEL ===== */
+.panel{
+  border-radius:16px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  padding:16px;
+}
+
+/* ===== PODIUM ===== */
+.podium{
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap:30px;
+  flex-wrap:wrap;
+  padding:10px 0 20px 0;
+}
+
+.podiumItem{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+
+.podiumAvatar{
+  width:110px;
+  height:110px;
+  border-radius:24px;
+  background:center/cover no-repeat;
+  border:2px solid rgba(255,255,255,.2);
+  box-shadow:0 20px 50px rgba(0,0,0,.45);
+}
+
+.podiumItem.rank2 .podiumAvatar{ width:95px;height:95px; }
+.podiumItem.rank3 .podiumAvatar{ width:85px;height:85px; }
+
+.podiumName{
+  font-weight:1000;
+  font-size:14px;
+  text-align:center;
+}
+
+.podiumXp{
+  font-size:12px;
+  opacity:.8;
+}
+
+.crown{
+  font-size:20px;
+}
+
+/* ===== TABLE ===== */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:12px 10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+
+th{opacity:.7;text-align:left}
+
+.rank{width:60px;font-weight:1000}
+.right{text-align:right;font-variant-numeric:tabular-nums}
+
+.nameCell{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.avatar{
+  width:36px;height:36px;
+  border-radius:12px;
+  background:center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.15);
+}
+
+.profileBtn{
+  padding:4px 8px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  cursor:pointer;
+}
+
+.meHighlight{
+  background:rgba(120,170,255,.08);
+}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div><b>Gachax</b> — Leaderboard XP</div>
-      <div class="controls">
-        <select id="limitSel" title="Top">
-          <option value="50">Top 50</option>
-          <option value="100">Top 100</option>
-        </select>
-        <button onclick="location.href='/'">← Retour</button>
-      </div>
-    </div>
+<div class="wrap">
 
-    <div class="panel">
-      <div class="meRow">
-        <div class="pill" id="meRank">Ton rang: …</div>
-        <div class="pill" id="updated">Chargement…</div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <table>
-        <thead>
-          <tr>
-            <th class="rank">#</th>
-            <th>Joueur</th>
-            <th class="right">Niveau</th>
-            <th class="right">XP</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="4" class="error">Chargement…</td></tr>
-        </tbody>
-      </table>
-    </div>
+<div class="topbar">
+  <div><b>Gachax</b> — Leaderboard XP</div>
+  <div class="controls">
+    <select id="limitSel">
+      <option value="50">Top 50</option>
+      <option value="100">Top 100</option>
+    </select>
+    <button onclick="location.href='/'">← Retour</button>
   </div>
+</div>
+
+<div class="panel">
+  <div id="meRank">Ton rang : ...</div>
+</div>
+
+<div class="panel">
+  <div class="podium" id="podium"></div>
+</div>
+
+<div class="panel">
+  <table>
+    <thead>
+      <tr>
+        <th class="rank">#</th>
+        <th>Joueur</th>
+        <th class="right">Niveau</th>
+        <th class="right">XP</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+</div>
 
 <script>
-  const TOKEN_KEY = "gacha_token_v1";
-  const token = localStorage.getItem(TOKEN_KEY);
-  if(!token) location.href="/login.html";
+const TOKEN_KEY="gacha_token_v1";
+const token=localStorage.getItem(TOKEN_KEY);
+if(!token) location.href="/login.html";
 
-  async function api(path){
-    const r = await fetch(path, {
-      headers:{
-        "Authorization":"Bearer " + token,
-        "Content-Type":"application/json"
-      }
-    });
-    const data = await r.json().catch(()=> ({}));
-    if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
-    return data;
-  }
-
-  const limitSel = document.getElementById("limitSel");
-  const tbody = document.getElementById("tbody");
-  const meRank = document.getElementById("meRank");
-  const updated = document.getElementById("updated");
-
-  function fmt(n){ return (Number(n)||0).toLocaleString("fr-FR"); }
-
-  function rowHtml(x){
-    const av = (x.avatar || "").trim() || "poke.png";
-    return `
-      <tr>
-        <td class="rank">${x.rank}</td>
-        <td>
-          <div class="nameCell">
-            <div class="avatar" style="background-image:url('${av.replace(/'/g,"\\'")}')"></div>
-            <div class="nameText">${String(x.name||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}</div>
-          </div>
-        </td>
-        <td class="right">${fmt(x.level)}</td>
-        <td class="right">${fmt(x.xp)}</td>
-      </tr>
-    `;
-  }
-
-  async function load(){
-    tbody.innerHTML = `<tr><td colspan="4" class="error">Chargement…</td></tr>`;
-    try{
-      const limit = Number(limitSel.value) || 50;
-      const data = await api(`/api/leaderboard/xp?limit=${limit}`);
-
-      meRank.textContent = "Ton rang: " + (data?.me?.rank ? "#" + data.me.rank : "—");
-      updated.textContent = "Mis à jour: " + new Date().toLocaleString("fr-FR", { hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" });
-
-      const top = data.top || [];
-      if(!top.length){
-        tbody.innerHTML = `<tr><td colspan="4" class="error">Aucun joueur.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = top.map(rowHtml).join("");
-    }catch(e){
-      tbody.innerHTML = `<tr><td colspan="4" class="error">Erreur: ${String(e.message||e)}</td></tr>`;
-      meRank.textContent = "Ton rang: —";
-      updated.textContent = "—";
+async function api(path){
+  const r=await fetch(path,{
+    headers:{
+      "Authorization":"Bearer "+token,
+      "Content-Type":"application/json"
     }
-  }
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||("HTTP "+r.status));
+  return data;
+}
 
-  limitSel.addEventListener("change", load);
-  load();
+const tbody=document.getElementById("tbody");
+const podium=document.getElementById("podium");
+const meRank=document.getElementById("meRank");
+const limitSel=document.getElementById("limitSel");
+
+function fmt(n){return (Number(n)||0).toLocaleString("fr-FR");}
+
+function buildPodium(top){
+  podium.innerHTML="";
+  const order=[1,0,2]; // 2e, 1er, 3e pour centrer
+  order.forEach(i=>{
+    if(!top[i]) return;
+    const p=top[i];
+    const div=document.createElement("div");
+    div.className="podiumItem rank"+(i+1);
+    div.innerHTML=`
+      ${i===0?'<div class="crown">👑</div>':''}
+      <div class="podiumAvatar" style="background-image:url('${p.avatar||"poke.png"}')"></div>
+      <div class="podiumName">${p.name}</div>
+      <div class="podiumXp">${fmt(p.xp)} XP</div>
+    `;
+    podium.appendChild(div);
+  });
+}
+
+function rowHtml(x,me){
+  return `
+    <tr class="${x.rank===me?'meHighlight':''}">
+      <td class="rank">${x.rank}</td>
+      <td>
+        <div class="nameCell">
+          <div class="avatar" style="background-image:url('${x.avatar||"poke.png"}')"></div>
+          <div>${x.name}</div>
+          <button class="profileBtn" onclick="openProfile('${x.friendCode||x.name}')">Profil</button>
+        </div>
+      </td>
+      <td class="right">${fmt(x.level)}</td>
+      <td class="right">${fmt(x.xp)}</td>
+    </tr>
+  `;
+}
+
+function openProfile(id){
+  location.href="/profile.html?u="+encodeURIComponent(id);
+}
+
+async function load(){
+  tbody.innerHTML="<tr><td colspan='4'>Chargement...</td></tr>";
+  const limit=Number(limitSel.value)||50;
+  const data=await api("/api/leaderboard/xp?limit="+limit);
+
+  buildPodium(data.top.slice(0,3));
+
+  meRank.textContent="Ton rang : #"+(data.me?.rank||"—");
+
+  tbody.innerHTML=data.top.map(x=>rowHtml(x,data.me?.rank)).join("");
+}
+
+limitSel.addEventListener("change",load);
+load();
 </script>
+
 </body>
 </html>
