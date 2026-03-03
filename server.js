@@ -256,7 +256,7 @@ function sellPriceFor(grade, mint){
   if (mint) return 20;
   const g = Number(grade) || 0;
   if (g >= 10) return 10;
-  if (g >= 7) return 5;
+  if (g >= 7) return 3;
   if (g >= 5) return 2;
   return 1;
 }
