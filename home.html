@@ -17,9 +17,7 @@
       height: 100vh;
     }
 
-    .container {
-      text-align: center;
-    }
+    .container { text-align: center; }
 
     h1 {
       margin-bottom: 40px;
@@ -61,7 +59,6 @@
       background: linear-gradient(135deg, #2bd3ff, #6a5cff);
     }
 
-    /* 🔥 Logo style */
     .gameLogo {
       width: 160px;
       max-width: 100%;
@@ -70,9 +67,7 @@
       transition: 0.3s;
     }
 
-    .card:hover .gameLogo {
-      transform: scale(1.08);
-    }
+    .card:hover .gameLogo { transform: scale(1.08); }
 
     .card p {
       font-size: 0.9rem;
@@ -90,10 +85,9 @@
 <body>
 
   <div class="container">
-    <h1> Choisis ton TCG</h1>
+    <h1>Choisis ton TCG</h1>
 
     <div class="games">
-
       <div class="card pokemon" onclick="goGame('pokemon')">
         <img src="International_Pokémon_logo.png" alt="Pokémon" class="gameLogo">
         <p>Ouvre des cartes Pokémon, collectionne et trade.</p>
@@ -107,8 +101,7 @@
       <div class="card lorcana" onclick="goGame('lorcana')">
         <img src="Lorcana_Logo.png" alt="Lorcana" class="gameLogo">
         <p>Ouvre des cartes Lorcana, collectionne et trade.</p>
-    </div>
-
+      </div>
     </div>
 
     <footer>
@@ -117,8 +110,31 @@
   </div>
 
   <script>
+    const GAME_KEY = "gacha_game_v1";
+
+    function normalizeGame(g){
+      g = String(g || "").toLowerCase();
+      if (g === "onepiece") return "onepiece";
+      if (g === "lorcana")  return "lorcana";
+      return "pokemon";
+    }
+
     function goGame(game) {
-      window.location.href = "index.html?game=" + game;
+      const g = normalizeGame(game);
+      localStorage.setItem(GAME_KEY, g);
+
+      // ✅ redirige vers ta page gacha
+      // Si ton gacha est sur "/" c'est parfait.
+      // Si ce n'est pas le cas, tu peux remplacer par "/index.html" (ta page gacha).
+      window.location.href = "/";
+
+      // ✅ fallback si "/" n'existe pas chez toi
+      setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          // probable échec/chemin différent
+          window.location.href = "/index.html";
+        }
+      }, 400);
     }
   </script>
 
