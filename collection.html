@@ -556,8 +556,13 @@ function applyFilters(){
 function openZoom(x){
   let img = x.image;
 
-  // ✅ seulement Pokémon: low.webp -> high.webp
+  // Pokémon low -> high
   if (currentGame() === "pokemon" && img && img.includes("/low.webp")) {
+    img = img.replace("/low.webp", "/high.webp");
+  }
+
+  // Lorcana low -> high
+  if (currentGame() === "lorcana" && img && img.includes("/low.webp")) {
     img = img.replace("/low.webp", "/high.webp");
   }
 
