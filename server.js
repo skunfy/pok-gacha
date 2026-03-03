@@ -295,8 +295,8 @@ function xpForSell(unitPrice, qty){
 }
 
 // ----- PAY LOOP (server-side) -----
-const PAY_AMOUNT = 20;
-const PAY_EVERY_MS = 1 * 60 * 1000;
+const PAY_AMOUNT = 10;
+const PAY_EVERY_MS = 15 * 60 * 1000;
 
 async function applyPayForUser(userId) {
   const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
