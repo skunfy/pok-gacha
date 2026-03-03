@@ -898,40 +898,41 @@
         </div>
 
         <!-- ✅ bouton pour changer de jeu (ouvre le picker) -->
-        <a class="topLink" href="#" id="changeGame">TCG</a>
+    <a class="topLink" href="#" id="changeGame">TCG</a>
 
-        <a class="topLink" href="/collection.html">COLLECTION</a>
-        <a class="topLink" href="/market.html">MARKET</a>
-        <a class="topLink" href="/friends.html">FRIENDS</a>
-        <a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
-          <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
-          <span class="lvlBubble" id="miniLvl">1</span>
-        </a>
+<a class="topLink" href="/collection.html">COLLECTION</a>
+<a class="topLink" href="/market.html">MARKET</a>
+<a class="topLink" href="/friends.html">FRIENDS</a>
 
-        <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
-        <img src="no" alt="">
-        <span id="notifBadge" class="notifBadge"></span>
-        </button>
+<a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
+  <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+  <span class="lvlBubble" id="miniLvl">1</span>
+</a>
 
-          <div class="notifMenu" id="notifMenu">
-            <div class="notifHeader">
-              <b>Notifications</b>
-              <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
-            </div>
+<!-- ✅ NOTIFS (wrapper obligatoire) -->
+<div class="notifContainer" id="notifWrap">
+  <button id="notifBtn" class="notifIcon" type="button" aria-label="Notifications">
+    <img src="no" alt="">
+    <span id="notifBadge" class="notifBadge"></span>
+  </button>
 
-            <div class="notifList" id="notifList"></div>
-
-            <div class="notifFooter">
-              <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
-            </div>
-          </div>
-        </div>
-
-        <a class="logoutIcon" href="#" id="logout" aria-label="Logout">
-        <img src="loggout.png" alt="">
-        </a>
-      </div>
+  <div class="notifMenu" id="notifMenu">
+    <div class="notifHeader">
+      <b>Notifications</b>
+      <button id="notifReadAll" class="notifSmallBtn" type="button">Tout lire</button>
     </div>
+
+    <div class="notifList" id="notifList"></div>
+
+    <div class="notifFooter">
+      <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+    </div>
+  </div>
+</div>
+
+<a class="logoutIcon" href="#" id="logout" aria-label="Logout">
+  <img src="loggout.png" alt="">
+</a>
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
