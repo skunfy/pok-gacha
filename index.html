@@ -69,6 +69,82 @@
     padding-top: calc(12px + env(safe-area-inset-top));
   }
 
+  /* ===== Mini profile (avatar + lvl) ===== */
+.miniProfileLink{
+  position:relative;
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  display:inline-grid;
+  place-items:center;
+  text-decoration:none;
+  flex:0 0 auto;
+
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+.miniProfileLink:hover{
+  background:rgba(255,255,255,.10);
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.18);
+}
+.miniProfileLink:active{ transform: translateY(0px) scale(.99); }
+
+.miniAvatar{
+  --glow: rgba(120,170,255,.22);
+  --glow2: rgba(190,120,255,.22);
+
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  background: rgba(0,0,0,.25) center/cover no-repeat;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.10),
+    0 0 22px var(--glow);
+  position:relative;
+}
+.miniAvatar::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius:14px;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
+    radial-gradient(circle at 70% 70%, var(--glow2), transparent 55%);
+  filter: blur(8px);
+  opacity:.55;
+}
+
+.lvlBubble{
+  position:absolute;
+  left:-6px;
+  bottom:-6px;
+  min-width:22px;
+  height:22px;
+  padding:0 6px;
+  border-radius:999px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:12px;
+  font-weight:1000;
+  color:#fff;
+
+  background: rgba(0,0,0,.65);
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow: 0 10px 22px rgba(0,0,0,.45);
+}
+
+@media (max-width: 520px){
+  .miniProfileLink{ width:42px; height:42px; border-radius:14px; }
+  .miniAvatar{ width:34px; height:34px; }
+}
+
   /* Logo dans la topbar */
   .cornerLogo{
     position: static;
@@ -723,6 +799,10 @@
         </div>
 
         <a class="topLink" href="#" id="logout">LOGOUT</a>
+        <a class="miniProfileLink" href="/profile.html" id="miniProfile" aria-label="Profil">
+          <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+          <span class="lvlBubble" id="miniLvl">1</span>
+        </a>
       </div>
     </div>
 
@@ -856,6 +936,9 @@
     const shine = document.getElementById("shine");
     const glare = document.getElementById("glare");
     const card = document.getElementById("card");
+
+    const miniAvatar = document.getElementById("miniAvatar");
+    const miniLvl = document.getElementById("miniLvl");
 
     // ✅ Placeholder logo (ajout)
     const cardPh = document.getElementById("cardPh");
@@ -1059,12 +1142,63 @@
     card.addEventListener("click", openZoomFromCurrent);
     modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
 
+    function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+
+function hexToRgba(hex, a){
+  const h = String(hex||"").replace("#","").trim();
+  const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
+  const r = parseInt(full.slice(0,2),16) || 0;
+  const g = parseInt(full.slice(2,4),16) || 0;
+  const b = parseInt(full.slice(4,6),16) || 0;
+  return `rgba(${r},${g},${b},${clamp(Number(a)||0,0,1)})`;
+}
+
+function themeForLevel(level){
+  const l = clamp(Number(level)||1, 1, 100);
+  if (l >= 100) return { glow:"#ff5b5b", glow2:"#ffd36a" };
+  if (l >= 50)  return { glow:"#ff78dc", glow2:"#8b7bff" };
+  if (l >= 25)  return { glow:"#ffd36a", glow2:"#ff9a5c" };
+  if (l >= 10)  return { glow:"#78ffc8", glow2:"#52d7ff" };
+  return          { glow:"#78aaff", glow2:"#be78ff" };
+}
+
+function intensityForLevel(level){
+  const l = clamp(Number(level)||1, 1, 100);
+  if (l < 50){
+    const t = (l - 1) / 49;
+    return 0.15 + t * 0.40;
+  }
+  const t = (l - 50) / 50;
+  return 0.55 + t * 0.45;
+}
+
+function applyMiniProfileTheme(level){
+  if(!miniAvatar) return;
+  const t = themeForLevel(level);
+  const intensity = intensityForLevel(level);
+  miniAvatar.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
+  miniAvatar.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
+}
+
+function setMiniAvatar(url){
+  if(!miniAvatar) return;
+  const u = String(url||"").trim();
+  // fallback si pas d’avatar => poke.png
+  miniAvatar.style.backgroundImage = `url("${u || "poke.png"}")`;
+}
+
     async function loadMe(){
-      const me = await api("/api/me");
-      subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
-      updateTopUI(me);
-      return me;
-    }
+  const me = await api("/api/me");
+  subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
+  updateTopUI(me);
+
+  // ✅ mini profile
+  setMiniAvatar(me.avatar);
+  if(miniLvl) miniLvl.textContent = String(me.level || 1);
+  applyMiniProfileTheme(me.level || 1);
+
+  return me;
+}
 
     async function loadPulls(){
       log.innerHTML = "";
