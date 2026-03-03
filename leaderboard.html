@@ -331,14 +331,7 @@ th{
 
 /* highlight me */
 /* ===== ME (super visible) ===== */
-.meHighlight td{
-  background:
-    linear-gradient(90deg,
-      rgba(120,170,255,.22) 0%,
-      rgba(190,120,255,.12) 55%,
-      rgba(0,0,0,0) 100%);
-}
-
+/* ===== ME (bande continue, sans coupures) ===== */
 .meHighlight{
   position:relative;
 }
@@ -346,27 +339,51 @@ th{
 .meHighlight::before{
   content:"";
   position:absolute;
-  left:0; top:0; bottom:0;
+  inset:6px 8px;              /* marges internes => arrondi propre */
+  border-radius:16px;
+
+  /* bande continue */
+  background: linear-gradient(90deg,
+    rgba(120,170,255,.22) 0%,
+    rgba(190,120,255,.14) 55%,
+    rgba(0,0,0,.06) 100%);
+
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:
+    0 16px 55px rgba(0,0,0,.25),
+    0 0 32px rgba(120,170,255,.14);
+
+  pointer-events:none;
+  z-index:0;
+}
+
+.meHighlight:hover::before{
+  background: linear-gradient(90deg,
+    rgba(120,170,255,.28) 0%,
+    rgba(190,120,255,.18) 55%,
+    rgba(0,0,0,.06) 100%);
+}
+
+/* le trait néon à gauche (optionnel mais stylé) */
+.meHighlight::after{
+  content:"";
+  position:absolute;
+  left:10px;
+  top:10px;
+  bottom:10px;
   width:4px;
+  border-radius:999px;
   background: linear-gradient(180deg, rgba(120,170,255,.95), rgba(190,120,255,.95));
-  box-shadow: 0 0 22px rgba(120,170,255,.35);
+  box-shadow: 0 0 22px rgba(120,170,255,.30);
+  pointer-events:none;
+  z-index:1;
 }
 
-.meHighlight td:first-child{
-  border-top-left-radius:14px;
-  border-bottom-left-radius:14px;
-}
-.meHighlight td:last-child{
-  border-top-right-radius:14px;
-  border-bottom-right-radius:14px;
-}
-
-.meHighlight:hover td{
-  background:
-    linear-gradient(90deg,
-      rgba(120,170,255,.28) 0%,
-      rgba(190,120,255,.16) 55%,
-      rgba(0,0,0,0) 100%);
+/* IMPORTANT : on met les cellules au-dessus du fond */
+.meHighlight td{
+  position:relative;
+  z-index:2;
+  background: transparent !important;
 }
 
 .meTag{
