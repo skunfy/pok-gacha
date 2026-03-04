@@ -289,9 +289,9 @@ function levelForXp(xp){
 }
 
 function xpForOpen(grade){
-  if (grade === 10) return 400;
-  if (grade >= 8) return 100;
-  if (grade >= 5) return 60;
+  if (grade === 10) return 100;
+  if (grade >= 8) return 50;
+  if (grade >= 5) return 30;
   return 20;
 }
 
