@@ -291,6 +291,16 @@ function getGame(req){
   return "pokemon";
 }
 
+function parseIdKeyServer(idKey){
+  const p = String(idKey || "").split("__");
+  return {
+    game:    p[0] || "",
+    setId:   p[1] || "",
+    localId: p[2] || "",
+    cardId:  p[3] || ""
+  };
+}
+
 function levelForXp(xp){
   const x = Math.max(0, Number(xp) || 0);
   // courbe simple: lvl 1 -> 0 xp, lvl 2 -> 100 xp, lvl 3 -> 300 xp, etc.
@@ -1640,8 +1650,9 @@ app.post("/api/market/buy", auth, async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    // ✅ on récupère aussi imageHigh si dispo
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, game, name, setName, image, grade, mint, price, qty
+      `SELECT id, seller_user_id, idKey, game, name, setName, image, imageHigh, grade, mint, price, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -1662,6 +1673,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
       return res.status(400).json({ error: "Tu ne peux pas acheter ta propre vente" });
     }
 
+    // lock buyer money
     const bQ = await client.query(`SELECT money FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
     const buyerMoney = Number(bQ.rows[0]?.money ?? 0);
     const total = Number(l.price) * qty;
@@ -1671,30 +1683,45 @@ app.post("/api/market/buy", auth, async (req, res) => {
       return res.status(400).json({ error: "Pas assez de Pokédollars" });
     }
 
+    // move money
     await client.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [total, req.user.id]);
     await client.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [total, l.seller_user_id]);
 
     const now = Date.now();
 
-    // IMPORTANT: remettre game dans collection
+    // ✅ parse idKey pour binder fields
+    const key = String(l.idkey || l.idKey || "");
+    const ids = parseIdKeyServer(key);
+
+    // ✅ remet en collection AVEC cardId/setId/localId/imageHigh
     await client.query(
       `
-      INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       ON CONFLICT (user_id, idKey)
       DO UPDATE SET
         count = collection.count + EXCLUDED.count,
         grade = GREATEST(collection.grade, EXCLUDED.grade),
         mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-        lastAt = EXCLUDED.lastAt
+        imageHigh = COALESCE(collection.imageHigh, EXCLUDED.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId)
       `,
       [
         req.user.id,
-        l.idkey || l.idKey,
-        l.game || "pokemon",
+        key,
+        l.game || ids.game || "pokemon",
+        ids.cardId || null,
+        ids.setId || null,
+        ids.localId || null,
         l.name,
         l.setname || l.setName,
         l.image,
+        l.imagehigh || l.imageHigh || l.image, // fallback safe
         l.grade,
         l.mint ? 1 : 0,
         qty,
@@ -1702,6 +1729,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
       ]
     );
 
+    // update/remove listing stock
     if (l.qty === qty) {
       await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
     } else {
@@ -1710,11 +1738,18 @@ app.post("/api/market/buy", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    await notify(l.seller_user_id, "sale", "💰 Vente réussie !", `${qty}× ${l.name} vendu pour ${total}💵`);
+    // notif vendeur (hors transaction)
+    await notify(
+      l.seller_user_id,
+      "sale",
+      "💰 Vente réussie !",
+      `${qty}× ${l.name} vendu pour ${total}💵`
+    );
 
     const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
     res.json({ ok: true, money: me.rows[0]?.money || 0 });
-  } catch {
+
+  } catch (e) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Buy failed" });
   } finally {
