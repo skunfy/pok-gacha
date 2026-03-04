@@ -1072,42 +1072,43 @@ app.get("/api/sets", auth, async (req, res) => {
   const game = getGame(req);
 
   try {
-    // ✅ POKEMON
+    // ===== POKEMON =====
     if (game === "pokemon") {
       const list = await getPokemonSetsCached();
       return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
     }
 
-    // ✅ LORCANA (Lorcast /sets)
+    // ===== LORCANA =====
     if (game === "lorcana") {
       const list = await getLorcanaSets();
+      // lorcast: code + name
       return res.json({
-        sets: list
-          .map(s => ({
-            id: pickFirst(s, ["code", "id"]),
-            name: pickFirst(s, ["name"]) || pickFirst(s, ["code", "id"])
-          }))
-          .filter(s => s.id)
+        sets: list.map(s => ({
+          id: String(s.code || s.id || ""),
+          name: String(s.name || s.code || "Set")
+        })).filter(s => s.id)
       });
     }
 
-    // ✅ ONE PIECE (pas de endpoint sets -> on group depuis allSetCards)
+    // ===== ONE PIECE =====
     if (game === "onepiece") {
       const list = await getOpBriefList();
-      const map = new Map();
 
-      for (const it of list) {
-        const setName = pickFirst(it, ["set_name", "setName", "set", "series"]) || "One Piece";
-        const setId   = pickFirst(it, ["set_id", "setId", "set_code", "setCode"]) || setName;
-        if (!map.has(setId)) map.set(setId, { id: setId, name: setName });
+      // on fabrique des "sets" à partir des champs existants
+      const map = new Map();
+      for (const c of list) {
+        const setName = pickFirst(c, ["set_name", "setName", "set", "series"]) || "One Piece";
+        const setId   = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || setName;
+        const id = String(setId);
+        if (!map.has(id)) map.set(id, { id, name: String(setName) });
       }
 
-      return res.json({ sets: Array.from(map.values()) });
+      return res.json({ sets: Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name)) });
     }
 
     return res.json({ sets: [] });
   } catch (e) {
-    return res.status(502).json({ error: "Sets failed" });
+    return res.status(502).json({ error: "sets failed" });
   }
 });
 
@@ -1117,7 +1118,7 @@ app.get("/api/set_cards", auth, async (req, res) => {
   if (!setId) return res.status(400).json({ error: "Missing setId" });
 
   try {
-    // ✅ POKEMON
+    // ===== POKEMON =====
     if (game === "pokemon") {
       const cards = await getPokemonSetCardsCached(setId);
       return res.json({
@@ -1127,73 +1128,61 @@ app.get("/api/set_cards", auth, async (req, res) => {
           localId: String(c.localId || ""),
           name: c.name || "",
           image: normalizeImageField(c.image, "low", "webp"),
-          imageHigh: normalizeImageField(c.image, "high", "webp")
+          imageHigh: normalizeImageField(c.image, "high", "webp"),
         }))
       });
     }
 
-    // ✅ LORCANA
+    // ===== LORCANA =====
     if (game === "lorcana") {
-      const list = await getLorcanaCardsForSet(setId); // setId = code
-      return res.json({
-        setId,
-        cards: list.map(c => {
-          const cardId =
-            pickFirst(c, ["id", "card_id", "cardId", "uuid"]) || "";
-          const localId =
-            pickFirst(c, ["collector_number", "number", "localId"]) || "";
-          const name =
-            pickFirst(c, ["name", "card_name", "title"]) || "";
-          const { low, high } = pickImageLorcana(c);
+      const cards = await getLorcanaCardsForSet(setId);
+      const out = cards.map(c => {
+        const { low, high } = pickImageLorcana(c);
+        const cardId  = String(c.id || c.card_id || c.uuid || "");
+        const localId = String(c.collector_number || c.number || c.card_number || "");
+        return {
+          cardId,
+          localId,
+          name: String(c.name || ""),
+          image: low || null,
+          imageHigh: high || low || null,
+        };
+      }).filter(x => x.cardId);
 
-          return {
-            cardId,
-            localId: String(localId || ""),
-            name,
-            image: low,
-            imageHigh: high || low
-          };
-        }).filter(x => x.cardId && x.image)
-      });
+      return res.json({ setId, cards: out });
     }
 
-    // ✅ ONE PIECE
+    // ===== ONE PIECE =====
     if (game === "onepiece") {
       const list = await getOpBriefList();
 
-      const filtered = list.filter(it => {
-        const sid =
-          pickFirst(it, ["set_id", "setId", "set_code", "setCode"]) ||
-          (pickFirst(it, ["set_name", "setName", "set", "series"]) || "One Piece");
-        return String(sid) === String(setId);
-      });
-
-      return res.json({
-        setId,
-        cards: filtered.map(it => {
-          const cardId =
-            pickFirst(it, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) || "";
-          const localId =
-            pickFirst(it, ["card_number", "number", "localId", "local_id"]) || "";
-          const name =
-            pickFirst(it, ["card_name", "name", "cardName", "title"]) || "";
-          const image =
-            pickFirst(it, ["card_image", "image_url", "imageUrl", "image", "img"]) || null;
+      const out = list
+        .filter(c => {
+          const sId = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || (pickFirst(c, ["set_name","setName","set","series"]) || "One Piece");
+          return String(sId) === setId;
+        })
+        .map(c => {
+          const cardId  = pickFirst(c, ["card_set_id","cardSetId","card_id","cardId","id"]) || "";
+          const localId = pickFirst(c, ["card_number","number","collector_number","collectorNumber"]) || "";
+          const name    = pickFirst(c, ["card_name","name","title"]) || "";
+          const image   = pickFirst(c, ["card_image","image_url","imageUrl","image","img"]) || null;
 
           return {
-            cardId,
-            localId: String(localId || ""),
-            name,
+            cardId: String(cardId),
+            localId: String(localId),
+            name: String(name),
             image,
             imageHigh: image
           };
-        }).filter(x => x.cardId && x.image)
-      });
+        })
+        .filter(x => x.cardId);
+
+      return res.json({ setId, cards: out });
     }
 
     return res.json({ setId, cards: [] });
   } catch (e) {
-    return res.status(502).json({ error: "Set cards failed" });
+    return res.status(502).json({ error: "set_cards failed" });
   }
 });
 
