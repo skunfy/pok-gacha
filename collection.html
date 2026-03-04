@@ -508,7 +508,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
 .slot:not(.missing) .missTag{ display:none; }
 
-
 /* ✅ Progress (TCG Pocket vibe) */
 .progressBox{
   min-width: 240px;
@@ -736,8 +735,8 @@ const zoomMint = document.getElementById("zoomMint");
 let allItems = [];
 
 // ===== Binder state =====
-let setsList = [];                 // /api/sets (pokemon) OR local sets list for other games
-let binderCards = [];              // /api/set_cards (pokemon) OR generated setCards for other games
+let setsList = [];
+let binderCards = [];
 let binderPage = 0;                // 0-based
 const BINDER_PAGE_SIZE = 16;
 
@@ -757,7 +756,6 @@ gameSel.addEventListener("change", async () => {
   selected.clear();
   refreshSelUI();
 
-  // reset set select on game change (optional)
   localStorage.setItem(SET_KEY, "");
   binderPage = 0;
 
@@ -823,8 +821,7 @@ function setGridMode(on){
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
 }
 
-/* ✅ MODIF: setSel visible en binder pour TOUS les jeux.
-   Le pager s'affiche si binderCards existe (tous jeux). */
+/* setSel visible en binder pour TOUS les jeux */
 function setBinderControlsVisible(){
   const isBinder = currentView() === "binder";
   setSel.style.display = isBinder ? "" : "none";
@@ -839,7 +836,6 @@ clearSelBtn.addEventListener("click", () => {
 
 sellSelectedBtn.addEventListener("click", async () => {
   if (!selected.size) return;
-
   const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
 
   try{
@@ -1012,38 +1008,27 @@ function render(items){
 // BINDER: sets + cards + pages + trous vides
 // =========================
 
-/* ✅ NEW: sets list pour chaque jeu
-   - pokemon: via /api/sets
-   - onepiece/lorcana: basé sur TA collection (setId si dispo, sinon setName) */
+// Parse idKey: game__setId__localId__cardId
+function parseIdKey(idKey){
+  const p = String(idKey || "").split("__");
+  return {
+    game:   p[0] || "",
+    setId:  p[1] || "",
+    localId:p[2] || "",
+    cardId: p[3] || ""
+  };
+}
+
+/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
 async function loadSetsForGame(){
-  const game = currentGame();
   setsList = [];
-
-  // Pokemon: API
-  if (game === "pokemon"){
-    try{
-      const data = await api("/api/sets");
-      setsList = data.sets || [];
-    }catch{
-      setsList = [];
-    }
-  } else {
-    // One Piece / Lorcana: sets depuis la collection (pas d'API sets côté serveur)
-    const setMap = new Map(); // id -> {id,name}
-    for (const it of allItems){
-      if ((it.game || game) !== game) continue;
-
-      // priorité: setId si existe, sinon setName, sinon set
-      const sid = String(it.setId || it.setName || it.set || "").trim();
-      if (!sid) continue;
-
-      const nm = String(it.setName || it.set || sid).trim();
-      if (!setMap.has(sid)) setMap.set(sid, { id: sid, name: nm });
-    }
-    setsList = Array.from(setMap.values()).sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+  try{
+    const data = await api("/api/sets");
+    setsList = data.sets || [];
+  }catch{
+    setsList = [];
   }
 
-  // remplir select
   setSel.innerHTML = "";
   if (!setsList.length){
     const o = document.createElement("option");
@@ -1067,75 +1052,44 @@ async function loadSetsForGame(){
   }
 
   const saved = currentSetId();
-  if (saved && setsList.some(s => s.id === saved)){
-    setSel.value = saved;
-  } else {
-    setSel.value = "";
-  }
+  setSel.value = (saved && setsList.some(s => s.id === saved)) ? saved : "";
 }
 
-/* ✅ binderCards (cartes du set)
-   - pokemon: /api/set_cards?setId=
-   - onepiece/lorcana: depuis TA collection (donc pas "manquantes", mais binder ok) */
+/* ✅ IMPORTANT: pour TOUS les jeux -> /api/set_cards?setId= */
 async function loadBinderSetCards(){
-  binderCards.sort((a,b)=>{
-  const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
-  const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
-  return Number(ax) - Number(bx);
-  });
   binderCards = [];
-  
   const setId = setSel.value;
   if (!setId) return;
 
-  const game = currentGame();
-
-  if (game === "pokemon"){
-    try{
-      const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
-      binderCards = data.cards || [];
-    }catch{
-      binderCards = [];
-    }
-    return;
+  try{
+    const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
+    binderCards = data.cards || [];
+  }catch{
+    binderCards = [];
   }
 
-  // onepiece / lorcana -> on crée un "set_cards" depuis ta collection
-  const tmp = [];
-  for (const it of allItems){
-    if ((it.game || game) !== game) continue;
-    const sid = String(it.setId || it.setName || it.set || "").trim();
-    if (sid !== setId) continue;
-
-    // id stable: cardId si existe sinon idKey
-    const cardId = String(it.cardId || it.idKey || "").trim();
-    tmp.push({
-      cardId,
-      localId: String(it.localId || ""),
-      name: it.name || "Carte",
-      image: it.image || null,
-      imageHigh: it.imageHigh || null
-    });
-  }
-
-  // tri: localId si numérique, sinon name
-  tmp.sort((a,b)=>{
-    const an = Number(a.localId); const bn = Number(b.localId);
-    if (!Number.isNaN(an) && !Number.isNaN(bn) && a.localId && b.localId) return an - bn;
-    return (a.name||"").localeCompare(b.name||"");
+  // tri numeric-friendly
+  binderCards.sort((a,b)=>{
+    const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
+    const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
+    return Number(ax) - Number(bx);
   });
-
-  binderCards = tmp;
 }
 
-/* ✅ owned map par set pour TOUS les jeux */
+/* ✅ owned map robuste: match sur setId + cardId (avec fallback idKey) */
 function buildOwnedMapForSet(setId){
   const g = currentGame();
   const m = new Map();
+
   for (const it of allItems){
     if ((it.game || g) !== g) continue;
-    if (String(it.setId || "") !== String(setId)) continue;
-    if (it.cardId) m.set(String(it.cardId), it);
+
+    const ids = parseIdKey(it.idKey);
+    const itSetId = String(it.setId || ids.setId || "").trim();
+    if (itSetId !== String(setId)) continue;
+
+    const key = String(it.cardId || ids.cardId || "").trim();
+    if (key) m.set(key, it);
   }
   return m;
 }
@@ -1146,9 +1100,7 @@ function renderBinder(){
   setBinderControlsVisible();
   binderGrid.innerHTML = "";
 
-  if (!isBinder){
-    return;
-  }
+  if (!isBinder) return;
 
   const setId = setSel.value;
   if (!setId){
@@ -1158,7 +1110,6 @@ function renderBinder(){
         Choisis un set pour afficher le classeur.
       </div>
     `;
-    // progress reset
     updateProgress([], "Set");
     return;
   }
@@ -1178,10 +1129,10 @@ function renderBinder(){
   prevPageBtn.disabled = binderPage === 0;
   nextPageBtn.disabled = binderPage >= pages - 1;
 
-  // ✅ progress set (sur tout le set, pas juste la page)
+  // progress set (sur tout le set)
   const fullSet = binderCards.map(c => ({
     ...c,
-    have: owned.has(c.cardId || c.id || "")
+    have: owned.has(String(c.cardId || c.id || "").trim())
   }));
   const setLabel = (setsList.find(s => s.id === setId)?.name) || setId || "Set";
   updateProgress(fullSet, setLabel);
@@ -1211,7 +1162,8 @@ function renderBinder(){
       return;
     }
 
-    const ownedItem = owned.get(cardBrief.cardId || cardBrief.id || "") || null;
+    const key = String(cardBrief.cardId || cardBrief.id || "").trim();
+    const ownedItem = owned.get(key) || null;
     const have = !!ownedItem;
 
     const img = have
@@ -1287,7 +1239,6 @@ async function boot(){
   await loadCollection();
 
   if (!isGrid){
-    // ✅ binder pour TOUS les jeux
     await loadSetsForGame();
     if (setSel.value){
       await loadBinderSetCards();
@@ -1297,7 +1248,6 @@ async function boot(){
     setBinderControlsVisible();
     renderBinder();
   } else {
-    // grid render
     applyFilters();
     setBinderControlsVisible();
   }
