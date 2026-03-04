@@ -1078,12 +1078,13 @@ async function loadSetsForGame(){
    - pokemon: /api/set_cards?setId=
    - onepiece/lorcana: depuis TA collection (donc pas "manquantes", mais binder ok) */
 async function loadBinderSetCards(){
-  binderCards = [];
   binderCards.sort((a,b)=>{
   const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
   const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
   return Number(ax) - Number(bx);
-});
+  });
+  binderCards = [];
+  
   const setId = setSel.value;
   if (!setId) return;
 
