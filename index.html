@@ -1016,6 +1016,61 @@
     }
   }
 
+  /* ===== Aspiration magique ===== */
+.slab.suck .cardImg{
+  animation: suckOut .52s cubic-bezier(.2,.9,.2,1) forwards;
+  filter: blur(0px);
+}
+
+@keyframes suckOut{
+  0%{
+    opacity:1;
+    transform:translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg);
+    filter: blur(0px) brightness(1);
+  }
+  65%{
+    opacity:1;
+    transform:translate(-50%,-50%) translateZ(18px) scale(.45) rotate(18deg);
+    filter: blur(.6px) brightness(1.05);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%,-50%) translateZ(18px) scale(.03) rotate(80deg);
+    filter: blur(2px) brightness(1.2);
+  }
+}
+
+  /* vortex au centre */
+  .slab.suck::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    top:56%;
+    width:220px;
+    height:220px;
+    transform:translate(-50%,-50%);
+    border-radius:999px;
+    pointer-events:none;
+    opacity:0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%),
+      conic-gradient(from 0deg,
+        rgba(120,170,255,0),
+        rgba(190,120,255,.35),
+        rgba(120,170,255,.35),
+        rgba(255,210,110,.25),
+        rgba(120,170,255,0)
+      );
+    filter: blur(0.2px);
+    animation: vortex .52s cubic-bezier(.2,.9,.2,1) forwards;
+  }
+
+  @keyframes vortex{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.75) rotate(0deg); }
+    20%{ opacity:.9; }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(1.25) rotate(220deg); }
+  }
+
   </style>  
 
 
@@ -1127,7 +1182,7 @@
         <div class="cardImg" id="card"></div>
 
         <div class="cardPlaceholder" id="cardPh" aria-hidden="true">
-          <img src="poke.png" alt="">
+          <img id="phLogo" src="poke.png" alt="">
         </div>
 
         <div class="edge"></div>
@@ -1390,6 +1445,25 @@
     return new Promise(r => setTimeout(r, ms));
   }
 
+  async function suckAwayCurrentCard(){
+  const bg = card.style.backgroundImage || "";
+  const hasCard = bg && !bg.includes("linear-gradient") && bg !== "none";
+
+  if(!hasCard) return;
+
+  // lance l'aspiration
+  slab.classList.add("suck");
+  await sleep(520);
+
+  // reset visuel
+  slab.classList.remove("suck");
+  card.style.backgroundImage = "";
+  card.dataset.high = "";
+
+  // remet le placeholder
+  setPlaceholderVisible(true);
+}
+
   async function runRevealFx({ tier, isMint }){
   if(!fxOverlay) return;
 
@@ -1493,7 +1567,21 @@
     const g = currentGame();
     title.textContent = `${gameLabel(g)} • CARD`;
     zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
+    applyPlaceholderLogo();
     // (subtitle reste pareil)
+  }
+
+  const phLogo = document.getElementById("phLogo");
+
+  function placeholderLogoForGame(g){
+    if(g === "onepiece") return "One_Piece_Logo.png";
+    if(g === "lorcana")  return "Lorcana.png";
+    return "International_Pokémon_logo.png"; // ou "poke.png" si tu préfères
+  }
+
+  function applyPlaceholderLogo(){
+    if(!phLogo) return;
+    phLogo.src = placeholderLogoForGame(currentGame());
   }
 
   // exposée au onclick HTML
@@ -1719,7 +1807,8 @@
 
   async function openOne(){
     btnOpen.disabled = true;
-        // 👇 Si une carte est déjà affichée, on la fait disparaître
+    await suckAwayCurrentCard();
+    // 👇 Si une carte est déjà affichée, on la fait disparaître
     const hasCard = card.style.backgroundImage && 
                     !card.style.backgroundImage.includes("linear-gradient");
 
