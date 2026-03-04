@@ -1272,6 +1272,9 @@
   </div>
 
   <audio id="sfxOpen" src="open.mp3" preload="auto"></audio>
+  <audio id="sfxCharge" src="suspense.mp3" preload="auto"></audio>
+  <audio id="sfxReveal" src="reveal.mp3" preload="auto"></audio>
+  <audio id="sfxRevealEpic" src="SFXg10.mp3" preload="auto"></audio>
 <!-- optionnel : son “reveal” -->
 </body>
 
@@ -1326,6 +1329,9 @@
 
   // ---------- DOM ----------
   const sfxOpen = document.getElementById("sfxOpen");
+  const sfxCharge = document.getElementById("sfxCharge");
+  const sfxReveal = document.getElementById("sfxReveal");
+  const sfxRevealEpic = document.getElementById("sfxRevealEpic");
 
   function playSfx(a, volume = 0.8){
     if(!a) return;
@@ -1464,11 +1470,11 @@
   setPlaceholderVisible(true);
 }
 
-  async function runRevealFx({ tier, isMint }){
+  async function runRevealFx({ tier, isMint, epic }){
   if(!fxOverlay) return;
 
   const fxTier = isMint ? "m" : tier;
-  const ultra = (tier === "g" || isMint);
+  const ultra = epic || tier === "g" || isMint;
 
   fxClear();
   fxOverlay.dataset.tier = fxTier;
@@ -1485,11 +1491,11 @@
   document.body.classList.add("cameraZoom");
 
   // suspense particles
-  fxSpawnParticles(
-    fxTier,
-    ultra ? 70 :
-    (fxTier==="v") ? 40 :
-    (fxTier==="b") ? 30 : 18
+ fxSpawnParticles(
+  fxTier,
+  ultra ? 90 :
+  (fxTier==="v") ? 40 :
+  (fxTier==="b") ? 30 : 18
   );
 
   await sleep(200);
@@ -1502,7 +1508,7 @@
 
   // 🎊 confetti rare
   if(ultra){
-    fxSpawnConfetti(fxTier, 45);
+  fxSpawnConfetti(fxTier, 60);
   }
 
   await sleep(1000);
@@ -1864,10 +1870,23 @@
       const img = new Image();
       
       img.onload = async () => {
+      
       setPlaceholderVisible(false);
 
+      playSfx(sfxCharge, 0.85);
+
       // effet whaou AVANT d’afficher la carte
-      await runRevealFx({ tier, isMint: !!c.mint });
+      await runRevealFx({
+      tier,
+      isMint: !!c.mint,
+      epic: (c.grade === 10 || c.mint)
+      });
+
+      if(c.grade === 10 || c.mint){
+      playSfx(sfxRevealEpic, 1); // 🔥 gros reveal
+      }else{
+      playSfx(sfxReveal, 0.9);
+      }
 
       // affiche la carte après l'effet
       card.style.backgroundImage = `url("${high}")`;
