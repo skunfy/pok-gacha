@@ -1000,6 +1000,22 @@
     100%{ transform: scale(1); }
   }
 
+  /* ===== Card disappear before new pull ===== */
+  .slab.disappear .cardImg{
+    animation: cardDisappear .35s ease forwards;
+  }
+
+  @keyframes cardDisappear{
+    0%{
+      opacity:1;
+      transform:translate(-50%,-50%) translateZ(18px) scale(1);
+    }
+    100%{
+      opacity:0;
+      transform:translate(-50%,-50%) translateZ(18px) scale(.85);
+    }
+  }
+
   </style>  
 
 
@@ -1703,6 +1719,22 @@
 
   async function openOne(){
     btnOpen.disabled = true;
+        // 👇 Si une carte est déjà affichée, on la fait disparaître
+    const hasCard = card.style.backgroundImage && 
+                    !card.style.backgroundImage.includes("linear-gradient");
+
+    if(hasCard){
+      slab.classList.add("disappear");
+      await sleep(350); // attendre la fin de l'anim
+      slab.classList.remove("disappear");
+
+      // on vide visuellement la carte
+      card.style.backgroundImage = "";
+      card.dataset.high = "";
+
+      // on remet le placeholder
+      setPlaceholderVisible(true);
+    }
     playSfx(sfxOpen, 0.8); // ✅ AJOUTE ÇA
     function playSfx(a, volume = 0.8){
     if(!a) return;
