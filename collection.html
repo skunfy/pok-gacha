@@ -700,9 +700,12 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
       <input id="search" placeholder="Rechercher...">
 
+      <!-- ✅ TRI: ajout doublons + rareté -->
       <select id="sort" title="Tri">
         <option value="recent">Dernières obtenues</option>
         <option value="grade">Meilleure note</option>
+        <option value="rarity">Rareté</option>
+        <option value="duplicates">Doublons</option>
         <option value="name">Nom A-Z</option>
       </select>
 
@@ -914,6 +917,55 @@ function refreshSelUI(){
   sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty})`;
 }
 
+/* =========================
+   ✅ TRI RARETÉ + DOUBLONS
+   ========================= */
+
+// Rank rareté: plus grand = plus rare.
+// On a 3 sources: (1) champ rarity si tu l'ajoutes un jour, (2) setName heuristique, (3) fallback via grade/tier.
+function rarityRank(item){
+  const g = Number(item?.grade || 0);
+
+  const raw = String(item?.rarity || item?.rarityCode || "").trim().toUpperCase();
+  if (raw){
+    // mapping large (pokemon / lorcana / onepiece possibles)
+    const map = new Map([
+      ["C",1],["COMMON",1],
+      ["U",2],["UNCOMMON",2],
+      ["R",3],["RARE",3],
+      ["RR",4],["DOUBLE RARE",4],
+      ["SR",5],["SUPER RARE",5],
+      ["UR",6],["ULTRA RARE",6],
+      ["CSR",7],["CHARACTER SUPER RARE",7],
+      ["SEC",8],["SECRET",8],["SECRET RARE",8],
+      ["ALT",9],["AA",9],["ALT ART",9],["ALTERNATE ART",9],
+      ["PR",10],["PROMO",10]
+    ]);
+    const v = map.get(raw);
+    if (v) return v;
+  }
+
+  // Heuristique sur le nom du set / nom carte (selon tes APIs ça peut contenir "Promo", "Secret", etc.)
+  const hay = (String(item?.name||"") + " " + String(item?.set||item?.setName||"")).toUpperCase();
+
+  if (hay.includes("PROMO")) return 10;
+  if (hay.includes("SECRET")) return 8;
+  if (hay.includes("ALT") || hay.includes("ALTERNATE")) return 9;
+  if (hay.includes("ULTRA")) return 6;
+  if (hay.includes("SUPER")) return 5;
+  if (hay.includes("DOUBLE RARE") || hay.includes("RR")) return 4;
+  if (hay.includes("RARE") || hay.includes(" R ")) return 3;
+  if (hay.includes("UNCOMMON") || hay.includes(" U ")) return 2;
+  if (hay.includes("COMMON") || hay.includes(" C ")) return 1;
+
+  // fallback: approx via grade
+  if (g >= 10) return 6;
+  if (g >= 8) return 5;
+  if (g >= 6) return 3;
+  if (g >= 4) return 2;
+  return 1;
+}
+
 function setGridMode(on){
   grid.style.display = on ? "" : "none";
   binderWrap.classList.toggle("on", !on);
@@ -1061,10 +1113,17 @@ function applyFilters(){
   }
 
   const sort = sortSelect.value;
+
   if(sort === "grade"){
-    items.sort((a,b)=> (b.grade||0) - (a.grade||0));
+    items.sort((a,b)=> (b.grade||0) - (a.grade||0) || (b.lastAt||0) - (a.lastAt||0));
   } else if(sort === "name"){
-    items.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+    items.sort((a,b)=> (a.name||"").localeCompare(b.name||"") || (b.lastAt||0) - (a.lastAt||0));
+  } else if(sort === "duplicates"){
+    // ✅ doublons: le plus grand count en premier
+    items.sort((a,b)=> (b.count||0) - (a.count||0) || (b.lastAt||0) - (a.lastAt||0));
+  } else if(sort === "rarity"){
+    // ✅ rareté: plus rare d'abord
+    items.sort((a,b)=> rarityRank(b) - rarityRank(a) || (b.grade||0) - (a.grade||0) || (b.lastAt||0) - (a.lastAt||0));
   } else {
     items.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
   }
