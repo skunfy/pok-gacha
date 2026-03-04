@@ -1251,6 +1251,31 @@
   const fxOverlay   = document.getElementById("fxOverlay");
   const fxParticles = document.getElementById("fxParticles");
   const fxConfetti  = document.getElementById("fxConfetti");
+  const fxRingEl    = fxOverlay?.querySelector(".fxRing");
+
+  // 🔥 récupère le centre EXACT de la carte
+  function fxGetCenter(){
+    const r = card?.getBoundingClientRect?.();
+    if(r){
+      return {
+        x: r.left + r.width / 2,
+        y: r.top  + r.height / 2 - 10 // petit offset pour être visuellement parfait
+      };
+    }
+
+    const s = slab?.getBoundingClientRect?.();
+    if(s){
+      return {
+        x: s.left + s.width / 2,
+        y: s.top  + s.height / 2
+      };
+    }
+
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight * 0.42
+    };
+  }
 
   function fxClear(){
     if(fxParticles) fxParticles.innerHTML = "";
@@ -1260,7 +1285,6 @@
   }
 
   function fxColorForTier(tier){
-    // couleurs simples (pas besoin de RGB exact)
     if(tier === "g") return "rgba(255,210,110,.95)";
     if(tier === "v") return "rgba(190,120,255,.95)";
     if(tier === "b") return "rgba(120,170,255,.95)";
@@ -1270,16 +1294,16 @@
 
   function fxSpawnParticles(tier, count){
     if(!fxParticles) return;
+
     const c = fxColorForTier(tier);
+    const { x:centerX, y:centerY } = fxGetCenter();
+
     for(let i=0;i<count;i++){
       const p = document.createElement("div");
       p.className = "fxP";
       p.style.background = c;
 
-      const centerX = window.innerWidth * 0.5;
-      const centerY = window.innerHeight * 0.42;
-
-      const a = Math.random() * Math.PI * 2;
+      const a  = Math.random() * Math.PI * 2;
       const r0 = 10 + Math.random()*60;
       const r1 = 120 + Math.random()*260;
 
@@ -1301,15 +1325,19 @@
 
   function fxSpawnConfetti(tier, count){
     if(!fxConfetti) return;
+
     const c = fxColorForTier(tier);
+
     for(let i=0;i<count;i++){
       const e = document.createElement("div");
       e.className = "fxC";
-      // mélange léger
-      e.style.background = (Math.random() < 0.35) ? "rgba(255,255,255,.95)" : c;
+      e.style.background = (Math.random() < 0.35)
+        ? "rgba(255,255,255,.95)"
+        : c;
 
       const x = Math.random()*window.innerWidth;
       const drift = (-80 + Math.random()*160) + "px";
+
       e.style.left = "0px";
       e.style.setProperty("--cx", x + "px");
       e.style.setProperty("--drift", drift);
@@ -1318,35 +1346,45 @@
     }
   }
 
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+  function sleep(ms){
+    return new Promise(r => setTimeout(r, ms));
+  }
 
   async function runRevealFx({ tier, isMint }){
     if(!fxOverlay) return;
 
-    // tier spécial MINT
     const fxTier = isMint ? "m" : tier;
 
     fxClear();
     fxOverlay.dataset.tier = fxTier;
     fxOverlay.classList.add("on");
 
-    // suspense (petit)
-    fxSpawnParticles(fxTier, (fxTier==="w") ? 18 : (fxTier==="b") ? 28 : (fxTier==="v") ? 38 : 55);
+    // 🔥 centre le cercle exactement sur la carte
+    const center = fxGetCenter();
+    if(fxRingEl){
+      fxRingEl.style.left = center.x + "px";
+      fxRingEl.style.top  = center.y + "px";
+    }
+
+    // suspense particles
+    fxSpawnParticles(
+      fxTier,
+      (fxTier==="w") ? 18 :
+      (fxTier==="b") ? 28 :
+      (fxTier==="v") ? 38 : 55
+    );
 
     await sleep(180);
 
     // moment reveal
     fxOverlay.classList.add("reveal");
 
-    // confetti seulement sur très rare
     if(fxTier==="g" || fxTier==="m"){
       fxSpawnConfetti(fxTier, 28);
     }
 
-    // laisse vivre l’anim
     await sleep(900);
 
-    // fade out
     fxOverlay.classList.remove("reveal");
     await sleep(200);
     fxOverlay.classList.remove("on");
