@@ -237,6 +237,11 @@ async function initDb() {
   await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
   await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
 
+    // ✅ Binder fields (MARKET)
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
 
     // ✅ Binder fields (Pokémon)
   await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS cardId TEXT;`);
@@ -1569,16 +1574,20 @@ app.post("/api/market/list", auth, async (req, res) => {
 
   if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
-  // game vient de l'idKey (game__...)
-  const game = String(idKey.split("__")[0] || "pokemon").toLowerCase();
-  const safeGame = (game === "onepiece") ? "onepiece" : (game === "lorcana") ? "lorcana" : "pokemon";
+  // game vient de l'idKey (game__...__...__...)
+  const gameFromKey = String(idKey.split("__")[0] || "pokemon").toLowerCase();
+  const safeGame =
+    gameFromKey === "onepiece" ? "onepiece" :
+    gameFromKey === "lorcana"  ? "lorcana"  :
+    "pokemon";
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
+    // ✅ On récupère aussi cardId/setId/localId/imageHigh depuis la collection
     const cQ = await client.query(
-      `SELECT game, name, setName, image, grade, mint, count
+      `SELECT game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count
        FROM collection
        WHERE user_id=$1 AND idKey=$2
        FOR UPDATE`,
@@ -1590,12 +1599,13 @@ app.post("/api/market/list", auth, async (req, res) => {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Not owned" });
     }
-    if (it.count < qty) {
+    if (Number(it.count) < qty) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "Quantité insuffisante" });
     }
 
-    if (it.count === qty) {
+    // retire de la collection
+    if (Number(it.count) === qty) {
       await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [
         req.user.id,
         idKey,
@@ -1608,18 +1618,24 @@ app.post("/api/market/list", auth, async (req, res) => {
     }
 
     const now = Date.now();
+
+    // ✅ On stocke tout dans market_listings (y compris binder ids + imageHigh)
     const ins = await client.query(
       `INSERT INTO market_listings
-        (seller_user_id, idKey, game, name, setName, image, grade, mint, price, qty, createdAt)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        (seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, price, qty, createdAt)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING id`,
       [
         req.user.id,
         idKey,
         it.game || safeGame,
+        it.cardid || it.cardId || null,
+        it.setid  || it.setId  || null,
+        it.localid|| it.localId|| null,
         it.name,
         it.setname || it.setName,
         it.image,
+        it.imagehigh || it.imageHigh || it.image,
         it.grade,
         it.mint ? 1 : 0,
         price,
@@ -1650,9 +1666,9 @@ app.post("/api/market/buy", auth, async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // ✅ on récupère aussi imageHigh si dispo
+    // ✅ On récupère aussi binder ids + imageHigh
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, game, name, setName, image, imageHigh, grade, mint, price, qty
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, price, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -1664,11 +1680,11 @@ app.post("/api/market/buy", auth, async (req, res) => {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Listing introuvable" });
     }
-    if (l.qty < qty) {
+    if (Number(l.qty) < qty) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "Plus assez en stock" });
     }
-    if (l.seller_user_id === req.user.id) {
+    if (Number(l.seller_user_id) === Number(req.user.id)) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "Tu ne peux pas acheter ta propre vente" });
     }
@@ -1689,11 +1705,18 @@ app.post("/api/market/buy", auth, async (req, res) => {
 
     const now = Date.now();
 
-    // ✅ parse idKey pour binder fields
+    // ✅ Fallback parse si jamais vieux listing sans colonnes
     const key = String(l.idkey || l.idKey || "");
     const ids = parseIdKeyServer(key);
 
-    // ✅ remet en collection AVEC cardId/setId/localId/imageHigh
+    const gameFinal = (l.game || ids.game || "pokemon");
+    const cardIdFinal  = (l.cardid  || l.cardId  || ids.cardId  || null);
+    const setIdFinal   = (l.setid   || l.setId   || ids.setId   || null);
+    const localIdFinal = (l.localid || l.localId || ids.localId || null);
+
+    const imageHighFinal = (l.imagehigh || l.imageHigh || l.image);
+
+    // ✅ remet en collection AVEC binder fields + imageHigh
     await client.query(
       `
       INSERT INTO collection
@@ -1714,14 +1737,14 @@ app.post("/api/market/buy", auth, async (req, res) => {
       [
         req.user.id,
         key,
-        l.game || ids.game || "pokemon",
-        ids.cardId || null,
-        ids.setId || null,
-        ids.localId || null,
+        gameFinal,
+        cardIdFinal,
+        setIdFinal,
+        localIdFinal,
         l.name,
         l.setname || l.setName,
         l.image,
-        l.imagehigh || l.imageHigh || l.image, // fallback safe
+        imageHighFinal,
         l.grade,
         l.mint ? 1 : 0,
         qty,
@@ -1730,7 +1753,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
     );
 
     // update/remove listing stock
-    if (l.qty === qty) {
+    if (Number(l.qty) === qty) {
       await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
     } else {
       await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
@@ -1807,7 +1830,7 @@ app.post("/api/market/cancel", auth, async (req, res) => {
     await client.query("BEGIN");
 
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, game, name, setName, image, grade, mint, qty
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -1819,36 +1842,54 @@ app.post("/api/market/cancel", auth, async (req, res) => {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Listing introuvable" });
     }
-    if (l.seller_user_id !== req.user.id) {
+    if (Number(l.seller_user_id) !== Number(req.user.id)) {
       await client.query("ROLLBACK");
       return res.status(403).json({ error: "Interdit" });
     }
-    if (l.qty < qty) {
+    if (Number(l.qty) < qty) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "Quantité invalide" });
     }
 
     const now = Date.now();
 
-    // IMPORTANT: remettre game dans collection
+    const key = String(l.idkey || l.idKey || "");
+    const ids = parseIdKeyServer(key);
+
+    const gameFinal = (l.game || ids.game || "pokemon");
+    const cardIdFinal  = (l.cardid  || l.cardId  || ids.cardId  || null);
+    const setIdFinal   = (l.setid   || l.setId   || ids.setId   || null);
+    const localIdFinal = (l.localid || l.localId || ids.localId || null);
+    const imageHighFinal = (l.imagehigh || l.imageHigh || l.image);
+
     await client.query(
       `
-      INSERT INTO collection (user_id, idKey, game, name, setName, image, grade, mint, count, lastAt)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       ON CONFLICT (user_id, idKey)
       DO UPDATE SET
         count = collection.count + EXCLUDED.count,
         grade = GREATEST(collection.grade, EXCLUDED.grade),
         mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-        lastAt = EXCLUDED.lastAt
+        imageHigh = COALESCE(collection.imageHigh, EXCLUDED.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId)
       `,
       [
         req.user.id,
-        l.idkey || l.idKey,
-        l.game || "pokemon",
+        key,
+        gameFinal,
+        cardIdFinal,
+        setIdFinal,
+        localIdFinal,
         l.name,
         l.setname || l.setName,
         l.image,
+        imageHighFinal,
         l.grade,
         l.mint ? 1 : 0,
         qty,
@@ -1856,7 +1897,7 @@ app.post("/api/market/cancel", auth, async (req, res) => {
       ]
     );
 
-    if (l.qty === qty) {
+    if (Number(l.qty) === qty) {
       await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
     } else {
       await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
