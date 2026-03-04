@@ -1079,6 +1079,11 @@ async function loadSetsForGame(){
    - onepiece/lorcana: depuis TA collection (donc pas "manquantes", mais binder ok) */
 async function loadBinderSetCards(){
   binderCards = [];
+  binderCards.sort((a,b)=>{
+  const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
+  const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
+  return Number(ax) - Number(bx);
+});
   const setId = setSel.value;
   if (!setId) return;
 
@@ -1124,19 +1129,12 @@ async function loadBinderSetCards(){
 
 /* ✅ owned map par set pour TOUS les jeux */
 function buildOwnedMapForSet(setId){
-  const game = currentGame();
+  const g = currentGame();
   const m = new Map();
-
   for (const it of allItems){
-    if ((it.game || game) !== game) continue;
-
-    const sid = String(it.setId || it.setName || it.set || "").trim();
-    if (sid !== setId) continue;
-
-    const cid = String(it.cardId || it.idKey || "").trim();
-    if (!cid) continue;
-
-    m.set(cid, it);
+    if ((it.game || g) !== g) continue;
+    if (String(it.setId || "") !== String(setId)) continue;
+    if (it.cardId) m.set(String(it.cardId), it);
   }
   return m;
 }
