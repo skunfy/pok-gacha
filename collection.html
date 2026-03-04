@@ -592,8 +592,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="binder">Classeur 4×4</option>
       </select>
 
-      <!-- ✅ FILTRE EXTENSION (binder Pokémon) -->
-      <select id="setSel" title="Extension (Binder Pokémon)" style="display:none; min-width: 220px;"></select>
+      <!-- ✅ FILTRE EXTENSION / SET (binder ALL GAMES) -->
+      <select id="setSel" title="Set / Extension" style="display:none; min-width: 220px;"></select>
 
       <input id="search" placeholder="Rechercher...">
 
@@ -642,7 +642,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
       <div class="binderGrid" id="binderGrid"></div>
 
       <div class="smallNote" id="binderHint" style="opacity:.65;">
-        Binder : Pokémon uniquement • Choisis une extension • Les cases vides sont les cartes non obtenues.
+        Binder : Choisis un set • Les cases grisées sont les cartes manquantes.
       </div>
     </div>
   </div>
@@ -736,8 +736,8 @@ const zoomMint = document.getElementById("zoomMint");
 let allItems = [];
 
 // ===== Binder state =====
-let setsList = [];                 // /api/sets
-let binderCards = [];              // /api/set_cards (brief cards)
+let setsList = [];                 // /api/sets (pokemon) OR local sets list for other games
+let binderCards = [];              // /api/set_cards (pokemon) OR generated setCards for other games
 let binderPage = 0;                // 0-based
 const BINDER_PAGE_SIZE = 16;
 
@@ -756,6 +756,11 @@ gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
   selected.clear();
   refreshSelUI();
+
+  // reset set select on game change (optional)
+  localStorage.setItem(SET_KEY, "");
+  binderPage = 0;
+
   await boot();
 });
 
@@ -818,13 +823,12 @@ function setGridMode(on){
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
 }
 
+/* ✅ MODIF: setSel visible en binder pour TOUS les jeux.
+   Le pager s'affiche si binderCards existe (tous jeux). */
 function setBinderControlsVisible(){
-  const isPokemon = currentGame() === "pokemon";
   const isBinder = currentView() === "binder";
-
-  // setSel seulement si binder pokemon
-  setSel.style.display = (isBinder && isPokemon) ? "" : "none";
-  binderPager.style.display = (isBinder && isPokemon && binderCards.length) ? "" : "none";
+  setSel.style.display = isBinder ? "" : "none";
+  binderPager.style.display = (isBinder && binderCards.length) ? "" : "none";
 }
 
 clearSelBtn.addEventListener("click", () => {
@@ -1007,12 +1011,36 @@ function render(items){
 // =========================
 // BINDER: sets + cards + pages + trous vides
 // =========================
-async function loadPokemonSets(){
-  try{
-    const data = await api("/api/sets");
-    setsList = data.sets || [];
-  }catch{
-    setsList = [];
+
+/* ✅ NEW: sets list pour chaque jeu
+   - pokemon: via /api/sets
+   - onepiece/lorcana: basé sur TA collection (setId si dispo, sinon setName) */
+async function loadSetsForGame(){
+  const game = currentGame();
+  setsList = [];
+
+  // Pokemon: API
+  if (game === "pokemon"){
+    try{
+      const data = await api("/api/sets");
+      setsList = data.sets || [];
+    }catch{
+      setsList = [];
+    }
+  } else {
+    // One Piece / Lorcana: sets depuis la collection (pas d'API sets côté serveur)
+    const setMap = new Map(); // id -> {id,name}
+    for (const it of allItems){
+      if ((it.game || game) !== game) continue;
+
+      // priorité: setId si existe, sinon setName, sinon set
+      const sid = String(it.setId || it.setName || it.set || "").trim();
+      if (!sid) continue;
+
+      const nm = String(it.setName || it.set || sid).trim();
+      if (!setMap.has(sid)) setMap.set(sid, { id: sid, name: nm });
+    }
+    setsList = Array.from(setMap.values()).sort((a,b)=> (a.name||"").localeCompare(b.name||""));
   }
 
   // remplir select
@@ -1020,15 +1048,15 @@ async function loadPokemonSets(){
   if (!setsList.length){
     const o = document.createElement("option");
     o.value = "";
-    o.textContent = "Aucune extension (erreur API)";
+    o.textContent = "Aucun set dispo";
     setSel.appendChild(o);
+    setSel.value = "";
     return;
   }
 
-  // option placeholder
   const ph = document.createElement("option");
   ph.value = "";
-  ph.textContent = "Choisir une extension…";
+  ph.textContent = "Choisir un set…";
   setSel.appendChild(ph);
 
   for (const s of setsList){
@@ -1038,7 +1066,6 @@ async function loadPokemonSets(){
     setSel.appendChild(o);
   }
 
-  // restore last set if exists
   const saved = currentSetId();
   if (saved && setsList.some(s => s.id === saved)){
     setSel.value = saved;
@@ -1047,32 +1074,74 @@ async function loadPokemonSets(){
   }
 }
 
+/* ✅ binderCards (cartes du set)
+   - pokemon: /api/set_cards?setId=
+   - onepiece/lorcana: depuis TA collection (donc pas "manquantes", mais binder ok) */
 async function loadBinderSetCards(){
   binderCards = [];
   const setId = setSel.value;
   if (!setId) return;
 
-  try{
-    const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
-    binderCards = data.cards || [];
-  }catch{
-    binderCards = [];
+  const game = currentGame();
+
+  if (game === "pokemon"){
+    try{
+      const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
+      binderCards = data.cards || [];
+    }catch{
+      binderCards = [];
+    }
+    return;
   }
+
+  // onepiece / lorcana -> on crée un "set_cards" depuis ta collection
+  const tmp = [];
+  for (const it of allItems){
+    if ((it.game || game) !== game) continue;
+    const sid = String(it.setId || it.setName || it.set || "").trim();
+    if (sid !== setId) continue;
+
+    // id stable: cardId si existe sinon idKey
+    const cardId = String(it.cardId || it.idKey || "").trim();
+    tmp.push({
+      cardId,
+      localId: String(it.localId || ""),
+      name: it.name || "Carte",
+      image: it.image || null,
+      imageHigh: it.imageHigh || null
+    });
+  }
+
+  // tri: localId si numérique, sinon name
+  tmp.sort((a,b)=>{
+    const an = Number(a.localId); const bn = Number(b.localId);
+    if (!Number.isNaN(an) && !Number.isNaN(bn) && a.localId && b.localId) return an - bn;
+    return (a.name||"").localeCompare(b.name||"");
+  });
+
+  binderCards = tmp;
 }
 
+/* ✅ owned map par set pour TOUS les jeux */
 function buildOwnedMapForSet(setId){
-  // key: cardId (tcgdex id)
+  const game = currentGame();
   const m = new Map();
+
   for (const it of allItems){
-    if ((it.game || "pokemon") !== "pokemon") continue;
-    if ((it.setId || "") !== setId) continue;
-    if (it.cardId) m.set(it.cardId, it);
+    if ((it.game || game) !== game) continue;
+
+    const sid = String(it.setId || it.setName || it.set || "").trim();
+    if (sid !== setId) continue;
+
+    const cid = String(it.cardId || it.idKey || "").trim();
+    if (!cid) continue;
+
+    m.set(cid, it);
   }
   return m;
 }
 
 function renderBinder(){
-  const isPokemon = currentGame() === "pokemon";
   const isBinder = currentView() === "binder";
 
   setBinderControlsVisible();
@@ -1082,25 +1151,16 @@ function renderBinder(){
     return;
   }
 
-  // binder uniquement pokemon
-  if (!isPokemon){
-    binderPager.style.display = "none";
-    binderGrid.innerHTML = `
-      <div style="opacity:.8; font-weight:900;">
-        Le mode Classeur 4×4 est dispo uniquement pour Pokémon (binder par extension).
-      </div>
-    `;
-    return;
-  }
-
   const setId = setSel.value;
   if (!setId){
     binderPager.style.display = "none";
     binderGrid.innerHTML = `
       <div style="opacity:.8; font-weight:900;">
-        Choisis une extension pour afficher le classeur.
+        Choisis un set pour afficher le classeur.
       </div>
     `;
+    // progress reset
+    updateProgress([], "Set");
     return;
   }
 
@@ -1119,17 +1179,24 @@ function renderBinder(){
   prevPageBtn.disabled = binderPage === 0;
   nextPageBtn.disabled = binderPage >= pages - 1;
 
-  // 16 slots fixes (si slice < 16, on complète avec vides)
+  // ✅ progress set (sur tout le set, pas juste la page)
+  const fullSet = binderCards.map(c => ({
+    ...c,
+    have: owned.has(c.cardId || c.id || "")
+  }));
+  const setLabel = (setsList.find(s => s.id === setId)?.name) || setId || "Set";
+  updateProgress(fullSet, setLabel);
+
+  // 16 slots fixes
   const fixed = [];
   for (let i = 0; i < BINDER_PAGE_SIZE; i++){
     fixed.push(slice[i] || null);
   }
 
-  fixed.forEach((cardBrief, idx) => {
+  fixed.forEach((cardBrief) => {
     const slot = document.createElement("div");
     const isEmpty = !cardBrief;
 
-    // si on est "hors set" (dernière page), on met des slots vides "—"
     if (isEmpty){
       slot.className = "slot empty";
       slot.innerHTML = `
@@ -1141,22 +1208,9 @@ function renderBinder(){
           <span class="pill">G—</span>
         </div>
       `;
-    binderGrid.appendChild(slot);
-    return;
-  }
-
-   // ✅ progress set (sur tout le set, pas juste la page)
-    const fullSet = binderCards.map(c => ({
-      ...c,
-      have: owned.has(c.cardId || c.id || "")
-    }));
-
-    const setLabel =
-      (setsList.find(s => s.id === setId)?.name) || setId || "Set";
-
-    updateProgress(fullSet, setLabel);
-
-    /////////////////////////////////////////////////
+      binderGrid.appendChild(slot);
+      return;
+    }
 
     const ownedItem = owned.get(cardBrief.cardId || cardBrief.id || "") || null;
     const have = !!ownedItem;
@@ -1183,8 +1237,8 @@ function renderBinder(){
         <span class="pill">#${localId || "?"}</span>
         <span class="pill">G${grade}</span>
         ${mint ? `<span class="pill mint">MINT</span>` : ``}
-     </div>
-  `;
+      </div>
+    `;
 
     const imgEl = slot.querySelector(".slotImg");
     if (have){
@@ -1209,7 +1263,7 @@ nextPageBtn.addEventListener("click", () => {
 
 function updateProgress(cards, label = "Set"){
   const total = cards.length;
-  const owned = cards.filter(c => c.have).length; // ✅ "have" = true si tu possèdes
+  const owned = cards.filter(c => c.have).length;
   const pct = total ? Math.round((owned / total) * 100) : 0;
 
   progTitle.textContent = label;
@@ -1218,7 +1272,6 @@ function updateProgress(cards, label = "Set"){
   progPct.textContent = pct + "%";
   progFill.style.width = pct + "%";
 }
-
 
 // =========================
 // Boot / sync UI
@@ -1234,9 +1287,9 @@ async function boot(){
   // load collection first (needed for binder ownership)
   await loadCollection();
 
-  // binder init if pokemon
-  if (!isGrid && currentGame() === "pokemon"){
-    await loadPokemonSets();
+  if (!isGrid){
+    // ✅ binder pour TOUS les jeux
+    await loadSetsForGame();
     if (setSel.value){
       await loadBinderSetCards();
     } else {
@@ -1245,7 +1298,7 @@ async function boot(){
     setBinderControlsVisible();
     renderBinder();
   } else {
-    // non binder => grid render
+    // grid render
     applyFilters();
     setBinderControlsVisible();
   }
@@ -1254,8 +1307,7 @@ async function boot(){
 searchInput.addEventListener("input", () => {
   if (currentView() === "grid") applyFilters();
   else {
-    // en binder: recherche dans TA collection (juste pour aider à retrouver vite)
-    // -> on repasse en grille automatiquement si tu tapes (comportement simple)
+    // en binder: si tu tapes, on repasse en grille (comportement simple)
     if (searchInput.value.trim()){
       viewSel.value = "grid";
       localStorage.setItem(VIEW_KEY, "grid");
