@@ -1236,6 +1236,15 @@
                 <span>Déconnexion</span>
               </span>
             </button>
+
+            <button class="profileItem" id="toggleSfx" type="button" role="menuitem" aria-pressed="false">
+              <span class="itemLeft">
+                <img class="menuIcon" src="sound.png" alt="" aria-hidden="true">
+                <span>Sons</span>
+              </span>
+              <span class="profilePill" id="toggleSfxPill">ON</span>
+          </button>
+
           </div>
         </div>
       </div>
@@ -1415,15 +1424,25 @@
   const sfxRevealEpic = document.getElementById("sfxRevealEpic");
   const sfxWhoosh   = document.getElementById("sfxWhoosh");
 
-  function playSfx(a, volume = 0.8){
-    if(!a) return;
-    try{
-      a.pause();
-      a.currentTime = 0;
-      a.volume = volume;
-      a.play().catch(()=>{});
-    }catch{}
-  }
+  function playSfx(a, volume = 0.8, pitchRand = 0){
+  if(!SFX_ON) return;
+  if(!a) return;
+
+  try{
+    a.pause();
+    a.currentTime = 0;
+    a.volume = volume;
+
+    if(pitchRand){
+      const r = (Math.random()*2 - 1) * pitchRand;
+      a.playbackRate = 1 + r;
+    }else{
+      a.playbackRate = 1;
+    }
+
+    a.play().catch(()=>{});
+  }catch{}
+}
 
   const slab = document.getElementById("slab");
   const shine = document.getElementById("shine");
@@ -2175,6 +2194,36 @@
     profileNotifArea.style.display = visible ? "none" : "block";
     if(!visible) await loadNotifList();
   });
+
+  // ===== SFX MASTER TOGGLE (dans dropdown profil) =====
+  const SFX_KEY = "gacha_sfx_on_v1";
+  let SFX_ON = (localStorage.getItem(SFX_KEY) ?? "1") === "1";
+
+  const btnSfx = document.getElementById("toggleSfx");
+  const pillSfx = document.getElementById("toggleSfxPill");
+
+  function applySfxUi(){
+    if(btnSfx) btnSfx.setAttribute("aria-pressed", SFX_ON ? "true" : "false");
+    if(pillSfx) pillSfx.textContent = SFX_ON ? "ON" : "OFF";
+  }
+
+  btnSfx?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // ✅ sinon ça peut fermer le menu
+
+    SFX_ON = !SFX_ON;
+    localStorage.setItem(SFX_KEY, SFX_ON ? "1" : "0");
+    applySfxUi();
+
+    // optionnel: couper les sons en cours quand on passe OFF
+    if(!SFX_ON){
+      [window.sfxOpen, window.sfxWhoosh, window.sfxSuspense, window.sfxReveal].forEach(a=>{
+        try{ a?.pause(); a.currentTime = 0; }catch{}
+      });
+    }
+  });
+
+  applySfxUi();
 </script>
 
 <div class="footerSignature">
