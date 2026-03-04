@@ -592,7 +592,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="binder">Classeur 4×4</option>
       </select>
 
-      <!-- ✅ FILTRE EXTENSION / SET (binder ALL GAMES) -->
+      <!-- ✅ RECHERCHE SET (visible seulement en binder) -->
+      <input id="setSearch" placeholder="Rechercher un set..." style="display:none; min-width: 200px;">
+
+      <!-- ✅ FILTRE EXTENSION / SET -->
       <select id="setSel" title="Set / Extension" style="display:none; min-width: 220px;"></select>
 
       <input id="search" placeholder="Rechercher...">
@@ -706,6 +709,7 @@ const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
 const viewSel = document.getElementById("viewSel");
 const setSel = document.getElementById("setSel");
+const setSearch = document.getElementById("setSearch"); // ✅ NEW
 
 const progTitle = document.getElementById("progTitle");
 const progOwned = document.getElementById("progOwned");
@@ -737,6 +741,7 @@ let allItems = [];
 
 // ===== Binder state =====
 let setsList = [];
+let setsAll = []; // ✅ NEW: liste complète pour la recherche
 let binderCards = [];
 let binderPage = 0;                // 0-based
 const BINDER_PAGE_SIZE = 16;
@@ -826,7 +831,12 @@ function setGridMode(on){
 function setBinderControlsVisible(){
   const isBinder = currentView() === "binder";
   setSel.style.display = isBinder ? "" : "none";
+  setSearch.style.display = isBinder ? "" : "none";   // ✅ NEW
   binderPager.style.display = (isBinder && binderCards.length) ? "" : "none";
+
+  if (!isBinder){
+    setSearch.value = "";
+  }
 }
 
 clearSelBtn.addEventListener("click", () => {
@@ -846,6 +856,7 @@ sellSelectedBtn.addEventListener("click", async () => {
     });
     selected.clear();
     await loadCollection();
+    applyFilters();      // ✅ rerender direct
     refreshSelUI();
   }catch(e){
     // silent
@@ -1009,29 +1020,10 @@ function render(items){
 // BINDER: sets + cards + pages + trous vides
 // =========================
 
-// Parse idKey: game__setId__localId__cardId
-function parseIdKey(idKey){
-  const p = String(idKey || "").split("__");
-  return {
-    game:   p[0] || "",
-    setId:  p[1] || "",
-    localId:p[2] || "",
-    cardId: p[3] || ""
-  };
-}
-
-/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
-async function loadSetsForGame(){
-  setsList = [];
-  try{
-    const data = await api("/api/sets");
-    setsList = data.sets || [];
-  }catch{
-    setsList = [];
-  }
-
+function fillSetSelect(list){
   setSel.innerHTML = "";
-  if (!setsList.length){
+
+  if (!list.length){
     const o = document.createElement("option");
     o.value = "";
     o.textContent = "Aucun set dispo";
@@ -1045,16 +1037,47 @@ async function loadSetsForGame(){
   ph.textContent = "Choisir un set…";
   setSel.appendChild(ph);
 
-  for (const s of setsList){
+  for (const s of list){
     const o = document.createElement("option");
     o.value = s.id;
     o.textContent = s.name || s.id;
     setSel.appendChild(o);
   }
+}
+
+/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
+async function loadSetsForGame(){
+  setsList = [];
+  try{
+    const data = await api("/api/sets");
+    setsList = data.sets || [];
+  }catch{
+    setsList = [];
+  }
+
+  setsAll = [...setsList]; // ✅ NEW: base pour recherche
+  fillSetSelect(setsList);
 
   const saved = currentSetId();
   setSel.value = (saved && setsList.some(s => s.id === saved)) ? saved : "";
 }
+
+/* ✅ filtre de sets via input */
+setSearch.addEventListener("input", () => {
+  const q = setSearch.value.toLowerCase().trim();
+  const filtered = !q
+    ? setsAll
+    : setsAll.filter(s =>
+        String(s.name || s.id).toLowerCase().includes(q) ||
+        String(s.id).toLowerCase().includes(q)
+      );
+
+  fillSetSelect(filtered);
+
+  // garde le set déjà choisi si encore présent
+  const cur = currentSetId();
+  if (cur && filtered.some(s => s.id === cur)) setSel.value = cur;
+});
 
 /* ✅ IMPORTANT: pour TOUS les jeux -> /api/set_cards?setId= */
 async function loadBinderSetCards(){
@@ -1077,7 +1100,18 @@ async function loadBinderSetCards(){
   });
 }
 
-/* ✅ owned map robuste: match sur setId + cardId (avec fallback idKey) */
+// Parse idKey: game__setId__localId__cardId
+function parseIdKey(idKey){
+  const p = String(idKey || "").split("__");
+  return {
+    game:   p[0] || "",
+    setId:  p[1] || "",
+    localId:p[2] || "",
+    cardId: p[3] || ""
+  };
+}
+
+/* ✅ owned map robuste: match sur setId + cardId */
 function buildOwnedMapForSet(setId){
   const g = currentGame();
   const m = new Map();
