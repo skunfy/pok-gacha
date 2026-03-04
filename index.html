@@ -976,6 +976,30 @@
   .fxOverlay[data-tier="v"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(190,120,255,.95), rgba(190,120,255,0) 60%); }
   .fxOverlay[data-tier="g"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,210,110,.98), rgba(255,210,110,0) 60%); }
   .fxOverlay[data-tier="m"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,80,80,.95), rgba(255,80,80,0) 60%); }
+
+
+  /* ===== Camera Zoom ===== */
+  .cameraZoom{
+    animation: cameraZoom .65s cubic-bezier(.2,.9,.2,1);
+    }
+
+  @keyframes cameraZoom{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.04); }
+    100%{ transform: scale(1); }
+  }
+
+  /* ===== Impact Pulse ===== */
+  .slab.impact{
+    animation: impactPulse .55s cubic-bezier(.2,.9,.2,1);
+  }
+
+  @keyframes impactPulse{
+    0%{ transform: scale(.96); }
+    40%{ transform: scale(1.06); }
+    100%{ transform: scale(1); }
+  }
+
   </style>  
 
 
@@ -1351,46 +1375,54 @@
   }
 
   async function runRevealFx({ tier, isMint }){
-    if(!fxOverlay) return;
+  if(!fxOverlay) return;
 
-    const fxTier = isMint ? "m" : tier;
+  const fxTier = isMint ? "m" : tier;
+  const ultra = (tier === "g" || isMint);
 
-    fxClear();
-    fxOverlay.dataset.tier = fxTier;
-    fxOverlay.classList.add("on");
+  fxClear();
+  fxOverlay.dataset.tier = fxTier;
+  fxOverlay.classList.add("on");
 
-    // 🔥 centre le cercle exactement sur la carte
-    const center = fxGetCenter();
-    if(fxRingEl){
-      fxRingEl.style.left = center.x + "px";
-      fxRingEl.style.top  = center.y + "px";
-    }
-
-    // suspense particles
-    fxSpawnParticles(
-      fxTier,
-      (fxTier==="w") ? 18 :
-      (fxTier==="b") ? 28 :
-      (fxTier==="v") ? 38 : 55
-    );
-
-    await sleep(180);
-
-    // moment reveal
-    fxOverlay.classList.add("reveal");
-
-    if(fxTier==="g" || fxTier==="m"){
-      fxSpawnConfetti(fxTier, 28);
-    }
-
-    await sleep(900);
-
-    fxOverlay.classList.remove("reveal");
-    await sleep(200);
-    fxOverlay.classList.remove("on");
-    await sleep(150);
-    fxClear();
+  // 🎯 centre cercle
+  const center = fxGetCenter();
+  if(fxRingEl){
+    fxRingEl.style.left = center.x + "px";
+    fxRingEl.style.top  = center.y + "px";
   }
+
+  // 🎥 caméra zoom léger
+  document.body.classList.add("cameraZoom");
+
+  // suspense particles
+  fxSpawnParticles(
+    fxTier,
+    ultra ? 70 :
+    (fxTier==="v") ? 40 :
+    (fxTier==="b") ? 30 : 18
+  );
+
+  await sleep(200);
+
+  fxOverlay.classList.add("reveal");
+
+  // 💥 impact carte
+  slab.classList.add("impact");
+  setTimeout(()=> slab.classList.remove("impact"), 600);
+
+  // 🎊 confetti rare
+  if(ultra){
+    fxSpawnConfetti(fxTier, 45);
+  }
+
+  await sleep(1000);
+
+  fxOverlay.classList.remove("reveal");
+  await sleep(200);
+  fxOverlay.classList.remove("on");
+  document.body.classList.remove("cameraZoom");
+  fxClear();
+}
 
   // ✅ mini profile (dans le dropdown)
   const miniAvatar = document.getElementById("miniAvatar");
