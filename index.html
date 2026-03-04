@@ -1275,6 +1275,7 @@
   <audio id="sfxCharge" src="suspense.mp3" preload="auto"></audio>
   <audio id="sfxReveal" src="reveal.mp3" preload="auto"></audio>
   <audio id="sfxRevealEpic" src="SFXg10.mp3" preload="auto"></audio>
+  <audio id="sfxWhoosh" src="whoosh.mp3" preload="auto"></audio>
 <!-- optionnel : son “reveal” -->
 </body>
 
@@ -1332,6 +1333,7 @@
   const sfxSuspense = document.getElementById("sfxSuspense");
   const sfxReveal = document.getElementById("sfxReveal");
   const sfxRevealEpic = document.getElementById("sfxRevealEpic");
+  const sfxWhoosh   = document.getElementById("sfxWhoosh");
 
   function playSfx(a, volume = 0.8){
     if(!a) return;
@@ -1456,6 +1458,7 @@
   const hasCard = bg && !bg.includes("linear-gradient") && bg !== "none";
 
   if(!hasCard) return;
+  playSfx(sfxWhoosh, 0.9, 0.05); // 💨 son aspiration
 
   // lance l'aspiration
   slab.classList.add("suck");
@@ -1814,8 +1817,10 @@
   }
 
   async function openOne(){
-    btnOpen.disabled = true;
+    
     await suckAwayCurrentCard();
+
+    btnOpen.disabled = true;
     // 👇 Si une carte est déjà affichée, on la fait disparaître
     const hasCard = card.style.backgroundImage && 
                     !card.style.backgroundImage.includes("linear-gradient");
