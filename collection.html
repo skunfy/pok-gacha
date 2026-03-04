@@ -568,6 +568,25 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   width:0%;
   transition: width .25s ease;
 }
+
+/* ===== Set Picker (dropdown searchable) ===== */
+.setPicker{ position:relative; }
+
+.setBtn{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:800
+}
+
+
 </style>
 </head>
 
@@ -592,11 +611,41 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="binder">Classeur 4×4</option>
       </select>
 
-      <!-- ✅ RECHERCHE SET (visible seulement en binder) -->
-      <input id="setSearch" placeholder="Rechercher un set..." style="display:none; min-width: 200px;">
+      <!-- ✅ SET PICKER (recherche + liste comme une sidebar) -->
+      <div id="setPicker" style="display:none; flex-direction:column; gap:6px; min-width:220px;">
 
-      <!-- ✅ FILTRE EXTENSION / SET -->
-      <select id="setSel" title="Set / Extension" style="display:none; min-width: 220px;"></select>
+        <!-- recherche -->
+        <input
+          id="setSearch"
+          placeholder="Rechercher un set..."
+          style="
+            padding:8px 10px;
+            border-radius:10px;
+            border:1px solid rgba(255,255,255,.15);
+            background:#0f111a;
+            color:#fff;
+            font-weight:700;
+          "
+        >
+
+        <!-- liste sets -->
+        <select
+          id="setSel"
+          title="Set / Extension"
+          size="8"
+          style="
+            padding:8px 10px;
+            border-radius:10px;
+            border:1px solid rgba(255,255,255,.15);
+            background:#0f111a;
+            color:#fff;
+            font-weight:700;
+            max-height:220px;
+            overflow-y:auto;
+          "
+        ></select>
+
+      </div>
 
       <input id="search" placeholder="Rechercher...">
 
@@ -616,7 +665,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     </div>
   </div>
 
-  <!-- ✅ Progress (placée ici sous la topbar) -->
+  <!-- ✅ Progress -->
   <div class="progressBox" id="progressBox" title="Progression du set">
     <div class="progressTop">
       <div class="progressTitle" id="progTitle">Set</div>
@@ -709,7 +758,7 @@ const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
 const viewSel = document.getElementById("viewSel");
 const setSel = document.getElementById("setSel");
-const setSearch = document.getElementById("setSearch"); // ✅ NEW
+const setSearch = document.getElementById("setSearch"); // ✅ recherche sets
 
 const progTitle = document.getElementById("progTitle");
 const progOwned = document.getElementById("progOwned");
@@ -741,9 +790,9 @@ let allItems = [];
 
 // ===== Binder state =====
 let setsList = [];
-let setsAll = []; // ✅ NEW: liste complète pour la recherche
+let setsAll = [];              // ✅ base complète pour filtre
 let binderCards = [];
-let binderPage = 0;                // 0-based
+let binderPage = 0;            // 0-based
 const BINDER_PAGE_SIZE = 16;
 
 function currentView(){
@@ -773,6 +822,7 @@ viewSel.addEventListener("change", async () => {
   binderPage = 0;
   selected.clear();
   refreshSelUI();
+
   await boot();
 });
 
@@ -827,11 +877,11 @@ function setGridMode(on){
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
 }
 
-/* setSel visible en binder pour TOUS les jeux */
+/* setSel + setSearch visibles en binder */
 function setBinderControlsVisible(){
   const isBinder = currentView() === "binder";
   setSel.style.display = isBinder ? "" : "none";
-  setSearch.style.display = isBinder ? "" : "none";   // ✅ NEW
+  setSearch.style.display = isBinder ? "" : "none";
   binderPager.style.display = (isBinder && binderCards.length) ? "" : "none";
 
   if (!isBinder){
@@ -847,6 +897,7 @@ clearSelBtn.addEventListener("click", () => {
 
 sellSelectedBtn.addEventListener("click", async () => {
   if (!selected.size) return;
+
   const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
 
   try{
@@ -854,9 +905,25 @@ sellSelectedBtn.addEventListener("click", async () => {
       method:"POST",
       body: JSON.stringify({ items: payload })
     });
+
     selected.clear();
+
+    // ✅ refresh immédiat (grid OU binder)
     await loadCollection();
-    applyFilters();      // ✅ rerender direct
+
+    if (currentView() === "grid"){
+      applyFilters();
+    } else {
+      // binder: refresh liste sets + cartes du set courant si encore valide
+      await loadSetsForGame();
+      if (setSel.value){
+        await loadBinderSetCards();
+      } else {
+        binderCards = [];
+      }
+      renderBinder();
+    }
+
     refreshSelUI();
   }catch(e){
     // silent
@@ -1002,13 +1069,23 @@ function render(items){
           method:"POST",
           body: JSON.stringify({ idKey: x.idKey, qty: 1 })
         });
+
         if (selected.has(x.idKey)){
           const prev = selected.get(x.idKey) || 1;
           const next = Math.max(1, prev - 1);
           selected.set(x.idKey, next);
         }
+
         await loadCollection();
-        applyFilters();
+
+        if (currentView() === "grid"){
+          applyFilters();
+        } else {
+          // si tu vends depuis un endroit où tu pourrais être en binder
+          await loadSetsForGame();
+          if (setSel.value) await loadBinderSetCards();
+          renderBinder();
+        }
       }catch{}
     };
 
@@ -1045,7 +1122,7 @@ function fillSetSelect(list){
   }
 }
 
-/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
+/* ✅ /api/sets pour TOUS les jeux */
 async function loadSetsForGame(){
   setsList = [];
   try{
@@ -1055,31 +1132,46 @@ async function loadSetsForGame(){
     setsList = [];
   }
 
-  setsAll = [...setsList]; // ✅ NEW: base pour recherche
+  // base complète pour la recherche
+  setsAll = [...setsList];
+
+  // reset search + fill
+  if (setSearch) setSearch.value = "";
   fillSetSelect(setsList);
 
   const saved = currentSetId();
   setSel.value = (saved && setsList.some(s => s.id === saved)) ? saved : "";
 }
 
-/* ✅ filtre de sets via input */
+/* ✅ Filtre "commence par" (comme ton croquis)
+   - "fl" -> garde uniquement ceux dont name/id commence par fl */
 setSearch.addEventListener("input", () => {
   const q = setSearch.value.toLowerCase().trim();
+
   const filtered = !q
     ? setsAll
-    : setsAll.filter(s =>
-        String(s.name || s.id).toLowerCase().includes(q) ||
-        String(s.id).toLowerCase().includes(q)
-      );
+    : setsAll.filter(s => {
+        const text = String(s.name || s.id || "").toLowerCase().trim();
+        const id   = String(s.id || "").toLowerCase().trim();
+        return text.startsWith(q) || id.startsWith(q);
+      });
+
+  const cur = currentSetId();
 
   fillSetSelect(filtered);
 
-  // garde le set déjà choisi si encore présent
-  const cur = currentSetId();
-  if (cur && filtered.some(s => s.id === cur)) setSel.value = cur;
+  // garde set choisi si encore là
+  if (cur && filtered.some(s => s.id === cur)) {
+    setSel.value = cur;
+  } else {
+    setSel.value = "";
+    localStorage.setItem(SET_KEY, "");
+    binderCards = [];
+    renderBinder();
+  }
 });
 
-/* ✅ IMPORTANT: pour TOUS les jeux -> /api/set_cards?setId= */
+/* ✅ /api/set_cards pour TOUS les jeux */
 async function loadBinderSetCards(){
   binderCards = [];
   const setId = setSel.value;
@@ -1111,7 +1203,7 @@ function parseIdKey(idKey){
   };
 }
 
-/* ✅ owned map robuste: match sur setId + cardId */
+/* owned map robuste: match sur setId + cardId */
 function buildOwnedMapForSet(setId){
   const g = currentGame();
   const m = new Map();
@@ -1263,14 +1355,12 @@ function updateProgress(cards, label = "Set"){
 // Boot / sync UI
 // =========================
 async function boot(){
-  // synchro selects
   gameSel.value = currentGame();
   viewSel.value = currentView();
 
   const isGrid = currentView() === "grid";
   setGridMode(isGrid);
 
-  // load collection first (needed for binder ownership)
   await loadCollection();
 
   if (!isGrid){
@@ -1291,7 +1381,7 @@ async function boot(){
 searchInput.addEventListener("input", () => {
   if (currentView() === "grid") applyFilters();
   else {
-    // en binder: si tu tapes, on repasse en grille (comportement simple)
+    // en binder: si tu tapes, on repasse en grille
     if (searchInput.value.trim()){
       viewSel.value = "grid";
       localStorage.setItem(VIEW_KEY, "grid");
