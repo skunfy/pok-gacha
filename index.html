@@ -1367,8 +1367,6 @@
   <audio id="sfxWhoosh" src="whoosh.mp3" preload="auto"></audio>
 <!-- optionnel : son “reveal” -->
 </body>
-
-
 <script>
   // --------- AUTH ---------
   const TOKEN_KEY = "gacha_token_v1";
@@ -1379,23 +1377,25 @@
     window.location.href = "/login.html";
   }
 
+  // --------- GAME ---------
   function currentGame(){
-  const g = (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  if (g === "onepiece") return "onepiece";
-  if (g === "lorcana") return "lorcana";
-  return "pokemon";
+    const g = (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+    if (g === "onepiece") return "onepiece";
+    if (g === "lorcana")  return "lorcana";
+    return "pokemon";
   }
+
   function gameLabel(g){
-  if (g === "onepiece") return "ONE PIECE";
-  if (g === "lorcana")  return "LORCANA";
-  return "POKÉMON";
+    if (g === "onepiece") return "ONE PIECE";
+    if (g === "lorcana")  return "LORCANA";
+    return "POKÉMON";
   }
 
   function toHighImage(url){
-  const u = String(url || "");
-  // règle simple: low.webp -> high.webp
-  if (u.includes("/low.webp")) return u.replace("/low.webp", "/high.webp");
-  return u;
+    const u = String(url || "");
+    // règle simple: low.webp -> high.webp
+    if (u.includes("/low.webp")) return u.replace("/low.webp", "/high.webp");
+    return u;
   }
 
   async function api(path, opts={}){
@@ -1417,71 +1417,146 @@
     return data;
   }
 
+  // ===== SFX MASTER TOGGLE (défini AVANT playSfx) =====
+  const SFX_KEY = "gacha_sfx_on_v1";
+  let SFX_ON = (localStorage.getItem(SFX_KEY) ?? "1") === "1";
+
   // ---------- DOM ----------
-  const sfxOpen = document.getElementById("sfxOpen");
-  const sfxSuspense = document.getElementById("sfxSuspense");
-  const sfxReveal = document.getElementById("sfxReveal");
+  const sfxOpen       = document.getElementById("sfxOpen");
+  const sfxCharge     = document.getElementById("sfxCharge");      // suspense.mp3
+  const sfxReveal     = document.getElementById("sfxReveal");
   const sfxRevealEpic = document.getElementById("sfxRevealEpic");
-  const sfxWhoosh   = document.getElementById("sfxWhoosh");
+  const sfxWhoosh     = document.getElementById("sfxWhoosh");
 
   function playSfx(a, volume = 0.8, pitchRand = 0){
-  if(!SFX_ON) return;
-  if(!a) return;
+    if(!SFX_ON) return;
+    if(!a) return;
 
-  try{
-    a.pause();
-    a.currentTime = 0;
-    a.volume = volume;
+    try{
+      a.pause();
+      a.currentTime = 0;
+      a.volume = volume;
 
-    if(pitchRand){
-      const r = (Math.random()*2 - 1) * pitchRand;
-      a.playbackRate = 1 + r;
-    }else{
-      a.playbackRate = 1;
-    }
+      if(pitchRand){
+        const r = (Math.random()*2 - 1) * pitchRand;
+        a.playbackRate = 1 + r;
+      }else{
+        a.playbackRate = 1;
+      }
 
-    a.play().catch(()=>{});
-  }catch{}
-}
+      a.play().catch(()=>{});
+    }catch{}
+  }
 
-  const slab = document.getElementById("slab");
+  const slab  = document.getElementById("slab");
   const shine = document.getElementById("shine");
   const glare = document.getElementById("glare");
-  const card = document.getElementById("card");
+  const card  = document.getElementById("card");
 
-    // ===== REVEAL FX JS =====
+  // ✅ mini profile (dans le dropdown)
+  const miniAvatar = document.getElementById("miniAvatar");
+  const miniLvl    = document.getElementById("miniLvl");
+
+  // ✅ Placeholder logo
+  const cardPh = document.getElementById("cardPh");
+  function setPlaceholderVisible(v){
+    if(!cardPh) return;
+    cardPh.style.display = v ? "flex" : "none";
+  }
+
+  const title    = document.getElementById("title");
+  const subtitle = document.getElementById("subtitle");
+  const gradeEl  = document.getElementById("grade");
+  const mintTag  = document.getElementById("mintTag");
+  const log      = document.getElementById("log");
+
+  const modal       = document.getElementById("modal");
+  const zoomSlab    = document.getElementById("zoomSlab");
+  const zoomShine   = document.getElementById("zoomShine");
+  const zoomGlare   = document.getElementById("zoomGlare");
+  const zoomCard    = document.getElementById("zoomCard");
+  const zoomTitle   = document.getElementById("zoomTitle");
+  const zoomSubtitle= document.getElementById("zoomSubtitle");
+  const zoomGrade   = document.getElementById("zoomGrade");
+  const zoomMintTag = document.getElementById("zoomMintTag");
+
+  const btnOpen       = document.getElementById("open");
+  const btnLogout     = document.getElementById("logout");
+  const btnChangeGame = document.getElementById("changeGame");
+
+  const moneyEl = document.getElementById("money");
+  const subTop  = document.getElementById("subTop");
+
+  // ✅ header dropdown profil
+  const profileName = document.getElementById("profileName");
+  const profileSub  = document.getElementById("profileSub");
+
+  // GAME PICKER
+  const gameModal        = document.getElementById("gameModal");
+  const gameCurrentLabel = document.getElementById("gameCurrentLabel");
+
+  const phLogo = document.getElementById("phLogo");
+
+  function placeholderLogoForGame(g){
+    if(g === "onepiece") return "One_Piece_Logo.png";
+    if(g === "lorcana")  return "Lorcana.png";
+    return "International_Pokémon_logo.png"; // ou "poke.png"
+  }
+
+  function applyPlaceholderLogo(){
+    if(!phLogo) return;
+    phLogo.src = placeholderLogoForGame(currentGame());
+  }
+
+  function openGamePicker(){
+    if(gameCurrentLabel) gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
+    gameModal?.classList.add("open");
+  }
+  function closeGamePicker(){
+    gameModal?.classList.remove("open");
+  }
+  function applyGameToUI(){
+    const g = currentGame();
+    if(title)     title.textContent     = `${gameLabel(g)} • CARD`;
+    if(zoomTitle) zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
+    applyPlaceholderLogo();
+  }
+
+  // exposée au onclick HTML
+  window.setGameAndClose = async function(g){
+    const v = (g === "onepiece") ? "onepiece" : (g === "lorcana") ? "lorcana" : "pokemon";
+    localStorage.setItem(GAME_KEY, v);
+    closeGamePicker();
+    applyGameToUI();
+    try{ await loadMe(); }catch{}
+  };
+
+  btnChangeGame?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openGamePicker();
+  });
+
+  // ===== REVEAL FX JS =====
   const fxOverlay   = document.getElementById("fxOverlay");
   const fxParticles = document.getElementById("fxParticles");
   const fxConfetti  = document.getElementById("fxConfetti");
   const fxRingEl    = fxOverlay?.querySelector(".fxRing");
 
-  // 🔥 récupère le centre EXACT de la carte
   function fxGetCenter(){
     const r = card?.getBoundingClientRect?.();
     if(r){
-      return {
-        x: r.left + r.width / 2,
-        y: r.top  + r.height / 2 - 10 // petit offset pour être visuellement parfait
-      };
+      return { x: r.left + r.width/2, y: r.top + r.height/2 - 10 };
     }
-
     const s = slab?.getBoundingClientRect?.();
     if(s){
-      return {
-        x: s.left + s.width / 2,
-        y: s.top  + s.height / 2
-      };
+      return { x: s.left + s.width/2, y: s.top + s.height/2 };
     }
-
-    return {
-      x: window.innerWidth / 2,
-      y: window.innerHeight * 0.42
-    };
+    return { x: window.innerWidth/2, y: window.innerHeight * 0.42 };
   }
 
   function fxClear(){
     if(fxParticles) fxParticles.innerHTML = "";
-    if(fxConfetti) fxConfetti.innerHTML = "";
+    if(fxConfetti)  fxConfetti.innerHTML  = "";
     fxOverlay?.classList.remove("on","reveal");
     if(fxOverlay) fxOverlay.dataset.tier = "";
   }
@@ -1496,7 +1571,6 @@
 
   function fxSpawnParticles(tier, count){
     if(!fxParticles) return;
-
     const c = fxColorForTier(tier);
     const { x:centerX, y:centerY } = fxGetCenter();
 
@@ -1509,17 +1583,12 @@
       const r0 = 10 + Math.random()*60;
       const r1 = 120 + Math.random()*260;
 
-      const x0 = Math.cos(a)*r0;
-      const y0 = Math.sin(a)*r0;
-      const x1 = Math.cos(a)*r1;
-      const y1 = Math.sin(a)*r1;
-
       p.style.left = centerX + "px";
       p.style.top  = centerY + "px";
-      p.style.setProperty("--x0", x0 + "px");
-      p.style.setProperty("--y0", y0 + "px");
-      p.style.setProperty("--x1", x1 + "px");
-      p.style.setProperty("--y1", y1 + "px");
+      p.style.setProperty("--x0", (Math.cos(a)*r0) + "px");
+      p.style.setProperty("--y0", (Math.sin(a)*r0) + "px");
+      p.style.setProperty("--x1", (Math.cos(a)*r1) + "px");
+      p.style.setProperty("--y1", (Math.sin(a)*r1) + "px");
 
       fxParticles.appendChild(p);
     }
@@ -1527,17 +1596,14 @@
 
   function fxSpawnConfetti(tier, count){
     if(!fxConfetti) return;
-
     const c = fxColorForTier(tier);
 
     for(let i=0;i<count;i++){
       const e = document.createElement("div");
       e.className = "fxC";
-      e.style.background = (Math.random() < 0.35)
-        ? "rgba(255,255,255,.95)"
-        : c;
+      e.style.background = (Math.random() < 0.35) ? "rgba(255,255,255,.95)" : c;
 
-      const x = Math.random()*window.innerWidth;
+      const x = Math.random() * window.innerWidth;
       const drift = (-80 + Math.random()*160) + "px";
 
       e.style.left = "0px";
@@ -1548,166 +1614,74 @@
     }
   }
 
-  function sleep(ms){
-    return new Promise(r => setTimeout(r, ms));
-  }
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   async function suckAwayCurrentCard(){
-  const bg = card.style.backgroundImage || "";
-  const hasCard = bg && !bg.includes("linear-gradient") && bg !== "none";
+    const bg = card?.style?.backgroundImage || "";
+    const hasCard = bg && !bg.includes("linear-gradient") && bg !== "none";
+    if(!hasCard) return;
 
-  if(!hasCard) return;
-  playSfx(sfxWhoosh, 0.9, 0.05); // 💨 son aspiration
+    playSfx(sfxWhoosh, 0.9, 0.05);
 
-  // lance l'aspiration
-  slab.classList.add("suck");
-  await sleep(520);
+    slab?.classList.add("suck");
+    await sleep(520);
 
-  // reset visuel
-  slab.classList.remove("suck");
-  card.style.backgroundImage = "";
-  card.dataset.high = "";
-
-  // remet le placeholder
-  setPlaceholderVisible(true);
-}
+    slab?.classList.remove("suck");
+    if(card){
+      card.style.backgroundImage = "";
+      card.dataset.high = "";
+    }
+    setPlaceholderVisible(true);
+  }
 
   async function runRevealFx({ tier, isMint, epic }){
-  if(!fxOverlay) return;
+    if(!fxOverlay) return;
 
-  const fxTier = isMint ? "m" : tier;
-  const ultra = epic || tier === "g" || isMint;
+    const fxTier = isMint ? "m" : tier;
+    const ultra  = !!epic || tier === "g" || !!isMint;
 
-  fxClear();
-  fxOverlay.dataset.tier = fxTier;
-  fxOverlay.classList.add("on");
+    fxClear();
+    fxOverlay.dataset.tier = fxTier;
+    fxOverlay.classList.add("on");
 
-  playSfx(sfxSuspense, 0.9, 0.04);
+    playSfx(sfxCharge, 0.9, 0.04);
 
-  // 🎯 centre cercle
-  const center = fxGetCenter();
-  if(fxRingEl){
-    fxRingEl.style.left = center.x + "px";
-    fxRingEl.style.top  = center.y + "px";
+    const center = fxGetCenter();
+    if(fxRingEl){
+      fxRingEl.style.left = center.x + "px";
+      fxRingEl.style.top  = center.y + "px";
+    }
+
+    document.body.classList.add("cameraZoom");
+
+    fxSpawnParticles(
+      fxTier,
+      ultra ? 90 :
+      (fxTier==="v") ? 40 :
+      (fxTier==="b") ? 30 : 18
+    );
+
+    await sleep(200);
+
+    fxOverlay.classList.add("reveal");
+
+    slab?.classList.add("impact");
+    setTimeout(()=> slab?.classList.remove("impact"), 600);
+
+    if(ultra){
+      fxSpawnConfetti(fxTier, 60);
+    }
+
+    await sleep(1000);
+
+    fxOverlay.classList.remove("reveal");
+    await sleep(200);
+    fxOverlay.classList.remove("on");
+    document.body.classList.remove("cameraZoom");
+    fxClear();
   }
 
-  // 🎥 caméra zoom léger
-  document.body.classList.add("cameraZoom");
-
-  // suspense particles
- fxSpawnParticles(
-  fxTier,
-  ultra ? 90 :
-  (fxTier==="v") ? 40 :
-  (fxTier==="b") ? 30 : 18
-  );
-
-  await sleep(200);
-
-  fxOverlay.classList.add("reveal");
-
-  // 💥 impact carte
-  slab.classList.add("impact");
-  setTimeout(()=> slab.classList.remove("impact"), 600);
-
-  // 🎊 confetti rare
-  if(ultra){
-  fxSpawnConfetti(fxTier, 60);
-  }
-
-  await sleep(1000);
-
-  fxOverlay.classList.remove("reveal");
-  await sleep(200);
-  fxOverlay.classList.remove("on");
-  document.body.classList.remove("cameraZoom");
-  fxClear();
-}
-
-  // ✅ mini profile (dans le dropdown)
-  const miniAvatar = document.getElementById("miniAvatar");
-  const miniLvl = document.getElementById("miniLvl");
-
-  // ✅ Placeholder logo (ajout)
-  const cardPh = document.getElementById("cardPh");
-  function setPlaceholderVisible(v){
-    if(!cardPh) return;
-    cardPh.style.display = v ? "flex" : "none";
-  }
-
-  const title = document.getElementById("title");
-  const subtitle = document.getElementById("subtitle");
-  const gradeEl = document.getElementById("grade");
-  const mintTag = document.getElementById("mintTag");
-  const log = document.getElementById("log");
-
-  const modal = document.getElementById("modal");
-  const zoomSlab = document.getElementById("zoomSlab");
-  const zoomShine = document.getElementById("zoomShine");
-  const zoomGlare = document.getElementById("zoomGlare");
-  const zoomCard = document.getElementById("zoomCard");
-  const zoomTitle = document.getElementById("zoomTitle");
-  const zoomSubtitle = document.getElementById("zoomSubtitle");
-  const zoomGrade = document.getElementById("zoomGrade");
-  const zoomMintTag = document.getElementById("zoomMintTag");
-
-  const btnOpen = document.getElementById("open");
-  const btnLogout = document.getElementById("logout");
-  const btnChangeGame = document.getElementById("changeGame");
-
-  const moneyEl = document.getElementById("money");
-  const subTop = document.getElementById("subTop");
-
-  // ✅ header du dropdown profil
-  const profileName = document.getElementById("profileName");
-  const profileSub  = document.getElementById("profileSub");
-
-  // GAME PICKER
-  const gameModal = document.getElementById("gameModal");
-  const gameCurrentLabel = document.getElementById("gameCurrentLabel");
-
-  function openGamePicker(){
-    gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
-    gameModal.classList.add("open");
-  }
-  function closeGamePicker(){
-    gameModal.classList.remove("open");
-  }
-  function applyGameToUI(){
-    const g = currentGame();
-    title.textContent = `${gameLabel(g)} • CARD`;
-    zoomTitle.textContent = `${gameLabel(g)} • GRADE ?`;
-    applyPlaceholderLogo();
-    // (subtitle reste pareil)
-  }
-
-  const phLogo = document.getElementById("phLogo");
-
-  function placeholderLogoForGame(g){
-    if(g === "onepiece") return "One_Piece_Logo.png";
-    if(g === "lorcana")  return "Lorcana.png";
-    return "International_Pokémon_logo.png"; // ou "poke.png" si tu préfères
-  }
-
-  function applyPlaceholderLogo(){
-    if(!phLogo) return;
-    phLogo.src = placeholderLogoForGame(currentGame());
-  }
-
-  // exposée au onclick HTML
-  window.setGameAndClose = async function(g){
-    const v = (g === "onepiece") ? "onepiece" : (g === "lorcana") ? "lorcana" : "pokemon";
-    localStorage.setItem(GAME_KEY, v);
-    closeGamePicker();
-    applyGameToUI();
-    try{ await loadMe(); }catch{}
-  }
-
-  btnChangeGame.onclick = (e) => {
-    e.preventDefault();
-    openGamePicker();
-  }
-
+  // ---------- GAME / UI ----------
   let dragging = false;
   let zoomDragging = false;
 
@@ -1715,13 +1689,13 @@
 
   function updateTopUI(me){
     if (moneyEl) moneyEl.textContent = String(me.money);
-    btnOpen.disabled = (me.money < COST_ONE);
+    if (btnOpen) btnOpen.disabled = (me.money < COST_ONE);
   }
 
   function tierFromGrade(grade){
     if (grade >= 10) return "g";
-    if (grade >= 7) return "v";
-    if (grade >= 5) return "b";
+    if (grade >= 7)  return "v";
+    if (grade >= 5)  return "b";
     return "w";
   }
 
@@ -1743,31 +1717,34 @@
     `;
 
     el.addEventListener("click", () => {
-      // ✅ si on clique un log, on affiche une carte => on cache le placeholder
       setPlaceholderVisible(false);
 
-      card.style.backgroundImage = `url("${imageUrl}")`;
+      if(card) card.style.backgroundImage = `url("${imageUrl}")`;
 
-      title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
-      subtitle.textContent = `${name} • ${setName}`;
-      gradeEl.textContent = grade;
+      if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
+      if(subtitle) subtitle.textContent = `${name} • ${setName}`;
+      if(gradeEl)  gradeEl.textContent = String(grade);
 
-      slab.dataset.tier = tier;
-      slab.dataset.mint = isMint ? "1" : "0";
-      mintTag.style.display = isMint ? "inline-flex" : "none";
+      if(slab){
+        slab.dataset.tier = tier;
+        slab.dataset.mint = isMint ? "1" : "0";
+        slab.classList.add("reveal");
+        setTimeout(() => slab.classList.remove("reveal"), 450);
+      }
 
-      slab.classList.add("reveal");
-      setTimeout(() => slab.classList.remove("reveal"), 450);
+      if(mintTag) mintTag.style.display = isMint ? "inline-flex" : "none";
     });
 
-    log.prepend(el);
+    log?.prepend(el);
   }
 
   // ---------- HOLO / TILT ----------
   function setTilt(clientX, clientY) {
+    if(!slab) return;
     const r = slab.getBoundingClientRect();
     const px = (clientX - r.left) / r.width;
     const py = (clientY - r.top) / r.height;
+
     const rx = (0.5 - py) * 18;
     const ry = (px - 0.5) * 22;
     slab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
@@ -1775,26 +1752,39 @@
     const x = Math.max(0, Math.min(1, px));
     const y = Math.max(0, Math.min(1, py));
 
-    shine.style.opacity = "0.75";
-    glare.style.opacity = "0.45";
-    shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-    glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    if(shine){
+      shine.style.opacity = "0.75";
+      shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+    }
+    if(glare){
+      glare.style.opacity = "0.45";
+      glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    }
   }
 
-  slab.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
-  slab.addEventListener("mouseenter", () => { shine.style.opacity = "0.75"; glare.style.opacity = "0.45"; });
-  slab.addEventListener("mouseleave", () => {
-    slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-    shine.style.opacity = "0";
-    glare.style.opacity = "0";
-    shine.style.transform = `translateZ(0px)`;
-    glare.style.transform = `translateZ(0px)`;
+  slab?.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
+  slab?.addEventListener("mouseenter", () => {
+    if(shine) shine.style.opacity = "0.75";
+    if(glare) glare.style.opacity = "0.45";
   });
-  slab.addEventListener("mousedown", () => dragging = true);
+  slab?.addEventListener("mouseleave", () => {
+    if(!slab) return;
+    slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    if(shine){
+      shine.style.opacity = "0";
+      shine.style.transform = `translateZ(0px)`;
+    }
+    if(glare){
+      glare.style.opacity = "0";
+      glare.style.transform = `translateZ(0px)`;
+    }
+  });
+  slab?.addEventListener("mousedown", () => dragging = true);
   window.addEventListener("mouseup", () => dragging = false);
   window.addEventListener("mousemove", (e) => { if (dragging) setTilt(e.clientX, e.clientY); });
 
   function setZoomTilt(clientX, clientY){
+    if(!zoomSlab) return;
     const r = zoomSlab.getBoundingClientRect();
     const px = (clientX - r.left) / r.width;
     const py = (clientY - r.top) / r.height;
@@ -1806,44 +1796,58 @@
     const x = Math.max(0, Math.min(1, px));
     const y = Math.max(0, Math.min(1, py));
 
-    zoomShine.style.opacity = "0.80";
-    zoomGlare.style.opacity = "0.50";
-    zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-    zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    if(zoomShine){
+      zoomShine.style.opacity = "0.80";
+      zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
+    }
+    if(zoomGlare){
+      zoomGlare.style.opacity = "0.50";
+      zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
+    }
   }
 
-  zoomSlab.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
-  zoomSlab.addEventListener("mouseenter", ()=>{ zoomShine.style.opacity="0.80"; zoomGlare.style.opacity="0.50"; });
-  zoomSlab.addEventListener("mouseleave", ()=>{
-    zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-    zoomShine.style.opacity="0";
-    zoomGlare.style.opacity="0";
-    zoomShine.style.transform = `translateZ(0px)`;
-    zoomGlare.style.transform = `translateZ(0px)`;
+  zoomSlab?.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
+  zoomSlab?.addEventListener("mouseenter", ()=>{
+    if(zoomShine) zoomShine.style.opacity="0.80";
+    if(zoomGlare) zoomGlare.style.opacity="0.50";
   });
-  zoomSlab.addEventListener("mousedown", ()=> zoomDragging = true);
+  zoomSlab?.addEventListener("mouseleave", ()=>{
+    if(!zoomSlab) return;
+    zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
+    if(zoomShine){
+      zoomShine.style.opacity="0";
+      zoomShine.style.transform = `translateZ(0px)`;
+    }
+    if(zoomGlare){
+      zoomGlare.style.opacity="0";
+      zoomGlare.style.transform = `translateZ(0px)`;
+    }
+  });
+  zoomSlab?.addEventListener("mousedown", ()=> zoomDragging = true);
   window.addEventListener("mouseup", ()=> zoomDragging = false);
-  window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
+  window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal?.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
 
   function openZoomFromCurrent(){
-    const bg = card.style.backgroundImage;
+    const bg = card?.style?.backgroundImage || "";
     if (!bg || bg.includes("linear-gradient")) return;
 
-    const high = card.dataset.high;
-    zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
+    const high = card?.dataset?.high;
+    if(zoomCard) zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
 
-    zoomTitle.textContent = title.textContent;
-    zoomSubtitle.textContent = subtitle.textContent;
-    zoomGrade.textContent = gradeEl.textContent;
+    if(zoomTitle)    zoomTitle.textContent    = title?.textContent || "";
+    if(zoomSubtitle) zoomSubtitle.textContent = subtitle?.textContent || "";
+    if(zoomGrade)    zoomGrade.textContent    = gradeEl?.textContent || "";
 
-    zoomSlab.dataset.tier = slab.dataset.tier || "";
-    zoomSlab.dataset.mint = slab.dataset.mint || "0";
-    zoomMintTag.style.display = (mintTag.style.display === "none") ? "none" : "inline-flex";
+    if(zoomSlab){
+      zoomSlab.dataset.tier = slab?.dataset?.tier || "";
+      zoomSlab.dataset.mint = slab?.dataset?.mint || "0";
+    }
+    if(zoomMintTag) zoomMintTag.style.display = (mintTag?.style?.display === "none") ? "none" : "inline-flex";
 
-    modal.classList.add("open");
+    modal?.classList.add("open");
   }
-  card.addEventListener("click", openZoomFromCurrent);
-  modal.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
+  card?.addEventListener("click", openZoomFromCurrent);
+  modal?.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
 
   function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
 
@@ -1886,21 +1890,18 @@
   function setMiniAvatar(url){
     if(!miniAvatar) return;
     const u = String(url||"").trim();
-    // fallback si pas d’avatar => poke.png
     miniAvatar.style.backgroundImage = `url("${u || "poke.png"}")`;
   }
 
   async function loadMe(){
     const me = await api("/api/me");
-    subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
+    if(subTop) subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
     updateTopUI(me);
 
-    // ✅ mini profile
     setMiniAvatar(me.avatar);
     if(miniLvl) miniLvl.textContent = String(me.level || 1);
     applyMiniProfileTheme(me.level || 1);
 
-    // ✅ header dropdown profil
     if(profileName) profileName.textContent = me.name || "Mon compte";
     if(profileSub)  profileSub.textContent  = "Niv. " + String(me.level || 1) + " • " + gameLabel(currentGame());
 
@@ -1908,7 +1909,7 @@
   }
 
   async function loadPulls(){
-    log.innerHTML = "";
+    if(log) log.innerHTML = "";
     const data = await api("/api/pulls");
     for(const p of (data.pulls || []).slice().reverse()){
       addLog(p.name, p.set, p.grade, p.mint, p.image);
@@ -1916,47 +1917,40 @@
   }
 
   async function openOne(){
-    
     await suckAwayCurrentCard();
 
-    btnOpen.disabled = true;
-    // 👇 Si une carte est déjà affichée, on la fait disparaître
-    const hasCard = card.style.backgroundImage && 
-                    !card.style.backgroundImage.includes("linear-gradient");
+    if(btnOpen) btnOpen.disabled = true;
 
-    if(hasCard){
+    const hasCard = (card?.style?.backgroundImage || "") &&
+                    !(card.style.backgroundImage || "").includes("linear-gradient");
+
+    if(hasCard && slab){
       slab.classList.add("disappear");
-      await sleep(350); // attendre la fin de l'anim
+      await sleep(350);
       slab.classList.remove("disappear");
 
-      // on vide visuellement la carte
-      card.style.backgroundImage = "";
-      card.dataset.high = "";
-
-      // on remet le placeholder
+      if(card){
+        card.style.backgroundImage = "";
+        card.dataset.high = "";
+      }
       setPlaceholderVisible(true);
     }
-    playSfx(sfxOpen, 0.8); // ✅ AJOUTE ÇA
-    function playSfx(a, volume = 0.8){
-    if(!a) return;
-    try{
-      a.pause();
-      a.currentTime = 0;
-      a.volume = volume;
-      a.playbackRate = 0.96 + Math.random()*0.10; // ✅ ici
-      a.play().catch(()=>{});
-    }catch{}
-   }
 
-    slab.classList.remove("shake");
-    void slab.offsetWidth;
-    slab.classList.add("shake");
+    playSfx(sfxOpen, 0.8);
 
-    subtitle.textContent = "Invocation...";
-    gradeEl.textContent = "?";
-    slab.dataset.tier = "";
-    slab.dataset.mint = "0";
-    mintTag.style.display = "none";
+    if(slab){
+      slab.classList.remove("shake");
+      void slab.offsetWidth;
+      slab.classList.add("shake");
+    }
+
+    if(subtitle) subtitle.textContent = "Invocation...";
+    if(gradeEl)  gradeEl.textContent = "?";
+    if(slab){
+      slab.dataset.tier = "";
+      slab.dataset.mint = "0";
+    }
+    if(mintTag) mintTag.style.display = "none";
 
     try{
       const data = await api("/api/open", { method:"POST" });
@@ -1964,100 +1958,75 @@
 
       const tier = tierFromGrade(c.grade);
 
-      title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
-      subtitle.textContent = `${c.name} • ${c.set}`;
-      gradeEl.textContent = c.grade;
-      mintTag.style.display = c.mint ? "inline-flex" : "none";
+      if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
+      if(subtitle) subtitle.textContent = `${c.name} • ${c.set}`;
+      if(gradeEl)  gradeEl.textContent = String(c.grade);
+      if(mintTag)  mintTag.style.display = c.mint ? "inline-flex" : "none";
 
-           // ✅ on force une image "high" quand c'est possible (Pokémon / Lorcana)
       const high = toHighImage(c.imageHigh || c.image);
       const low  = c.image;
 
       const img = new Image();
-      
       img.onload = async () => {
-      
-      setPlaceholderVisible(false);
+        setPlaceholderVisible(false);
 
-      playSfx(sfxCharge, 0.85);
+        playSfx(sfxCharge, 0.85);
 
-      // effet whaou AVANT d’afficher la carte
-      await runRevealFx({
-      tier,
-      isMint: !!c.mint,
-      epic: (c.grade === 10 || c.mint)
-      });
+        await runRevealFx({
+          tier,
+          isMint: !!c.mint,
+          epic: (c.grade === 10 || c.mint)
+        });
 
-      if(c.grade === 10 || c.mint){
-      playSfx(sfxRevealEpic, 1); // 🔥 gros reveal
-      }else{
-      playSfx(sfxReveal, 0.9);
-      }
+        if(c.grade === 10 || c.mint){
+          playSfx(sfxRevealEpic, 1);
+        }else{
+          playSfx(sfxReveal, 0.9);
+        }
 
-      // affiche la carte après l'effet
-      card.style.backgroundImage = `url("${high}")`;
-      card.dataset.high = high;
+        if(card){
+          card.style.backgroundImage = `url("${high}")`;
+          card.dataset.high = high;
+        }
 
-      slab.dataset.tier = tier;
-      slab.dataset.mint = c.mint ? "1" : "0";
-      slab.classList.add("reveal");
-      setTimeout(() => slab.classList.remove("reveal"), 450);
+        if(slab){
+          slab.dataset.tier = tier;
+          slab.dataset.mint = c.mint ? "1" : "0";
+          slab.classList.add("reveal");
+          setTimeout(() => slab.classList.remove("reveal"), 450);
+        }
       };
 
-      img.onerror = () => { subtitle.textContent = "Image introuvable"; };
-
-      // on essaie de précharger la high (sinon fallback low)
+      img.onerror = () => { if(subtitle) subtitle.textContent = "Image introuvable"; };
       img.src = high || low;
 
       addLog(c.name, c.set, c.grade, c.mint, c.image);
-
       await loadMe();
 
     }catch(e){
-      subtitle.innerHTML = e.message.includes("Not enough")
-      ? `Pas assez de Pokédollars <img class="moneyIcon" src="dollax.png" alt="Dollax">`
-      : "Problème temporaire, réessaie";
+      if(subtitle){
+        subtitle.innerHTML = String(e?.message || "").includes("Not enough")
+          ? `Pas assez de Pokédollars <img class="moneyIcon" src="dollax.png" alt="Dollax">`
+          : "Problème temporaire, réessaie";
+      }
       await loadMe();
     }
   }
 
-  btnOpen.onclick = openOne;
+  btnOpen?.addEventListener("click", openOne);
 
   // ✅ Logout dans dropdown
-  btnLogout.onclick = async (e) => {
+  btnLogout?.addEventListener("click", async (e) => {
     e.preventDefault();
     try{ await api("/api/logout", { method:"POST" }); }catch{}
     localStorage.removeItem(TOKEN_KEY);
     window.location.href = "/login.html";
-  };
-
-  // ---------- INIT ----------
-  card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
-
-  // ✅ au démarrage, aucune carte => placeholder visible
-  setPlaceholderVisible(true);
-
-  (async () => {
-    try{
-      // ✅ si aucun jeu choisi (première fois), on force le picker
-      if(!localStorage.getItem(GAME_KEY)){
-        openGamePicker();
-      }
-      applyGameToUI();
-      await loadMe();
-      await loadPulls();
-    }catch(e){
-      localStorage.removeItem(TOKEN_KEY);
-      window.location.href = "/login.html";
-    }
-  })();
+  });
 
   // ---------- NOTIFS (dans dropdown profil) ----------
-  const notifList = document.getElementById("notifList");
-  const notifEmpty = document.getElementById("notifEmpty");
+  const notifList    = document.getElementById("notifList");
+  const notifEmpty   = document.getElementById("notifEmpty");
   const notifReadAll = document.getElementById("notifReadAll");
-
-  // ✅ pill sur le bouton "Notifications"
   const profileNotifPill = document.getElementById("profileNotifPill");
 
   function fmtTime(ts){
@@ -2090,9 +2059,9 @@
   }
 
   function replaceMoneyIcon(text){
-  return escapeHtml(text || "")
-    .replaceAll("💵", `<img class="moneyIcon" src="dollax.png" alt="Dollax">`);
-}
+    return escapeHtml(text || "")
+      .replaceAll("💵", `<img class="moneyIcon" src="dollax.png" alt="Dollax">`);
+  }
 
   async function loadNotifList(){
     try{
@@ -2100,12 +2069,12 @@
       const notifs = data.notifications || [];
       setBadge(data.unread || 0);
 
-      notifList.innerHTML = "";
+      if(notifList) notifList.innerHTML = "";
       if(!notifs.length){
-        notifEmpty.style.display = "block";
+        if(notifEmpty) notifEmpty.style.display = "block";
         return;
       }
-      notifEmpty.style.display = "none";
+      if(notifEmpty) notifEmpty.style.display = "none";
 
       for(const n of notifs){
         const item = document.createElement("div");
@@ -2132,11 +2101,11 @@
           await loadNotifList();
         };
 
-        notifList.appendChild(item);
+        notifList?.appendChild(item);
       }
     }catch{
-      notifList.innerHTML = "";
-      notifEmpty.style.display = "block";
+      if(notifList) notifList.innerHTML = "";
+      if(notifEmpty) notifEmpty.style.display = "block";
     }
   }
 
@@ -2145,9 +2114,6 @@
     try{ await api("/api/notifications/read_all", { method:"POST" }); }catch{}
     await loadNotifList();
   });
-
-  loadNotifCount();
-  setInterval(loadNotifCount, 12000);
 
   // ---------- PROFILE DROPDOWN ----------
   const profileWrap = document.getElementById("profileWrap");
@@ -2195,34 +2161,50 @@
     if(!visible) await loadNotifList();
   });
 
-  // ===== SFX MASTER TOGGLE (dans dropdown profil) =====
-  const SFX_KEY = "gacha_sfx_on_v1";
-  let SFX_ON = (localStorage.getItem(SFX_KEY) ?? "1") === "1";
-
-  const btnSfx = document.getElementById("toggleSfx");
+  // ===== SFX toggle UI =====
+  const btnSfx  = document.getElementById("toggleSfx");
   const pillSfx = document.getElementById("toggleSfxPill");
 
   function applySfxUi(){
-    if(btnSfx) btnSfx.setAttribute("aria-pressed", SFX_ON ? "true" : "false");
+    if(btnSfx)  btnSfx.setAttribute("aria-pressed", SFX_ON ? "true" : "false");
     if(pillSfx) pillSfx.textContent = SFX_ON ? "ON" : "OFF";
   }
 
   btnSfx?.addEventListener("click", (e) => {
     e.preventDefault();
-    e.stopPropagation(); // ✅ sinon ça peut fermer le menu
+    e.stopPropagation();
 
     SFX_ON = !SFX_ON;
     localStorage.setItem(SFX_KEY, SFX_ON ? "1" : "0");
     applySfxUi();
 
-    // optionnel: couper les sons en cours quand on passe OFF
     if(!SFX_ON){
-      [window.sfxOpen, window.sfxWhoosh, window.sfxSuspense, window.sfxReveal].forEach(a=>{
+      [sfxOpen, sfxCharge, sfxReveal, sfxRevealEpic, sfxWhoosh].forEach(a=>{
         try{ a?.pause(); a.currentTime = 0; }catch{}
       });
     }
   });
 
+  // ---------- INIT ----------
+  if(card) card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
+  setPlaceholderVisible(true);
+
+  (async () => {
+    try{
+      if(!localStorage.getItem(GAME_KEY)){
+        openGamePicker();
+      }
+      applyGameToUI();
+      await loadMe();
+      await loadPulls();
+    }catch(e){
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = "/login.html";
+    }
+  })();
+
+  loadNotifCount();
+  setInterval(loadNotifCount, 12000);
   applySfxUi();
 </script>
 
