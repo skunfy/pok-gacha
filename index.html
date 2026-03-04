@@ -1329,7 +1329,7 @@
 
   // ---------- DOM ----------
   const sfxOpen = document.getElementById("sfxOpen");
-  const sfxCharge = document.getElementById("sfxCharge");
+  const sfxSuspense = document.getElementById("sfxSuspense");
   const sfxReveal = document.getElementById("sfxReveal");
   const sfxRevealEpic = document.getElementById("sfxRevealEpic");
 
@@ -1479,6 +1479,8 @@
   fxClear();
   fxOverlay.dataset.tier = fxTier;
   fxOverlay.classList.add("on");
+
+  playSfx(sfxSuspense, 0.9, 0.04);
 
   // 🎯 centre cercle
   const center = fxGetCenter();
