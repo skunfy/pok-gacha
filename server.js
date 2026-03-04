@@ -641,9 +641,24 @@ async function drawCard(game) {
 
       if (!image) continue;
 
+      // ✅ binder-friendly ids (setId / localId)
+      const setId =
+        pickFirst(d, ["set_id", "setId", "set_code", "setCode"]) ||
+        pickFirst(pick, ["set_id", "setId", "set_code", "setCode"]) ||
+        setName ||
+        "onepiece";
+
+      const localId =
+        pickFirst(d, ["card_number", "number", "localId", "local_id"]) ||
+        pickFirst(pick, ["card_number", "number", "localId", "local_id"]) ||
+        "";
+
       console.log("🌐 source=OPTCG (working)");
 
       return {
+        cardId,                      // ✅
+        setId,                       // ✅
+        localId: String(localId || ""), // ✅
         name,
         set: setName,
         rarity: pickFirst(d, ["rarity"]) || "",
@@ -654,65 +669,77 @@ async function drawCard(game) {
 
     throw new Error("One Piece: impossible de trouver une carte avec image");
   }
+  
 
   // ----- LORCANA ONLINE (LORCAST) -----
-  if (game === "lorcana") {
-    // ✅ IMPORTANT: on récupère les sets UNE seule fois (pas de shadow "const sets" dans le loop)
-    const sets = await getLorcanaSets();
+if (game === "lorcana") {
+  // ✅ IMPORTANT: on récupère les sets UNE seule fois (pas de shadow "const sets" dans le loop)
+  const sets = await getLorcanaSets();
 
-    // debug optionnel (à laisser 1 fois)
-    // console.log("LORCANA set sample keys:", Object.keys(sets[0] || {}), sets[0]);
+  // On tente plusieurs sets si jamais une réponse est vide
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const s = sets[Math.floor(Math.random() * sets.length)] || {};
 
-    // On tente plusieurs sets si jamais une réponse est vide
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const s = sets[Math.floor(Math.random() * sets.length)] || {};
+    const setCode =
+      pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
+      null;
 
-      const setCode =
-        pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
-        null;
+    if (!setCode) continue;
 
-      if (!setCode) continue;
-
-      let cards;
-      try {
-        cards = await getLorcanaCardsForSet(setCode);
-      } catch {
-        continue;
-      }
-
-      if (!Array.isArray(cards) || !cards.length) continue;
-
-      // On tente plusieurs cartes dans ce set pour être sûr d'avoir une image
-      for (let pickTry = 0; pickTry < 12; pickTry++) {
-        const c = cards[Math.floor(Math.random() * cards.length)] || {};
-
-        const name =
-          pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
-
-        const setName =
-          pickFirst(s, ["name", "set_name"]) ||
-          pickFirst(c, ["set_name", "setName"]) ||
-          `Set ${setCode}`;
-
-        const rarity = pickFirst(c, ["rarity"]) || "";
-
-        const { low, high } = pickImageLorcana(c);
-        if (!low) continue;
-
-        console.log("🌐 source=LORCAST");
-
-        return {
-          name,
-          set: setName,
-          rarity,
-          image: low,
-          imageHigh: high || low
-        };
-      }
+    let cards;
+    try {
+      cards = await getLorcanaCardsForSet(setCode);
+    } catch {
+      continue;
     }
 
-    throw new Error("Lorcana: impossible de trouver une carte avec image");
+    if (!Array.isArray(cards) || !cards.length) continue;
+
+    // On tente plusieurs cartes dans ce set pour être sûr d'avoir une image
+    for (let pickTry = 0; pickTry < 12; pickTry++) {
+      const c = cards[Math.floor(Math.random() * cards.length)] || {};
+
+      const name =
+        pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
+
+      const setName =
+        pickFirst(s, ["name", "set_name"]) ||
+        pickFirst(c, ["set_name", "setName"]) ||
+        `Set ${setCode}`;
+
+      const rarity = pickFirst(c, ["rarity"]) || "";
+
+      const { low, high } = pickImageLorcana(c);
+      if (!low) continue;
+
+      // ✅ binder-friendly ids (setId / localId / cardId)
+      const cardId =
+        pickFirst(c, ["id", "card_id", "cardId", "uuid"]) ||
+        null;
+
+      const setId = String(setCode || "lorcana");
+
+      const localId =
+        pickFirst(c, ["collector_number", "collectorNumber", "number", "card_number", "localId", "local_id"]) ||
+        "";
+
+      console.log("🌐 source=LORCAST");
+
+      return {
+        cardId,                        // ✅
+        setId,                         // ✅
+        localId: String(localId || ""),// ✅
+        name,
+        set: setName,
+        rarity,
+        image: low,
+        imageHigh: high || low
+      };
+    }
   }
+
+  throw new Error("Lorcana: impossible de trouver une carte avec image");
+}
 
   // ----- POKEMON ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
@@ -922,13 +949,10 @@ app.post("/api/open", auth, async (req, res) => {
   const xpAdd = xpForOpen(grade);
   await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
-  // idKey stable pour pokemon
-  let idKey;
-  if (game === "pokemon") {
-    idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
-  } else {
-    idKey = `${game}__${c.name}__${c.set}__${c.image}`;
-  }
+  // idKey stable pour tous :p
+
+    // ✅ idKey stable pour TOUS les jeux (binder-friendly)
+  const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
 
   // log pull
   await pool.query(
@@ -1046,40 +1070,130 @@ app.get("/api/collection", auth, async (req, res) => {
 
 app.get("/api/sets", auth, async (req, res) => {
   const game = getGame(req);
-  if (game !== "pokemon") return res.json({ sets: [] });
 
   try {
-    const list = await getPokemonSetsCached();
-    return res.json({
-      sets: list.map(s => ({ id: s.id, name: s.name }))
-    });
+    // ✅ POKEMON
+    if (game === "pokemon") {
+      const list = await getPokemonSetsCached();
+      return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+    }
+
+    // ✅ LORCANA (Lorcast /sets)
+    if (game === "lorcana") {
+      const list = await getLorcanaSets();
+      return res.json({
+        sets: list
+          .map(s => ({
+            id: pickFirst(s, ["code", "id"]),
+            name: pickFirst(s, ["name"]) || pickFirst(s, ["code", "id"])
+          }))
+          .filter(s => s.id)
+      });
+    }
+
+    // ✅ ONE PIECE (pas de endpoint sets -> on group depuis allSetCards)
+    if (game === "onepiece") {
+      const list = await getOpBriefList();
+      const map = new Map();
+
+      for (const it of list) {
+        const setName = pickFirst(it, ["set_name", "setName", "set", "series"]) || "One Piece";
+        const setId   = pickFirst(it, ["set_id", "setId", "set_code", "setCode"]) || setName;
+        if (!map.has(setId)) map.set(setId, { id: setId, name: setName });
+      }
+
+      return res.json({ sets: Array.from(map.values()) });
+    }
+
+    return res.json({ sets: [] });
   } catch (e) {
-    return res.status(502).json({ error: "TCGdex sets failed" });
+    return res.status(502).json({ error: "Sets failed" });
   }
 });
 
 app.get("/api/set_cards", auth, async (req, res) => {
   const game = getGame(req);
-  if (game !== "pokemon") return res.json({ cards: [] });
-
   const setId = String(req.query.setId || "").trim();
   if (!setId) return res.status(400).json({ error: "Missing setId" });
 
   try {
-    const cards = await getPokemonSetCardsCached(setId);
+    // ✅ POKEMON
+    if (game === "pokemon") {
+      const cards = await getPokemonSetCardsCached(setId);
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.id,
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: normalizeImageField(c.image, "low", "webp"),
+          imageHigh: normalizeImageField(c.image, "high", "webp")
+        }))
+      });
+    }
 
-    return res.json({
-      setId,
-      cards: cards.map(c => ({
-        cardId: c.id,
-        localId: String(c.localId || ""),
-        name: c.name || "",
-        image: normalizeImageField(c.image, "low", "webp"),
-        imageHigh: normalizeImageField(c.image, "high", "webp")
-      }))
-    });
+    // ✅ LORCANA
+    if (game === "lorcana") {
+      const list = await getLorcanaCardsForSet(setId); // setId = code
+      return res.json({
+        setId,
+        cards: list.map(c => {
+          const cardId =
+            pickFirst(c, ["id", "card_id", "cardId", "uuid"]) || "";
+          const localId =
+            pickFirst(c, ["collector_number", "number", "localId"]) || "";
+          const name =
+            pickFirst(c, ["name", "card_name", "title"]) || "";
+          const { low, high } = pickImageLorcana(c);
+
+          return {
+            cardId,
+            localId: String(localId || ""),
+            name,
+            image: low,
+            imageHigh: high || low
+          };
+        }).filter(x => x.cardId && x.image)
+      });
+    }
+
+    // ✅ ONE PIECE
+    if (game === "onepiece") {
+      const list = await getOpBriefList();
+
+      const filtered = list.filter(it => {
+        const sid =
+          pickFirst(it, ["set_id", "setId", "set_code", "setCode"]) ||
+          (pickFirst(it, ["set_name", "setName", "set", "series"]) || "One Piece");
+        return String(sid) === String(setId);
+      });
+
+      return res.json({
+        setId,
+        cards: filtered.map(it => {
+          const cardId =
+            pickFirst(it, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) || "";
+          const localId =
+            pickFirst(it, ["card_number", "number", "localId", "local_id"]) || "";
+          const name =
+            pickFirst(it, ["card_name", "name", "cardName", "title"]) || "";
+          const image =
+            pickFirst(it, ["card_image", "image_url", "imageUrl", "image", "img"]) || null;
+
+          return {
+            cardId,
+            localId: String(localId || ""),
+            name,
+            image,
+            imageHigh: image
+          };
+        }).filter(x => x.cardId && x.image)
+      });
+    }
+
+    return res.json({ setId, cards: [] });
   } catch (e) {
-    return res.status(502).json({ error: "TCGdex set detail failed" });
+    return res.status(502).json({ error: "Set cards failed" });
   }
 });
 
