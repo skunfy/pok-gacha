@@ -613,11 +613,25 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     </div>
   </div>
 
+  <!-- ✅ Progress (placée ici sous la topbar) -->
+  <div class="progressBox" id="progressBox" title="Progression du set">
+    <div class="progressTop">
+      <div class="progressTitle" id="progTitle">Set</div>
+      <div class="progressNums">
+        <span id="progOwned">0</span>/<span id="progTotal">0</span>
+        <span class="progressPct" id="progPct">0%</span>
+      </div>
+    </div>
+    <div class="progressBar">
+      <div class="progressFill" id="progFill" style="width:0%"></div>
+    </div>
+  </div>
+
   <div class="gridWrap">
-    <!-- GRILLE (existante) -->
+    <!-- GRILLE -->
     <div class="grid" id="grid"></div>
 
-    <!-- BINDER (nouveau) -->
+    <!-- BINDER -->
     <div class="binderWrap" id="binderWrap">
       <div class="binderPager" id="binderPager" style="display:none;">
         <button id="prevPageBtn">◀</button>
@@ -630,20 +644,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
       <div class="smallNote" id="binderHint" style="opacity:.65;">
         Binder : Pokémon uniquement • Choisis une extension • Les cases vides sont les cartes non obtenues.
       </div>
-    </div>
-  </div>
-
-  <!-- ✅ Progress -->
-  <div class="progressBox" id="progressBox" title="Progression du set">
-    <div class="progressTop">
-      <div class="progressTitle" id="progTitle">Set</div>
-      <div class="progressNums">
-        <span id="progOwned">0</span>/<span id="progTotal">0</span>
-        <span class="progressPct" id="progPct">0%</span>
-      </div>
-    </div>
-    <div class="progressBar">
-      <div class="progressFill" id="progFill" style="width:0%"></div>
     </div>
   </div>
 
