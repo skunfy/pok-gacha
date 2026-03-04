@@ -1071,6 +1071,86 @@
     100%{ opacity:0; transform:translate(-50%,-50%) scale(1.25) rotate(220deg); }
   }
 
+  /* ===== SUCK / ASPIRATION (Gacha) ===== */
+
+/* petit confort perf */
+.slab, .cardImg{
+  will-change: transform, filter, opacity;
+}
+
+/* on “fige” les hover/tilt pendant l’aspiration */
+.slab.suck{
+  cursor: default;
+}
+
+/* la coque recule un peu + tremble léger */
+.slab.suck{
+  animation: slabSuck 520ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes slabSuck{
+  0%   { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(1); }
+  25%  { transform: rotateX(1deg) rotateY(-1deg) translateZ(0) scale(1.01); }
+  100% { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(.985); }
+}
+
+/* la carte se fait aspirer */
+.slab.suck .cardImg{
+  animation: cardSuck 520ms cubic-bezier(.15,.9,.15,1) forwards;
+  transform-origin: 50% 45%;
+}
+@keyframes cardSuck{
+  0%{
+    transform: translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg);
+    filter: blur(0px) brightness(1) saturate(1);
+    opacity: 1;
+  }
+  35%{
+    transform: translate(-50%,-52%) translateZ(18px) scale(.92) rotate(-10deg);
+    filter: blur(.4px) brightness(1.05) saturate(1.05);
+    opacity: .95;
+  }
+  70%{
+    transform: translate(-50%,-56%) translateZ(18px) scale(.55) rotate(40deg);
+    filter: blur(1.2px) brightness(1.08) saturate(1.1);
+    opacity: .75;
+  }
+  100%{
+    transform: translate(-50%,-62%) translateZ(18px) scale(.06) rotate(140deg);
+    filter: blur(3px) brightness(1.2) saturate(1.2);
+    opacity: 0;
+  }
+}
+
+/* anneau/vortex subtil au-dessus (utilise ton .flash déjà présent) */
+.slab.suck .flash{
+  opacity: 1;
+  animation: suckVortex 520ms ease forwards;
+}
+@keyframes suckVortex{
+  0%   { transform: translateZ(40px) scale(.65); opacity: 0; }
+  25%  { opacity: .55; }
+  100% { transform: translateZ(40px) scale(1.35); opacity: 0; }
+}
+
+/* petit “snap” de lumière sur la shell */
+.slab.suck .shell::after{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  border-radius:30px;
+  pointer-events:none;
+  background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
+  opacity:0;
+  animation: suckGlow 520ms ease forwards;
+}
+@keyframes suckGlow{
+  0%   { opacity:0; transform:scale(.95); }
+  30%  { opacity:.7; }
+  100% { opacity:0; transform:scale(1.15); }
+}
+
+.slab.suck #cardPh{ opacity: 0; }
+
   </style>  
 
 
