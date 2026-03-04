@@ -283,7 +283,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   letter-spacing:.2px;
   margin-top:2px;
 }
-
 .cardSub{
   opacity:.75;
   font-size:12px;
@@ -299,7 +298,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   gap:8px;
   flex-wrap:wrap;
 }
-
 .badge{
   font-size:11px;
   font-weight:1000;
@@ -309,28 +307,21 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   background: rgba(0,0,0,.18);
   opacity:.92;
 }
-
 .badge.mint{
   border-color: rgba(255,80,80,.55);
   background: rgba(255,80,80,.12);
   color: rgba(255,120,120,.98);
 }
-
 .badge.grade{
   font-size:11px;
   font-weight:1000;
   padding:4px 10px;
   border-radius:999px;
-
   border:1px solid rgba(255,255,255,.18);
   background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
-
   letter-spacing:.3px;
 }
-
-.badge.count{
-  opacity:.85;
-}
+.badge.count{ opacity:.85; }
 
 /* prix en pill */
 .priceTag{
@@ -353,7 +344,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   gap:8px;
   align-items:center;
 }
-
 .qtyInput{
   width:88px;
   padding:8px 10px;
@@ -363,7 +353,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   color:#fff;
   font-weight:1000;
 }
-
 .sellBtn{
   flex:1;
   padding:10px 12px;
@@ -392,7 +381,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   border-radius:22px;
   position:relative;
 }
-
 .shell{
   position:absolute;
   inset:0;
@@ -402,7 +390,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   backdrop-filter:blur(6px);
   box-shadow: 0 35px 120px rgba(0,0,0,.65);
 }
-
 .label{
   position:absolute;
   left:50%;
@@ -419,12 +406,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   padding:0 12px;
   gap:10px;
 }
-
-.grade{
-  font-size:24px;
-  font-weight:1000;
-}
-
+.grade{ font-size:24px; font-weight:1000; }
 .mintBadge{
   padding:5px 8px;
   border-radius:999px;
@@ -436,7 +418,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   display:none;
   white-space:nowrap;
 }
-
 .cardImg{
   position:absolute;
   left:50%;
@@ -468,9 +449,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .gridWrap{ scrollbar-gutter: stable both-edges; }
 
 /* carte non possédée = grisée */
-.slot.missing{
-  opacity: .95;
-}
+.slot.missing{ opacity: .95; }
 .slot.missing .slotImg{
   filter: grayscale(1) saturate(.15) brightness(.85) contrast(.95);
   transform: scale(.99);
@@ -489,7 +468,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     );
   pointer-events:none;
 }
-
 .missTag{
   position:absolute;
   bottom:10px;
@@ -516,7 +494,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }
-
 .progressTop{
   display:flex;
   justify-content:space-between;
@@ -524,7 +501,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   align-items:center;
   margin-bottom:8px;
 }
-
 .progressTitle{
   font-weight:1000;
   font-size:12px;
@@ -532,9 +508,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width: 140px;
+  max-width: 220px;
 }
-
 .progressNums{
   font-weight:1000;
   font-size:12px;
@@ -544,12 +519,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   align-items:baseline;
   white-space:nowrap;
 }
-
-.progressPct{
-  opacity:.75;
-  font-weight:1000;
-}
-
+.progressPct{ opacity:.75; font-weight:1000; }
 .progressBar{
   height:10px;
   border-radius:999px;
@@ -557,7 +527,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   border:1px solid rgba(255,255,255,.10);
   overflow:hidden;
 }
-
 .progressFill{
   height:100%;
   border-radius:999px;
@@ -566,23 +535,134 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   transition: width .25s ease;
 }
 
-/* ===== Set Picker (sidebar dans la topbar) ===== */
-#setPicker{
+/* ===== Set Picker (dropdown custom) ===== */
+.setPicker{ position:relative; display:flex; align-items:center; }
+.setBtn{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-width: 220px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:#0f111a;
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+}
+.setBtn:hover{ background: rgba(255,255,255,.10); }
+.setBtnLabel{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 170px;
+  opacity:.95;
+}
+.setBtnChevron{ opacity:.7; font-weight:1000; }
+
+.setPanel{
+  position:absolute;
+  top: calc(100% + 10px);
+  left:0;
+  width: 320px;
+  max-width: 70vw;
+  border-radius:14px;
+  background: rgba(15,17,26,.92);
+  border:1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 25px 70px rgba(0,0,0,.55);
+  padding:10px;
   display:none;
-  flex-direction:column;
-  gap:6px;
-  min-width:220px;
+  z-index:999;
+}
+.setPanel.open{ display:block; }
+
+.setSearch{
+  width:100%;
+  padding:9px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+  color:#fff;
+  outline:none;
+  font-weight:800;
+}
+.setSearch::placeholder{ opacity:.65; }
+
+.setList{
+  margin-top:10px;
+  max-height: 260px;
+  overflow:auto;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+.setItem{
+  padding:9px 10px;
+  font-weight:900;
+  font-size:13px;
+  cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+.setItem:last-child{ border-bottom:none; }
+.setItem:hover{ background: rgba(255,255,255,.06); }
+.setItem small{ opacity:.65; font-weight:900; }
+
+.setItem.active{
+  background: rgba(120,170,255,.14);
+  border-left: 3px solid rgba(120,170,255,.85);
 }
 
-#setSel{
-  max-height:220px;
-  overflow-y:auto;
+.setPanelHint{
+  margin-top:8px;
+  font-size:11px;
+  opacity:.7;
+  font-weight:900;
+}
+
+.setList{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
+}
+.setList::-webkit-scrollbar{ width: 10px; }
+.setList::-webkit-scrollbar-track{
+  background: rgba(255,255,255,.06);
+  border-radius: 999px;
+}
+.setList::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.18);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,.25);
+}
+
+/* ===== Empty state binder ===== */
+.binderEmpty{
+  border-radius:16px;
+  background: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.12);
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.binderEmptyTitle{
+  font-weight:1000;
+  font-size:16px;
+  opacity:.95;
+}
+.binderEmptySub{
+  font-weight:900;
+  opacity:.7;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="wrap">
 
   <div class="topbar">
@@ -602,10 +682,21 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="binder">Classeur 4×4</option>
       </select>
 
-      <!-- ✅ SET PICKER (recherche + liste style scrollbar) -->
-      <div id="setPicker">
-        <input id="setSearch" placeholder="Rechercher un set (début)..." />
-        <select id="setSel" title="Set / Extension" size="8"></select>
+      <!-- ✅ SET PICKER (aligné + panel recherche/liste) -->
+      <div class="setPicker" id="setPicker" style="display:none;">
+        <button type="button" class="setBtn" id="setBtn" aria-haspopup="listbox" aria-expanded="false">
+          <span class="setBtnLabel" id="setBtnLabel">Choisir un set…</span>
+          <span class="setBtnChevron">▾</span>
+        </button>
+
+        <div class="setPanel" id="setPanel" role="dialog" aria-label="Choix du set">
+          <input id="setSearch" class="setSearch" placeholder="Rechercher un set (début)…" autocomplete="off">
+          <div class="setList" id="setList" role="listbox" tabindex="0"></div>
+          <div class="setPanelHint">Tape “fl” → garde uniquement ceux qui commencent par “fl”.</div>
+        </div>
+
+        <!-- garde le select caché (compat) -->
+        <select id="setSel" style="display:none;"></select>
       </div>
 
       <input id="search" placeholder="Rechercher...">
@@ -719,10 +810,6 @@ const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
 const viewSel = document.getElementById("viewSel");
 
-const setPicker = document.getElementById("setPicker");
-const setSel = document.getElementById("setSel");
-const setSearch = document.getElementById("setSearch");
-
 const progTitle = document.getElementById("progTitle");
 const progOwned = document.getElementById("progOwned");
 const progTotal = document.getElementById("progTotal");
@@ -739,9 +826,6 @@ const nextPageBtn = document.getElementById("nextPageBtn");
 const sellSelectedBtn = document.getElementById("sellSelectedBtn");
 const clearSelBtn = document.getElementById("clearSelBtn");
 
-// selection: idKey -> qty
-const selected = new Map();
-
 const modal = document.getElementById("modal");
 const zoomSlab = document.getElementById("zoomSlab");
 const zoomImg = document.getElementById("zoomImg");
@@ -749,17 +833,26 @@ const zoomTitle = document.getElementById("zoomTitle");
 const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
 
+/* ===== Set picker custom ===== */
+const setPicker = document.getElementById("setPicker");
+const setBtn = document.getElementById("setBtn");
+const setBtnLabel = document.getElementById("setBtnLabel");
+const setPanel = document.getElementById("setPanel");
+const setSearch = document.getElementById("setSearch");
+const setListEl = document.getElementById("setList");
+const setSel = document.getElementById("setSel"); // hidden
+
+// selection: idKey -> qty
+const selected = new Map();
+
 let allItems = [];
 
 // ===== Binder state =====
 let setsList = [];
-let setsAll  = [];
+let setsAll = [];
 let binderCards = [];
 let binderPage = 0;                // 0-based
 const BINDER_PAGE_SIZE = 16;
-
-// clavier dans la liste
-let setNavIndex = -1;
 
 function currentView(){
   const v = String(localStorage.getItem(VIEW_KEY) || "grid").toLowerCase();
@@ -772,7 +865,25 @@ function currentSetId(){
 gameSel.value = currentGame();
 viewSel.value = currentView();
 
-/* ===== Helpers ===== */
+gameSel.addEventListener("change", async () => {
+  localStorage.setItem(GAME_KEY, gameSel.value);
+  selected.clear();
+  refreshSelUI();
+
+  localStorage.setItem(SET_KEY, "");
+  binderPage = 0;
+
+  await boot();
+});
+
+viewSel.addEventListener("change", async () => {
+  localStorage.setItem(VIEW_KEY, viewSel.value);
+  binderPage = 0;
+  selected.clear();
+  refreshSelUI();
+  await boot();
+});
+
 function tierFromGrade(g){
   if(g >= 10) return "g";
   if(g >= 7) return "v";
@@ -812,23 +923,122 @@ function setGridMode(on){
   sellSelectedBtn.style.display = on ? "" : "none";
   clearSelBtn.style.display = on ? "" : "none";
 
-  // search/sort utiles en grille
+  // search/sort utiles en grille; en binder on garde search visible mais placeholder différent
   sortSelect.style.display = on ? "" : "none";
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
 }
 
 function setBinderControlsVisible(){
   const isBinder = currentView() === "binder";
-  if (setPicker) setPicker.style.display = isBinder ? "flex" : "none";
+  setPicker.style.display = isBinder ? "flex" : "none";
   binderPager.style.display = (isBinder && binderCards.length) ? "" : "none";
+  if (!isBinder) closeSetPanel();
+}
 
-  if (!isBinder && setSearch){
-    setSearch.value = "";
-    setNavIndex = -1;
+/* ===== Set picker logic ===== */
+function openSetPanel(){
+  setPanel.classList.add("open");
+  setBtn.setAttribute("aria-expanded","true");
+  setSearch.value = "";
+  renderSetList(setsAll);
+  setSearch.focus();
+}
+function closeSetPanel(){
+  setPanel.classList.remove("open");
+  setBtn.setAttribute("aria-expanded","false");
+}
+function toggleSetPanel(){
+  if (setPanel.classList.contains("open")) closeSetPanel();
+  else openSetPanel();
+}
+
+setBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  toggleSetPanel();
+});
+
+document.addEventListener("click", (e) => {
+  if (!setPicker.contains(e.target)) closeSetPanel();
+});
+
+setSearch.addEventListener("input", () => {
+  const q = setSearch.value.toLowerCase().trim();
+  const filtered = !q ? setsAll : setsAll.filter(s => {
+    const name = String(s.name || s.id || "").toLowerCase().trim();
+    const id   = String(s.id || "").toLowerCase().trim();
+    return name.startsWith(q) || id.startsWith(q);
+  });
+  renderSetList(filtered);
+});
+
+function renderSetList(list){
+  const cur = currentSetId();
+  setListEl.innerHTML = "";
+
+  if (!list.length){
+    setListEl.innerHTML = `<div class="setItem" style="opacity:.7;cursor:default;">Aucun set</div>`;
+    return;
+  }
+
+  for (const s of list){
+    const row = document.createElement("div");
+    row.className = "setItem" + (s.id === cur ? " active" : "");
+    row.innerHTML = `<span>${s.name || s.id}</span><small>${s.id}</small>`;
+    row.onclick = async () => {
+      setSel.value = s.id;
+      localStorage.setItem(SET_KEY, s.id);
+      setBtnLabel.textContent = s.name || s.id;
+
+      binderPage = 0;
+      await loadBinderSetCards();
+      renderBinder();
+      closeSetPanel();
+    };
+    setListEl.appendChild(row);
   }
 }
 
-/* ===== API load ===== */
+/* ===== Sell buttons ===== */
+clearSelBtn.addEventListener("click", () => {
+  selected.clear();
+  applyFilters();
+  refreshSelUI();
+});
+
+sellSelectedBtn.addEventListener("click", async () => {
+  if (!selected.size) return;
+
+  const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
+
+  try{
+    await api("/api/sell_bulk",{
+      method:"POST",
+      body: JSON.stringify({ items: payload })
+    });
+
+    selected.clear();
+
+    // ✅ refresh immédiat (grid OU binder)
+    await loadCollection();
+
+    if (currentView() === "grid"){
+      applyFilters();
+    } else {
+      await loadSetsForGame();
+      if (setSel.value){
+        await loadBinderSetCards();
+      } else {
+        binderCards = [];
+      }
+      renderBinder();
+    }
+
+    refreshSelUI();
+  }catch(e){
+    // silent
+  }
+});
+
 async function loadCollection(){
   try{
     const data = await api("/api/collection");
@@ -839,7 +1049,6 @@ async function loadCollection(){
   }
 }
 
-/* ===== GRID ===== */
 function applyFilters(){
   const q = searchInput.value.toLowerCase().trim();
   let items = [...allItems];
@@ -891,7 +1100,6 @@ function render(items){
       g === "onepiece" ? "🟥 One Piece" :
       g === "lorcana" ? "🟦 Lorcana" :
       "🟨 Pokémon";
-
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 
     const wasSelected = selected.has(x.idKey);
@@ -986,8 +1194,6 @@ function render(items){
           if (setSel.value) await loadBinderSetCards();
           renderBinder();
         }
-
-        refreshSelUI();
       }catch{}
     };
 
@@ -995,144 +1201,9 @@ function render(items){
   });
 }
 
-/* ===== BINDER ===== */
-function fillSetSelect(list){
-  setSel.innerHTML = "";
-
-  if (!list.length){
-    const o = document.createElement("option");
-    o.value = "";
-    o.textContent = "Aucun set dispo";
-    setSel.appendChild(o);
-    setSel.value = "";
-    return;
-  }
-
-  for (const s of list){
-    const o = document.createElement("option");
-    o.value = s.id;
-    o.textContent = s.name || s.id;
-    setSel.appendChild(o);
-  }
-}
-
-/* ✅ /api/sets pour TOUS les jeux */
-async function loadSetsForGame(){
-  setsList = [];
-  try{
-    const data = await api("/api/sets");
-    setsList = data.sets || [];
-  }catch{
-    setsList = [];
-  }
-
-  setsAll = [...setsList].sort((a,b)=> String(a.name||a.id).localeCompare(String(b.name||b.id)));
-
-  fillSetSelect(setsAll);
-
-  const saved = currentSetId();
-  if (saved && setsAll.some(s => s.id === saved)){
-    setSel.value = saved;
-  } else {
-    setSel.value = "";
-  }
-
-  setNavIndex = setSel.selectedIndex >= 0 ? setSel.selectedIndex : -1;
-}
-
-/* ✅ Filtre "commence par" (fl => garde uniquement les sets qui commencent par fl) */
-function filterSets(){
-  const q = String(setSearch.value || "").toLowerCase().trim();
-
-  const filtered = !q
-    ? setsAll
-    : setsAll.filter(s => {
-        const text = String(s.name || s.id || "").toLowerCase().trim();
-        const id   = String(s.id || "").toLowerCase().trim();
-        return text.startsWith(q) || id.startsWith(q);
-      });
-
-  const prevSelected = setSel.value;
-
-  fillSetSelect(filtered);
-
-  if (prevSelected && filtered.some(s => s.id === prevSelected)){
-    setSel.value = prevSelected;
-  } else {
-    setSel.value = filtered[0]?.id || "";
-    localStorage.setItem(SET_KEY, setSel.value || "");
-  }
-
-  if (filtered.length){
-    setNavIndex = setSel.selectedIndex >= 0 ? setSel.selectedIndex : 0;
-    setSel.selectedIndex = setNavIndex;
-    setSel.options[setNavIndex]?.scrollIntoView({ block: "nearest" });
-  } else {
-    setNavIndex = -1;
-  }
-}
-
-setSearch.addEventListener("input", async () => {
-  filterSets();
-  binderPage = 0;
-
-  if (setSel.value){
-    localStorage.setItem(SET_KEY, setSel.value);
-    await loadBinderSetCards();
-    renderBinder();
-  } else {
-    binderCards = [];
-    renderBinder();
-  }
-});
-
-// clavier ↑ ↓ Enter depuis l'input de recherche set
-setSearch.addEventListener("keydown", (e) => {
-  const opts = setSel.options.length;
-  if (!opts) return;
-
-  if (e.key === "ArrowDown"){
-    e.preventDefault();
-    setNavIndex = Math.min(opts - 1, (setNavIndex < 0 ? 0 : setNavIndex + 1));
-    setSel.selectedIndex = setNavIndex;
-    setSel.options[setNavIndex]?.scrollIntoView({ block:"nearest" });
-  }
-  if (e.key === "ArrowUp"){
-    e.preventDefault();
-    setNavIndex = Math.max(0, (setNavIndex < 0 ? 0 : setNavIndex - 1));
-    setSel.selectedIndex = setNavIndex;
-    setSel.options[setNavIndex]?.scrollIntoView({ block:"nearest" });
-  }
-  if (e.key === "Enter"){
-    e.preventDefault();
-    setSel.dispatchEvent(new Event("change"));
-  }
-  if (e.key === "Escape"){
-    e.preventDefault();
-    setSearch.value = "";
-    filterSets();
-  }
-});
-
-/* ✅ /api/set_cards pour TOUS les jeux */
-async function loadBinderSetCards(){
-  binderCards = [];
-  const setId = setSel.value;
-  if (!setId) return;
-
-  try{
-    const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
-    binderCards = data.cards || [];
-  }catch{
-    binderCards = [];
-  }
-
-  binderCards.sort((a,b)=>{
-    const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
-    const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
-    return Number(ax) - Number(bx);
-  });
-}
+// =========================
+// BINDER: sets + cards + pages + trous vides
+// =========================
 
 // Parse idKey: game__setId__localId__cardId
 function parseIdKey(idKey){
@@ -1145,7 +1216,64 @@ function parseIdKey(idKey){
   };
 }
 
-/* owned map robuste: match sur setId + cardId */
+/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
+async function loadSetsForGame(){
+  setsList = [];
+  try{
+    const data = await api("/api/sets");
+    setsList = data.sets || [];
+  }catch{
+    setsList = [];
+  }
+
+  setsAll = [...setsList];
+
+  // sync hidden select (compat)
+  setSel.innerHTML = "";
+  for (const s of setsAll){
+    const o = document.createElement("option");
+    o.value = s.id;
+    o.textContent = s.name || s.id;
+    setSel.appendChild(o);
+  }
+
+  const saved = currentSetId();
+  const found = setsAll.find(s => s.id === saved);
+
+  if (found){
+    setSel.value = found.id;
+    setBtnLabel.textContent = found.name || found.id;
+  } else {
+    setSel.value = "";
+    setBtnLabel.textContent = "Choisir un set…";
+    localStorage.setItem(SET_KEY, "");
+  }
+
+  if (setPanel.classList.contains("open")) renderSetList(setsAll);
+}
+
+/* ✅ IMPORTANT: pour TOUS les jeux -> /api/set_cards?setId= */
+async function loadBinderSetCards(){
+  binderCards = [];
+  const setId = setSel.value;
+  if (!setId) return;
+
+  try{
+    const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
+    binderCards = data.cards || [];
+  }catch{
+    binderCards = [];
+  }
+
+  // tri numeric-friendly
+  binderCards.sort((a,b)=>{
+    const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
+    const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
+    return Number(ax) - Number(bx);
+  });
+}
+
+/* ✅ owned map robuste: match sur setId + cardId */
 function buildOwnedMapForSet(setId){
   const g = currentGame();
   const m = new Map();
@@ -1175,8 +1303,9 @@ function renderBinder(){
   if (!setId){
     binderPager.style.display = "none";
     binderGrid.innerHTML = `
-      <div style="opacity:.8; font-weight:900;">
-        Choisis un set pour afficher le classeur.
+      <div class="binderEmpty">
+        <div class="binderEmptyTitle">Choisis un set pour afficher le classeur.</div>
+        <div class="binderEmptySub">Clique “Choisir un set…” puis filtre avec la recherche (ex: “fl”).</div>
       </div>
     `;
     updateProgress([], "Set");
@@ -1266,8 +1395,6 @@ function renderBinder(){
         ...ownedItem,
         set: (ownedItem.set || ownedItem.setName || ""),
       });
-    } else {
-      imgEl.onclick = null;
     }
 
     binderGrid.appendChild(slot);
@@ -1295,78 +1422,37 @@ function updateProgress(cards, label = "Set"){
   progFill.style.width = pct + "%";
 }
 
-/* ===== Events ===== */
-gameSel.addEventListener("change", async () => {
-  localStorage.setItem(GAME_KEY, gameSel.value);
-  selected.clear();
-  refreshSelUI();
+// =========================
+// Boot / sync UI
+// =========================
+async function boot(){
+  gameSel.value = currentGame();
+  viewSel.value = currentView();
 
-  localStorage.setItem(SET_KEY, "");
-  binderPage = 0;
+  const isGrid = currentView() === "grid";
+  setGridMode(isGrid);
 
-  await boot();
-});
+  await loadCollection();
 
-viewSel.addEventListener("change", async () => {
-  localStorage.setItem(VIEW_KEY, viewSel.value);
-  binderPage = 0;
-  selected.clear();
-  refreshSelUI();
-  await boot();
-});
-
-setSel.addEventListener("change", async () => {
-  localStorage.setItem(SET_KEY, setSel.value);
-  binderPage = 0;
-  await loadBinderSetCards();
-  renderBinder();
-});
-
-clearSelBtn.addEventListener("click", () => {
-  selected.clear();
-  applyFilters();
-  refreshSelUI();
-});
-
-sellSelectedBtn.addEventListener("click", async () => {
-  if (!selected.size) return;
-
-  const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
-
-  try{
-    await api("/api/sell_bulk",{
-      method:"POST",
-      body: JSON.stringify({ items: payload })
-    });
-
-    selected.clear();
-
-    // ✅ refresh immédiat (grid OU binder)
-    await loadCollection();
-
-    if (currentView() === "grid"){
-      applyFilters();
+  if (!isGrid){
+    await loadSetsForGame();
+    if (setSel.value){
+      await loadBinderSetCards();
     } else {
-      await loadSetsForGame();
-      if (setSel.value){
-        await loadBinderSetCards();
-      } else {
-        binderCards = [];
-      }
-      renderBinder();
+      binderCards = [];
     }
-
-    refreshSelUI();
-  }catch(e){
-    // silent
+    setBinderControlsVisible();
+    renderBinder();
+  } else {
+    applyFilters();
+    setBinderControlsVisible();
   }
-});
+}
 
-/* ===== Search/sort ===== */
 searchInput.addEventListener("input", () => {
   if (currentView() === "grid") applyFilters();
   else {
-    // en binder: si tu tapes, on repasse en grille
+    // en binder: si tu tapes, on repasse en grille (comportement simple)
     if (searchInput.value.trim()){
       viewSel.value = "grid";
       localStorage.setItem(VIEW_KEY, "grid");
@@ -1377,7 +1463,6 @@ searchInput.addEventListener("input", () => {
 });
 sortSelect.addEventListener("change", applyFilters);
 
-/* ===== Modal close ===== */
 modal.onclick = e => {
   if(e.target === modal){
     modal.classList.remove("open");
@@ -1391,39 +1476,6 @@ document.addEventListener("keydown", (e) => {
     modal.setAttribute("aria-hidden","true");
   }
 });
-
-/* ===== Boot ===== */
-async function boot(){
-  gameSel.value = currentGame();
-  viewSel.value = currentView();
-
-  const isGrid = currentView() === "grid";
-  setGridMode(isGrid);
-
-  await loadCollection();
-
-  if (!isGrid){
-    await loadSetsForGame();
-
-    // ré-applique le filtre si l'user avait déjà tapé
-    if (setSearch.value.trim()) filterSets();
-
-    if (setSel.value){
-      await loadBinderSetCards();
-    } else {
-      binderCards = [];
-    }
-
-    setBinderControlsVisible();
-    renderBinder();
-
-    // focus direct sur recherche set
-    setTimeout(() => setSearch.focus(), 0);
-  } else {
-    applyFilters();
-    setBinderControlsVisible();
-  }
-}
 
 boot();
 </script>
