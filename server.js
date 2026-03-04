@@ -237,6 +237,16 @@ async function initDb() {
   await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
   await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
 
+
+    // ✅ Binder fields (Pokémon)
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -352,6 +362,54 @@ async function fetchWithTimeout(url, ms = 20000) {
 }
 
 // =========================
+// BINDER CACHE (SETS + SET_CARDS)
+// =========================
+ // =========================
+// BINDER CACHE (SETS + SET_CARDS)
+// =========================
+const SETS_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
+const SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+
+let setsCache = { at: 0, list: [] };     // cache liste des sets
+const setCardsCache = new Map();         // setId -> { at, cards }
+
+async function getPokemonSetsCached() {
+  const now = Date.now();
+  if (setsCache.list.length && now - setsCache.at < SETS_TTL_MS) {
+    return setsCache.list;
+  }
+
+  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/sets", 20000);
+  if (!r.ok) throw new Error("TCGdex sets failed");
+
+  const list = await r.json().catch(() => []);
+  const clean = Array.isArray(list) ? list : [];
+
+  setsCache = { at: now, list: clean };
+  return clean;
+}
+
+async function getPokemonSetCardsCached(setId) {
+  const now = Date.now();
+  const cached = setCardsCache.get(setId);
+  if (cached?.cards?.length && now - cached.at < SET_CARDS_TTL_MS) {
+    return cached.cards;
+  }
+
+  const r = await fetchWithTimeout(
+    `https://api.tcgdex.net/v2/fr/sets/${encodeURIComponent(setId)}`,
+    20000
+  );
+  if (!r.ok) throw new Error("TCGdex set detail failed");
+
+  const data = await r.json().catch(() => null);
+  const cards = Array.isArray(data?.cards) ? data.cards : [];
+
+  setCardsCache.set(setId, { at: now, cards });
+  return cards;
+}
+
+// =========================
 // TCGDEX PERF: CACHE LIST + CACHE DETAILS
 // =========================
 const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000; // 6h
@@ -391,6 +449,7 @@ async function getCardDetailById(id) {
   cardDetailCache.set(id, { at: now, data });
   return data;
 }
+
 
 // =========================
 // LORCANA (LORCAST) ONLINE CACHE
@@ -692,8 +751,11 @@ async function drawCard(game) {
     console.log("🌐 source=TCGDEX (cached)");
 
     return {
+      cardId: c.id || pick.id,                // id global tcgdex
+      setId: c.set?.id || null,               // ex: "base1", "swsh3"...
+      localId: String(c.localId || ""),       // ex: "1", "136", "TG05"...
       name: c.name || pick.name || "Unknown",
-      set: (c.set && (c.set.name || c.set.id)) || "Unknown",
+      set: c.set?.name || c.set?.id || "Unknown",
       rarity: c.rarity || "",
       image: imageLow,
       imageHigh: imageHigh || null,
@@ -831,6 +893,7 @@ app.get("/api/me", auth, async (req, res) => {
 
 app.post("/api/open", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
+
   const game = getGame(req);
   const { rows } = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
   const money = rows[0]?.money ?? 0;
@@ -839,67 +902,112 @@ app.post("/api/open", auth, async (req, res) => {
     return res.status(400).json({ error: "Pas assez de Pokédollars" });
   }
 
+  // payer
   await pool.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
 
   let c;
   try {
     c = await drawCard(game);
-    } catch (e) {
+  } catch (e) {
     console.error("❌ drawCard failed:", { game, message: e?.message, stack: e?.stack });
     await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
     return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
-}
-
-      // ✅ XP SELL
+  }
 
   const grade = rollGrade();
   const mint = rollMintForGrade(grade);
   const now = Date.now();
 
-  // ✅ XP OPEN (avec grade)
+  // XP open
   const xpAdd = xpForOpen(grade);
   await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
-  const idKey = `${game}__${c.name}__${c.set}__${c.image}`;
+  // idKey stable pour pokemon
+  let idKey;
+  if (game === "pokemon") {
+    idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
+  } else {
+    idKey = `${game}__${c.name}__${c.set}__${c.image}`;
+  }
 
- await pool.query(
-  `INSERT INTO pulls (user_id, game, name, setName, image, imageHigh, grade, mint, at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-  [req.user.id, game, c.name, c.set, c.image, c.imageHigh || c.image, grade, mint, now]
-);
-
+  // log pull
   await pool.query(
-  `
-  INSERT INTO collection (user_id, idKey, game, name, setName, image, imageHigh, grade, mint, count, lastAt)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,$10)
-  ON CONFLICT (user_id, idKey)
-  DO UPDATE SET
-    count = collection.count + 1,
-    grade = GREATEST(collection.grade, EXCLUDED.grade),
-    mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-    imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
-    lastAt = EXCLUDED.lastAt
-  `,
-  [req.user.id, idKey, game, c.name, c.set, c.image, (c.imageHigh || c.image), grade, mint, now]
-);
+    `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [
+      req.user.id,
+      game,
+      c.cardId || null,
+      c.setId || null,
+      c.localId || null,
+      c.name,
+      c.set,
+      c.image,
+      c.imageHigh || c.image,
+      grade,
+      mint,
+      now,
+    ]
+  );
 
+  // upsert collection
+  await pool.query(
+    `
+    INSERT INTO collection
+      (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13)
+    ON CONFLICT (user_id, idKey)
+    DO UPDATE SET
+      count = collection.count + 1,
+      grade = GREATEST(collection.grade, EXCLUDED.grade),
+      mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+      imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+      lastAt = EXCLUDED.lastAt,
+      cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+      setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+      localId= COALESCE(collection.localId,EXCLUDED.localId)
+    `,
+    [
+      req.user.id,
+      idKey,
+      game,
+      c.cardId || null,
+      c.setId || null,
+      c.localId || null,
+      c.name,
+      c.set,
+      c.image,
+      c.imageHigh || c.image,
+      grade,
+      mint,
+      now,
+    ]
+  );
+
+  // money actuel
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-  res.json({
-  money: me.rows[0]?.money || 0,
-  card: {
-    game,                 // 👈 AJOUT
-    name: c.name,
-    set: c.set,
-    image: c.image,
-    imageHigh: c.imageHigh,
-    grade,
-    mint: Boolean(mint),
-  },
+  return res.json({
+    money: me.rows[0]?.money || 0,
+    xpAdd,
+    card: {
+      idKey,
+      game,
+      name: c.name,
+      set: c.set,
+      cardId: c.cardId || null,
+      setId: c.setId || null,
+      localId: c.localId || null,
+      image: c.image,
+      imageHigh: c.imageHigh || c.image,
+      grade,
+      mint: Boolean(mint),
+    },
+  });
 });
 
 
-});
 
 app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
@@ -907,8 +1015,8 @@ app.get("/api/collection", auth, async (req, res) => {
   const game = getGame(req);
 
   const items = await pool.query(
-  `SELECT idKey, game, name, setName, image, imageHigh, grade, mint, count, lastAt
-   FROM collection
+  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
+   FROM collection 
    WHERE user_id=$1 AND game=$2
    ORDER BY lastAt DESC`,
   [req.user.id, game]
@@ -923,6 +1031,9 @@ app.get("/api/collection", auth, async (req, res) => {
       game: x.game || game, 
       name: x.name,
       set: x.setname || x.setName,
+      cardId: x.cardid || x.cardId || null,
+      setId: x.setid || x.setId || null,
+      localId: x.localid || x.localId || null,
       image: x.image,
       imageHigh: x.imagehigh || x.imageHigh || null,
       grade: x.grade,
@@ -931,6 +1042,45 @@ app.get("/api/collection", auth, async (req, res) => {
       lastAt: Number(x.lastat || x.lastAt),
     })),
   });
+});
+
+app.get("/api/sets", auth, async (req, res) => {
+  const game = getGame(req);
+  if (game !== "pokemon") return res.json({ sets: [] });
+
+  try {
+    const list = await getPokemonSetsCached();
+    return res.json({
+      sets: list.map(s => ({ id: s.id, name: s.name }))
+    });
+  } catch (e) {
+    return res.status(502).json({ error: "TCGdex sets failed" });
+  }
+});
+
+app.get("/api/set_cards", auth, async (req, res) => {
+  const game = getGame(req);
+  if (game !== "pokemon") return res.json({ cards: [] });
+
+  const setId = String(req.query.setId || "").trim();
+  if (!setId) return res.status(400).json({ error: "Missing setId" });
+
+  try {
+    const cards = await getPokemonSetCardsCached(setId);
+
+    return res.json({
+      setId,
+      cards: cards.map(c => ({
+        cardId: c.id,
+        localId: String(c.localId || ""),
+        name: c.name || "",
+        image: normalizeImageField(c.image, "low", "webp"),
+        imageHigh: normalizeImageField(c.image, "high", "webp")
+      }))
+    });
+  } catch (e) {
+    return res.status(502).json({ error: "TCGdex set detail failed" });
+  }
 });
 
 app.get("/api/pulls", auth, async (req, res) => {

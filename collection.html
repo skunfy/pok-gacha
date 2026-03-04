@@ -84,6 +84,12 @@ button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
 button:active{ transform: translateY(0px) scale(.99); }
 button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
+.smallNote{
+  opacity:.7;
+  font-size:12px;
+  font-weight:900;
+}
+
 /* ===== Grid container ===== */
 .gridWrap{
   border-radius:16px;
@@ -98,6 +104,118 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   display:grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap:18px;
+}
+
+/* ===== Binder 4x4 ===== */
+.binderWrap{
+  display:none;
+  flex-direction:column;
+  gap:14px;
+}
+.binderWrap.on{ display:flex; }
+
+.binderGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap:14px;
+}
+@media (max-width: 900px){
+  .binderGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px){
+  .binderGrid{ grid-template-columns: repeat(1, minmax(0, 1fr)); }
+}
+
+.slot{
+  position:relative;
+  border-radius:16px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+  box-shadow: 0 16px 50px rgba(0,0,0,.25);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+  min-height: 340px;
+}
+.slot.empty{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border-style:dashed;
+  opacity:.85;
+}
+.slot:hover{
+  border-color: rgba(255,255,255,.18);
+}
+
+.slotImg{
+  height:240px;
+  border-radius:12px;
+  background: rgba(0,0,0,.25) center/contain no-repeat;
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  cursor:pointer;
+  transition: transform .16s ease;
+}
+.slot.empty .slotImg{
+  background:
+    radial-gradient(220px 120px at 40% 40%, rgba(255,255,255,.08), transparent 60%),
+    rgba(0,0,0,.18);
+  cursor:default;
+}
+.slot:hover .slotImg{ transform: scale(1.01); }
+.slot.empty:hover .slotImg{ transform:none; }
+
+.slotTitle{
+  font-weight:1000;
+  letter-spacing:.2px;
+  margin-top:2px;
+}
+.slotSub{
+  opacity:.75;
+  font-size:12px;
+  margin-top:-6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.slotMeta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:auto;
+}
+.pill{
+  font-size:11px;
+  font-weight:1000;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  opacity:.92;
+}
+.pill.mint{
+  border-color: rgba(255,80,80,.55);
+  background: rgba(255,80,80,.12);
+  color: rgba(255,120,120,.98);
+}
+
+.binderPager{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.12);
+}
+.binderPager .mid{
+  font-weight:1000;
+  opacity:.9;
+  text-align:center;
+  flex:1;
 }
 
 /* ===== Money icon ===== */
@@ -364,8 +482,16 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="pokemon">Pokémon</option>
         <option value="onepiece">One Piece</option>
         <option value="lorcana">Lorcana</option>
-
       </select>
+
+      <!-- ✅ MODE -->
+      <select id="viewSel" title="Affichage">
+        <option value="grid">Grille</option>
+        <option value="binder">Classeur 4×4</option>
+      </select>
+
+      <!-- ✅ FILTRE EXTENSION (binder Pokémon) -->
+      <select id="setSel" title="Extension (Binder Pokémon)" style="display:none; min-width: 220px;"></select>
 
       <input id="search" placeholder="Rechercher...">
 
@@ -386,7 +512,23 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   </div>
 
   <div class="gridWrap">
+    <!-- GRILLE (existante) -->
     <div class="grid" id="grid"></div>
+
+    <!-- BINDER (nouveau) -->
+    <div class="binderWrap" id="binderWrap">
+      <div class="binderPager" id="binderPager" style="display:none;">
+        <button id="prevPageBtn">◀</button>
+        <div class="mid" id="pageInfo">Page 1 / 1</div>
+        <button id="nextPageBtn">▶</button>
+      </div>
+
+      <div class="binderGrid" id="binderGrid"></div>
+
+      <div class="smallNote" id="binderHint" style="opacity:.65;">
+        Binder : Pokémon uniquement • Choisis une extension • Les cases vides sont les cartes non obtenues.
+      </div>
+    </div>
   </div>
 
 </div>
@@ -411,6 +553,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 <script>
 const TOKEN_KEY = "gacha_token_v1";
 const GAME_KEY  = "gacha_game_v1";
+const VIEW_KEY  = "gacha_view_v1";
+const SET_KEY   = "gacha_set_v1";
 
 const TOKEN = localStorage.getItem(TOKEN_KEY);
 if(!TOKEN) location.href="/login.html";
@@ -444,6 +588,15 @@ const grid = document.getElementById("grid");
 const searchInput = document.getElementById("search");
 const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
+const viewSel = document.getElementById("viewSel");
+const setSel = document.getElementById("setSel");
+
+const binderWrap = document.getElementById("binderWrap");
+const binderGrid = document.getElementById("binderGrid");
+const binderPager = document.getElementById("binderPager");
+const pageInfo = document.getElementById("pageInfo");
+const prevPageBtn = document.getElementById("prevPageBtn");
+const nextPageBtn = document.getElementById("nextPageBtn");
 
 const sellSelectedBtn = document.getElementById("sellSelectedBtn");
 const clearSelBtn = document.getElementById("clearSelBtn");
@@ -460,12 +613,43 @@ const zoomMint = document.getElementById("zoomMint");
 
 let allItems = [];
 
+// ===== Binder state =====
+let setsList = [];                 // /api/sets
+let binderCards = [];              // /api/set_cards (brief cards)
+let binderPage = 0;                // 0-based
+const BINDER_PAGE_SIZE = 16;
+
+function currentView(){
+  const v = String(localStorage.getItem(VIEW_KEY) || "grid").toLowerCase();
+  return (v === "binder") ? "binder" : "grid";
+}
+function currentSetId(){
+  return String(localStorage.getItem(SET_KEY) || "").trim();
+}
+
 gameSel.value = currentGame();
+viewSel.value = currentView();
+
 gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
   selected.clear();
   refreshSelUI();
-  await loadCollection();
+  await boot();
+});
+
+viewSel.addEventListener("change", async () => {
+  localStorage.setItem(VIEW_KEY, viewSel.value);
+  binderPage = 0;
+  selected.clear();
+  refreshSelUI();
+  await boot();
+});
+
+setSel.addEventListener("change", async () => {
+  localStorage.setItem(SET_KEY, setSel.value);
+  binderPage = 0;
+  await loadBinderSetCards();
+  renderBinder();
 });
 
 function tierFromGrade(g){
@@ -499,6 +683,28 @@ function refreshSelUI(){
   sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty})`;
 }
 
+function setGridMode(on){
+  grid.style.display = on ? "" : "none";
+  binderWrap.classList.toggle("on", !on);
+
+  // bulk sell uniquement en grille
+  sellSelectedBtn.style.display = on ? "" : "none";
+  clearSelBtn.style.display = on ? "" : "none";
+
+  // search/sort utiles en grille; en binder on garde search visible mais on le rend "soft"
+  sortSelect.style.display = on ? "" : "none";
+  searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
+}
+
+function setBinderControlsVisible(){
+  const isPokemon = currentGame() === "pokemon";
+  const isBinder = currentView() === "binder";
+
+  // setSel seulement si binder pokemon
+  setSel.style.display = (isBinder && isPokemon) ? "" : "none";
+  binderPager.style.display = (isBinder && isPokemon && binderCards.length) ? "" : "none";
+}
+
 clearSelBtn.addEventListener("click", () => {
   selected.clear();
   applyFilters();
@@ -527,7 +733,6 @@ async function loadCollection(){
   try{
     const data = await api("/api/collection");
     allItems = data.items || [];
-    applyFilters();
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
@@ -560,23 +765,13 @@ function applyFilters(){
 }
 
 function openZoom(x){
-  let img = x.image;
-
-  // Pokémon low -> high
-  if (currentGame() === "pokemon" && img && img.includes("/low.webp")) {
-    img = img.replace("/low.webp", "/high.webp");
-  }
-
-  // Lorcana low -> high
-  if (currentGame() === "lorcana" && img && img.includes("/low.webp")) {
-    img = img.replace("/low.webp", "/high.webp");
-  }
+  const img = x.imageHigh || toHighImage(x.image) || x.image;
 
   zoomImg.style.backgroundImage = `url('${img}')`;
   zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
-  zoomGrade.textContent = x.grade;
+  zoomGrade.textContent = (x.grade ?? "?");
 
-  zoomSlab.dataset.tier = tierFromGrade(x.grade);
+  zoomSlab.dataset.tier = tierFromGrade(Number(x.grade)||0);
   zoomSlab.dataset.mint = x.mint ? "1" : "0";
   zoomMint.style.display = x.mint ? "inline-flex" : "none";
 
@@ -592,17 +787,17 @@ function render(items){
 
     const g = (x.game || currentGame());
     const gameTag =
-    g === "onepiece" ? "🟥 One Piece" :
-    g === "lorcana" ? "🟦 Lorcana" :
-    "🟨 Pokémon";
+      g === "onepiece" ? "🟥 One Piece" :
+      g === "lorcana" ? "🟦 Lorcana" :
+      "🟨 Pokémon";
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 
     const wasSelected = selected.has(x.idKey);
     const selQty = selected.get(x.idKey) || 1;
 
-     const imgForCard =
+    const imgForCard =
       (currentGame() === "pokemon" || currentGame() === "lorcana")
-        ? toHighImage(x.image)
+        ? (x.imageHigh || toHighImage(x.image))
         : x.image;
 
     el.innerHTML=`
@@ -673,13 +868,13 @@ function render(items){
           method:"POST",
           body: JSON.stringify({ idKey: x.idKey, qty: 1 })
         });
-        // si cette carte était sélectionnée, on réduit éventuellement sa sélection
         if (selected.has(x.idKey)){
           const prev = selected.get(x.idKey) || 1;
           const next = Math.max(1, prev - 1);
           selected.set(x.idKey, next);
         }
         await loadCollection();
+        applyFilters();
       }catch{}
     };
 
@@ -687,7 +882,238 @@ function render(items){
   });
 }
 
-searchInput.addEventListener("input", applyFilters);
+// =========================
+// BINDER: sets + cards + pages + trous vides
+// =========================
+async function loadPokemonSets(){
+  try{
+    const data = await api("/api/sets");
+    setsList = data.sets || [];
+  }catch{
+    setsList = [];
+  }
+
+  // remplir select
+  setSel.innerHTML = "";
+  if (!setsList.length){
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = "Aucune extension (erreur API)";
+    setSel.appendChild(o);
+    return;
+  }
+
+  // option placeholder
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "Choisir une extension…";
+  setSel.appendChild(ph);
+
+  for (const s of setsList){
+    const o = document.createElement("option");
+    o.value = s.id;
+    o.textContent = s.name || s.id;
+    setSel.appendChild(o);
+  }
+
+  // restore last set if exists
+  const saved = currentSetId();
+  if (saved && setsList.some(s => s.id === saved)){
+    setSel.value = saved;
+  } else {
+    setSel.value = "";
+  }
+}
+
+async function loadBinderSetCards(){
+  binderCards = [];
+  const setId = setSel.value;
+  if (!setId) return;
+
+  try{
+    const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
+    binderCards = data.cards || [];
+  }catch{
+    binderCards = [];
+  }
+}
+
+function buildOwnedMapForSet(setId){
+  // key: cardId (tcgdex id)
+  const m = new Map();
+  for (const it of allItems){
+    if ((it.game || "pokemon") !== "pokemon") continue;
+    if ((it.setId || "") !== setId) continue;
+    if (it.cardId) m.set(it.cardId, it);
+  }
+  return m;
+}
+
+function renderBinder(){
+  const isPokemon = currentGame() === "pokemon";
+  const isBinder = currentView() === "binder";
+
+  setBinderControlsVisible();
+  binderGrid.innerHTML = "";
+
+  if (!isBinder){
+    return;
+  }
+
+  // binder uniquement pokemon
+  if (!isPokemon){
+    binderPager.style.display = "none";
+    binderGrid.innerHTML = `
+      <div style="opacity:.8; font-weight:900;">
+        Le mode Classeur 4×4 est dispo uniquement pour Pokémon (binder par extension).
+      </div>
+    `;
+    return;
+  }
+
+  const setId = setSel.value;
+  if (!setId){
+    binderPager.style.display = "none";
+    binderGrid.innerHTML = `
+      <div style="opacity:.8; font-weight:900;">
+        Choisis une extension pour afficher le classeur.
+      </div>
+    `;
+    return;
+  }
+
+  const total = binderCards.length;
+  const pages = Math.max(1, Math.ceil(total / BINDER_PAGE_SIZE));
+  binderPage = Math.max(0, Math.min(binderPage, pages - 1));
+
+  const start = binderPage * BINDER_PAGE_SIZE;
+  const slice = binderCards.slice(start, start + BINDER_PAGE_SIZE);
+
+  const owned = buildOwnedMapForSet(setId);
+
+  // pager
+  binderPager.style.display = total ? "" : "none";
+  pageInfo.textContent = `Page ${binderPage + 1} / ${pages}`;
+  prevPageBtn.disabled = binderPage === 0;
+  nextPageBtn.disabled = binderPage >= pages - 1;
+
+  // 16 slots fixes (si slice < 16, on complète avec vides)
+  const fixed = [];
+  for (let i = 0; i < BINDER_PAGE_SIZE; i++){
+    fixed.push(slice[i] || null);
+  }
+
+  fixed.forEach((cardBrief, idx) => {
+    const slot = document.createElement("div");
+    const isEmpty = !cardBrief;
+
+    // si on est "hors set" (dernière page), on met des slots vides "—"
+    if (isEmpty){
+      slot.className = "slot empty";
+      slot.innerHTML = `
+        <div class="slotImg"></div>
+        <div class="slotTitle">—</div>
+        <div class="slotSub">Emplacement vide</div>
+        <div class="slotMeta">
+          <span class="pill">#</span>
+          <span class="pill">0/0</span>
+        </div>
+      `;
+      binderGrid.appendChild(slot);
+      return;
+    }
+
+    const ownedItem = owned.get(cardBrief.cardId || cardBrief.id || "") || null;
+    const have = !!ownedItem;
+
+    const img = have
+      ? (ownedItem.imageHigh || toHighImage(ownedItem.image))
+      : (cardBrief.image || null);
+
+    slot.className = "slot" + (have ? "" : " empty");
+
+    const localId = String(cardBrief.localId || "");
+    const title = cardBrief.name || "Carte";
+    const sub = have ? `Obtenue ×${ownedItem.count || 1}` : `Manquante`;
+    const grade = have ? (ownedItem.grade ?? "?") : "—";
+    const mint = have ? !!ownedItem.mint : false;
+
+    slot.innerHTML = `
+      <div class="slotImg" style="${img ? `background-image:url('${img}')` : ""}"></div>
+      <div class="slotTitle">${title}</div>
+      <div class="slotSub">${sub}</div>
+      <div class="slotMeta">
+        <span class="pill">#${localId || "?"}</span>
+        <span class="pill">G${grade}</span>
+        ${mint ? `<span class="pill mint">MINT</span>` : ``}
+      </div>
+    `;
+
+    const imgEl = slot.querySelector(".slotImg");
+    if (have){
+      imgEl.onclick = () => openZoom({
+        ...ownedItem,
+        set: (ownedItem.set || ownedItem.setName || ""),
+      });
+    }
+
+    binderGrid.appendChild(slot);
+  });
+}
+
+prevPageBtn.addEventListener("click", () => {
+  binderPage = Math.max(0, binderPage - 1);
+  renderBinder();
+});
+nextPageBtn.addEventListener("click", () => {
+  binderPage = binderPage + 1;
+  renderBinder();
+});
+
+// =========================
+// Boot / sync UI
+// =========================
+async function boot(){
+  // synchro selects
+  gameSel.value = currentGame();
+  viewSel.value = currentView();
+
+  const isGrid = currentView() === "grid";
+  setGridMode(isGrid);
+
+  // load collection first (needed for binder ownership)
+  await loadCollection();
+
+  // binder init if pokemon
+  if (!isGrid && currentGame() === "pokemon"){
+    await loadPokemonSets();
+    if (setSel.value){
+      await loadBinderSetCards();
+    } else {
+      binderCards = [];
+    }
+    setBinderControlsVisible();
+    renderBinder();
+  } else {
+    // non binder => grid render
+    applyFilters();
+    setBinderControlsVisible();
+  }
+}
+
+searchInput.addEventListener("input", () => {
+  if (currentView() === "grid") applyFilters();
+  else {
+    // en binder: recherche dans TA collection (juste pour aider à retrouver vite)
+    // -> on repasse en grille automatiquement si tu tapes (comportement simple)
+    if (searchInput.value.trim()){
+      viewSel.value = "grid";
+      localStorage.setItem(VIEW_KEY, "grid");
+      setGridMode(true);
+      applyFilters();
+    }
+  }
+});
 sortSelect.addEventListener("change", applyFilters);
 
 modal.onclick = e => {
@@ -704,7 +1130,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-loadCollection();
+boot();
 </script>
 
 </body>
