@@ -466,6 +466,23 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 .gridWrap::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
 .gridWrap{ scrollbar-gutter: stable both-edges; }
+
+/* carte non possédée = grisée */
+.slot.missing{
+  opacity: .95;
+}
+
+.slot.missing .slotImg{
+  filter: grayscale(1) saturate(.2) brightness(.75) contrast(.95);
+}
+
+.slot.missing::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.28);
+  pointer-events:none;
+}
 </style>
 </head>
 
@@ -1030,7 +1047,7 @@ function renderBinder(){
       ? (ownedItem.imageHigh || toHighImage(ownedItem.image))
       : (cardBrief.image || null);
 
-    slot.className = "slot" + (have ? "" : " empty");
+    slot.className = "slot" + (have ? "" : " missing");
 
     const localId = String(cardBrief.localId || "");
     const title = cardBrief.name || "Carte";
