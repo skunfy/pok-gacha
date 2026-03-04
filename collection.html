@@ -505,7 +505,69 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   backdrop-filter: blur(6px);
   letter-spacing:.3px;
 }
-.slot.owned .missTag{ display:none; }
+
+.slot:not(.missing) .missTag{ display:none; }
+
+
+/* ✅ Progress (TCG Pocket vibe) */
+.progressBox{
+  min-width: 240px;
+  padding:10px 12px;
+  border-radius:14px;
+  background: rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.progressTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  margin-bottom:8px;
+}
+
+.progressTitle{
+  font-weight:1000;
+  font-size:12px;
+  opacity:.9;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 140px;
+}
+
+.progressNums{
+  font-weight:1000;
+  font-size:12px;
+  opacity:.9;
+  display:flex;
+  gap:8px;
+  align-items:baseline;
+  white-space:nowrap;
+}
+
+.progressPct{
+  opacity:.75;
+  font-weight:1000;
+}
+
+.progressBar{
+  height:10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+  overflow:hidden;
+}
+
+.progressFill{
+  height:100%;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(120,170,255,.95), rgba(255,120,220,.85));
+  width:0%;
+  transition: width .25s ease;
+}
 </style>
 </head>
 
@@ -571,6 +633,20 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     </div>
   </div>
 
+  <!-- ✅ Progress -->
+  <div class="progressBox" id="progressBox" title="Progression du set">
+    <div class="progressTop">
+      <div class="progressTitle" id="progTitle">Set</div>
+      <div class="progressNums">
+        <span id="progOwned">0</span>/<span id="progTotal">0</span>
+        <span class="progressPct" id="progPct">0%</span>
+      </div>
+    </div>
+    <div class="progressBar">
+      <div class="progressFill" id="progFill" style="width:0%"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- MODAL -->
@@ -630,6 +706,12 @@ const sortSelect = document.getElementById("sort");
 const gameSel = document.getElementById("gameSel");
 const viewSel = document.getElementById("viewSel");
 const setSel = document.getElementById("setSel");
+
+const progTitle = document.getElementById("progTitle");
+const progOwned = document.getElementById("progOwned");
+const progTotal = document.getElementById("progTotal");
+const progPct   = document.getElementById("progPct");
+const progFill  = document.getElementById("progFill");
 
 const binderWrap = document.getElementById("binderWrap");
 const binderGrid = document.getElementById("binderGrid");
@@ -1051,22 +1133,30 @@ function renderBinder(){
     if (isEmpty){
       slot.className = "slot empty";
       slot.innerHTML = `
-      ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
-
-      <div class="slotImg" style="${img ? `background-image:url('${img}')` : ""}"></div>
-
-      <div class="slotTitle">${title}</div>
-      <div class="slotSub">${sub}</div>
-
-      <div class="slotMeta">
-        <span class="pill">#${localId || "?"}</span>
-        <span class="pill">G${grade}</span>
-        ${mint ? `<span class="pill mint">MINT</span>` : ``}
-      </div>
+        <div class="slotImg"></div>
+        <div class="slotTitle">—</div>
+        <div class="slotSub">Hors set</div>
+        <div class="slotMeta">
+          <span class="pill">#—</span>
+          <span class="pill">G—</span>
+        </div>
       `;
-      binderGrid.appendChild(slot);
-      return;
-    }
+    binderGrid.appendChild(slot);
+    return;
+  }
+
+   // ✅ progress set (sur tout le set, pas juste la page)
+    const fullSet = binderCards.map(c => ({
+      ...c,
+      have: owned.has(c.cardId || c.id || "")
+    }));
+
+    const setLabel =
+      (setsList.find(s => s.id === setId)?.name) || setId || "Set";
+
+    updateProgress(fullSet, setLabel);
+
+    /////////////////////////////////////////////////
 
     const ownedItem = owned.get(cardBrief.cardId || cardBrief.id || "") || null;
     const have = !!ownedItem;
@@ -1084,6 +1174,8 @@ function renderBinder(){
     const mint = have ? !!ownedItem.mint : false;
 
     slot.innerHTML = `
+      ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
+
       <div class="slotImg" style="${img ? `background-image:url('${img}')` : ""}"></div>
       <div class="slotTitle">${title}</div>
       <div class="slotSub">${sub}</div>
@@ -1091,8 +1183,8 @@ function renderBinder(){
         <span class="pill">#${localId || "?"}</span>
         <span class="pill">G${grade}</span>
         ${mint ? `<span class="pill mint">MINT</span>` : ``}
-      </div>
-    `;
+     </div>
+  `;
 
     const imgEl = slot.querySelector(".slotImg");
     if (have){
@@ -1114,6 +1206,19 @@ nextPageBtn.addEventListener("click", () => {
   binderPage = binderPage + 1;
   renderBinder();
 });
+
+function updateProgress(cards, label = "Set"){
+  const total = cards.length;
+  const owned = cards.filter(c => c.have).length; // ✅ "have" = true si tu possèdes
+  const pct = total ? Math.round((owned / total) * 100) : 0;
+
+  progTitle.textContent = label;
+  progOwned.textContent = owned;
+  progTotal.textContent = total;
+  progPct.textContent = pct + "%";
+  progFill.style.width = pct + "%";
+}
+
 
 // =========================
 // Boot / sync UI
