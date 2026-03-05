@@ -1168,16 +1168,26 @@
   }
   .histTop b{ font-size:13px; letter-spacing:.4px; }
   .histTop small{ opacity:.7; font-size:12px; }
+
+  /* CROIX BOUTON HISTORIQUE A BOUGER SI TU AS BESOIN */ 
+  
   .histClose{
-    width:34px;
-    height:34px;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.14);
-    background:rgba(255,255,255,.06);
-    color:#fff;
-    font-weight:1000;
-    cursor:pointer;
-  }
+  width:34px;
+  height:34px;
+  padding:0;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:1000;
+  cursor:pointer;
+
+  display:grid;
+  place-items:center;
+
+  line-height:1;
+  font-size:18px; /* ajuste si tu veux */
+}
   .histClose:hover{ background:rgba(255,255,255,.10); }
 
   .logRow{
@@ -1222,6 +1232,26 @@
   .tag.v{color:var(--tV); border-color:rgba(190,120,255,.35)}
   .tag.g{color:var(--tG); border-color:rgba(255,210,110,.35)}
   .tag.m{color:var(--tM); border-color:rgba(255,80,80,.55)}
+
+
+  /* ✅ Le body peut rester overflow-x hidden,
+   MAIS on autorise le scroll horizontal dans le carousel */
+.carouselViewport{
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  touch-action: pan-x; /* ✅ important sur mobile */
+}
+.carouselViewport:active{ cursor: grabbing; }
+.carouselViewport::-webkit-scrollbar{ display:none; }
+
+/* ✅ éviter que le track "casse" */
+.carouselTrack{ user-select:none; }
+.slide{ user-select:none; -webkit-user-drag:none; }
+
+.carouselViewport.dragging{ cursor: grabbing; }
 
 </style>
 </head>
@@ -1941,8 +1971,6 @@
 
     // hover/touch pause
     carPaused = false;
-    carouselViewport.onmouseenter = () => (carPaused = true);
-    carouselViewport.onmouseleave = () => (carPaused = false);
 
     carouselViewport.ontouchstart = () => (carPaused = true);
     carouselViewport.ontouchend   = () => (carPaused = false);
@@ -1956,8 +1984,41 @@
       resumeT = setTimeout(()=> (carPaused = false), 900);
     };
 
-    startCarousel();
+    requestAnimationFrame(() => startCarousel());
   }
+// ---------- Carousel drag (mouse) ----------
+  (function enableCarouselDrag(){
+    const vp = carouselViewport;
+    if(!vp) return;
+
+    let isDown = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    vp.addEventListener("mousedown", (e) => {
+      isDown = true;
+      carPaused = true; // pause l’auto-scroll pendant le drag
+      vp.classList.add("dragging");
+      startX = e.pageX;
+      startScrollLeft = vp.scrollLeft;
+      e.preventDefault();
+    });
+
+    window.addEventListener("mouseup", () => {
+      if(!isDown) return;
+      isDown = false;
+      vp.classList.remove("dragging");
+      // reprise auto après un petit délai
+      setTimeout(()=> (carPaused = false), 500);
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if(!isDown) return;
+      const dx = e.pageX - startX;
+      vp.scrollLeft = startScrollLeft - dx;
+    });
+  })();
+
 
   // ---------- History modal ----------
   function openHistory(){
