@@ -387,19 +387,22 @@ let ptcgSetsCache = { at: 0, list: [] };
 const ptcgSetCardsCache = new Map(); // setId -> {at, cards}
 
 async function getPokemonSetsPTCG(){
-  const now = Date.now();
-  if (ptcgSetsCache.list.length && now - ptcgSetsCache.at < PTCG_SETS_TTL_MS){
-    return ptcgSetsCache.list;
-  }
+  const url = `${PTCG_BASE}/sets`;
+  const r = await fetchWithTimeout(url, 20000, {
+    ...ptcgHeaders(),
+    "Accept": "application/json",
+    "User-Agent": "gachax/1.0"
+  });
 
-  const r = await fetchWithTimeout(`${PTCG_BASE}/sets`, 20000, ptcgHeaders());
-  // ref docs: /v2/sets returns { data: [...] } :contentReference[oaicite:1]{index=1}
-  if (!r.ok) throw new Error("PTCG sets failed HTTP " + r.status);
+  if (!r.ok) {
+    const txt = await r.text().catch(()=> "");
+    console.log("PTCG SETS FAIL", r.status, url, txt.slice(0,200));
+    throw new Error("PTCG sets failed HTTP " + r.status);
+  }
 
   const json = await r.json().catch(()=> ({}));
   const list = Array.isArray(json?.data) ? json.data : [];
-
-  ptcgSetsCache = { at: now, list };
+  ptcgSetsCache = { at: Date.now(), list };
   return list;
 }
 
