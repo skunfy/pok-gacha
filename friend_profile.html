@@ -148,6 +148,13 @@ body{
   cursor:pointer;
 }
 
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
 .small{font-size:12px; opacity:.75}
 .msg{opacity:.85;font-size:13px}
 
@@ -347,7 +354,7 @@ button:active{ transform: translateY(0px) scale(.99); }
   </div>
 
   <div class="panel">
-    <b>Cartes favorites</b>
+    <b id="favTitle">Cartes favorites</b>
     <div class="grid" id="favGrid" style="margin-top:12px"></div>
   </div>
 
@@ -372,7 +379,7 @@ button:active{ transform: translateY(0px) scale(.99); }
 </div>
 
 <script>
-const TOKEN = localStorage.getItem("gacha_token_v1"); // peut être null, c'est OK (public)
+const TOKEN = localStorage.getItem("gacha_token_v1");
 
 /* ✅ API helper: met Authorization seulement si présent */
 async function api(path){
@@ -489,8 +496,21 @@ async function load(){
     return;
   }
 
-  // ✅ PUBLIC: profil via /api/profile_public/:friendCode
-  const data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+  let data = null;
+  let canSeeFavorites = false;
+
+  if (TOKEN) {
+    try {
+      data = await api("/api/profile/" + encodeURIComponent(friendCode));
+      canSeeFavorites = true;
+    } catch (e) {
+      data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+      canSeeFavorites = false;
+    }
+  } else {
+    data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+    canSeeFavorites = false;
+  }
 
   document.getElementById("name").textContent = data.name || "...";
   document.getElementById("code").textContent = "Code ami: " + (data.friendCode || "----");
@@ -516,21 +536,39 @@ async function load(){
   applyXpUi(data.xp || 0, data.level || 1);
   setAvatarGlowByLevel(data.level || 1);
 
-  // stats depuis route publique
+  // stats : route publique les a, route amis non
   if (data.stats){
     setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana);
   } else {
-    setStats(0,0,0);
+    try {
+      const publicData = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+      if (publicData.stats) {
+        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana);
+      } else {
+        setStats(0,0,0);
+      }
+    } catch {
+      setStats(0,0,0);
+    }
   }
 
-  // favoris: seulement si ton backend décide de les exposer (sinon "privés")
+  const favTitle = document.getElementById("favTitle");
   const grid = document.getElementById("favGrid");
   grid.innerHTML = "";
 
+  if (!canSeeFavorites) {
+    favTitle.textContent = "Cartes favorites";
+    grid.innerHTML = `<div class="small" style="opacity:.85;">
+      Les cartes favorites sont visibles uniquement pour les amis.
+    </div>`;
+    return;
+  }
+
   const favs = Array.isArray(data.favorites) ? data.favorites : [];
   if(!favs.length){
+    favTitle.textContent = "Cartes favorites";
     grid.innerHTML = `<div class="small" style="opacity:.85;">
-      Aucune carte favorite publique (ou favoris privés).
+      Aucune carte favorite.
     </div>`;
     return;
   }
