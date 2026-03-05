@@ -359,8 +359,15 @@ async function fetchWithTimeout(url, ms = 20000, extraHeaders = null) {
   try {
     return await fetch(url, {
       signal: controller.signal,
-      headers: { ...(extraHeaders || {}) }
+      headers: { ...(extraHeaders || {}) },
     });
+  } catch (e) {
+    if (e?.name === "AbortError") {
+      console.log("⏱️ FETCH TIMEOUT", ms, "ms ->", url);
+    } else {
+      console.log("🌐 FETCH ERROR", url, e?.message);
+    }
+    throw e;
   } finally {
     clearTimeout(id);
   }
@@ -369,16 +376,21 @@ async function fetchWithTimeout(url, ms = 20000, extraHeaders = null) {
 // =========================
 // BINDER CACHE (SETS + SET_CARDS)
 // =========================
-
+// =========================
 // POKEMONTCG.IO (v2) CACHE
 // =========================
 const PTCG_BASE = "https://api.pokemontcg.io/v2";
 const PTCG_KEY = String(process.env.POKEMONTCG_API_KEY || "");
 
 function ptcgHeaders(){
-  // clé optionnelle mais vivement recommandée (rate limit)
-  return PTCG_KEY ? { "X-Api-Key": PTCG_KEY } : {};
+  return {
+    ...(PTCG_KEY ? { "X-Api-Key": PTCG_KEY } : {}),
+    "Accept": "application/json",
+    "User-Agent": "gachax/1.0"
+  };
 }
+
+const PTCG_TIMEOUT_MS = 45000;
 
 const PTCG_SETS_TTL_MS = 6 * 60 * 60 * 1000;
 const PTCG_SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000;
@@ -386,57 +398,81 @@ const PTCG_SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000;
 let ptcgSetsCache = { at: 0, list: [] };
 const ptcgSetCardsCache = new Map(); // setId -> {at, cards}
 
+// =========================
+// GET POKEMON SETS
+// =========================
 async function getPokemonSetsPTCG(){
-  const url = `${PTCG_BASE}/sets`;
-  const r = await fetchWithTimeout(url, 20000, {
-    ...ptcgHeaders(),
-    "Accept": "application/json",
-    "User-Agent": "gachax/1.0"
-  });
+  const now = Date.now();
 
-  if (!r.ok) {
+  if (ptcgSetsCache.list.length && now - ptcgSetsCache.at < PTCG_SETS_TTL_MS){
+    return ptcgSetsCache.list;
+  }
+
+  const url = `${PTCG_BASE}/sets`;
+
+  const r = await fetchWithTimeout(url, PTCG_TIMEOUT_MS, ptcgHeaders());
+
+  if (!r.ok){
     const txt = await r.text().catch(()=> "");
-    console.log("PTCG SETS FAIL", r.status, url, txt.slice(0,200));
+    console.log("❌ PTCG SETS FAIL", r.status, url, txt.slice(0,200));
     throw new Error("PTCG sets failed HTTP " + r.status);
   }
 
   const json = await r.json().catch(()=> ({}));
   const list = Array.isArray(json?.data) ? json.data : [];
-  ptcgSetsCache = { at: Date.now(), list };
+
+  ptcgSetsCache = { at: now, list };
+
+  console.log(`🌐 cached PTCG sets: ${list.length}`);
+
   return list;
 }
 
+// =========================
+// GET CARDS FOR SET
+// =========================
 async function getPokemonSetCardsPTCG(setId){
   const now = Date.now();
+
   const cached = ptcgSetCardsCache.get(setId);
   if (cached?.cards?.length && now - cached.at < PTCG_SET_CARDS_TTL_MS){
     return cached.cards;
   }
 
-  // pokemontcg.io search syntax uses q=... and returns { data: [...] } :contentReference[oaicite:2]{index=2}
-  // Query: set.id:<setId>
-  // On boucle pages au cas où un set > 250 cartes.
   const pageSize = 250;
   let page = 1;
   let all = [];
 
   while (true){
-    const url = `${PTCG_BASE}/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=${pageSize}`;
-    const r = await fetchWithTimeout(url, 20000, ptcgHeaders());
-    if (!r.ok) throw new Error("PTCG set cards failed HTTP " + r.status);
+
+    const url =
+      `${PTCG_BASE}/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=${pageSize}`;
+
+    const r = await fetchWithTimeout(url, PTCG_TIMEOUT_MS, ptcgHeaders());
+
+    if (!r.ok){
+      const txt = await r.text().catch(()=> "");
+      console.log("❌ PTCG SET CARDS FAIL", r.status, url, txt.slice(0,200));
+      throw new Error("PTCG set cards failed HTTP " + r.status);
+    }
 
     const json = await r.json().catch(()=> ({}));
     const chunk = Array.isArray(json?.data) ? json.data : [];
+
     all = all.concat(chunk);
 
-    // pagination info in body (page/pageSize/count/totalCount) :contentReference[oaicite:3]{index=3}
     const count = Number(json?.count || chunk.length || 0);
+
     if (!count || count < pageSize) break;
+
     page++;
     if (page > 30) break; // sécurité
   }
 
   ptcgSetCardsCache.set(setId, { at: now, cards: all });
+
+  console.log(`🌐 cached PTCG cards for ${setId}: ${all.length}`);
+
   return all;
 }
 
