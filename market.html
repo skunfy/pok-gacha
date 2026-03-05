@@ -419,6 +419,116 @@ button:disabled{opacity:.55; cursor:not-allowed}
   background: rgba(255,255,255,.08);
 }
 .note{font-size:12px; color: var(--muted)}
+
+/* =========================================
+   PATCH: enlever l’effet "grillage" (borders)
+   ========================================= */
+
+/* Variables plus soft */
+:root{
+  --line: rgba(255,255,255,.07);     /* au lieu de .12/.15 */
+  --line2: rgba(255,255,255,.10);
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.045);
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --inset: inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* Panels et topbar: bordure + douce et ombre */
+.topbar, .panel{
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow), var(--inset);
+}
+
+/* Cards: retire la bordure trop présente, préfère un shadow */
+.cardBox, .itemRow{
+  border: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.035));
+  box-shadow: 0 10px 26px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+/* Hover: au lieu de montrer une bordure claire, on fait un glow très soft */
+.cardBox:hover, .itemRow:hover, .clickable:hover{
+  outline: none;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.38),
+    inset 0 1px 0 rgba(255,255,255,.055);
+  border-color: rgba(255,255,255,.10);
+}
+
+/* Pills: c’est souvent elles qui "quadrillent" => bordure + légère et fond + homogène */
+.pill{
+  border: 1px solid rgba(255,255,255,.07);
+  background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.12));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
+}
+
+/* Inputs/select: bordure plus discrète, focus propre */
+input, select{
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(15,17,26,.88), rgba(15,17,26,.72));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+input:focus, select:focus{
+  outline: none;
+  border-color: rgba(130,170,255,.35);
+  box-shadow:
+    0 0 0 3px rgba(80,130,255,.12),
+    inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* Boutons: au lieu d’une bordure claire, on fait “verre + glow au hover” */
+button{
+  border: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+button:hover{
+  border-color: rgba(255,255,255,.13);
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+button:active{
+  transform: translateY(1px);
+}
+
+/* =========================================
+   SEGMENTED CONTROLS (anti "borders collées")
+   -> si tu as des groupes de boutons collés
+   ========================================= */
+
+/* Exemple de classe à utiliser: <div class="seg"> <button> - </button> <span>1</span> <button>+</button> </div> */
+.seg{
+  display:inline-flex;
+  align-items:center;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);   /* UNE seule bordure externe */
+  overflow:hidden;
+  background: rgba(0,0,0,.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.seg > *{
+  border:0 !important;              /* supprime les bordures internes */
+  border-radius:0 !important;
+  background: transparent !important;
+  box-shadow:none !important;
+}
+.seg > * + *{
+  border-left: 1px solid rgba(255,255,255,.06); /* séparateur ultra light */
+}
+.seg button{
+  padding:8px 10px;
+}
+.seg span, .seg input{
+  padding:8px 12px;
+  font-weight:900;
+  min-width: 40px;
+  text-align:center;
+}
+
+/* Si tu as des rows avec plein de pills collées: mets plus d’air */
+.row{ gap:8px; }
 </style>
 </head>
 
