@@ -1816,6 +1816,7 @@
   }
 
   // ---------- GAME / UI ----------
+  let carouselListenersBound = false;
   let dragging = false;
   let zoomDragging = false;
 
@@ -1908,8 +1909,10 @@
   }
 
   // ---------- Carousel auto-scroll (infinite loop) ----------
+  // ---------- Carousel auto-scroll (infinite loop) ----------
   let carRAF = null;
   let carPaused = false;
+  let autoScrolling = false;          // ✅ global
 
   function stopCarousel(){
     if(carRAF) cancelAnimationFrame(carRAF);
@@ -1926,7 +1929,7 @@
     const half = tr.scrollWidth / 2;
     if(!half || half < 10) return;
 
-    const speed = 0.35; // px per frame (subtle)
+    const speed = 1.0; // px per frame (subtle)
 
     const step = () => {
       if (!carPaused) {
@@ -1946,7 +1949,7 @@
 
     carouselTrack.innerHTML = "";
 
-    const base = (pulls || []).slice(0, 10); // 10 derniers
+    const base = (pulls || []).slice(0, 12); // 12 derniers
     if(!base.length){
       // petit placeholder si vide
       const empty = document.createElement("div");
@@ -1970,24 +1973,26 @@
     carouselViewport.scrollLeft = 0;
 
     // hover/touch pause
-    carPaused = false;
+    // hover/touch/scroll pause (bind une seule fois)
+  carPaused = false;
+
+  if (!carouselListenersBound) {
+    carouselListenersBound = true;
 
     carouselViewport.ontouchstart = () => (carPaused = true);
     carouselViewport.ontouchend   = () => (carPaused = false);
     carouselViewport.ontouchcancel= () => (carPaused = false);
 
-    // user scroll pauses for a moment then resumes
     let resumeT = null;
-    let autoScrolling = false;
-
     carouselViewport.addEventListener("scroll", () => {
       if (autoScrolling) return; // ✅ ignore scroll events caused by auto-scroll
       carPaused = true;
-      if (resumeT) clearTimeout(resumeT);
+      clearTimeout(resumeT);
       resumeT = setTimeout(() => (carPaused = false), 900);
     });
-    requestAnimationFrame(() => startCarousel());
   }
+
+requestAnimationFrame(() => startCarousel());
 // ---------- Carousel drag (mouse) ----------
   (function enableCarouselDrag(){
     const vp = carouselViewport;
