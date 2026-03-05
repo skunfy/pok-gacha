@@ -369,50 +369,6 @@ async function fetchWithTimeout(url, ms = 20000, extraHeaders = null) {
 // =========================
 // BINDER CACHE (SETS + SET_CARDS)
 // =========================
- // =========================
-// BINDER CACHE (SETS + SET_CARDS)
-// =========================
-const SETS_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
-const SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
-
-let setsCache = { at: 0, list: [] };     // cache liste des sets
-const setCardsCache = new Map();         // setId -> { at, cards }
-
-async function getPokemonSetsCached() {
-  const now = Date.now();
-  if (setsCache.list.length && now - setsCache.at < SETS_TTL_MS) {
-    return setsCache.list;
-  }
-
-  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/sets", 20000);
-  if (!r.ok) throw new Error("TCGdex sets failed");
-
-  const list = await r.json().catch(() => []);
-  const clean = Array.isArray(list) ? list : [];
-
-  setsCache = { at: now, list: clean };
-  return clean;
-}
-
-async function getPokemonSetCardsCached(setId) {
-  const now = Date.now();
-  const cached = setCardsCache.get(setId);
-  if (cached?.cards?.length && now - cached.at < SET_CARDS_TTL_MS) {
-    return cached.cards;
-  }
-
-  const r = await fetchWithTimeout(
-    `https://api.tcgdex.net/v2/fr/sets/${encodeURIComponent(setId)}`,
-    20000
-  );
-  if (!r.ok) throw new Error("TCGdex set detail failed");
-
-  const data = await r.json().catch(() => null);
-  const cards = Array.isArray(data?.cards) ? data.cards : [];
-
-  setCardsCache.set(setId, { at: now, cards });
-  return cards;
-}
 
 // POKEMONTCG.IO (v2) CACHE
 // =========================
