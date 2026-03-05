@@ -12,7 +12,6 @@
       --bg2:#121826;
       --text:#ffffff;
       --muted: rgba(255,255,255,.72);
-      --soft: rgba(255,255,255,.10);
       --soft2: rgba(255,255,255,.16);
       --shadow: 0 18px 60px rgba(0,0,0,.55);
       --radius: 22px;
@@ -33,7 +32,7 @@
       color: var(--text);
       display: grid;
       place-items: center;
-      min-height: 100dvh; /* mieux que 100vh sur mobile */
+      min-height: 100dvh;
       padding: 24px;
     }
 
@@ -49,55 +48,11 @@
     }
 
     .sub {
-      margin: 0 auto 28px;
+      margin: 0 auto 26px;
       max-width: 720px;
       color: var(--muted);
       font-size: 0.98rem;
       line-height: 1.45;
-    }
-
-    .topbar{
-      display:flex;
-      gap:12px;
-      justify-content:center;
-      align-items:center;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 10px 14px;
-      border: 1px solid var(--soft2);
-      background: rgba(0,0,0,.18);
-      border-radius: 999px;
-      color: var(--muted);
-      font-size:.92rem;
-      backdrop-filter: blur(6px);
-    }
-
-    .btn{
-      appearance:none;
-      border: 1px solid var(--soft2);
-      background: rgba(255,255,255,.08);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-weight: 700;
-      cursor:pointer;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
-    }
-    .btn:hover{ background: rgba(255,255,255,.12) }
-    .btn:active{ transform: translateY(1px) }
-
-    .btnPrimary{
-      border-color: rgba(125,211,252,.55);
-      background: rgba(125,211,252,.18);
-    }
-    .btnPrimary:hover{
-      background: rgba(125,211,252,.24);
     }
 
     .games {
@@ -128,9 +83,9 @@
       align-items:center;
       justify-content:center;
       min-height: 230px;
+      background: transparent;
     }
 
-    /* hover uniquement si le device supporte hover */
     @media (hover:hover){
       .card:hover {
         transform: translateY(-4px) scale(1.01);
@@ -192,28 +147,18 @@
       opacity: 0.65;
     }
 
-    /* Respect motion preferences */
     @media (prefers-reduced-motion: reduce){
-      .card, .gameLogo, .btn{ transition: none !important; }
+      .card, .gameLogo{ transition: none !important; }
     }
   </style>
 </head>
+
 <body>
   <main class="container" aria-label="Sélection du jeu">
     <h1>Choisis ton TCG</h1>
     <p class="sub">
-      Sélectionne un jeu pour ouvrir des packs, collectionner, vendre et acheter au marché.
+      Clique sur un jeu pour ouvrir des cartes, collectionner, vendre et acheter au marché.
     </p>
-
-    <div class="topbar">
-      <div class="pill" id="statusPill">Aucun jeu sélectionné</div>
-      <button class="btn btnPrimary" id="continueBtn" type="button" style="display:none">
-        Continuer
-      </button>
-      <button class="btn" id="resetBtn" type="button" style="display:none">
-        Réinitialiser
-      </button>
-    </div>
 
     <section class="games" aria-label="Jeux disponibles">
       <button class="card pokemon" data-game="pokemon" type="button" aria-label="Choisir Pokémon">
@@ -248,76 +193,34 @@
       return "pokemon";
     }
 
-    function getSelected(){
-      const g = localStorage.getItem(GAME_KEY);
-      return g ? normalizeGame(g) : "";
-    }
-
-    function labelFor(g){
-      if (g === "onepiece") return "One Piece";
-      if (g === "lorcana") return "Lorcana";
-      if (g === "pokemon") return "Pokémon";
-      return "";
-    }
-
-    function updateUI(){
-      const selected = getSelected();
-      const pill = document.getElementById("statusPill");
-      const cont = document.getElementById("continueBtn");
-      const reset = document.getElementById("resetBtn");
-
+    function updateSelectedVisual(){
+      const selected = normalizeGame(localStorage.getItem(GAME_KEY) || "");
       document.querySelectorAll(".card").forEach(el=>{
         el.classList.toggle("selected", el.dataset.game === selected);
       });
-
-      if (selected){
-        pill.textContent = `Jeu sélectionné : ${labelFor(selected)}`;
-        cont.style.display = "inline-flex";
-        reset.style.display = "inline-flex";
-      } else {
-        pill.textContent = "Aucun jeu sélectionné";
-        cont.style.display = "none";
-        reset.style.display = "none";
-      }
     }
 
     function goGame(game){
       const g = normalizeGame(game);
       localStorage.setItem(GAME_KEY, g);
+      updateSelectedVisual();
 
-      // Redirection vers ta page gacha.
-      // Tu peux remplacer "/" par "/index.html" si ton app est servie autrement.
-      const primary = "/";
-      const fallback = "/index.html";
+      // ✅ redirige vers ta page gacha (comme avant)
+      window.location.href = "/";
 
-      // navigation "propre"
-      window.location.assign(primary);
-
-      // fallback si route différente / build différent
+      // fallback si "/" n'existe pas
       setTimeout(() => {
-        // si on est toujours sur la home, on tente index.html
         if (document.visibilityState === "visible") {
-          window.location.assign(fallback);
+          window.location.href = "/index.html";
         }
-      }, 450);
+      }, 400);
     }
 
-    // Wire events
     document.querySelectorAll(".card").forEach(btn=>{
       btn.addEventListener("click", () => goGame(btn.dataset.game));
     });
 
-    document.getElementById("continueBtn").addEventListener("click", () => {
-      const g = getSelected();
-      if (g) goGame(g);
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      localStorage.removeItem(GAME_KEY);
-      updateUI();
-    });
-
-    updateUI();
+    updateSelectedVisual();
   </script>
 </body>
 </html>
