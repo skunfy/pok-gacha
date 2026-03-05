@@ -69,125 +69,112 @@
     padding-top: calc(12px + env(safe-area-inset-top));
   }
 
-  /* ===== Mini profile (avatar + lvl) ===== */
   /* ===== MINI PROFILE (avatar + lvl) — FIX ===== */
-
-.miniProfileLink{
-  position:relative;
-  width:50px;
-  height:50px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
-  padding:0;
-  text-decoration:none;
-
-  /* ✅ on enlève la “capsule” */
-  background:transparent;
-  border:none;
-  backdrop-filter:none;
-
-  border-radius:18px;
-  cursor:pointer;
-
-  transition: transform .12s ease;
-}
-
-.miniProfileLink:hover{
-  transform: translateY(-1px);
-}
-.miniProfileLink:active{
-  transform: translateY(0px) scale(.98);
-}
-
-/* ✅ L’AVATAR devient le vrai “cadre” (plein, pas contain) */
-.miniAvatar{
-  --glow: rgba(120,170,255,.35);
-  --glow2: rgba(190,120,255,.35);
-
-  width:100%;
-  height:100%;
-  display:block;
-  border-radius:18px;
-  overflow:hidden;
-
-  background-position:center;
-  background-repeat:no-repeat;
-  background-size:cover; /* ✅ remplit le carré */
-
-  border:1px solid rgba(255,255,255,.18);
-  background-color: rgba(0,0,0,.25);
-
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.10),
-    0 0 26px var(--glow);
-
-  position:relative;
-}
-
-/* glow secondaire dynamique */
-.miniAvatar::after{
-  content:"";
-  position:absolute;
-  inset:-3px;
-  border-radius:20px;
-  pointer-events:none;
-
-  background:
-    radial-gradient(circle at 30% 30%, var(--glow), transparent 60%),
-    radial-gradient(circle at 70% 70%, var(--glow2), transparent 60%);
-
-  filter: blur(10px);
-  opacity:.75;
-}
-
-/* BULLE LVL */
-.lvlBubble{
-  position:absolute;
-  left:-8px;
-  bottom:-8px;
-
-  min-width:26px;
-  height:26px;
-  padding:0 7px;
-  border-radius:999px;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  font-size:13px;
-  font-weight:1000;
-  color:#fff;
-
-  background: linear-gradient(145deg, rgba(0,0,0,.85), rgba(0,0,0,.65));
-  border:1px solid rgba(255,255,255,.25);
-
-  box-shadow:
-    0 6px 18px rgba(0,0,0,.55),
-    0 0 12px rgba(255,255,255,.15);
-}
-
-/* MOBILE */
-@media (max-width:520px){
   .miniProfileLink{
-    width:46px;
-    height:46px; /* ✅ carré */
+    position:relative;
+    width:50px;
+    height:50px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 auto;
+    padding:0;
+    text-decoration:none;
+
+    /* ✅ on enlève la “capsule” */
+    background:transparent;
+    border:none;
+    backdrop-filter:none;
+
+    border-radius:18px;
+    cursor:pointer;
+
+    transition: transform .12s ease;
   }
 
+  .miniProfileLink:hover{ transform: translateY(-1px); }
+  .miniProfileLink:active{ transform: translateY(0px) scale(.98); }
+
+  /* ✅ L’AVATAR devient le vrai “cadre” (plein, pas contain) */
   .miniAvatar{
-    border-radius:16px;
+    --glow: rgba(120,170,255,.35);
+    --glow2: rgba(190,120,255,.35);
+
+    width:100%;
+    height:100%;
+    display:block;
+    border-radius:18px;
+    overflow:hidden;
+
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:cover; /* ✅ remplit le carré */
+
+    border:1px solid rgba(255,255,255,.18);
+    background-color: rgba(0,0,0,.25);
+
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.10),
+      0 0 26px var(--glow);
+
+    position:relative;
   }
 
-  .lvlBubble{
-    min-width:22px;
-    height:22px;
-    font-size:11px;
-    left:-7px;
-    bottom:-7px;
+  /* glow secondaire dynamique */
+  .miniAvatar::after{
+    content:"";
+    position:absolute;
+    inset:-3px;
+    border-radius:20px;
+    pointer-events:none;
+
+    background:
+      radial-gradient(circle at 30% 30%, var(--glow), transparent 60%),
+      radial-gradient(circle at 70% 70%, var(--glow2), transparent 60%);
+
+    filter: blur(10px);
+    opacity:.75;
   }
-}
+
+  /* BULLE LVL */
+  .lvlBubble{
+    position:absolute;
+    left:-8px;
+    bottom:-8px;
+
+    min-width:26px;
+    height:26px;
+    padding:0 7px;
+    border-radius:999px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:13px;
+    font-weight:1000;
+    color:#fff;
+
+    background: linear-gradient(145deg, rgba(0,0,0,.85), rgba(0,0,0,.65));
+    border:1px solid rgba(255,255,255,.25);
+
+    box-shadow:
+      0 6px 18px rgba(0,0,0,.55),
+      0 0 12px rgba(255,255,255,.15);
+  }
+
+  /* MOBILE */
+  @media (max-width:520px){
+    .miniProfileLink{ width:46px; height:46px; }
+    .miniAvatar{ border-radius:16px; }
+    .lvlBubble{
+      min-width:22px;
+      height:22px;
+      font-size:11px;
+      left:-7px;
+      bottom:-7px;
+    }
+  }
 
   /* Logo dans la topbar */
   .cornerLogo{
@@ -447,60 +434,6 @@
     75%{transform:translateZ(0) translateX(-1px)}
   }
 
-  /* ===== Log ===== */
-  .logWrap{
-    width:100%;
-    max-width:980px;
-    border-radius:18px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    backdrop-filter: blur(10px);
-    padding:10px;
-  }
-  .logTitle{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px 6px}
-  .logTitle b{font-size:13px;letter-spacing:.4px}
-  .logTitle small{opacity:.7}
-  .logRow{
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap:10px;
-    max-height:240px;
-    overflow:auto;
-    padding-right:4px;
-  }
-  .pill{
-    display:flex; gap:10px; align-items:center;
-    font-size:12px; opacity:.92;
-    border:1px solid rgba(255,255,255,.12);
-    padding:8px 10px; border-radius:14px;
-    background:rgba(255,255,255,.05);
-    cursor:pointer;
-    transition: transform .12s ease, background .12s ease;
-  }
-  .pill:hover{background:rgba(255,255,255,.08); transform: translateY(-1px)}
-  .thumb{
-    width:34px;height:46px;border-radius:8px;
-    background: transparent center/cover no-repeat;
-    border:1px solid rgba(255,255,255,.12);
-    flex:0 0 auto;
-  }
-  .pill .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .pill .meta .line1{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .pill .meta .line2{opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .tag{
-    margin-left:auto;
-    font-weight:900;
-    padding:4px 8px; border-radius:999px;
-    border:1px solid rgba(255,255,255,.16);
-    background:rgba(0,0,0,.18);
-    white-space:nowrap;
-  }
-  .tag.w{color:var(--tW); border-color:rgba(255,255,255,.28)}
-  .tag.b{color:var(--tB); border-color:rgba(120,170,255,.35)}
-  .tag.v{color:var(--tV); border-color:rgba(190,120,255,.35)}
-  .tag.g{color:var(--tG); border-color:rgba(255,210,110,.35)}
-  .tag.m{color:var(--tM); border-color:rgba(255,80,80,.55)}
-
   /* ===== Modal zoom ===== */
   .modal{
     position:fixed; inset:0;
@@ -579,11 +512,8 @@
   /* ===== Profile dropdown (OPTION 1) ===== */
   .profileWrap{ position:relative; display:inline-block; }
 
- /* marge profil friend*/
-  .profileWrap{
-  margin-left: 120px; /* 👈 ajuste 8–16px selon ton goût */
-}
-
+  /* marge profil friend*/
+  .profileWrap{ margin-left: 120px; }
 
   .profileMenu{
     position:absolute;
@@ -680,7 +610,6 @@
     border: 2px solid rgba(0,0,0,.25);
   }
   *::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.28); }
-  .logRow, .notifList{ scrollbar-gutter: stable both-edges; }
 
   /* ===== Game Picker ===== */
   .gameModal{
@@ -815,18 +744,13 @@
     text-align:center;
   }
 
-  /* Mobile (si tu as ton bloc @media 420px) */
+  /* Mobile */
   @media (max-width:420px){
-    .cardPlaceholder{
-      width:240px;
-      height:320px;
-    }
+    .cardPlaceholder{ width:240px; height:320px; }
     .cardPlaceholder img{ width:120px; }
   }
 
   /* ICONE PROFILE LOGGOUT ET NOTIF LA ZONE */
-
-  /* bloc gauche (icone + texte) */
   .profileItem .itemLeft{
     display:flex;
     align-items:center;
@@ -834,7 +758,6 @@
     min-width:0;
   }
 
-  /* icones PNG */
   .profileItem .menuIcon{
     width:18px;
     height:18px;
@@ -844,25 +767,21 @@
     filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
   }
 
-  /* optionnel : un peu plus petit sur mobile */
   @media (max-width:520px){
-    .profileItem .menuIcon{
-      width:17px;
-      height:17px;
-    }
+    .profileItem .menuIcon{ width:17px; height:17px; }
   }
 
   .moneyIcon{
-  width:30px;
-  height:30px;
-  object-fit:contain;
-  display:inline-block;
-  vertical-align:-10px; /* aligne mieux avec le texte */
-  margin:0 2px;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
-}
+    width:30px;
+    height:30px;
+    object-fit:contain;
+    display:inline-block;
+    vertical-align:-10px;
+    margin:0 2px;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  }
 
-    /* ===== REVEAL FX (whaou) ===== */
+  /* ===== REVEAL FX (whaou) ===== */
   .fxOverlay{
     position:fixed;
     inset:0;
@@ -871,7 +790,6 @@
     opacity:0;
     transition: opacity .18s ease;
   }
-
   .fxOverlay.on{ opacity:1; }
 
   .fxVignette{
@@ -884,10 +802,7 @@
     animation: fxDim .35s ease forwards;
   }
 
-  @keyframes fxDim{
-    from{opacity:0}
-    to{opacity:1}
-  }
+  @keyframes fxDim{ from{opacity:0} to{opacity:1} }
 
   .fxFlash{
     position:absolute; inset:-20%;
@@ -896,9 +811,7 @@
     transform: scale(.95);
   }
 
-  .fxOverlay.reveal .fxFlash{
-    animation: fxFlash .42s ease;
-  }
+  .fxOverlay.reveal .fxFlash{ animation: fxFlash .42s ease; }
 
   @keyframes fxFlash{
     0%{opacity:0; transform:scale(.95)}
@@ -928,9 +841,7 @@
     filter: blur(0.5px);
   }
 
-  .fxOverlay.reveal .fxRing{
-    animation: fxRing 1.05s cubic-bezier(.2,.9,.2,1) forwards;
-  }
+  .fxOverlay.reveal .fxRing{ animation: fxRing 1.05s cubic-bezier(.2,.9,.2,1) forwards; }
 
   @keyframes fxRing{
     0%{opacity:0; transform:translate(-50%,-50%) scale(.70) rotate(-10deg)}
@@ -938,7 +849,6 @@
     100%{opacity:0; transform:translate(-50%,-50%) scale(1.18) rotate(35deg)}
   }
 
-  /* particles */
   .fxParticles{ position:absolute; inset:0; }
   .fxP{
     position:absolute;
@@ -954,7 +864,6 @@
     100%{ transform: translate(var(--x1), var(--y1)) scale(0.0); opacity:0 }
   }
 
-  /* confetti (rare seulement) */
   .fxConfetti{ position:absolute; inset:0; overflow:hidden; }
   .fxC{
     position:absolute;
@@ -970,77 +879,38 @@
     100%{ transform: translate3d(calc(var(--cx) + var(--drift)), 110vh, 0) rotate(320deg); opacity:0 }
   }
 
-  /* tier colors (simple) */
   .fxOverlay[data-tier="w"] .fxRing{ filter: blur(0.5px); }
   .fxOverlay[data-tier="b"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(120,170,255,.95), rgba(120,170,255,0) 60%); }
   .fxOverlay[data-tier="v"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(190,120,255,.95), rgba(190,120,255,0) 60%); }
   .fxOverlay[data-tier="g"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,210,110,.98), rgba(255,210,110,0) 60%); }
   .fxOverlay[data-tier="m"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,80,80,.95), rgba(255,80,80,0) 60%); }
 
-
   /* ===== Camera Zoom ===== */
-  .cameraZoom{
-    animation: cameraZoom .65s cubic-bezier(.2,.9,.2,1);
-    }
-
-  @keyframes cameraZoom{
-    0%{ transform: scale(1); }
-    40%{ transform: scale(1.04); }
-    100%{ transform: scale(1); }
-  }
+  .cameraZoom{ animation: cameraZoom .65s cubic-bezier(.2,.9,.2,1); }
+  @keyframes cameraZoom{ 0%{ transform: scale(1); } 40%{ transform: scale(1.04); } 100%{ transform: scale(1); } }
 
   /* ===== Impact Pulse ===== */
-  .slab.impact{
-    animation: impactPulse .55s cubic-bezier(.2,.9,.2,1);
-  }
-
-  @keyframes impactPulse{
-    0%{ transform: scale(.96); }
-    40%{ transform: scale(1.06); }
-    100%{ transform: scale(1); }
-  }
+  .slab.impact{ animation: impactPulse .55s cubic-bezier(.2,.9,.2,1); }
+  @keyframes impactPulse{ 0%{ transform: scale(.96); } 40%{ transform: scale(1.06); } 100%{ transform: scale(1); } }
 
   /* ===== Card disappear before new pull ===== */
-  .slab.disappear .cardImg{
-    animation: cardDisappear .35s ease forwards;
-  }
-
+  .slab.disappear .cardImg{ animation: cardDisappear .35s ease forwards; }
   @keyframes cardDisappear{
-    0%{
-      opacity:1;
-      transform:translate(-50%,-50%) translateZ(18px) scale(1);
-    }
-    100%{
-      opacity:0;
-      transform:translate(-50%,-50%) translateZ(18px) scale(.85);
-    }
+    0%{ opacity:1; transform:translate(-50%,-50%) translateZ(18px) scale(1); }
+    100%{ opacity:0; transform:translate(-50%,-50%) translateZ(18px) scale(.85); }
   }
 
   /* ===== Aspiration magique ===== */
-.slab.suck .cardImg{
-  animation: suckOut .52s cubic-bezier(.2,.9,.2,1) forwards;
-  filter: blur(0px);
-}
+  .slab.suck .cardImg{
+    animation: suckOut .52s cubic-bezier(.2,.9,.2,1) forwards;
+    filter: blur(0px);
+  }
+  @keyframes suckOut{
+    0%{ opacity:1; transform:translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg); filter: blur(0px) brightness(1); }
+    65%{ opacity:1; transform:translate(-50%,-50%) translateZ(18px) scale(.45) rotate(18deg); filter: blur(.6px) brightness(1.05); }
+    100%{ opacity:0; transform:translate(-50%,-50%) translateZ(18px) scale(.03) rotate(80deg); filter: blur(2px) brightness(1.2); }
+  }
 
-@keyframes suckOut{
-  0%{
-    opacity:1;
-    transform:translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg);
-    filter: blur(0px) brightness(1);
-  }
-  65%{
-    opacity:1;
-    transform:translate(-50%,-50%) translateZ(18px) scale(.45) rotate(18deg);
-    filter: blur(.6px) brightness(1.05);
-  }
-  100%{
-    opacity:0;
-    transform:translate(-50%,-50%) translateZ(18px) scale(.03) rotate(80deg);
-    filter: blur(2px) brightness(1.2);
-  }
-}
-
-  /* vortex au centre */
   .slab.suck::after{
     content:"";
     position:absolute;
@@ -1064,96 +934,296 @@
     filter: blur(0.2px);
     animation: vortex .52s cubic-bezier(.2,.9,.2,1) forwards;
   }
-
   @keyframes vortex{
     0%{ opacity:0; transform:translate(-50%,-50%) scale(.75) rotate(0deg); }
     20%{ opacity:.9; }
     100%{ opacity:0; transform:translate(-50%,-50%) scale(1.25) rotate(220deg); }
   }
 
-  /* ===== SUCK / ASPIRATION (Gacha) ===== */
+  .slab, .cardImg{ will-change: transform, filter, opacity; }
+  .slab.suck{ cursor: default; }
 
-/* petit confort perf */
-.slab, .cardImg{
-  will-change: transform, filter, opacity;
-}
+  .slab.suck{ animation: slabSuck 520ms cubic-bezier(.2,.9,.2,1) forwards; }
+  @keyframes slabSuck{
+    0%   { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(1); }
+    25%  { transform: rotateX(1deg) rotateY(-1deg) translateZ(0) scale(1.01); }
+    100% { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(.985); }
+  }
 
-/* on “fige” les hover/tilt pendant l’aspiration */
-.slab.suck{
-  cursor: default;
-}
+  .slab.suck .cardImg{
+    animation: cardSuck 520ms cubic-bezier(.15,.9,.15,1) forwards;
+    transform-origin: 50% 45%;
+  }
+  @keyframes cardSuck{
+    0%{ transform: translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg); filter: blur(0px) brightness(1) saturate(1); opacity: 1; }
+    35%{ transform: translate(-50%,-52%) translateZ(18px) scale(.92) rotate(-10deg); filter: blur(.4px) brightness(1.05) saturate(1.05); opacity: .95; }
+    70%{ transform: translate(-50%,-56%) translateZ(18px) scale(.55) rotate(40deg); filter: blur(1.2px) brightness(1.08) saturate(1.1); opacity: .75; }
+    100%{ transform: translate(-50%,-62%) translateZ(18px) scale(.06) rotate(140deg); filter: blur(3px) brightness(1.2) saturate(1.2); opacity: 0; }
+  }
 
-/* la coque recule un peu + tremble léger */
-.slab.suck{
-  animation: slabSuck 520ms cubic-bezier(.2,.9,.2,1) forwards;
-}
-@keyframes slabSuck{
-  0%   { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(1); }
-  25%  { transform: rotateX(1deg) rotateY(-1deg) translateZ(0) scale(1.01); }
-  100% { transform: rotateX(0deg) rotateY(0deg) translateZ(0) scale(.985); }
-}
-
-/* la carte se fait aspirer */
-.slab.suck .cardImg{
-  animation: cardSuck 520ms cubic-bezier(.15,.9,.15,1) forwards;
-  transform-origin: 50% 45%;
-}
-@keyframes cardSuck{
-  0%{
-    transform: translate(-50%,-50%) translateZ(18px) scale(1) rotate(0deg);
-    filter: blur(0px) brightness(1) saturate(1);
+  .slab.suck .flash{
     opacity: 1;
+    animation: suckVortex 520ms ease forwards;
   }
-  35%{
-    transform: translate(-50%,-52%) translateZ(18px) scale(.92) rotate(-10deg);
-    filter: blur(.4px) brightness(1.05) saturate(1.05);
-    opacity: .95;
+  @keyframes suckVortex{
+    0%   { transform: translateZ(40px) scale(.65); opacity: 0; }
+    25%  { opacity: .55; }
+    100% { transform: translateZ(40px) scale(1.35); opacity: 0; }
   }
-  70%{
-    transform: translate(-50%,-56%) translateZ(18px) scale(.55) rotate(40deg);
-    filter: blur(1.2px) brightness(1.08) saturate(1.1);
-    opacity: .75;
+
+  .slab.suck .shell::after{
+    content:"";
+    position:absolute;
+    inset:-20%;
+    border-radius:30px;
+    pointer-events:none;
+    background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
+    opacity:0;
+    animation: suckGlow 520ms ease forwards;
   }
-  100%{
-    transform: translate(-50%,-62%) translateZ(18px) scale(.06) rotate(140deg);
-    filter: blur(3px) brightness(1.2) saturate(1.2);
-    opacity: 0;
+  @keyframes suckGlow{
+    0%   { opacity:0; transform:scale(.95); }
+    30%  { opacity:.7; }
+    100% { opacity:0; transform:scale(1.15); }
   }
-}
 
-/* anneau/vortex subtil au-dessus (utilise ton .flash déjà présent) */
-.slab.suck .flash{
-  opacity: 1;
-  animation: suckVortex 520ms ease forwards;
-}
-@keyframes suckVortex{
-  0%   { transform: translateZ(40px) scale(.65); opacity: 0; }
-  25%  { opacity: .55; }
-  100% { transform: translateZ(40px) scale(1.35); opacity: 0; }
-}
+  .slab.suck #cardPh{ opacity: 0; }
 
-/* petit “snap” de lumière sur la shell */
-.slab.suck .shell::after{
-  content:"";
-  position:absolute;
-  inset:-20%;
-  border-radius:30px;
-  pointer-events:none;
-  background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
-  opacity:0;
-  animation: suckGlow 520ms ease forwards;
-}
-@keyframes suckGlow{
-  0%   { opacity:0; transform:scale(.95); }
-  30%  { opacity:.7; }
-  100% { opacity:0; transform:scale(1.15); }
-}
+  /* ====== NEW: Carousel “Derniers pulls” + Historique bouton ====== */
+  .carouselWrap{
+    width:100%;
+    max-width:980px;
+    border-radius:18px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    backdrop-filter: blur(10px);
+    padding:12px;
+    overflow:hidden;
+  }
 
-.slab.suck #cardPh{ opacity: 0; }
+  .carouselHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:2px 4px 10px 4px;
+  }
+  .carouselHead b{ font-size:13px; letter-spacing:.4px; }
+  .carouselHead small{ opacity:.7; font-size:12px; }
 
-  </style>  
+  .histBtn{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    font-weight:1000;
+    cursor:pointer;
+    transition: transform .12s ease, background .12s ease;
+    white-space:nowrap;
+  }
+  .histBtn:hover{ background:rgba(255,255,255,.10); transform: translateY(-1px); }
+  .histBtn:active{ transform: translateY(0px) scale(.99); }
 
+  .carousel{
+    position:relative;
+    border-radius:14px;
+    overflow:hidden;
+    background: rgba(0,0,0,.16);
+    border: 1px solid rgba(255,255,255,.08);
+  }
 
+  .carousel::before,
+  .carousel::after{
+    content:"";
+    position:absolute;
+    top:0; bottom:0;
+    width:54px;
+    pointer-events:none;
+    z-index:2;
+  }
+  .carousel::before{
+    left:0;
+    background: linear-gradient(90deg, rgba(10,12,20,.95), rgba(10,12,20,0));
+  }
+  .carousel::after{
+    right:0;
+    background: linear-gradient(270deg, rgba(10,12,20,.95), rgba(10,12,20,0));
+  }
+
+  .carouselViewport{
+    overflow:auto;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .carouselViewport::-webkit-scrollbar{ display:none; }
+
+  .carouselTrack{
+    display:flex;
+    gap:10px;
+    padding:10px;
+    align-items:center;
+    width:max-content;
+  }
+
+  .slide{
+    width:96px;
+    height:132px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.04);
+    overflow:hidden;
+    position:relative;
+    cursor:pointer;
+    flex:0 0 auto;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  }
+  .slide:hover{
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.18);
+  }
+  .slide:active{ transform: translateY(0px) scale(.99); }
+
+  .slideImg{
+    position:absolute;
+    inset:0;
+    background:center/cover no-repeat;
+    filter: saturate(1.02) contrast(1.02);
+  }
+
+  .slideMeta{
+    position:absolute;
+    left:8px;
+    right:8px;
+    bottom:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  .slideTag{
+    height:20px;
+    padding:0 8px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:1000;
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.18);
+    backdrop-filter: blur(6px);
+    white-space:nowrap;
+  }
+  .slideTag.w{color:var(--tW); border-color:rgba(255,255,255,.22)}
+  .slideTag.b{color:var(--tB); border-color:rgba(120,170,255,.30)}
+  .slideTag.v{color:var(--tV); border-color:rgba(190,120,255,.30)}
+  .slideTag.g{color:var(--tG); border-color:rgba(255,210,110,.30)}
+  .slideTag.m{color:var(--tM); border-color:rgba(255,80,80,.50)}
+
+  .slideName{
+    max-width:60px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:11px;
+    opacity:.9;
+    font-weight:900;
+    background: rgba(0,0,0,.38);
+    border: 1px solid rgba(255,255,255,.14);
+    padding:0 7px;
+    height:20px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    backdrop-filter: blur(6px);
+  }
+
+  @media (max-width:520px){
+    .slide{ width:86px; height:120px; border-radius:12px; }
+    .carousel::before,.carousel::after{ width:42px; }
+    .slideName{ max-width:52px; }
+  }
+
+  /* ====== NEW: Historique modal (ancien gros bloc) ====== */
+  .histModal .histCard{
+    width:min(980px, 94vw);
+    border-radius:18px;
+    background:rgba(15,17,26,.96);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 22px 70px rgba(0,0,0,.55);
+    padding:12px;
+    overflow:hidden;
+  }
+
+  .histTop{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:6px 6px 10px 6px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  .histTop b{ font-size:13px; letter-spacing:.4px; }
+  .histTop small{ opacity:.7; font-size:12px; }
+  .histClose{
+    width:34px;
+    height:34px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.06);
+    color:#fff;
+    font-weight:1000;
+    cursor:pointer;
+  }
+  .histClose:hover{ background:rgba(255,255,255,.10); }
+
+  .logRow{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap:10px;
+    max-height:min(62vh, 520px);
+    overflow:auto;
+    padding:10px 6px 6px 6px;
+    padding-right:4px;
+  }
+
+  .pill{
+    display:flex; gap:10px; align-items:center;
+    font-size:12px; opacity:.92;
+    border:1px solid rgba(255,255,255,.12);
+    padding:8px 10px; border-radius:14px;
+    background:rgba(255,255,255,.05);
+    cursor:pointer;
+    transition: transform .12s ease, background .12s ease;
+  }
+  .pill:hover{background:rgba(255,255,255,.08); transform: translateY(-1px)}
+  .thumb{
+    width:34px;height:46px;border-radius:8px;
+    background: transparent center/cover no-repeat;
+    border:1px solid rgba(255,255,255,.12);
+    flex:0 0 auto;
+  }
+  .pill .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .pill .meta .line1{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .pill .meta .line2{opacity:.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .tag{
+    margin-left:auto;
+    font-weight:900;
+    padding:4px 8px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.18);
+    white-space:nowrap;
+  }
+  .tag.w{color:var(--tW); border-color:rgba(255,255,255,.28)}
+  .tag.b{color:var(--tB); border-color:rgba(120,170,255,.35)}
+  .tag.v{color:var(--tV); border-color:rgba(190,120,255,.35)}
+  .tag.g{color:var(--tG); border-color:rgba(255,210,110,.35)}
+  .tag.m{color:var(--tM); border-color:rgba(255,80,80,.55)}
+
+</style>
 </head>
 
 <body>
@@ -1201,10 +1271,10 @@
             </div>
 
             <a class="profileItem" href="/profile.html" role="menuitem">
-            <span class="itemLeft">
-              <img class="menuIcon" src="Profile.png" alt="" aria-hidden="true">
-              <span>Profil</span>
-            </span>
+              <span class="itemLeft">
+                <img class="menuIcon" src="Profile.png" alt="" aria-hidden="true">
+                <span>Profil</span>
+              </span>
             </a>
 
             <button class="profileItem" id="profileNotifBtn" type="button" role="menuitem">
@@ -1243,8 +1313,7 @@
                 <span>Sons</span>
               </span>
               <span class="profilePill" id="toggleSfxPill">ON</span>
-          </button>
-
+            </button>
           </div>
         </div>
       </div>
@@ -1290,13 +1359,23 @@
       +10 dollax toutes les 15 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom
     </div>
 
-    <div class="logWrap">
-      <div class="logTitle">
-        <b>Historique</b>
-        <small>(clique une entrée pour revoir)</small>
+    <!-- ✅ NEW: Carousel Derniers pulls + bouton Historique -->
+    <div class="carouselWrap">
+      <div class="carouselHead">
+        <div>
+          <b>Derniers pulls</b>
+          <small>(clique une carte pour revoir)</small>
+        </div>
+        <button class="histBtn" id="openHistory" type="button">Historique</button>
       </div>
-      <div class="logRow" id="log"></div>
+
+      <div class="carousel">
+        <div class="carouselViewport" id="carouselViewport">
+          <div class="carouselTrack" id="carouselTrack"></div>
+        </div>
+      </div>
     </div>
+
   </div>
 
   <!-- MODAL ZOOM -->
@@ -1324,7 +1403,20 @@
     </div>
   </div>
 
-  <!-- ✅ GAME PICKER (après login) -->
+  <!-- ✅ NEW: Historique modal (ancien gros bloc) -->
+  <div class="modal histModal" id="histModal" aria-hidden="true">
+    <div class="histCard" role="dialog" aria-label="Historique">
+      <div class="histTop">
+        <div>
+          <b>Historique</b>
+          <small>(clique une entrée pour revoir)</small>
+        </div>
+        <button class="histClose" id="closeHistory" type="button" aria-label="Fermer">✕</button>
+      </div>
+      <div class="logRow" id="log"></div>
+    </div>
+  </div>
+
   <!-- ✅ GAME PICKER (après login) -->
   <div class="gameModal" id="gameModal">
     <div class="gameCard">
@@ -1365,8 +1457,8 @@
   <audio id="sfxReveal" src="reveal.mp3" preload="auto"></audio>
   <audio id="sfxRevealEpic" src="SFXg10.mp3" preload="auto"></audio>
   <audio id="sfxWhoosh" src="whoosh.mp3" preload="auto"></audio>
-<!-- optionnel : son “reveal” -->
 </body>
+
 <script>
   // --------- AUTH ---------
   const TOKEN_KEY = "gacha_token_v1";
@@ -1393,7 +1485,6 @@
 
   function toHighImage(url){
     const u = String(url || "");
-    // règle simple: low.webp -> high.webp
     if (u.includes("/low.webp")) return u.replace("/low.webp", "/high.webp");
     return u;
   }
@@ -1423,7 +1514,7 @@
 
   // ---------- DOM ----------
   const sfxOpen       = document.getElementById("sfxOpen");
-  const sfxCharge     = document.getElementById("sfxCharge");      // suspense.mp3
+  const sfxCharge     = document.getElementById("sfxCharge");
   const sfxReveal     = document.getElementById("sfxReveal");
   const sfxRevealEpic = document.getElementById("sfxRevealEpic");
   const sfxWhoosh     = document.getElementById("sfxWhoosh");
@@ -1431,7 +1522,6 @@
   function playSfx(a, volume = 0.8, pitchRand = 0){
     if(!SFX_ON) return;
     if(!a) return;
-
     try{
       a.pause();
       a.currentTime = 0;
@@ -1453,11 +1543,9 @@
   const glare = document.getElementById("glare");
   const card  = document.getElementById("card");
 
-  // ✅ mini profile (dans le dropdown)
   const miniAvatar = document.getElementById("miniAvatar");
   const miniLvl    = document.getElementById("miniLvl");
 
-  // ✅ Placeholder logo
   const cardPh = document.getElementById("cardPh");
   function setPlaceholderVisible(v){
     if(!cardPh) return;
@@ -1468,8 +1556,11 @@
   const subtitle = document.getElementById("subtitle");
   const gradeEl  = document.getElementById("grade");
   const mintTag  = document.getElementById("mintTag");
-  const log      = document.getElementById("log");
 
+  // ✅ history modal log container
+  const log = document.getElementById("log");
+
+  // zoom modal
   const modal       = document.getElementById("modal");
   const zoomSlab    = document.getElementById("zoomSlab");
   const zoomShine   = document.getElementById("zoomShine");
@@ -1487,7 +1578,6 @@
   const moneyEl = document.getElementById("money");
   const subTop  = document.getElementById("subTop");
 
-  // ✅ header dropdown profil
   const profileName = document.getElementById("profileName");
   const profileSub  = document.getElementById("profileSub");
 
@@ -1495,12 +1585,25 @@
   const gameModal        = document.getElementById("gameModal");
   const gameCurrentLabel = document.getElementById("gameCurrentLabel");
 
+  // placeholder logo
   const phLogo = document.getElementById("phLogo");
+
+  // ✅ Carousel
+  const carouselViewport = document.getElementById("carouselViewport");
+  const carouselTrack    = document.getElementById("carouselTrack");
+
+  // ✅ History modal
+  const histModal   = document.getElementById("histModal");
+  const btnHistOpen = document.getElementById("openHistory");
+  const btnHistClose= document.getElementById("closeHistory");
+
+  // keep latest pulls in memory
+  let PULLS_CACHE = [];
 
   function placeholderLogoForGame(g){
     if(g === "onepiece") return "One_Piece_Logo.png";
     if(g === "lorcana")  return "Lorcana.png";
-    return "International_Pokémon_logo.png"; // ou "poke.png"
+    return "International_Pokémon_logo.png";
   }
 
   function applyPlaceholderLogo(){
@@ -1512,9 +1615,8 @@
     if(gameCurrentLabel) gameCurrentLabel.textContent = "Actuel: " + gameLabel(currentGame());
     gameModal?.classList.add("open");
   }
-  function closeGamePicker(){
-    gameModal?.classList.remove("open");
-  }
+  function closeGamePicker(){ gameModal?.classList.remove("open"); }
+
   function applyGameToUI(){
     const g = currentGame();
     if(title)     title.textContent     = `${gameLabel(g)} • CARD`;
@@ -1522,13 +1624,15 @@
     applyPlaceholderLogo();
   }
 
-  // exposée au onclick HTML
   window.setGameAndClose = async function(g){
     const v = (g === "onepiece") ? "onepiece" : (g === "lorcana") ? "lorcana" : "pokemon";
     localStorage.setItem(GAME_KEY, v);
     closeGamePicker();
     applyGameToUI();
-    try{ await loadMe(); }catch{}
+    try{
+      await loadMe();
+      await loadPulls(); // refresh carousel + history for the game
+    }catch{}
   };
 
   btnChangeGame?.addEventListener("click", (e) => {
@@ -1702,41 +1806,172 @@
   function tagClass(tier, isMint){ return isMint ? "m" : tier; }
   function tagText(grade, isMint){ return isMint ? "MINT" : `G${grade}`; }
 
-  function addLog(name, setName, grade, isMint, imageUrl) {
-    const tier = tierFromGrade(grade);
+  // ✅ central: show a pull on the big card (used by carousel + history)
+  function showPull(p){
+    if(!p) return;
+
+    setPlaceholderVisible(false);
+
+    const tier = tierFromGrade(p.grade);
+
+    const imgLow  = p.image;
+    const imgHigh = toHighImage(p.imageHigh || p.image);
+
+    if(card){
+      card.style.backgroundImage = `url("${imgHigh || imgLow}")`;
+      card.dataset.high = imgHigh || "";
+    }
+
+    if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${p.grade}`;
+    if(subtitle) subtitle.textContent = `${p.name} • ${p.set}`;
+    if(gradeEl)  gradeEl.textContent = String(p.grade);
+
+    if(slab){
+      slab.dataset.tier = tier;
+      slab.dataset.mint = p.mint ? "1" : "0";
+      slab.classList.add("reveal");
+      setTimeout(() => slab.classList.remove("reveal"), 450);
+    }
+
+    if(mintTag) mintTag.style.display = p.mint ? "inline-flex" : "none";
+  }
+
+  function addHistoryItem(p, target){
+    const tier = tierFromGrade(p.grade);
 
     const el = document.createElement("div");
     el.className = "pill";
     el.innerHTML = `
-      <div class="thumb" style="background-image:url('${toHighImage(imageUrl).replace(/'/g,"\\'")}')"></div>
+      <div class="thumb" style="background-image:url('${toHighImage(p.image).replace(/'/g,"\\'")}')"></div>
       <div class="meta">
-        <div class="line1">${isMint ? "MINT" : `Grade ${grade}`} • ${name}</div>
-        <div class="line2">${setName}</div>
+        <div class="line1">${p.mint ? "MINT" : `Grade ${p.grade}`} • ${p.name}</div>
+        <div class="line2">${p.set}</div>
       </div>
-      <div class="tag ${tagClass(tier, isMint)}">${tagText(grade, isMint)}</div>
+      <div class="tag ${tagClass(tier, p.mint)}">${tagText(p.grade, p.mint)}</div>
     `;
 
     el.addEventListener("click", () => {
-      setPlaceholderVisible(false);
-
-      if(card) card.style.backgroundImage = `url("${imageUrl}")`;
-
-      if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${grade}`;
-      if(subtitle) subtitle.textContent = `${name} • ${setName}`;
-      if(gradeEl)  gradeEl.textContent = String(grade);
-
-      if(slab){
-        slab.dataset.tier = tier;
-        slab.dataset.mint = isMint ? "1" : "0";
-        slab.classList.add("reveal");
-        setTimeout(() => slab.classList.remove("reveal"), 450);
-      }
-
-      if(mintTag) mintTag.style.display = isMint ? "inline-flex" : "none";
+      // close history modal to see the big card
+      closeHistory();
+      showPull(p);
     });
 
-    log?.prepend(el);
+    target?.prepend(el);
   }
+
+  function createSlide(p){
+    const tier = tierFromGrade(p.grade);
+    const tag = tagClass(tier, p.mint);
+
+    const s = document.createElement("div");
+    s.className = "slide";
+    s.innerHTML = `
+      <div class="slideImg" style="background-image:url('${toHighImage(p.image).replace(/'/g,"\\'")}')"></div>
+      <div class="slideMeta">
+        <span class="slideName" title="${String(p.name||"").replace(/"/g,"&quot;")}">${p.name || ""}</span>
+        <span class="slideTag ${tag}">${tagText(p.grade, p.mint)}</span>
+      </div>
+    `;
+
+    s.addEventListener("click", () => showPull(p));
+    return s;
+  }
+
+  // ---------- Carousel auto-scroll (infinite loop) ----------
+  let carRAF = null;
+  let carPaused = false;
+
+  function stopCarousel(){
+    if(carRAF) cancelAnimationFrame(carRAF);
+    carRAF = null;
+  }
+
+  function startCarousel(){
+    stopCarousel();
+    const vp = carouselViewport;
+    const tr = carouselTrack;
+    if(!vp || !tr) return;
+
+    // only if enough content to scroll
+    const half = tr.scrollWidth / 2;
+    if(!half || half < 10) return;
+
+    const speed = 0.35; // px per frame (subtle)
+
+    const step = () => {
+      if(!carPaused){
+        vp.scrollLeft += speed;
+        if(vp.scrollLeft >= half){
+          vp.scrollLeft -= half;
+        }
+      }
+      carRAF = requestAnimationFrame(step);
+    };
+
+    carRAF = requestAnimationFrame(step);
+  }
+
+  function renderCarouselFromPulls(pulls){
+    if(!carouselTrack || !carouselViewport) return;
+
+    carouselTrack.innerHTML = "";
+
+    const base = (pulls || []).slice(0, 10); // 10 derniers
+    if(!base.length){
+      // petit placeholder si vide
+      const empty = document.createElement("div");
+      empty.style.opacity = ".65";
+      empty.style.fontSize = "12px";
+      empty.style.padding = "10px";
+      empty.textContent = "Aucun pull pour le moment.";
+      carouselTrack.appendChild(empty);
+      stopCarousel();
+      return;
+    }
+
+    // duplicate for seamless loop
+    const doubled = base.concat(base);
+
+    for(const p of doubled){
+      carouselTrack.appendChild(createSlide(p));
+    }
+
+    // reset scroll
+    carouselViewport.scrollLeft = 0;
+
+    // hover/touch pause
+    carPaused = false;
+    carouselViewport.onmouseenter = () => (carPaused = true);
+    carouselViewport.onmouseleave = () => (carPaused = false);
+
+    carouselViewport.ontouchstart = () => (carPaused = true);
+    carouselViewport.ontouchend   = () => (carPaused = false);
+    carouselViewport.ontouchcancel= () => (carPaused = false);
+
+    // user scroll pauses for a moment then resumes
+    let resumeT = null;
+    carouselViewport.onscroll = () => {
+      carPaused = true;
+      if(resumeT) clearTimeout(resumeT);
+      resumeT = setTimeout(()=> (carPaused = false), 900);
+    };
+
+    startCarousel();
+  }
+
+  // ---------- History modal ----------
+  function openHistory(){
+    histModal?.classList.add("open");
+    histModal?.setAttribute("aria-hidden","false");
+  }
+  function closeHistory(){
+    histModal?.classList.remove("open");
+    histModal?.setAttribute("aria-hidden","true");
+  }
+
+  btnHistOpen?.addEventListener("click", openHistory);
+  btnHistClose?.addEventListener("click", closeHistory);
+  histModal?.addEventListener("click", (e) => { if(e.target === histModal) closeHistory(); });
 
   // ---------- HOLO / TILT ----------
   function setTilt(clientX, clientY) {
@@ -1849,6 +2084,15 @@
   card?.addEventListener("click", openZoomFromCurrent);
   modal?.addEventListener("click", (e) => { if(e.target === modal) modal.classList.remove("open"); });
 
+  // close modals on ESC
+  document.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      modal?.classList.remove("open");
+      closeHistory();
+    }
+  });
+
+  // ---------- Helpers mini profile theme ----------
   function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
 
   function hexToRgba(hex, a){
@@ -1911,9 +2155,17 @@
   async function loadPulls(){
     if(log) log.innerHTML = "";
     const data = await api("/api/pulls");
-    for(const p of (data.pulls || []).slice().reverse()){
-      addLog(p.name, p.set, p.grade, p.mint, p.image);
+
+    // server returns newest first, keep as-is
+    PULLS_CACHE = (data.pulls || []).slice(0, 80);
+
+    // fill history (all)
+    for(const p of PULLS_CACHE.slice().reverse()){
+      addHistoryItem(p, log);
     }
+
+    // fill carousel (10 newest)
+    renderCarouselFromPulls(PULLS_CACHE);
   }
 
   async function openOne(){
@@ -1956,15 +2208,25 @@
       const data = await api("/api/open", { method:"POST" });
       const c = data.card;
 
-      const tier = tierFromGrade(c.grade);
+      const pull = {
+        name: c.name,
+        set:  c.set,
+        image: c.image,
+        imageHigh: c.imageHigh || c.image,
+        grade: c.grade,
+        mint: !!c.mint,
+        at: Date.now()
+      };
 
-      if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${c.grade}`;
-      if(subtitle) subtitle.textContent = `${c.name} • ${c.set}`;
-      if(gradeEl)  gradeEl.textContent = String(c.grade);
-      if(mintTag)  mintTag.style.display = c.mint ? "inline-flex" : "none";
+      const tier = tierFromGrade(pull.grade);
 
-      const high = toHighImage(c.imageHigh || c.image);
-      const low  = c.image;
+      if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${pull.grade}`;
+      if(subtitle) subtitle.textContent = `${pull.name} • ${pull.set}`;
+      if(gradeEl)  gradeEl.textContent = String(pull.grade);
+      if(mintTag)  mintTag.style.display = pull.mint ? "inline-flex" : "none";
+
+      const high = toHighImage(pull.imageHigh || pull.image);
+      const low  = pull.image;
 
       const img = new Image();
       img.onload = async () => {
@@ -1974,11 +2236,11 @@
 
         await runRevealFx({
           tier,
-          isMint: !!c.mint,
-          epic: (c.grade === 10 || c.mint)
+          isMint: !!pull.mint,
+          epic: (pull.grade === 10 || pull.mint)
         });
 
-        if(c.grade === 10 || c.mint){
+        if(pull.grade === 10 || pull.mint){
           playSfx(sfxRevealEpic, 1);
         }else{
           playSfx(sfxReveal, 0.9);
@@ -1991,7 +2253,7 @@
 
         if(slab){
           slab.dataset.tier = tier;
-          slab.dataset.mint = c.mint ? "1" : "0";
+          slab.dataset.mint = pull.mint ? "1" : "0";
           slab.classList.add("reveal");
           setTimeout(() => slab.classList.remove("reveal"), 450);
         }
@@ -2000,7 +2262,16 @@
       img.onerror = () => { if(subtitle) subtitle.textContent = "Image introuvable"; };
       img.src = high || low;
 
-      addLog(c.name, c.set, c.grade, c.mint, c.image);
+      // update local cache + UI
+      PULLS_CACHE.unshift(pull);
+      if(PULLS_CACHE.length > 80) PULLS_CACHE.length = 80;
+
+      // history list: add new item at top (prepend)
+      addHistoryItem(pull, log);
+
+      // carousel rerender (cheap, 10 items)
+      renderCarouselFromPulls(PULLS_CACHE);
+
       await loadMe();
 
     }catch(e){
@@ -2146,10 +2417,6 @@
     if(profileWrap && !profileWrap.contains(e.target)) closeProfileMenu();
   });
 
-  document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape") closeProfileMenu();
-  });
-
   // Sous-menu Notifications (dans dropdown)
   profileNotifBtn?.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -2209,10 +2476,10 @@
 </script>
 
 <div class="footerSignature">
-  Gachax est un fan site non officiel.  
-  Ce site n’est affilié ni approuvé par The Pokémon Company, Nintendo, Game Freak, Creatures Inc., ou par les détenteurs officiels des droits de One Piece et du One Piece Card Game (Bandai).  
-  Pokémon © Nintendo / Creatures Inc. / GAME FREAK.  
-  One Piece © Eiichiro Oda / Shueisha / Toei Animation.  
+  Gachax est un fan site non officiel.
+  Ce site n’est affilié ni approuvé par The Pokémon Company, Nintendo, Game Freak, Creatures Inc., ou par les détenteurs officiels des droits de One Piece et du One Piece Card Game (Bandai).
+  Pokémon © Nintendo / Creatures Inc. / GAME FREAK.
+  One Piece © Eiichiro Oda / Shueisha / Toei Animation.
   Développement & conception : Skunfy.
 </div>
 
