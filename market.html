@@ -3,31 +3,41 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Market — Pokégacha</title>
+<title>Market — Gachax</title>
 
 <style>
 :root{
   --bg1:#05060d; --bg2:#090b18;
 
-  --panel: rgba(255,255,255,.05);
-  --panel2: rgba(255,255,255,.06);
-  --stroke: rgba(255,255,255,.10);
-  --stroke2: rgba(255,255,255,.14);
+  /* glass */
+  --glassA: rgba(255,255,255,.055);
+  --glassB: rgba(255,255,255,.035);
+
+  /* ultra soft lines (ANTI GRILLE) */
+  --line:  rgba(255,255,255,.055);
+  --line2: rgba(255,255,255,.085);
 
   --text: rgba(255,255,255,.92);
-  --muted: rgba(255,255,255,.72);
+  --muted: rgba(255,255,255,.70);
+  --muted2: rgba(255,255,255,.56);
 
-  --blue: rgba(80,130,255,.90);
+  --blue: rgba(80,130,255,.95);
   --pink: rgba(255,80,220,.85);
 
-  --shadow: 0 18px 70px rgba(0,0,0,.35);
+  --shadow: 0 18px 70px rgba(0,0,0,.40);
+  --shadow2: 0 14px 34px rgba(0,0,0,.36);
+  --inset: inset 0 1px 0 rgba(255,255,255,.05);
+
+  --r20: 20px;
+  --r18: 18px;
   --r16: 16px;
   --r14: 14px;
   --r12: 12px;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
+*{ box-sizing:border-box }
+html,body{ height:100% }
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
@@ -40,9 +50,21 @@ body{
   overflow-x:hidden;
 }
 
+/* Scrollbars (dark, cohérent DA) */
+*{ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.14) rgba(0,0,0,.18); }
+*::-webkit-scrollbar{ width:10px; height:10px; }
+*::-webkit-scrollbar-track{ background: rgba(0,0,0,.18); border-radius:999px; }
+*::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.14);
+  border:2px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+  border-radius:999px;
+}
+*::-webkit-scrollbar-thumb:hover{ background: rgba(255,255,255,.20); }
+
 /* Layout */
 .wrap{
-  width:min(1220px, 95vw);
+  width:min(1240px, 95vw);
   margin:18px auto 44px;
   display:grid;
   gap:14px;
@@ -56,31 +78,82 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:12px 12px;
-  border-radius:18px;
-  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-  border:1px solid var(--stroke);
+  padding:10px 12px;
+  border-radius:22px;
+  background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035));
+  border: 1px solid var(--line);
   backdrop-filter: blur(12px);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--inset);
   gap:12px;
 }
 
 .brand{
   display:flex;
-  gap:12px;
   align-items:center;
+  gap:12px;
   min-width: 260px;
+}
+.brandLeft{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width: 0;
 }
 .logo{
   width:40px;height:40px;border-radius:14px;
   background:
     radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 60%),
     linear-gradient(135deg, rgba(80,130,255,.30), rgba(255,80,220,.22));
-  border:1px solid rgba(255,255,255,.12);
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
-.brand b{letter-spacing:.4px}
-.subTop{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 360px}
+
+.profileMini{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.avatarWrap{
+  width:30px; height:30px;
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.22);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04);
+  flex: 0 0 auto;
+}
+.avatarImg{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.avatarFallback{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  font-weight:1000;
+  font-size:12px;
+  color: rgba(255,255,255,.90);
+  background:
+    radial-gradient(16px 16px at 30% 30%, rgba(255,255,255,.18), transparent 60%),
+    linear-gradient(135deg, rgba(80,130,255,.22), rgba(255,80,220,.16));
+}
+.subTop{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 420px;
+}
+.brand b{ letter-spacing:.4px }
 
 /* Controls */
 .controls{
@@ -88,88 +161,159 @@ body{
   gap:10px;
   align-items:center;
   flex-wrap:wrap;
-  justify-content:flex-end
+  justify-content:flex-end;
 }
+
 input, select{
   padding:9px 10px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(15,17,26,.85);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  background: linear-gradient(180deg, rgba(15,17,26,.88), rgba(15,17,26,.72));
   color:#fff;
-  font-weight:750;
+  font-weight:800;
   outline:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
+input::placeholder{ color: rgba(255,255,255,.45); font-weight:800 }
 input:focus, select:focus{
-  border-color: rgba(80,130,255,.55);
-  box-shadow: 0 0 0 3px rgba(80,130,255,.18);
+  border-color: rgba(130,170,255,.28);
+  box-shadow:
+    0 0 0 3px rgba(80,130,255,.12),
+    inset 0 1px 0 rgba(255,255,255,.05);
 }
 
 button{
   padding:9px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.08);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.045));
   color:#fff;
-  font-weight:900;
+  font-weight:1000;
   cursor:pointer;
-  transition: transform .08s ease, background .12s ease, border-color .12s ease;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
 }
-button:hover{ background:rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+button:hover{
+  border-color: rgba(255,255,255,.10);
+  box-shadow: 0 10px 22px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.06);
+}
 button:active{ transform: translateY(1px) scale(.99); }
-button:disabled{opacity:.55; cursor:not-allowed}
+button:disabled{ opacity:.55; cursor:not-allowed; }
 
+.btnGhost{ background: rgba(0,0,0,.16); }
 .btnPrimary{
   background: linear-gradient(135deg, rgba(80,130,255,.22), rgba(255,80,220,.14));
-  border-color: rgba(255,255,255,.20);
-}
-.btnGhost{
-  background:rgba(0,0,0,.16);
+  border-color: rgba(255,255,255,.10);
 }
 
+/* Pills */
 .pill{
   display:inline-flex;
   gap:8px;
   align-items:center;
   padding:7px 10px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.15);
+  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.12));
   font-size:12px;
-  font-weight:900;
+  font-weight:1000;
   white-space:nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
-.pill.soft{ background:rgba(255,255,255,.06); }
-.pill.blue{ border-color: rgba(80,130,255,.35); }
-.pill.pink{ border-color: rgba(255,80,220,.28); }
+.pill.soft{ background: rgba(255,255,255,.045); }
+.pill.blue{ border-color: rgba(80,130,255,.20); }
+.pill.pink{ border-color: rgba(255,80,220,.18); }
 
 .dollaxIcon{ width:18px; height:18px; object-fit:contain; display:inline-block; }
 
 /* Panels */
 .panel{
-  border-radius:18px;
-  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
-  border:1px solid var(--stroke);
+  border-radius:22px;
+  background: linear-gradient(180deg, var(--glassA), var(--glassB));
+  border:1px solid var(--line);
   padding:14px;
   backdrop-filter:blur(10px);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), var(--inset);
 }
 
+/* Grid layout */
 .grid2{
   display:grid;
   grid-template-columns: 1.2fr .8fr;
   gap:14px;
 }
-@media (max-width: 980px){ .grid2{grid-template-columns:1fr;} }
+@media (max-width: 980px){ .grid2{ grid-template-columns:1fr; } }
 
 .hrow{
   display:flex;
   gap:10px;
   align-items:center;
   flex-wrap:wrap;
-  justify-content:space-between
+  justify-content:space-between;
 }
-.hrow b{letter-spacing:.5px}
-.msg{opacity:.82; font-size:13px; white-space:pre-line; margin-top:8px; color: var(--muted)}
+.hrow b{ letter-spacing:.5px }
+.msg{ opacity:.82; font-size:13px; white-space:pre-line; margin-top:8px; color: var(--muted); }
+
+/* KPI cluster */
+.kpi{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* Filters (checkbox no-white) */
+.filtersBar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:10px;
+}
+.fChip{
+  display:inline-flex;
+  gap:10px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  background: rgba(0,0,0,.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  font-size:12px;
+  font-weight:1000;
+}
+.fChip span{ color: rgba(255,255,255,.86); }
+.cb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:16px; height:16px;
+  border-radius:6px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.20);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.cb:checked{
+  border-color: rgba(80,130,255,.40);
+  background: rgba(80,130,255,.22);
+}
+.cb:checked::after{
+  content:"";
+  width:8px; height:8px;
+  border-radius:3px;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 0 18px rgba(80,130,255,.20);
+}
+.fMiniSelect, .fMiniInput{
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.06);
+  background: rgba(15,17,26,.78);
+  color:#fff;
+  font-weight:900;
+  outline:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.fMiniInput{ width:92px; }
+.fLabel{ color: rgba(255,255,255,.72); font-weight:1000; }
 
 /* Market grid */
 .grid{
@@ -177,35 +321,36 @@ button:disabled{opacity:.55; cursor:not-allowed}
   grid-template-columns:repeat(4,1fr);
   gap:12px;
 }
-@media (max-width: 1100px){ .grid{grid-template-columns:repeat(3,1fr);} }
-@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width: 1100px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width: 720px){ .grid{ grid-template-columns:repeat(2,1fr); } }
 
-/* Card */
+/* Card (ANTI GRILLE: border ultra soft + shadow) */
 .card{
   position:relative;
-  border-radius:16px;
+  border-radius:18px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.05);
-  transition: transform .14s ease, border-color .14s ease, background .14s ease;
+  border:1px solid rgba(255,255,255,.055);
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.035));
+  box-shadow: 0 10px 26px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.045);
+  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
 }
 .card:hover{
   transform: translateY(-2px);
-  border-color: rgba(255,255,255,.18);
-  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.09);
+  box-shadow: var(--shadow2), inset 0 1px 0 rgba(255,255,255,.05);
 }
-.cardHead{
-  position:relative;
-  padding:10px;
-  padding-bottom:0;
-}
+
+.cardHead{ position:relative; padding:10px; padding-bottom:0; }
 .cardImg{
   height:200px;
-  border-radius:14px;
+  border-radius:16px;
   background:center/contain no-repeat;
-  background-color: rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.10);
+  background-color: rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.055); /* ultra soft */
+  cursor:pointer;
 }
+
+/* Overlays more readable */
 .cardOverlay{
   position:absolute;
   inset:10px 10px auto 10px;
@@ -215,21 +360,26 @@ button:disabled{opacity:.55; cursor:not-allowed}
   pointer-events:none;
 }
 .badge{
-  pointer-events:none;
   display:inline-flex;
   align-items:center;
-  gap:6px;
-  padding:6px 10px;
+  gap:7px;
+  padding:7px 10px;
   border-radius:999px;
   font-size:12px;
-  font-weight:900;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.14);
+  font-weight:1000;
+  background: rgba(0,0,0,.52);           /* + foncé => lisible */
+  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  color: rgba(255,255,255,.92);
+  text-shadow: 0 1px 10px rgba(0,0,0,.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
 .badgePrice{
-  background: linear-gradient(135deg, rgba(80,130,255,.18), rgba(255,80,220,.14));
-  border-color: rgba(255,255,255,.20);
+  background: linear-gradient(135deg, rgba(80,130,255,.26), rgba(255,80,220,.18));
+  border-color: rgba(255,255,255,.09);
 }
+.badgePrice b{ font-weight:1100; }
+
+/* Card body */
 .cardBody{
   padding:10px 12px 12px;
   display:grid;
@@ -242,9 +392,10 @@ button:disabled{opacity:.55; cursor:not-allowed}
   gap:10px;
 }
 .cardTitle{
-  font-weight:1000;
+  font-weight:1100;
   line-height:1.1;
   font-size:14px;
+  cursor:pointer;
 }
 .cardSet{
   font-size:12px;
@@ -253,53 +404,71 @@ button:disabled{opacity:.55; cursor:not-allowed}
 .metaRow{
   display:flex; gap:8px; flex-wrap:wrap; align-items:center;
 }
-.small{font-size:12px; opacity:.75}
-.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:12px 0}
+.small{ font-size:12px; color: var(--muted2); }
+.sep{ border:none; border-top:1px solid rgba(255,255,255,.06); margin:12px 0; }
 
-/* Buy controls inside card */
+/* Stepper with ONE border (no grid effect) */
+.stepper{
+  display:inline-flex;
+  align-items:center;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);  /* ONE outline only */
+  background: rgba(0,0,0,.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.stepper > *{
+  border:0 !important;
+  border-radius:0 !important;
+  background: transparent !important;
+  box-shadow:none !important;
+}
+.stepper > * + *{
+  border-left:1px solid rgba(255,255,255,.045); /* ultra light separator */
+}
+.stepper button{
+  padding:8px 10px;
+  font-weight:1100;
+  min-width:34px;
+}
+.stepper input{
+  width:44px;
+  text-align:center;
+  padding:8px 10px;
+  font-weight:1000;
+  color:#fff;
+  outline:none;
+}
+
+/* Buy row */
 .buyRow{
   display:flex;
   gap:10px;
   align-items:center;
   margin-top:2px;
 }
-.stepper{
-  display:flex; align-items:center; gap:6px;
-  padding:6px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
-}
-.stepper button{
-  padding:6px 10px;
-  border-radius:10px;
-  font-weight:1000;
-}
-.stepper input{
-  width:44px;
-  text-align:center;
-  padding:7px 8px;
-  border-radius:10px;
-}
 .buyBtn{
   margin-left:auto;
   padding:10px 12px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,.18);
-  background: rgba(255,255,255,.10);
-  font-weight:1000;
+  border:1px solid rgba(255,255,255,.07);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  font-weight:1100;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
 }
-.buyBtn:hover{ background: rgba(255,255,255,.14); }
-.buyBtn:active{ transform: translateY(1px) }
+.buyBtn:hover{
+  border-color: rgba(255,255,255,.10);
+  box-shadow: 0 10px 22px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.06);
+}
 
-/* Right panel sections */
+/* Right sections */
 .sectionTitle{
   display:flex;
   align-items:baseline;
   justify-content:space-between;
   gap:10px;
 }
-.sectionTitle .hint{font-size:12px; color: var(--muted)}
+.sectionTitle .hint{ font-size:12px; color: var(--muted); }
 
 /* Collection selectable */
 .selGrid{
@@ -308,19 +477,13 @@ button:disabled{opacity:.55; cursor:not-allowed}
   overflow:auto;
   padding-right:6px;
 }
-.selGrid::-webkit-scrollbar{ width:10px; }
-.selGrid::-webkit-scrollbar-thumb{
-  background: rgba(255,255,255,.10);
-  border:2px solid rgba(0,0,0,0);
-  background-clip: padding-box;
-  border-radius:999px;
-}
-.selCard{
-  cursor:pointer;
-}
+.selCard{ cursor:pointer; }
 .selCard.selected{
-  outline: 2px solid rgba(80,130,255,.55);
-  box-shadow: 0 0 0 6px rgba(80,130,255,.14);
+  border-color: rgba(130,170,255,.20);
+  box-shadow:
+    0 16px 44px rgba(0,0,0,.40),
+    0 0 0 4px rgba(80,130,255,.10),
+    inset 0 1px 0 rgba(255,255,255,.05);
 }
 
 /* My listings list */
@@ -331,48 +494,22 @@ button:disabled{opacity:.55; cursor:not-allowed}
   align-items:center;
   flex-wrap:wrap;
   padding:12px;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.04);
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.055); /* ultra soft */
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.030));
+  box-shadow: 0 10px 26px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.itemRow:hover{
+  border-color: rgba(255,255,255,.09);
+  box-shadow: var(--shadow2), inset 0 1px 0 rgba(255,255,255,.05);
 }
 .thumb{
-  width:42px;height:58px;border-radius:12px;
+  width:42px;height:58px;border-radius:14px;
   background:center/cover no-repeat;
-  border:1px solid rgba(255,255,255,.12);
-}
-.spacer{flex:1 1 auto}
-
-/* Filters bar (extra) */
-.filtersBar{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:flex-start;
-  margin-top:10px;
-}
-.filtersBar label{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  padding:7px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.14);
-  font-size:12px;
-  font-weight:900;
+  border:1px solid rgba(255,255,255,.055);
   cursor:pointer;
-  user-select:none;
 }
-.filtersBar input[type="checkbox"]{
-  width:16px; height:16px;
-  accent-color: rgba(80,130,255,.9);
-}
-
-.kpi{
-  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-}
-.kpi .pill{opacity:.95}
+.spacer{ flex:1 1 auto; }
 
 /* Modal */
 .modalBack{
@@ -380,155 +517,34 @@ button:disabled{opacity:.55; cursor:not-allowed}
   display:none;
   place-items:center;
   padding:16px;
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(8px);
+  background: rgba(0,0,0,.58);
+  backdrop-filter: blur(10px);
   z-index:50;
 }
 .modal{
   width:min(900px, 96vw);
-  border-radius:20px;
-  border:1px solid rgba(255,255,255,.16);
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.10);
   background: linear-gradient(180deg, rgba(20,22,34,.92), rgba(12,13,22,.92));
-  box-shadow: 0 30px 120px rgba(0,0,0,.55);
+  box-shadow: 0 30px 120px rgba(0,0,0,.60);
   overflow:hidden;
 }
-.modalInner{
-  display:grid;
-  grid-template-columns: 1.05fr .95fr;
-}
-@media (max-width: 880px){ .modalInner{grid-template-columns:1fr;} }
+.modalInner{ display:grid; grid-template-columns: 1.05fr .95fr; }
+@media (max-width: 880px){ .modalInner{ grid-template-columns:1fr; } }
 .modalImg{
   min-height:360px;
   background:center/contain no-repeat;
   background-color: rgba(0,0,0,.25);
-  border-right:1px solid rgba(255,255,255,.10);
+  border-right:1px solid rgba(255,255,255,.06);
 }
-@media (max-width: 880px){ .modalImg{border-right:none; border-bottom:1px solid rgba(255,255,255,.10);} }
-.modalBody{
-  padding:14px;
-  display:grid;
-  gap:10px;
+@media (max-width: 880px){
+  .modalImg{ border-right:none; border-bottom:1px solid rgba(255,255,255,.06); }
 }
-.modalTop{
-  display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
-}
-.modalTitle{font-size:18px; font-weight:1100; line-height:1.1}
-.modalClose{
-  padding:8px 10px;
-  border-radius:12px;
-  background: rgba(255,255,255,.08);
-}
-.note{font-size:12px; color: var(--muted)}
-
-/* =========================================
-   PATCH: enlever l’effet "grillage" (borders)
-   ========================================= */
-
-/* Variables plus soft */
-:root{
-  --line: rgba(255,255,255,.07);     /* au lieu de .12/.15 */
-  --line2: rgba(255,255,255,.10);
-  --glass: rgba(255,255,255,.06);
-  --glass2: rgba(255,255,255,.045);
-  --shadow: 0 10px 30px rgba(0,0,0,.35);
-  --inset: inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-/* Panels et topbar: bordure + douce et ombre */
-.topbar, .panel{
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow), var(--inset);
-}
-
-/* Cards: retire la bordure trop présente, préfère un shadow */
-.cardBox, .itemRow{
-  border: 1px solid rgba(255,255,255,.06);
-  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.035));
-  box-shadow: 0 10px 26px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.045);
-}
-
-/* Hover: au lieu de montrer une bordure claire, on fait un glow très soft */
-.cardBox:hover, .itemRow:hover, .clickable:hover{
-  outline: none;
-  box-shadow:
-    0 14px 34px rgba(0,0,0,.38),
-    inset 0 1px 0 rgba(255,255,255,.055);
-  border-color: rgba(255,255,255,.10);
-}
-
-/* Pills: c’est souvent elles qui "quadrillent" => bordure + légère et fond + homogène */
-.pill{
-  border: 1px solid rgba(255,255,255,.07);
-  background: linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.12));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.045);
-}
-
-/* Inputs/select: bordure plus discrète, focus propre */
-input, select{
-  border: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, rgba(15,17,26,.88), rgba(15,17,26,.72));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-}
-input:focus, select:focus{
-  outline: none;
-  border-color: rgba(130,170,255,.35);
-  box-shadow:
-    0 0 0 3px rgba(80,130,255,.12),
-    inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-/* Boutons: au lieu d’une bordure claire, on fait “verre + glow au hover” */
-button{
-  border: 1px solid rgba(255,255,255,.08);
-  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-}
-button:hover{
-  border-color: rgba(255,255,255,.13);
-  box-shadow:
-    0 10px 22px rgba(0,0,0,.35),
-    inset 0 1px 0 rgba(255,255,255,.06);
-}
-button:active{
-  transform: translateY(1px);
-}
-
-/* =========================================
-   SEGMENTED CONTROLS (anti "borders collées")
-   -> si tu as des groupes de boutons collés
-   ========================================= */
-
-/* Exemple de classe à utiliser: <div class="seg"> <button> - </button> <span>1</span> <button>+</button> </div> */
-.seg{
-  display:inline-flex;
-  align-items:center;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.08);   /* UNE seule bordure externe */
-  overflow:hidden;
-  background: rgba(0,0,0,.18);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-}
-.seg > *{
-  border:0 !important;              /* supprime les bordures internes */
-  border-radius:0 !important;
-  background: transparent !important;
-  box-shadow:none !important;
-}
-.seg > * + *{
-  border-left: 1px solid rgba(255,255,255,.06); /* séparateur ultra light */
-}
-.seg button{
-  padding:8px 10px;
-}
-.seg span, .seg input{
-  padding:8px 12px;
-  font-weight:900;
-  min-width: 40px;
-  text-align:center;
-}
-
-/* Si tu as des rows avec plein de pills collées: mets plus d’air */
-.row{ gap:8px; }
+.modalBody{ padding:14px; display:grid; gap:10px; }
+.modalTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+.modalTitle{ font-size:18px; font-weight:1100; line-height:1.1; }
+.modalClose{ padding:8px 10px; border-radius:14px; background: rgba(255,255,255,.08); }
+.note{ font-size:12px; color: var(--muted); }
 </style>
 </head>
 
@@ -537,10 +553,21 @@ button:active{
 
   <div class="topbar">
     <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <div><b>Gachax</b> <span style="opacity:.7">— Market</span></div>
-        <div class="subTop" id="subTop"></div>
+      <div class="brandLeft">
+        <div class="logo" aria-hidden="true"></div>
+        <div style="min-width:0">
+          <div><b>Gachax</b> <span style="opacity:.7">— Market</span></div>
+          <div class="subTop" id="subTop"></div>
+        </div>
+      </div>
+
+      <!-- ✅ avatar + fallback -->
+      <div class="profileMini" title="Profil" onclick="location.href='/profile.html'" style="cursor:pointer;">
+        <div class="avatarWrap" id="avatarWrap">
+          <div class="avatarFallback" id="avatarFallback">?</div>
+          <img id="avatarImg" class="avatarImg" alt="avatar" style="display:none;">
+        </div>
+        <span class="small" id="miniName" style="color:rgba(255,255,255,.78);">...</span>
       </div>
     </div>
 
@@ -582,33 +609,33 @@ button:active{
         </div>
       </div>
 
-      <!-- Extra filters -->
+      <!-- Filters -->
       <div class="filtersBar">
-        <label title="Afficher seulement les cartes MINT">
-          <input type="checkbox" id="fMint">
-          MINT only
-        </label>
+        <div class="fChip" title="Afficher seulement les cartes MINT">
+          <input class="cb" type="checkbox" id="fMint">
+          <span>MINT only</span>
+        </div>
 
-        <label title="Masquer tes propres ventes">
-          <input type="checkbox" id="fHideMine">
-          Masquer mes ventes
-        </label>
+        <div class="fChip" title="Masquer tes propres ventes">
+          <input class="cb" type="checkbox" id="fHideMine">
+          <span>Masquer mes ventes</span>
+        </div>
 
-        <label title="Filtrer par grade minimum">
-          Grade min:
-          <select id="fGradeMin">
+        <div class="fChip" title="Filtrer par grade minimum">
+          <span class="fLabel">Grade min</span>
+          <select class="fMiniSelect" id="fGradeMin">
             <option value="0">0</option>
             <option value="5">5</option>
             <option value="7">7</option>
             <option value="9">9</option>
             <option value="10">10</option>
           </select>
-        </label>
+        </div>
 
-        <label title="Prix maximum">
-          Prix max:
-          <input id="fPriceMax" type="number" min="0" placeholder="∞" style="width:90px">
-        </label>
+        <div class="fChip" title="Prix maximum">
+          <span class="fLabel">Prix max</span>
+          <input class="fMiniInput" id="fPriceMax" type="number" min="0" placeholder="∞">
+        </div>
       </div>
 
       <div class="msg" id="msgMarket"></div>
@@ -625,15 +652,15 @@ button:active{
       <div class="msg" id="msgSell"></div>
 
       <div class="buyRow" style="margin-top:10px;">
-        <div class="stepper" title="Prix unitaire">
-          <span class="small" style="opacity:.85; font-weight:900;">Prix</span>
-          <input id="price" type="number" min="1" value="5">
+        <div class="fChip" title="Prix unitaire">
+          <span class="fLabel">Prix</span>
+          <input class="fMiniInput" id="price" type="number" min="1" value="5" style="width:110px">
         </div>
 
         <div class="stepper" title="Quantité">
-          <button id="qMinus">−</button>
+          <button id="qMinus" type="button">−</button>
           <input id="qty" type="number" min="1" value="1">
-          <button id="qPlus">+</button>
+          <button id="qPlus" type="button">+</button>
         </div>
 
         <button id="btnList" class="btnPrimary" disabled>VENDRE</button>
@@ -649,19 +676,19 @@ button:active{
       </div>
 
       <div class="filtersBar" style="margin-top:10px;">
-        <label title="Recherche rapide dans ta collection">
-          🔎
-          <input id="mySearch" placeholder="Filtrer..." style="width:160px">
-        </label>
-        <label title="Trier ta sélection">
-          Trier:
-          <select id="mySort">
+        <div class="fChip" title="Recherche rapide dans ta collection">
+          <span>🔎</span>
+          <input class="fMiniInput" id="mySearch" placeholder="Filtrer..." style="width:170px">
+        </div>
+        <div class="fChip" title="Trier ta sélection">
+          <span class="fLabel">Trier</span>
+          <select class="fMiniSelect" id="mySort">
             <option value="recent">Récents</option>
             <option value="grade">Grade</option>
             <option value="name">Nom</option>
             <option value="count">Qté</option>
           </select>
-        </label>
+        </div>
       </div>
 
       <div class="grid selGrid" id="myCollectionGrid"></div>
@@ -690,7 +717,7 @@ button:active{
             <div class="modalTitle" id="modalTitle"></div>
             <div class="note" id="modalSub"></div>
           </div>
-          <button class="modalClose" id="modalClose">✕</button>
+          <button class="modalClose" id="modalClose" type="button">✕</button>
         </div>
 
         <div class="metaRow" id="modalBadges"></div>
@@ -699,11 +726,11 @@ button:active{
 
         <div class="buyRow">
           <div class="stepper">
-            <button id="mMinus">−</button>
+            <button id="mMinus" type="button">−</button>
             <input id="mQty" type="number" min="1" value="1">
-            <button id="mPlus">+</button>
+            <button id="mPlus" type="button">+</button>
           </div>
-          <button class="btnPrimary" id="mBuy" style="margin-left:auto;">Acheter</button>
+          <button class="btnPrimary" id="mBuy" style="margin-left:auto;" type="button">Acheter</button>
         </div>
 
         <div class="note" id="modalNote"></div>
@@ -745,10 +772,34 @@ async function api(path, opts={}){
   return data;
 }
 
+function escapeHtml(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+function gameTag(g){
+  if (g === "onepiece") return "🟥 One Piece";
+  if (g === "lorcana")  return "🟦 Lorcana";
+  return "🟨 Pokémon";
+}
+function fmtCardLine(x){
+  const setName = x.setName || x.set || "";
+  return `${x.name} • ${setName} • Grade ${x.grade}${x.mint ? " (MINT)" : ""}`;
+}
+function show(el, t){ el.textContent = t || ""; }
+
 /* DOM */
 const gameSel = document.getElementById("gameSel");
 const subTop = document.getElementById("subTop");
 const moneyEl = document.getElementById("money");
+const miniName = document.getElementById("miniName");
+
+const avatarImg = document.getElementById("avatarImg");
+const avatarFallback = document.getElementById("avatarFallback");
 
 const searchEl = document.getElementById("search");
 const sortEl = document.getElementById("sort");
@@ -801,31 +852,43 @@ let selectedItem = null;
 let lastMarketListings = [];
 let modalListing = null;
 
-function show(el, t){ el.textContent = t || ""; }
-function escapeHtml(s){
-  return String(s||"")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-function gameTag(g){
-  if (g === "onepiece") return "🟥 One Piece";
-  if (g === "lorcana")  return "🟦 Lorcana";
-  return "🟨 Pokémon";
-}
-function fmtCardLine(x){
-  const setName = x.setName || x.set || "";
-  return `${x.name} • ${setName} • Grade ${x.grade}${x.mint ? " (MINT)" : ""}`;
-}
-function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-
 gameSel.value = currentGame();
 gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
   await boot();
 });
+
+/* ✅ Avatar: charge depuis /api/profile/me si dispo, sinon fallback initiale */
+async function loadAvatar(){
+  // fallback par défaut
+  const initial = (me?.name || "?").trim().slice(0,1).toUpperCase() || "?";
+  avatarFallback.textContent = initial;
+  avatarImg.style.display = "none";
+  avatarFallback.style.display = "grid";
+
+  try{
+    const prof = await fetch("/api/profile/me", {
+      headers:{
+        "Authorization":"Bearer " + localStorage.getItem(TOKEN_KEY),
+        "Content-Type":"application/json"
+      }
+    }).then(r => r.ok ? r.json() : Promise.reject(new Error("no profile")));
+    const url = String(prof?.avatar || "").trim();
+    if(!url) return;
+
+    avatarImg.onload = () => {
+      avatarFallback.style.display = "none";
+      avatarImg.style.display = "block";
+    };
+    avatarImg.onerror = () => {
+      avatarImg.style.display = "none";
+      avatarFallback.style.display = "grid";
+    };
+    avatarImg.src = url;
+  }catch{
+    // ok: on garde fallback
+  }
+}
 
 /* Quantity steppers */
 function syncSellQty(delta){
@@ -847,7 +910,7 @@ mMinus.onclick = ()=> syncModalQty(-1);
 mPlus.onclick  = ()=> syncModalQty(+1);
 mQty.addEventListener("input", ()=> syncModalQty(0));
 
-/* Modal controls */
+/* Modal */
 function openModal(listing){
   modalListing = listing;
   modalImg.style.backgroundImage = `url('${listing.image}')`;
@@ -859,7 +922,7 @@ function openModal(listing){
     <span class="pill soft">Grade ${escapeHtml(listing.grade)}</span>
     <span class="pill soft">${mintTxt}</span>
     <span class="pill soft">Stock ${escapeHtml(listing.qty)}</span>
-    <span class="pill blue"><img src="dollax.png" class="dollaxIcon" alt=""> ${escapeHtml(listing.price)}</span>
+    <span class="pill blue"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(listing.price)}</b></span>
   `;
 
   mQty.value = String(clamp(1, 1, Number(listing.qty||1)));
@@ -889,7 +952,9 @@ mBuy.onclick = async () => {
 async function loadMe(){
   me = await api("/api/me", { method:"GET", headers:{} });
   moneyEl.textContent = me.money ?? 0;
+  miniName.textContent = me.name || "...";
   subTop.textContent = `Connecté • ${me.name} • Code ami: ${me.friendCode} • ${gameTag(currentGame())}`;
+  await loadAvatar();
 }
 
 function applyMarketFilters(listings){
@@ -939,13 +1004,13 @@ function renderMarket(listings){
         <div class="cardImg" style="background-image:url('${l.image}')"></div>
         <div class="cardOverlay">
           <span class="badge">${gameTag(g)}</span>
-          <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> ${escapeHtml(l.price)}</span>
+          <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(l.price)}</b></span>
         </div>
       </div>
 
       <div class="cardBody">
         <div class="titleRow">
-          <div>
+          <div style="min-width:0">
             <div class="cardTitle">${escapeHtml(l.name)}</div>
             <div class="cardSet">${escapeHtml(l.setName || "")}</div>
           </div>
@@ -958,11 +1023,11 @@ function renderMarket(listings){
 
         <div class="buyRow">
           <div class="stepper" title="Quantité à acheter">
-            <button class="bMinus">−</button>
+            <button class="bMinus" type="button">−</button>
             <input class="bQty" type="number" min="1" value="1">
-            <button class="bPlus">+</button>
+            <button class="bPlus" type="button">+</button>
           </div>
-          <button class="buyBtn">Acheter</button>
+          <button class="buyBtn" type="button">Acheter</button>
         </div>
 
         <div class="small">Vendeur: ${escapeHtml(l.sellerName || ("#" + l.sellerUserId))} • ${mintTxt}</div>
@@ -973,7 +1038,6 @@ function renderMarket(listings){
     const bMinus = el.querySelector(".bMinus");
     const bPlus = el.querySelector(".bPlus");
     const buyBtn = el.querySelector(".buyBtn");
-
     const max = Number(l.qty||1);
 
     function clampLocal(){
@@ -986,7 +1050,6 @@ function renderMarket(listings){
     bPlus.onclick  = () => { qtyInput.value = String(clamp((Number(qtyInput.value||1)|0)+1,1,max)); };
     qtyInput.addEventListener("input", clampLocal);
 
-    // click on image/title opens modal
     el.querySelector(".cardImg").onclick = () => openModal(l);
     el.querySelector(".cardTitle").onclick = () => openModal(l);
 
@@ -1067,7 +1130,7 @@ async function loadMyCollection(){
         <div class="cardImg" style="height:170px;background-image:url('${x.image}')"></div>
         <div class="cardOverlay">
           <span class="badge">${gameTag(g)}</span>
-          <span class="badge">${x.count ? "×" + escapeHtml(x.count) : ""}</span>
+          <span class="badge">×${escapeHtml(x.count || 1)}</span>
         </div>
       </div>
       <div class="cardBody">
@@ -1091,8 +1154,7 @@ async function loadMyCollection(){
         }) + ` • Dispo: ×${x.count}`;
       syncSellQty(0);
       show(msgSell, "");
-      // refresh selection highlight
-      loadMyCollection();
+      loadMyCollection(); // refresh highlight
     };
 
     myCollectionGrid.appendChild(el);
@@ -1117,12 +1179,12 @@ async function loadMine(){
 
     row.innerHTML = `
       <div class="thumb" style="background-image:url('${l.image}')"></div>
-      <div>
+      <div style="min-width:220px">
         <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName || "")}</span></div>
         <div class="small">${gameTag(g)} • Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix <b>${escapeHtml(l.price)}</b> • Stock ${escapeHtml(l.qty)}</div>
       </div>
       <div class="spacer"></div>
-      <button class="cancelBtn">Annuler…</button>
+      <button class="cancelBtn" type="button">Annuler…</button>
     `;
 
     row.querySelector(".thumb").onclick = () => openModal(l);
@@ -1184,17 +1246,21 @@ searchEl.addEventListener("input", () => loadMarket());
 sortEl.addEventListener("change", () => loadMarket());
 refreshBtn.onclick = () => loadMarket();
 
-fMint.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
-fHideMine.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
-fGradeMin.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
-fPriceMax.addEventListener("input",  () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
+function refilter(){
+  const list = applyMarketFilters(lastMarketListings);
+  updateKpis(list);
+  renderMarket(list);
+}
+fMint.addEventListener("change", refilter);
+fHideMine.addEventListener("change", refilter);
+fGradeMin.addEventListener("change", refilter);
+fPriceMax.addEventListener("input", refilter);
 
 reloadMine.onclick = () => loadMine();
-
 mySearch.addEventListener("input", ()=> loadMyCollection());
 mySort.addEventListener("change", ()=> loadMyCollection());
 
-async function boot(soft=false){
+async function boot(){
   try{
     await loadMe();
     await loadMarket();
