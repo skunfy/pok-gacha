@@ -144,6 +144,13 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
 
 .clickable{cursor:pointer}
 .clickable:hover{outline:1px solid rgba(255,255,255,.18)}
+
+.dollaxIcon{
+  width:30px;
+  height:30px;
+  object-fit:contain;
+  display:inline-block;
+}
 </style>
 </head>
 
@@ -163,7 +170,10 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
         <option value="lorcana">Lorcana</option>
       </select>
 
-      <div class="pill">💵 <span id="money">0</span></div>
+      <div class="pill">
+        <img src="dollax.png" alt="Dollax" class="dollaxIcon">
+        <span id="money">0</span>
+      </div>
       <input id="search" placeholder="Rechercher...">
       <select id="sort">
         <option value="recent">Plus récents</option>
