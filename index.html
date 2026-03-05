@@ -1929,11 +1929,11 @@
     const speed = 0.35; // px per frame (subtle)
 
     const step = () => {
-      if(!carPaused){
+      if (!carPaused) {
+        autoScrolling = true;
         vp.scrollLeft += speed;
-        if(vp.scrollLeft >= half){
-          vp.scrollLeft -= half;
-        }
+        if (vp.scrollLeft >= half) vp.scrollLeft -= half;
+        autoScrolling = false;
       }
       carRAF = requestAnimationFrame(step);
     };
@@ -1978,12 +1978,14 @@
 
     // user scroll pauses for a moment then resumes
     let resumeT = null;
-    carouselViewport.onscroll = () => {
-      carPaused = true;
-      if(resumeT) clearTimeout(resumeT);
-      resumeT = setTimeout(()=> (carPaused = false), 900);
-    };
+    let autoScrolling = false;
 
+    carouselViewport.addEventListener("scroll", () => {
+      if (autoScrolling) return; // ✅ ignore scroll events caused by auto-scroll
+      carPaused = true;
+      if (resumeT) clearTimeout(resumeT);
+      resumeT = setTimeout(() => (carPaused = false), 900);
+    });
     requestAnimationFrame(() => startCarousel());
   }
 // ---------- Carousel drag (mouse) ----------
