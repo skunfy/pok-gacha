@@ -584,11 +584,19 @@ function pickFirst(obj, keys) {
 // IMAGE URL NORMALIZATION
 // low.webp pour afficher vite, high.webp pour zoom
 // =========================
-function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
-  if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
-  const hasExt = /\.(png|jpe?g|webp)(\?|$)/i.test(urlBaseOrWithExt);
-  if (hasExt) return urlBaseOrWithExt;
-  return urlBaseOrWithExt.replace(/\/$/, "") + `/${quality}.${ext}`;
+function buildTcgdexAsset(base, quality="low", ext="webp") {
+  if (!base || typeof base !== "string") return null;
+
+  const u = base.replace(/\/$/, "");
+
+  // si déjà une image complète
+  if (/\.(png|jpe?g|webp)(\?|$)/i.test(u)) return u;
+
+  // ✅ si l'API renvoie déjà .../low ou .../high
+  if (/(\/low|\/high)$/i.test(u)) return `${u}.${ext}`;
+
+  // base "neutre" -> on ajoute /low.webp ou /high.webp
+  return `${u}/${quality}.${ext}`;
 }
 
 function normalizeImageField(imageField, quality = "low", ext = "webp") {
