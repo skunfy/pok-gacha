@@ -1032,6 +1032,7 @@
     background: rgba(0,0,0,.16);
     border: 1px solid rgba(255,255,255,.08);
   }
+  
 
   .carousel::before,
   .carousel::after{
@@ -1992,7 +1993,8 @@
     });
   }
 
-requestAnimationFrame(() => startCarousel());
+  requestAnimationFrame(() => startCarousel());
+  }
 // ---------- Carousel drag (mouse) ----------
   (function enableCarouselDrag(){
     const vp = carouselViewport;
@@ -2521,6 +2523,7 @@ requestAnimationFrame(() => startCarousel());
   });
 
   // ---------- INIT ----------
+ // ---------- INIT ----------
   if(card) card.style.backgroundImage = "linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02))";
   setPlaceholderVisible(true);
 
