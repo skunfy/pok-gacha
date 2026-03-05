@@ -377,6 +377,17 @@ async function fetchWithTimeout(url, ms = 20000) {
 }
 
 // =========================
+// Helpers (shared)
+// =========================
+function pickFirst(obj, keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+// =========================
 // POKEMONTCG.IO helpers
 // =========================
 const POKEMONTCG_KEY = String(process.env.POKEMONTCG_KEY || "").trim();
