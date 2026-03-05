@@ -273,12 +273,12 @@ function randFriendCode() {
 }
 
 function sellPriceFor(grade, mint){
-  if (mint) return 20;
+  if (mint) return 100;
   const g = Number(grade) || 0;
-  if (g >= 10) return 10;
-  if (g >= 7) return 3;
-  if (g >= 5) return 2;
-  return 1;
+  if (g >= 10) return 50;
+  if (g >= 7) return 25;
+  if (g >= 5) return 20;
+  return 10;
 }
 
 async function notify(userId, type, title, body, meta = null) {
