@@ -867,6 +867,25 @@ app.post("/api/login", async (req, res) => {
     return res.json({ token, isNew: true, code: newCode, friendCode });
   }
 
+  app.post("/api/dev/give_money", auth, async (req, res) => {
+  // ✅ autorisé uniquement si ADMIN_KEY est défini
+  const adminKey = String(process.env.ADMIN_KEY || "");
+  if (!adminKey) return res.status(403).json({ error: "DEV route disabled" });
+
+  // ✅ check clé
+  const k = String(req.headers["x-admin-key"] || "");
+  if (k !== adminKey) return res.status(403).json({ error: "Forbidden" });
+
+  // ✅ amount
+  const amount = Math.max(1, Number(req.body?.amount || 0) | 0);
+  if (!amount) return res.status(400).json({ error: "Missing amount" });
+
+  await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [amount, req.user.id]);
+
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+  res.json({ ok: true, money: me.rows[0]?.money || 0, added: amount });
+});
+
   // Compte existant -> code obligatoire
   if (!code || code !== u.code) {
     return res.status(401).json({ error: "Code incorrect" });
