@@ -277,7 +277,7 @@ function sellPriceFor(grade, mint){
   const g = Number(grade) || 0;
   if (g >= 10) return 50;
   if (g >= 7) return 25;
-  if (g >= 5) return 20;
+  if (g >= 5) return 15
   return 10;
 }
 
@@ -377,9 +377,29 @@ async function fetchWithTimeout(url, ms = 20000) {
 }
 
 // =========================
-// BINDER CACHE (SETS + SET_CARDS)
+// POKEMONTCG.IO helpers
 // =========================
- // =========================
+const POKEMONTCG_KEY = String(process.env.POKEMONTCG_KEY || "").trim();
+const POKEMONTCG_BASE = "https://api.pokemontcg.io/v2";
+
+async function fetchPokemonTcg(url, ms = 20000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+
+  try {
+    const headers = {};
+    if (POKEMONTCG_KEY) headers["X-Api-Key"] = POKEMONTCG_KEY;
+
+    return await fetch(url, {
+      signal: controller.signal,
+      headers,
+    });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+// =========================
 // BINDER CACHE (SETS + SET_CARDS)
 // =========================
 const SETS_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
@@ -388,22 +408,28 @@ const SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 let setsCache = { at: 0, list: [] };     // cache liste des sets
 const setCardsCache = new Map();         // setId -> { at, cards }
 
+// ===== POKEMON: sets =====
 async function getPokemonSetsCached() {
   const now = Date.now();
   if (setsCache.list.length && now - setsCache.at < SETS_TTL_MS) {
     return setsCache.list;
   }
 
-  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/sets", 20000);
-  if (!r.ok) throw new Error("TCGdex sets failed");
+  const r = await fetchPokemonTcg(`${POKEMONTCG_BASE}/sets?pageSize=500`, 20000);
+  if (!r.ok) throw new Error("PokemonTCG sets failed");
 
-  const list = await r.json().catch(() => []);
-  const clean = Array.isArray(list) ? list : [];
+  const json = await r.json().catch(() => null);
+  const list = Array.isArray(json?.data) ? json.data : [];
+
+  const clean = list
+    .map((s) => ({ id: String(s.id), name: String(s.name || s.id) }))
+    .filter((s) => s.id);
 
   setsCache = { at: now, list: clean };
   return clean;
 }
 
+// ===== POKEMON: set cards =====
 async function getPokemonSetCardsCached(setId) {
   const now = Date.now();
   const cached = setCardsCache.get(setId);
@@ -411,21 +437,42 @@ async function getPokemonSetCardsCached(setId) {
     return cached.cards;
   }
 
-  const r = await fetchWithTimeout(
-    `https://api.tcgdex.net/v2/fr/sets/${encodeURIComponent(setId)}`,
-    20000
-  );
-  if (!r.ok) throw new Error("TCGdex set detail failed");
+  let page = 1;
+  const pageSize = 250;
+  let all = [];
 
-  const data = await r.json().catch(() => null);
-  const cards = Array.isArray(data?.cards) ? data.cards : [];
+  while (true) {
+    const url =
+      `${POKEMONTCG_BASE}/cards?q=set.id:${encodeURIComponent(setId)}` +
+      `&pageSize=${pageSize}&page=${page}`;
+
+    const r = await fetchPokemonTcg(url, 20000);
+    if (!r.ok) throw new Error("PokemonTCG set cards failed");
+
+    const json = await r.json().catch(() => null);
+    const data = Array.isArray(json?.data) ? json.data : [];
+    all = all.concat(data);
+
+    if (data.length < pageSize) break;
+    page++;
+    if (page > 20) break; // garde-fou
+  }
+
+  const cards = all.map((c) => ({
+    id: String(c.id),
+    cardId: String(c.id),
+    localId: String(c.number || ""),
+    name: String(c.name || ""),
+    image: c?.images?.small || null,
+    imageHigh: c?.images?.large || c?.images?.small || null,
+  }));
 
   setCardsCache.set(setId, { at: now, cards });
   return cards;
 }
 
 // =========================
-// TCGDEX PERF: CACHE LIST + CACHE DETAILS
+// TCGDEX PERF (tu peux les garder si tu veux, mais plus utilisés pour Pokémon)
 // =========================
 const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 const CARD_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -465,124 +512,8 @@ async function getCardDetailById(id) {
   return data;
 }
 
-
 // =========================
-// LORCANA (LORCAST) ONLINE CACHE
-// =========================
-const LORCANA_BASE = "https://api.lorcast.com/v0"; // docs: Lorcast API :contentReference[oaicite:1]{index=1}
-const LORCANA_SETS_TTL_MS  = 6 * 60 * 60 * 1000;   // 6h
-const LORCANA_CARDS_TTL_MS = 6 * 60 * 60 * 1000;   // 6h (par set)
-
-let lorSetsCache = { at: 0, list: [] };
-const lorSetCardsCache = new Map(); // code -> {at, list}
-
-async function getLorcanaSets(){
-  const now = Date.now();
-  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) {
-    return lorSetsCache.list;
-  }
-
-  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets`, 20000);
-  if (!r.ok) throw new Error(`LORCAST sets failed HTTP ${r.status}`);
-
-  const data = await r.json().catch(()=> null);
-
-  // ✅ /sets -> { results: [...] }
-  const list = Array.isArray(data) ? data : (data?.results || []);
-  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST sets empty");
-
-  lorSetsCache = { at: now, list };
-  console.log(`🌐 cached Lorcana sets: ${list.length}`);
-  return list;
-}
-
-async function getLorcanaCardsForSet(code){
-  const now = Date.now();
-  const cached = lorSetCardsCache.get(code);
-  if (cached?.list?.length && now - cached.at < LORCANA_CARDS_TTL_MS) return cached.list;
-
-  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets/${encodeURIComponent(code)}/cards`, 20000);
-  if (!r.ok) throw new Error("LORCAST set cards failed HTTP " + r.status);
-
-  const json = await r.json().catch(()=> null);
-  const list = Array.isArray(json) ? json : (json?.data || json?.cards || []);
-  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST set cards empty");
-
-  lorSetCardsCache.set(code, { at: now, list });
-  return list;
-}
-
-function pickImageLorcana(card){
-  const u = card?.image_uris?.digital || card?.image_uris || null;
-
-  // ✅ on évite "small" comme image principale (souvent trop petite)
-  const low  = u?.normal || u?.large || u?.small || null;
-  const high = u?.large  || u?.normal || u?.small || null;
-
-  return { low, high };
-}
-
-// =========================
-// ONE PIECE (OPTCG) ONLINE CACHE
-// =========================
-const OP_LIST_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
-const OP_DETAIL_TTL_MS = 24 * 60 * 60 * 1000;   // 24h
-
-let opBriefCache = { at: 0, list: [] };
-const opDetailCache = new Map();
-
-async function getOpBriefList() {
-  const now = Date.now();
-  if (opBriefCache.list.length && now - opBriefCache.at < OP_LIST_TTL_MS) {
-    return opBriefCache.list;
-  }
-
-  const r = await fetchWithTimeout("https://optcgapi.com/api/allSetCards/", 20000);
-  if (!r.ok) throw new Error("OPTCG list failed");
-
-  const list = await r.json().catch(() => null);
-  if (!Array.isArray(list) || !list.length) throw new Error("OPTCG list empty");
-
-  opBriefCache = { at: now, list };
-  console.log(`🌐 cached One Piece list: ${list.length} cards`);
-  return list;
-}
-
-async function getOpCardDetail(cardId) {
-  const now = Date.now();
-  const cached = opDetailCache.get(cardId);
-  if (cached && now - cached.at < OP_DETAIL_TTL_MS) return cached.data;
-
-  const r = await fetchWithTimeout(
-    `https://optcgapi.com/api/sets/card/${encodeURIComponent(cardId)}/`,
-    20000
-  );
-  if (!r.ok) throw new Error("OPTCG detail failed");
-
-  const data = await r.json().catch(() => null);
-  if (!data) throw new Error("OPTCG detail invalid");
-
-  // ✅ l’API renvoie souvent un ARRAY -> on prend une variante (random)
-  const picked = Array.isArray(data)
-    ? (data[Math.floor(Math.random() * data.length)] || data[0])
-    : data;
-
-  opDetailCache.set(cardId, { at: now, data: picked });
-  return picked;
-}
-
-// Essayez plusieurs clés possibles (API peut varier selon les cartes)
-function pickFirst(obj, keys) {
-  for (const k of keys) {
-    const v = obj?.[k];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  return null;
-}
-
-// =========================
-// IMAGE URL NORMALIZATION
-// low.webp pour afficher vite, high.webp pour zoom
+// IMAGE URL NORMALIZATION (TCGdex legacy)
 // =========================
 function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
   if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
@@ -612,30 +543,23 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 }
 
 // =========================
-// DRAW CARD
-// =========================
-// =========================
 // DRAW CARD (MULTI GAME)
 // =========================
 async function drawCard(game) {
-
   // ----- ONE PIECE ONLINE -----
   if (game === "onepiece") {
     const list = await getOpBriefList();
 
-    // On tente plusieurs fois de trouver une carte valide avec image
     for (let attempt = 0; attempt < 10; attempt++) {
       const pick = list[Math.floor(Math.random() * list.length)] || {};
 
       const cardId =
-        pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) ||
-        null;
-
+        pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) || null;
       if (!cardId) continue;
 
       let d;
       try {
-        d = await getOpCardDetail(cardId); // déjà array-safe
+        d = await getOpCardDetail(cardId);
       } catch {
         continue;
       }
@@ -656,7 +580,6 @@ async function drawCard(game) {
 
       if (!image) continue;
 
-      // ✅ binder-friendly ids (setId / localId)
       const setId =
         pickFirst(d, ["set_id", "setId", "set_code", "setCode"]) ||
         pickFirst(pick, ["set_id", "setId", "set_code", "setCode"]) ||
@@ -671,92 +594,76 @@ async function drawCard(game) {
       console.log("🌐 source=OPTCG (working)");
 
       return {
-        cardId,                      // ✅
-        setId,                       // ✅
-        localId: String(localId || ""), // ✅
+        cardId,
+        setId,
+        localId: String(localId || ""),
         name,
         set: setName,
         rarity: pickFirst(d, ["rarity"]) || "",
         image,
-        imageHigh: image
+        imageHigh: image,
       };
     }
 
     throw new Error("One Piece: impossible de trouver une carte avec image");
   }
-  
 
   // ----- LORCANA ONLINE (LORCAST) -----
-if (game === "lorcana") {
-  // ✅ IMPORTANT: on récupère les sets UNE seule fois (pas de shadow "const sets" dans le loop)
-  const sets = await getLorcanaSets();
+  if (game === "lorcana") {
+    const sets = await getLorcanaSets();
 
-  // On tente plusieurs sets si jamais une réponse est vide
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const s = sets[Math.floor(Math.random() * sets.length)] || {};
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const s = sets[Math.floor(Math.random() * sets.length)] || {};
+      const setCode = pickFirst(s, ["code", "set_code", "setCode", "id"]) || null;
+      if (!setCode) continue;
 
-    const setCode =
-      pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
-      null;
+      let cards;
+      try {
+        cards = await getLorcanaCardsForSet(setCode);
+      } catch {
+        continue;
+      }
+      if (!Array.isArray(cards) || !cards.length) continue;
 
-    if (!setCode) continue;
+      for (let pickTry = 0; pickTry < 12; pickTry++) {
+        const c = cards[Math.floor(Math.random() * cards.length)] || {};
 
-    let cards;
-    try {
-      cards = await getLorcanaCardsForSet(setCode);
-    } catch {
-      continue;
+        const name = pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
+        const setName =
+          pickFirst(s, ["name", "set_name"]) ||
+          pickFirst(c, ["set_name", "setName"]) ||
+          `Set ${setCode}`;
+
+        const rarity = pickFirst(c, ["rarity"]) || "";
+
+        const { low, high } = pickImageLorcana(c);
+        if (!low) continue;
+
+        const cardId = pickFirst(c, ["id", "card_id", "cardId", "uuid"]) || null;
+        const setId = String(setCode || "lorcana");
+        const localId =
+          pickFirst(c, ["collector_number", "collectorNumber", "number", "card_number", "localId", "local_id"]) ||
+          "";
+
+        console.log("🌐 source=LORCAST");
+
+        return {
+          cardId,
+          setId,
+          localId: String(localId || ""),
+          name,
+          set: setName,
+          rarity,
+          image: low,
+          imageHigh: high || low,
+        };
+      }
     }
 
-    if (!Array.isArray(cards) || !cards.length) continue;
-
-    // On tente plusieurs cartes dans ce set pour être sûr d'avoir une image
-    for (let pickTry = 0; pickTry < 12; pickTry++) {
-      const c = cards[Math.floor(Math.random() * cards.length)] || {};
-
-      const name =
-        pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
-
-      const setName =
-        pickFirst(s, ["name", "set_name"]) ||
-        pickFirst(c, ["set_name", "setName"]) ||
-        `Set ${setCode}`;
-
-      const rarity = pickFirst(c, ["rarity"]) || "";
-
-      const { low, high } = pickImageLorcana(c);
-      if (!low) continue;
-
-      // ✅ binder-friendly ids (setId / localId / cardId)
-      const cardId =
-        pickFirst(c, ["id", "card_id", "cardId", "uuid"]) ||
-        null;
-
-      const setId = String(setCode || "lorcana");
-
-      const localId =
-        pickFirst(c, ["collector_number", "collectorNumber", "number", "card_number", "localId", "local_id"]) ||
-        "";
-
-      console.log("🌐 source=LORCAST");
-
-      return {
-        cardId,                        // ✅
-        setId,                         // ✅
-        localId: String(localId || ""),// ✅
-        name,
-        set: setName,
-        rarity,
-        image: low,
-        imageHigh: high || low
-      };
-    }
+    throw new Error("Lorcana: impossible de trouver une carte avec image");
   }
 
-  throw new Error("Lorcana: impossible de trouver une carte avec image");
-}
-
-  // ----- POKEMON ONLINE (TCGDEX) -----
+  // ----- POKEMON ONLINE (PokemonTCG.io) -----
   if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
@@ -765,47 +672,33 @@ if (game === "lorcana") {
     throw new Error("Offline only: no cards.json");
   }
 
-  const MAX_TRIES = 6;
+  const sets = await getPokemonSetsCached();
+  if (!sets.length) throw new Error("PokemonTCG: no sets");
 
-  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
-    let list;
-    try {
-      list = await getCardsBriefList();
-    } catch {
-      list = null;
-    }
-    if (!list?.length) break;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const s = sets[Math.floor(Math.random() * sets.length)];
+    if (!s?.id) continue;
 
-    const pick = list[Math.floor(Math.random() * list.length)];
-    if (!pick?.id) continue;
+    const cards = await getPokemonSetCardsCached(s.id);
+    if (!cards?.length) continue;
 
-    let c;
-    try {
-      c = await getCardDetailById(pick.id);
-    } catch {
-      continue;
-    }
+    const pick = cards[Math.floor(Math.random() * cards.length)];
+    if (!pick?.cardId || !pick?.image) continue;
 
-    const imageLow = normalizeImageField(c.image, "low", "webp");
-    const imageHigh = normalizeImageField(c.image, "high", "webp");
-    if (!imageLow) continue;
-
-    console.log("🌐 source=TCGDEX (cached)");
+    console.log("🌐 source=POKEMONTCG.IO");
 
     return {
-      cardId: c.id || pick.id,                // id global tcgdex
-      setId: c.set?.id || null,               // ex: "base1", "swsh3"...
-      localId: String(c.localId || ""),       // ex: "1", "136", "TG05"...
-      name: c.name || pick.name || "Unknown",
-      set: c.set?.name || c.set?.id || "Unknown",
-      rarity: c.rarity || "",
-      image: imageLow,
-      imageHigh: imageHigh || null,
+      cardId: pick.cardId,
+      setId: s.id,
+      localId: String(pick.localId || ""),
+      name: pick.name,
+      set: s.name,
+      rarity: "",
+      image: pick.image,
+      imageHigh: pick.imageHigh || pick.image,
     };
   }
 
-
-  // Si tu veux 100% online, supprime carrément ce bloc fallback :
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if (c?.image) {
@@ -814,9 +707,8 @@ if (game === "lorcana") {
     }
   }
 
-  throw new Error("No card available (TCGdex + offline empty)");
+  throw new Error("No Pokemon card available");
 }
-
 
 // ----- GRADES -----
 function rollGrade() {
@@ -867,16 +759,22 @@ app.post("/api/login", async (req, res) => {
     return res.json({ token, isNew: true, code: newCode, friendCode });
   }
 
-  app.post("/api/dev/give_money", auth, async (req, res) => {
-  // ✅ autorisé uniquement si ADMIN_KEY est défini
+  // Compte existant -> code obligatoire
+  if (!code || code !== u.code) {
+    return res.status(401).json({ error: "Code incorrect" });
+  }
+
+  return res.json({ token: u.token, isNew: false });
+});
+
+// ✅ DEV ROUTE (SORTIE DE /api/login)
+app.post("/api/dev/give_money", auth, async (req, res) => {
   const adminKey = String(process.env.ADMIN_KEY || "");
   if (!adminKey) return res.status(403).json({ error: "DEV route disabled" });
 
-  // ✅ check clé
-  const k = String(req.headers["zakuro96"] || "");
+  const k = String(req.headers["x-admin-key"] || "");
   if (k !== adminKey) return res.status(403).json({ error: "Forbidden" });
 
-  // ✅ amount
   const amount = Math.max(1, Number(req.body?.amount || 0) | 0);
   if (!amount) return res.status(400).json({ error: "Missing amount" });
 
@@ -886,24 +784,15 @@ app.post("/api/login", async (req, res) => {
   res.json({ ok: true, money: me.rows[0]?.money || 0, added: amount });
 });
 
-  // Compte existant -> code obligatoire
-  if (!code || code !== u.code) {
-    return res.status(401).json({ error: "Code incorrect" });
-  }
-
-  return res.json({ token: u.token, isNew: false });
-});
-
 app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
   const userQ = await pool.query(
-  `SELECT name, money, friendCode, xp, avatar FROM users WHERE id=$1`,
-  [req.user.id]
-);
+    `SELECT name, money, friendCode, xp, avatar FROM users WHERE id=$1`,
+    [req.user.id]
+  );
   const u = userQ.rows[0];
 
-  // si ancien compte sans friendCode
   let friendCode = u?.friendcode || u?.friendCode || null;
   if (!friendCode) {
     friendCode = randFriendCode();
@@ -917,7 +806,6 @@ app.get("/api/me", auth, async (req, res) => {
     }
   }
 
-  // stats pulls
   const statsQ = await pool.query(
     `
     SELECT
@@ -948,7 +836,6 @@ app.get("/api/me", auth, async (req, res) => {
     xp: Number(u?.xp || 0),
     level: levelForXp(u?.xp || 0),
     avatar: u?.avatar || "",
-    
   });
 });
 
@@ -963,7 +850,6 @@ app.post("/api/open", auth, async (req, res) => {
     return res.status(400).json({ error: "Pas assez de Pokédollars" });
   }
 
-  // payer
   await pool.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
 
   let c;
@@ -979,16 +865,11 @@ app.post("/api/open", auth, async (req, res) => {
   const mint = rollMintForGrade(grade);
   const now = Date.now();
 
-  // XP open
   const xpAdd = xpForOpen(grade);
   await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
 
-  // idKey stable pour tous :p
-
-    // ✅ idKey stable pour TOUS les jeux (binder-friendly)
   const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
 
-  // log pull
   await pool.query(
     `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
@@ -1008,7 +889,6 @@ app.post("/api/open", auth, async (req, res) => {
     ]
   );
 
-  // upsert collection
   await pool.query(
     `
     INSERT INTO collection
@@ -1043,7 +923,6 @@ app.post("/api/open", auth, async (req, res) => {
     ]
   );
 
-  // money actuel
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
   return res.json({
@@ -1065,20 +944,18 @@ app.post("/api/open", auth, async (req, res) => {
   });
 });
 
-
-
 app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
   const game = getGame(req);
 
   const items = await pool.query(
-  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
-   FROM collection 
-   WHERE user_id=$1 AND game=$2
-   ORDER BY lastAt DESC`,
-  [req.user.id, game]
-);
+    `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
+     FROM collection 
+     WHERE user_id=$1 AND game=$2
+     ORDER BY lastAt DESC`,
+    [req.user.id, game]
+  );
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
@@ -1086,7 +963,7 @@ app.get("/api/collection", auth, async (req, res) => {
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => ({
       idKey: x.idkey || x.idKey,
-      game: x.game || game, 
+      game: x.game || game,
       name: x.name,
       set: x.setname || x.setName,
       cardId: x.cardid || x.cardId || null,
@@ -1109,18 +986,19 @@ app.get("/api/sets", auth, async (req, res) => {
     // ===== POKEMON =====
     if (game === "pokemon") {
       const list = await getPokemonSetsCached();
-      return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+      return res.json({ sets: list.map((s) => ({ id: s.id, name: s.name })) });
     }
 
     // ===== LORCANA =====
     if (game === "lorcana") {
       const list = await getLorcanaSets();
-      // lorcast: code + name
       return res.json({
-        sets: list.map(s => ({
-          id: String(s.code || s.id || ""),
-          name: String(s.name || s.code || "Set")
-        })).filter(s => s.id)
+        sets: list
+          .map((s) => ({
+            id: String(s.code || s.id || ""),
+            name: String(s.name || s.code || "Set"),
+          }))
+          .filter((s) => s.id),
       });
     }
 
@@ -1128,16 +1006,15 @@ app.get("/api/sets", auth, async (req, res) => {
     if (game === "onepiece") {
       const list = await getOpBriefList();
 
-      // on fabrique des "sets" à partir des champs existants
       const map = new Map();
       for (const c of list) {
         const setName = pickFirst(c, ["set_name", "setName", "set", "series"]) || "One Piece";
-        const setId   = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || setName;
+        const setId = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || setName;
         const id = String(setId);
         if (!map.has(id)) map.set(id, { id, name: String(setName) });
       }
 
-      return res.json({ sets: Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name)) });
+      return res.json({ sets: Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)) });
     }
 
     return res.json({ sets: [] });
@@ -1157,31 +1034,33 @@ app.get("/api/set_cards", auth, async (req, res) => {
       const cards = await getPokemonSetCardsCached(setId);
       return res.json({
         setId,
-        cards: cards.map(c => ({
-          cardId: c.id,
+        cards: cards.map((c) => ({
+          cardId: c.cardId,
           localId: String(c.localId || ""),
           name: c.name || "",
-          image: normalizeImageField(c.image, "low", "webp"),
-          imageHigh: normalizeImageField(c.image, "high", "webp"),
-        }))
+          image: c.image || null,
+          imageHigh: c.imageHigh || c.image || null,
+        })),
       });
     }
 
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
-      const out = cards.map(c => {
-        const { low, high } = pickImageLorcana(c);
-        const cardId  = String(c.id || c.card_id || c.uuid || "");
-        const localId = String(c.collector_number || c.number || c.card_number || "");
-        return {
-          cardId,
-          localId,
-          name: String(c.name || ""),
-          image: low || null,
-          imageHigh: high || low || null,
-        };
-      }).filter(x => x.cardId);
+      const out = cards
+        .map((c) => {
+          const { low, high } = pickImageLorcana(c);
+          const cardId = String(c.id || c.card_id || c.uuid || "");
+          const localId = String(c.collector_number || c.number || c.card_number || "");
+          return {
+            cardId,
+            localId,
+            name: String(c.name || ""),
+            image: low || null,
+            imageHigh: high || low || null,
+          };
+        })
+        .filter((x) => x.cardId);
 
       return res.json({ setId, cards: out });
     }
@@ -1191,25 +1070,27 @@ app.get("/api/set_cards", auth, async (req, res) => {
       const list = await getOpBriefList();
 
       const out = list
-        .filter(c => {
-          const sId = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || (pickFirst(c, ["set_name","setName","set","series"]) || "One Piece");
+        .filter((c) => {
+          const sId =
+            pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) ||
+            (pickFirst(c, ["set_name", "setName", "set", "series"]) || "One Piece");
           return String(sId) === setId;
         })
-        .map(c => {
-          const cardId  = pickFirst(c, ["card_set_id","cardSetId","card_id","cardId","id"]) || "";
-          const localId = pickFirst(c, ["card_number","number","collector_number","collectorNumber"]) || "";
-          const name    = pickFirst(c, ["card_name","name","title"]) || "";
-          const image   = pickFirst(c, ["card_image","image_url","imageUrl","image","img"]) || null;
+        .map((c) => {
+          const cardId = pickFirst(c, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) || "";
+          const localId = pickFirst(c, ["card_number", "number", "collector_number", "collectorNumber"]) || "";
+          const name = pickFirst(c, ["card_name", "name", "title"]) || "";
+          const image = pickFirst(c, ["card_image", "image_url", "imageUrl", "image", "img"]) || null;
 
           return {
             cardId: String(cardId),
             localId: String(localId),
             name: String(name),
             image,
-            imageHigh: image
+            imageHigh: image,
           };
         })
-        .filter(x => x.cardId);
+        .filter((x) => x.cardId);
 
       return res.json({ setId, cards: out });
     }
@@ -1218,6 +1099,31 @@ app.get("/api/set_cards", auth, async (req, res) => {
   } catch (e) {
     return res.status(502).json({ error: "set_cards failed" });
   }
+});
+
+app.get("/api/pulls", auth, async (req, res) => {
+  const game = getGame(req);
+
+  const rows = await pool.query(
+    `SELECT game, name, setName, image, imageHigh, grade, mint, at
+     FROM pulls
+     WHERE user_id=$1 AND game=$2
+     ORDER BY at DESC
+     LIMIT 80`,
+    [req.user.id, game]
+  );
+
+  res.json({
+    pulls: rows.rows.map((r) => ({
+      name: r.name,
+      set: r.setname || r.setName,
+      image: r.image,
+      imageHigh: r.imagehigh || r.imageHigh || null,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+      at: Number(r.at),
+    })),
+  });
 });
 
 app.get("/api/pulls", auth, async (req, res) => {
