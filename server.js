@@ -278,7 +278,7 @@ function sellPriceFor(grade, mint){
   if (g >= 10) return 10;
   if (g >= 7) return 3;
   if (g >= 5) return 2;
-  return 10;
+  return 1;
 }
 
 async function notify(userId, type, title, body, meta = null) {
@@ -1141,20 +1141,36 @@ app.get("/api/set_cards", auth, async (req, res) => {
   if (!setId) return res.status(400).json({ error: "Missing setId" });
 
   try {
-    // ===== POKEMON =====
-    if (game === "pokemon") {
-      const cards = await getPokemonSetCardsCached(setId);
-      return res.json({
-        setId,
-        cards: cards.map(c => ({
+  // ===== POKEMON =====
+  if (game === "pokemon") {
+    const cards = await getPokemonSetCardsCached(setId);
+
+    return res.json({
+      setId,
+      cards: cards.map(c => {
+
+        const low =
+          normalizeImageField(c.image, "low", "webp") ||
+          (c.localId
+            ? `https://assets.tcgdex.net/fr/${setId}/${c.localId}/low.webp`
+            : null);
+
+        const high =
+          normalizeImageField(c.image, "high", "webp") ||
+          (c.localId
+            ? `https://assets.tcgdex.net/fr/${setId}/${c.localId}/high.webp`
+            : null);
+
+        return {
           cardId: c.id,
           localId: String(c.localId || ""),
           name: c.name || "",
-          image: normalizeImageField(c.image, "low", "webp"),
-          imageHigh: normalizeImageField(c.image, "high", "webp"),
-        }))
-      });
-    }
+          image: low,
+          imageHigh: high
+        };
+      })
+    });
+  }
 
     // ===== LORCANA =====
     if (game === "lorcana") {
