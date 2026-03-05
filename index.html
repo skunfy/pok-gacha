@@ -1053,11 +1053,12 @@
   }
 
   .carouselViewport{
-    overflow:auto;
-    scrollbar-width:none;
-    -webkit-overflow-scrolling: touch;
+  overflow: hidden;          /* ✅ plus de scroll natif */
+  position: relative;
+  touch-action: pan-x;       /* ✅ drag horizontal */
+  cursor: grab;
   }
-  .carouselViewport::-webkit-scrollbar{ display:none; }
+  .carouselViewport.dragging{ cursor: grabbing; }
 
   .carouselTrack{
     display:flex;
@@ -1065,6 +1066,8 @@
     padding:10px;
     align-items:center;
     width:max-content;
+    will-change: transform;    /* ✅ perf */
+    transform: translate3d(0,0,0);
   }
 
   .slide{
@@ -1910,131 +1913,135 @@
   }
 
   // ---------- Carousel auto-scroll (infinite loop) ----------
-  // ---------- Carousel auto-scroll (infinite loop) ----------
   let carRAF = null;
-  let carPaused = false;
+let carPaused = false;
 
-  let lastAutoScrollAt = 0; // ✅ timestamp
+let carOffset = 0;      // position actuelle (px)
+let carHalf = 0;        // largeur du “loop” (la moitié)
+let lastT = 0;
 
-  function stopCarousel(){
-    if(carRAF) cancelAnimationFrame(carRAF);
-    carRAF = null;
-  }
+function stopCarousel(){
+  if(carRAF) cancelAnimationFrame(carRAF);
+  carRAF = null;
+}
 
-  function startCarousel(){
-    stopCarousel();
-    const vp = carouselViewport;
-    const tr = carouselTrack;
-    if(!vp || !tr) return;
+function startCarousel(){
+  stopCarousel();
+  if(!carouselViewport || !carouselTrack) return;
 
-    const half = tr.scrollWidth / 2;
-    if(!half || half < 10) return;
+  carHalf = carouselTrack.scrollWidth / 2;
+  if(!carHalf || carHalf < 10) return;
 
-    const pxPerSec = 25; // ✅ vitesse réelle (essaie 15-40)
-    let lastT = performance.now();
+  const pxPerSec = 80; // ✅ ici ta vitesse (essaie 60-140)
+  lastT = performance.now();
 
-    const step = (t) => {
-      const dt = (t - lastT) / 1000; // secondes
-      lastT = t;
+  const step = (t) => {
+    const dt = (t - lastT) / 1000;
+    lastT = t;
 
-      if(!carPaused){
-        lastAutoScrollAt = t; // ✅ marque que c’est nous qui scrollons
-        vp.scrollLeft += pxPerSec * dt;
+    if(!carPaused){
+      carOffset += pxPerSec * dt;
+      if(carOffset >= carHalf) carOffset -= carHalf;
 
-        if(vp.scrollLeft >= half) vp.scrollLeft -= half;
-      }
-
-      carRAF = requestAnimationFrame(step);
-    };
+      carouselTrack.style.transform = `translate3d(${-carOffset}px,0,0)`;
+    }
 
     carRAF = requestAnimationFrame(step);
+  };
+
+  carRAF = requestAnimationFrame(step);
+}
+
+function renderCarouselFromPulls(pulls){
+  if(!carouselTrack || !carouselViewport) return;
+
+  carouselTrack.innerHTML = "";
+
+  const base = (pulls || []).slice(0, 12);
+  if(!base.length){
+    const empty = document.createElement("div");
+    empty.style.opacity = ".65";
+    empty.style.fontSize = "12px";
+    empty.style.padding = "10px";
+    empty.textContent = "Aucun pull pour le moment.";
+    carouselTrack.appendChild(empty);
+    stopCarousel();
+    return;
   }
 
-  function renderCarouselFromPulls(pulls){
-    if(!carouselTrack || !carouselViewport) return;
+  // ✅ on double pour boucle infinie
+  const doubled = base.concat(base);
+  for(const p of doubled){
+    carouselTrack.appendChild(createSlide(p));
+  }
 
-    carouselTrack.innerHTML = "";
+  // reset
+  carOffset = 0;
+  carouselTrack.style.transform = `translate3d(0,0,0)`;
 
-    const base = (pulls || []).slice(0, 12); // 12 derniers
-    if(!base.length){
-      // petit placeholder si vide
-      const empty = document.createElement("div");
-      empty.style.opacity = ".65";
-      empty.style.fontSize = "12px";
-      empty.style.padding = "10px";
-      empty.textContent = "Aucun pull pour le moment.";
-      carouselTrack.appendChild(empty);
-      stopCarousel();
-      return;
+  bindCarouselDragOnce();
+  startCarousel();
+}
+
+let carouselDragBound = false;
+function bindCarouselDragOnce(){
+  if(carouselDragBound) return;
+  carouselDragBound = true;
+
+  const vp = carouselViewport;
+
+  let isDown = false;
+  let startX = 0;
+  let startOffset = 0;
+
+  const onDown = (e) => {
+    isDown = true;
+    carPaused = true;
+    vp.classList.add("dragging");
+
+    startX = (e.touches ? e.touches[0].clientX : e.clientX);
+    startOffset = carOffset;
+  };
+
+  const onMove = (e) => {
+    if(!isDown) return;
+    const x = (e.touches ? e.touches[0].clientX : e.clientX);
+    const dx = x - startX;
+
+    // drag => on bouge l’offset
+    carOffset = startOffset - dx;
+
+    // wrap propre
+    if(carHalf > 0){
+      carOffset = ((carOffset % carHalf) + carHalf) % carHalf;
     }
 
-    // duplicate for seamless loop
-    const doubled = base.concat(base);
+    carouselTrack.style.transform = `translate3d(${-carOffset}px,0,0)`;
+    e.preventDefault?.();
+  };
 
-    for(const p of doubled){
-      carouselTrack.appendChild(createSlide(p));
-    }
+  const onUp = () => {
+    if(!isDown) return;
+    isDown = false;
+    vp.classList.remove("dragging");
+    setTimeout(() => (carPaused = false), 400);
+  };
 
-    // reset scroll
-    carouselViewport.scrollLeft = 0;
+  // souris
+  vp.addEventListener("mousedown", onDown);
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
 
-    // hover/touch pause
-    // hover/touch/scroll pause (bind une seule fois)
-  carPaused = false;
+  // tactile
+  vp.addEventListener("touchstart", onDown, { passive:false });
+  vp.addEventListener("touchmove", onMove, { passive:false });
+  vp.addEventListener("touchend", onUp);
+  vp.addEventListener("touchcancel", onUp);
 
-  if (!carouselListenersBound) {
-    carouselListenersBound = true;
-
-    carouselViewport.ontouchstart  = () => (carPaused = true);
-    carouselViewport.ontouchend    = () => (carPaused = false);
-    carouselViewport.ontouchcancel = () => (carPaused = false);
-
-    let resumeT = null;
-    carouselViewport.addEventListener("scroll", () => {
-      // ✅ si le scroll vient de l’auto-scroll, on ignore
-      if (performance.now() - lastAutoScrollAt < 80) return;
-
-      carPaused = true;
-      clearTimeout(resumeT);
-      resumeT = setTimeout(() => (carPaused = false), 900);
-    }, { passive: true });
-  }
-
-  requestAnimationFrame(() => startCarousel());
-  }
-// ---------- Carousel drag (mouse) ----------
-  (function enableCarouselDrag(){
-    const vp = carouselViewport;
-    if(!vp) return;
-
-    let isDown = false;
-    let startX = 0;
-    let startScrollLeft = 0;
-
-    vp.addEventListener("mousedown", (e) => {
-      isDown = true;
-      carPaused = true; // pause l’auto-scroll pendant le drag
-      vp.classList.add("dragging");
-      startX = e.pageX;
-      startScrollLeft = vp.scrollLeft;
-      e.preventDefault();
-    });
-
-    window.addEventListener("mouseup", () => {
-      if(!isDown) return;
-      isDown = false;
-      vp.classList.remove("dragging");
-      // reprise auto après un petit délai
-      setTimeout(()=> (carPaused = false), 500);
-    });
-
-    window.addEventListener("mousemove", (e) => {
-      if(!isDown) return;
-      const dx = e.pageX - startX;
-      vp.scrollLeft = startScrollLeft - dx;
-    });
-  })();
-
+  // pause au hover (desktop)
+  vp.addEventListener("mouseenter", () => (carPaused = true));
+  vp.addEventListener("mouseleave", () => (carPaused = false));
+}
 
   // ---------- History modal ----------
   function openHistory(){
