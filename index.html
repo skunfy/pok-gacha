@@ -1913,7 +1913,8 @@
   // ---------- Carousel auto-scroll (infinite loop) ----------
   let carRAF = null;
   let carPaused = false;
-  let autoScrolling = false;          // ✅ global
+
+  let lastAutoScrollAt = 0; // ✅ timestamp
 
   function stopCarousel(){
     if(carRAF) cancelAnimationFrame(carRAF);
@@ -1926,19 +1927,23 @@
     const tr = carouselTrack;
     if(!vp || !tr) return;
 
-    // only if enough content to scroll
     const half = tr.scrollWidth / 2;
     if(!half || half < 10) return;
 
-    const speed = 5.0; // px per frame (subtle)
+    const pxPerSec = 25; // ✅ vitesse réelle (essaie 15-40)
+    let lastT = performance.now();
 
-    const step = () => {
-      if (!carPaused) {
-        autoScrolling = true;
-        vp.scrollLeft += speed;
-        if (vp.scrollLeft >= half) vp.scrollLeft -= half;
-        autoScrolling = false;
+    const step = (t) => {
+      const dt = (t - lastT) / 1000; // secondes
+      lastT = t;
+
+      if(!carPaused){
+        lastAutoScrollAt = t; // ✅ marque que c’est nous qui scrollons
+        vp.scrollLeft += pxPerSec * dt;
+
+        if(vp.scrollLeft >= half) vp.scrollLeft -= half;
       }
+
       carRAF = requestAnimationFrame(step);
     };
 
@@ -1980,17 +1985,19 @@
   if (!carouselListenersBound) {
     carouselListenersBound = true;
 
-    carouselViewport.ontouchstart = () => (carPaused = true);
-    carouselViewport.ontouchend   = () => (carPaused = false);
-    carouselViewport.ontouchcancel= () => (carPaused = false);
+    carouselViewport.ontouchstart  = () => (carPaused = true);
+    carouselViewport.ontouchend    = () => (carPaused = false);
+    carouselViewport.ontouchcancel = () => (carPaused = false);
 
     let resumeT = null;
     carouselViewport.addEventListener("scroll", () => {
-      if (autoScrolling) return; // ✅ ignore scroll events caused by auto-scroll
+      // ✅ si le scroll vient de l’auto-scroll, on ignore
+      if (performance.now() - lastAutoScrollAt < 80) return;
+
       carPaused = true;
       clearTimeout(resumeT);
       resumeT = setTimeout(() => (carPaused = false), 900);
-    });
+    }, { passive: true });
   }
 
   requestAnimationFrame(() => startCarousel());
