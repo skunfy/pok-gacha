@@ -333,12 +333,15 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.035));
   box-shadow: 0 10px 26px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.045);
   transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+  cursor:pointer; /* ✅ card cliquable (ouvre modal) */
 }
 .card:hover{
   transform: translateY(-2px);
   border-color: rgba(255,255,255,.09);
   box-shadow: var(--shadow2), inset 0 1px 0 rgba(255,255,255,.05);
 }
+/* ne pas “voler” le curseur sur inputs/boutons */
+.card button, .card input, .card select{ cursor:default; }
 
 .cardHead{ position:relative; padding:10px; padding-bottom:0; }
 .cardImg{
@@ -367,17 +370,28 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:999px;
   font-size:12px;
   font-weight:1000;
-  background: rgba(0,0,0,.52);           /* + foncé => lisible */
-  border:1px solid rgba(255,255,255,.06); /* ultra soft */
+  background: rgba(0,0,0,.52);
+  border:1px solid rgba(255,255,255,.06);
   color: rgba(255,255,255,.92);
   text-shadow: 0 1px 10px rgba(0,0,0,.55);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(8px); /* ✅ lisibilité */
 }
 .badgePrice{
-  background: linear-gradient(135deg, rgba(80,130,255,.26), rgba(255,80,220,.18));
-  border-color: rgba(255,255,255,.09);
+  background: linear-gradient(135deg, rgba(80,130,255,.45), rgba(255,80,220,.35)); /* ✅ + contrast */
+  border-color: rgba(255,255,255,.14);
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.08);
 }
-.badgePrice b{ font-weight:1100; }
+.badgePrice b{
+  font-weight:1100;
+  letter-spacing:.2px;
+  text-shadow: 0 1px 12px rgba(0,0,0,.65);
+}
+.badgePrice .dollaxIcon{
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.55));
+}
 
 /* Card body */
 .cardBody{
@@ -455,6 +469,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
   font-weight:1100;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  min-width: 110px; /* ✅ évite “Ac…” */
 }
 .buyBtn:hover{
   border-color: rgba(255,255,255,.10);
@@ -545,6 +560,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .modalTitle{ font-size:18px; font-weight:1100; line-height:1.1; }
 .modalClose{ padding:8px 10px; border-radius:14px; background: rgba(255,255,255,.08); }
 .note{ font-size:12px; color: var(--muted); }
+
+/* ✅ modal buy button a bit stronger */
+#mBuy{
+  padding: 11px 14px;
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
+}
 </style>
 </head>
 
@@ -723,6 +745,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 
         <div class="sep"></div>
 
+        <!-- ✅ quantité uniquement dans la modal -->
         <div class="buyRow">
           <div class="stepper">
             <button id="mMinus" type="button">−</button>
@@ -859,7 +882,6 @@ gameSel.addEventListener("change", async () => {
 
 /* ✅ Avatar: charge depuis /api/profile/me si dispo, sinon fallback initiale */
 async function loadAvatar(){
-  // fallback par défaut
   const initial = (me?.name || "?").trim().slice(0,1).toUpperCase() || "?";
   avatarFallback.textContent = initial;
   avatarImg.style.display = "none";
@@ -889,7 +911,7 @@ async function loadAvatar(){
   }
 }
 
-/* Quantity steppers */
+/* Quantity steppers (SELL) */
 function syncSellQty(delta){
   const max = selectedItem ? Number(selectedItem.count||1) : 9999;
   const cur = Number(qtyEl.value||1)|0;
@@ -899,6 +921,7 @@ qMinus.onclick = ()=> syncSellQty(-1);
 qPlus.onclick  = ()=> syncSellQty(+1);
 qtyEl.addEventListener("input", ()=> syncSellQty(0));
 
+/* Quantity steppers (MODAL BUY) */
 function syncModalQty(delta){
   if (!modalListing) return;
   const max = Number(modalListing.qty||1);
@@ -998,6 +1021,8 @@ function renderMarket(listings){
     const g = l.game || currentGame();
     const mintTxt = l.mint ? "MINT" : "Normal";
 
+    // ✅ CHANGE: plus de stepper sur les cards (gain de place)
+    // -> quantité uniquement dans la modal
     el.innerHTML = `
       <div class="cardHead">
         <div class="cardImg" style="background-image:url('${l.image}')"></div>
@@ -1021,11 +1046,6 @@ function renderMarket(listings){
         </div>
 
         <div class="buyRow">
-          <div class="stepper" title="Quantité à acheter">
-            <button class="bMinus" type="button">−</button>
-            <input class="bQty" type="number" min="1" value="1">
-            <button class="bPlus" type="button">+</button>
-          </div>
           <button class="buyBtn" type="button">Acheter</button>
         </div>
 
@@ -1033,36 +1053,21 @@ function renderMarket(listings){
       </div>
     `;
 
-    const qtyInput = el.querySelector(".bQty");
-    const bMinus = el.querySelector(".bMinus");
-    const bPlus = el.querySelector(".bPlus");
-    const buyBtn = el.querySelector(".buyBtn");
-    const max = Number(l.qty||1);
+    // ✅ click image / titre -> modal
+    el.querySelector(".cardImg").onclick = (ev) => { ev.stopPropagation(); openModal(l); };
+    el.querySelector(".cardTitle").onclick = (ev) => { ev.stopPropagation(); openModal(l); };
 
-    function clampLocal(){
-      const cur = Number(qtyInput.value||1)|0;
-      qtyInput.value = String(clamp(cur, 1, max));
-    }
-    clampLocal();
+    // ✅ card entière cliquable -> modal (sauf boutons/inputs)
+    el.addEventListener("click", (ev) => {
+      const t = ev.target;
+      if (t.closest("button") || t.closest("input") || t.closest("select")) return;
+      openModal(l);
+    });
 
-    bMinus.onclick = () => { qtyInput.value = String(clamp((Number(qtyInput.value||1)|0)-1,1,max)); };
-    bPlus.onclick  = () => { qtyInput.value = String(clamp((Number(qtyInput.value||1)|0)+1,1,max)); };
-    qtyInput.addEventListener("input", clampLocal);
-
-    el.querySelector(".cardImg").onclick = () => openModal(l);
-    el.querySelector(".cardTitle").onclick = () => openModal(l);
-
-    buyBtn.onclick = async () => {
-      try{
-        const want = clamp(Number(qtyInput.value||1)|0, 1, max);
-        await api("/api/market/buy", {
-          method:"POST",
-          body: JSON.stringify({ listingId: l.id, qty: want })
-        });
-        await boot(true);
-      }catch(e){
-        alert("❌ " + e.message);
-      }
+    // ✅ bouton Acheter sur card = ouvre la modal (quantité dedans)
+    el.querySelector(".buyBtn").onclick = (ev) => {
+      ev.stopPropagation();
+      openModal(l);
     };
 
     marketGrid.appendChild(el);
