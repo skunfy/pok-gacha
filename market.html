@@ -6,13 +6,32 @@
 <title>Market — Pokégacha</title>
 
 <style>
-:root{ --bg1:#05060d; --bg2:#090b18; }
+:root{
+  --bg1:#05060d; --bg2:#090b18;
+
+  --panel: rgba(255,255,255,.05);
+  --panel2: rgba(255,255,255,.06);
+  --stroke: rgba(255,255,255,.10);
+  --stroke2: rgba(255,255,255,.14);
+
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.72);
+
+  --blue: rgba(80,130,255,.90);
+  --pink: rgba(255,80,220,.85);
+
+  --shadow: 0 18px 70px rgba(0,0,0,.35);
+  --r16: 16px;
+  --r14: 14px;
+  --r12: 12px;
+}
+
 *{box-sizing:border-box}
+html,body{height:100%}
 body{
   margin:0;
-  min-height:100vh;
-  font-family:system-ui;
-  color:#fff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+  color:var(--text);
   background:
     radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
     radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
@@ -21,136 +40,385 @@ body{
   overflow-x:hidden;
 }
 
+/* Layout */
 .wrap{
-  width:min(1200px,95vw);
-  margin:24px auto 40px;
+  width:min(1220px, 95vw);
+  margin:18px auto 44px;
   display:grid;
-  gap:16px;
+  gap:14px;
 }
 
+/* Topbar sticky */
 .topbar{
+  position:sticky;
+  top:10px;
+  z-index:20;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(10px);
+  padding:12px 12px;
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  border:1px solid var(--stroke);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
   gap:12px;
 }
-.controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-input, select{
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
-  background:#0f111a;
-  color:#fff;
-  font-weight:700;
+
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  min-width: 260px;
 }
+.logo{
+  width:40px;height:40px;border-radius:14px;
+  background:
+    radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 60%),
+    linear-gradient(135deg, rgba(80,130,255,.30), rgba(255,80,220,.22));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.brand b{letter-spacing:.4px}
+.subTop{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 360px}
+
+/* Controls */
+.controls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end
+}
+input, select{
+  padding:9px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(15,17,26,.85);
+  color:#fff;
+  font-weight:750;
+  outline:none;
+}
+input:focus, select:focus{
+  border-color: rgba(80,130,255,.55);
+  box-shadow: 0 0 0 3px rgba(80,130,255,.18);
+}
+
 button{
-  padding:8px 12px;
-  border-radius:10px;
+  padding:9px 12px;
+  border-radius:12px;
   border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.08);
   color:#fff;
   font-weight:900;
   cursor:pointer;
+  transition: transform .08s ease, background .12s ease, border-color .12s ease;
 }
+button:hover{ background:rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+button:active{ transform: translateY(1px) scale(.99); }
 button:disabled{opacity:.55; cursor:not-allowed}
 
-.panel{
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  padding:16px;
-  backdrop-filter:blur(10px);
+.btnPrimary{
+  background: linear-gradient(135deg, rgba(80,130,255,.22), rgba(255,80,220,.14));
+  border-color: rgba(255,255,255,.20);
+}
+.btnGhost{
+  background:rgba(0,0,0,.16);
 }
 
-.grid2{
-  display:grid;
-  grid-template-columns: 1.15fr .85fr;
-  gap:16px;
-}
-@media (max-width: 980px){ .grid2{grid-template-columns:1fr;} }
-
-.hrow{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between}
-.hrow b{letter-spacing:.5px}
-.msg{opacity:.8; font-size:13px; white-space:pre-line; margin-top:8px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:14px;
-}
-@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
-@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
-
-.cardBox{
-  background:rgba(255,255,255,.06);
-  border-radius:14px;
-  padding:12px;
-  border:1px solid rgba(255,255,255,.12);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.cImg{
-  height:190px;
-  background:center/contain no-repeat;
-  border-radius:10px;
-}
 .pill{
   display:inline-flex;
   gap:8px;
   align-items:center;
-  padding:6px 10px;
+  padding:7px 10px;
   border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(0,0,0,.15);
   font-size:12px;
   font-weight:900;
+  white-space:nowrap;
 }
-.row{
+.pill.soft{ background:rgba(255,255,255,.06); }
+.pill.blue{ border-color: rgba(80,130,255,.35); }
+.pill.pink{ border-color: rgba(255,80,220,.28); }
+
+.dollaxIcon{ width:18px; height:18px; object-fit:contain; display:inline-block; }
+
+/* Panels */
+.panel{
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+  border:1px solid var(--stroke);
+  padding:14px;
+  backdrop-filter:blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap:14px;
+}
+@media (max-width: 980px){ .grid2{grid-template-columns:1fr;} }
+
+.hrow{
   display:flex;
   gap:10px;
-  flex-wrap:wrap;
   align-items:center;
+  flex-wrap:wrap;
+  justify-content:space-between
 }
-.small{font-size:12px; opacity:.75}
+.hrow b{letter-spacing:.5px}
+.msg{opacity:.82; font-size:13px; white-space:pre-line; margin-top:8px; color: var(--muted)}
 
-hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
-
-.list{
+/* Market grid */
+.grid{
   display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+@media (max-width: 1100px){ .grid{grid-template-columns:repeat(3,1fr);} }
+@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
+
+/* Card */
+.card{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  transition: transform .14s ease, border-color .14s ease, background .14s ease;
+}
+.card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+.cardHead{
+  position:relative;
+  padding:10px;
+  padding-bottom:0;
+}
+.cardImg{
+  height:200px;
+  border-radius:14px;
+  background:center/contain no-repeat;
+  background-color: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.10);
+}
+.cardOverlay{
+  position:absolute;
+  inset:10px 10px auto 10px;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  pointer-events:none;
+}
+.badge{
+  pointer-events:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.14);
+}
+.badgePrice{
+  background: linear-gradient(135deg, rgba(80,130,255,.18), rgba(255,80,220,.14));
+  border-color: rgba(255,255,255,.20);
+}
+.cardBody{
+  padding:10px 12px 12px;
+  display:grid;
+  gap:8px;
+}
+.titleRow{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
   gap:10px;
 }
+.cardTitle{
+  font-weight:1000;
+  line-height:1.1;
+  font-size:14px;
+}
+.cardSet{
+  font-size:12px;
+  color: var(--muted);
+}
+.metaRow{
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+}
+.small{font-size:12px; opacity:.75}
+.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:12px 0}
+
+/* Buy controls inside card */
+.buyRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:2px;
+}
+.stepper{
+  display:flex; align-items:center; gap:6px;
+  padding:6px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+}
+.stepper button{
+  padding:6px 10px;
+  border-radius:10px;
+  font-weight:1000;
+}
+.stepper input{
+  width:44px;
+  text-align:center;
+  padding:7px 8px;
+  border-radius:10px;
+}
+.buyBtn{
+  margin-left:auto;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.10);
+  font-weight:1000;
+}
+.buyBtn:hover{ background: rgba(255,255,255,.14); }
+.buyBtn:active{ transform: translateY(1px) }
+
+/* Right panel sections */
+.sectionTitle{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+}
+.sectionTitle .hint{font-size:12px; color: var(--muted)}
+
+/* Collection selectable */
+.selGrid{
+  margin-top:12px;
+  max-height:420px;
+  overflow:auto;
+  padding-right:6px;
+}
+.selGrid::-webkit-scrollbar{ width:10px; }
+.selGrid::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.10);
+  border:2px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+  border-radius:999px;
+}
+.selCard{
+  cursor:pointer;
+}
+.selCard.selected{
+  outline: 2px solid rgba(80,130,255,.55);
+  box-shadow: 0 0 0 6px rgba(80,130,255,.14);
+}
+
+/* My listings list */
+.list{ display:grid; gap:10px; margin-top:12px; }
 .itemRow{
   display:flex;
   gap:12px;
   align-items:center;
   flex-wrap:wrap;
   padding:12px;
-  border-radius:14px;
+  border-radius:16px;
   border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.04);
 }
 .thumb{
-  width:42px;height:58px;border-radius:10px;
+  width:42px;height:58px;border-radius:12px;
   background:center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
 }
 .spacer{flex:1 1 auto}
 
-.clickable{cursor:pointer}
-.clickable:hover{outline:1px solid rgba(255,255,255,.18)}
-
-.dollaxIcon{
-  width:30px;
-  height:30px;
-  object-fit:contain;
-  display:inline-block;
+/* Filters bar (extra) */
+.filtersBar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:10px;
 }
+.filtersBar label{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:7px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.14);
+  font-size:12px;
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+}
+.filtersBar input[type="checkbox"]{
+  width:16px; height:16px;
+  accent-color: rgba(80,130,255,.9);
+}
+
+.kpi{
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+}
+.kpi .pill{opacity:.95}
+
+/* Modal */
+.modalBack{
+  position:fixed; inset:0;
+  display:none;
+  place-items:center;
+  padding:16px;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(8px);
+  z-index:50;
+}
+.modal{
+  width:min(900px, 96vw);
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.16);
+  background: linear-gradient(180deg, rgba(20,22,34,.92), rgba(12,13,22,.92));
+  box-shadow: 0 30px 120px rgba(0,0,0,.55);
+  overflow:hidden;
+}
+.modalInner{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+}
+@media (max-width: 880px){ .modalInner{grid-template-columns:1fr;} }
+.modalImg{
+  min-height:360px;
+  background:center/contain no-repeat;
+  background-color: rgba(0,0,0,.25);
+  border-right:1px solid rgba(255,255,255,.10);
+}
+@media (max-width: 880px){ .modalImg{border-right:none; border-bottom:1px solid rgba(255,255,255,.10);} }
+.modalBody{
+  padding:14px;
+  display:grid;
+  gap:10px;
+}
+.modalTop{
+  display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+}
+.modalTitle{font-size:18px; font-weight:1100; line-height:1.1}
+.modalClose{
+  padding:8px 10px;
+  border-radius:12px;
+  background: rgba(255,255,255,.08);
+}
+.note{font-size:12px; color: var(--muted)}
 </style>
 </head>
 
@@ -158,81 +426,180 @@ hr.sep{border:none; border-top:1px solid rgba(255,255,255,.10); margin:14px 0}
 <div class="wrap">
 
   <div class="topbar">
-    <div>
-      <b>Gachax</b> — Market
-      <div class="msg" id="subTop"></div>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <div><b>Gachax</b> <span style="opacity:.7">— Market</span></div>
+        <div class="subTop" id="subTop"></div>
+      </div>
     </div>
+
     <div class="controls">
-      <!-- ✅ FILTRE JEU -->
       <select id="gameSel" title="Jeu">
         <option value="pokemon">Pokémon</option>
         <option value="onepiece">One Piece</option>
         <option value="lorcana">Lorcana</option>
       </select>
 
-      <div class="pill">
+      <div class="pill blue">
         <img src="dollax.png" alt="Dollax" class="dollaxIcon">
         <span id="money">0</span>
       </div>
-      <input id="search" placeholder="Rechercher...">
+
+      <input id="search" placeholder="Rechercher... (nom ou set)">
       <select id="sort">
         <option value="recent">Plus récents</option>
         <option value="price">Prix (bas → haut)</option>
         <option value="grade">Grade (haut → bas)</option>
         <option value="name">Nom A-Z</option>
       </select>
-      <button onclick="location.href='/collection.html'">COLLECTION</button>
-      <button onclick="location.href='/'">← Retour</button>
+
+      <button class="btnGhost" onclick="location.href='/collection.html'">COLLECTION</button>
+      <button class="btnGhost" onclick="location.href='/'">← Retour</button>
     </div>
   </div>
 
   <div class="grid2">
-    <!-- MARKET LISTINGS -->
+
+    <!-- MARKET -->
     <div class="panel">
       <div class="hrow">
         <b>Ventes en cours</b>
-        <button id="refresh">Rafraîchir</button>
+        <div class="kpi">
+          <span class="pill soft" id="kpiCount">0 offres</span>
+          <span class="pill soft" id="kpiRange">—</span>
+          <button id="refresh">Rafraîchir</button>
+        </div>
       </div>
+
+      <!-- Extra filters -->
+      <div class="filtersBar">
+        <label title="Afficher seulement les cartes MINT">
+          <input type="checkbox" id="fMint">
+          MINT only
+        </label>
+
+        <label title="Masquer tes propres ventes">
+          <input type="checkbox" id="fHideMine">
+          Masquer mes ventes
+        </label>
+
+        <label title="Filtrer par grade minimum">
+          Grade min:
+          <select id="fGradeMin">
+            <option value="0">0</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+
+        <label title="Prix maximum">
+          Prix max:
+          <input id="fPriceMax" type="number" min="0" placeholder="∞" style="width:90px">
+        </label>
+      </div>
+
       <div class="msg" id="msgMarket"></div>
       <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
     </div>
 
-    <!-- SELL + MY LISTINGS -->
+    <!-- SELL + MINE -->
     <div class="panel">
-      <div class="hrow">
+      <div class="sectionTitle">
         <b>Mettre en vente</b>
-        <span class="small">Clique une carte ci-dessous</span>
+        <span class="hint">Sélectionne une carte</span>
       </div>
 
       <div class="msg" id="msgSell"></div>
 
-      <div class="row" style="margin-top:10px;">
-        <input id="price" type="number" min="1" value="5" style="width:140px" placeholder="Prix">
-        <input id="qty" type="number" min="1" value="1" style="width:120px" placeholder="Qté">
-        <button id="btnList" disabled>VENDRE</button>
+      <div class="buyRow" style="margin-top:10px;">
+        <div class="stepper" title="Prix unitaire">
+          <span class="small" style="opacity:.85; font-weight:900;">Prix</span>
+          <input id="price" type="number" min="1" value="5">
+        </div>
+
+        <div class="stepper" title="Quantité">
+          <button id="qMinus">−</button>
+          <input id="qty" type="number" min="1" value="1">
+          <button id="qPlus">+</button>
+        </div>
+
+        <button id="btnList" class="btnPrimary" disabled>VENDRE</button>
       </div>
 
-      <div class="small" id="selected" style="margin-top:8px; opacity:.85;">Aucune carte sélectionnée.</div>
+      <div class="note" id="selected" style="margin-top:10px;">Aucune carte sélectionnée.</div>
 
       <hr class="sep">
 
-      <div class="hrow">
+      <div class="sectionTitle">
         <b>Ta collection (sélection)</b>
-        <span class="small">scroll</span>
+        <span class="hint">scroll • clique pour choisir</span>
       </div>
-      <div class="grid" id="myCollectionGrid" style="margin-top:12px; max-height:420px; overflow:auto; padding-right:6px;"></div>
+
+      <div class="filtersBar" style="margin-top:10px;">
+        <label title="Recherche rapide dans ta collection">
+          🔎
+          <input id="mySearch" placeholder="Filtrer..." style="width:160px">
+        </label>
+        <label title="Trier ta sélection">
+          Trier:
+          <select id="mySort">
+            <option value="recent">Récents</option>
+            <option value="grade">Grade</option>
+            <option value="name">Nom</option>
+            <option value="count">Qté</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="grid selGrid" id="myCollectionGrid"></div>
 
       <hr class="sep">
 
-      <div class="hrow">
+      <div class="sectionTitle">
         <b>Mes ventes</b>
         <button id="reloadMine">Recharger</button>
       </div>
       <div class="msg" id="msgMine"></div>
-      <div class="list" id="mineList" style="margin-top:12px;"></div>
+      <div class="list" id="mineList"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modalInner">
+      <div class="modalImg" id="modalImg"></div>
+      <div class="modalBody">
+        <div class="modalTop">
+          <div>
+            <div class="modalTitle" id="modalTitle"></div>
+            <div class="note" id="modalSub"></div>
+          </div>
+          <button class="modalClose" id="modalClose">✕</button>
+        </div>
+
+        <div class="metaRow" id="modalBadges"></div>
+
+        <div class="sep"></div>
+
+        <div class="buyRow">
+          <div class="stepper">
+            <button id="mMinus">−</button>
+            <input id="mQty" type="number" min="1" value="1">
+            <button id="mPlus">+</button>
+          </div>
+          <button class="btnPrimary" id="mBuy" style="margin-left:auto;">Acheter</button>
+        </div>
+
+        <div class="note" id="modalNote"></div>
+      </div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -268,16 +635,8 @@ async function api(path, opts={}){
   return data;
 }
 
+/* DOM */
 const gameSel = document.getElementById("gameSel");
-gameSel.value = currentGame();
-gameSel.addEventListener("change", async () => {
-  localStorage.setItem(GAME_KEY, gameSel.value);
-  await loadMe();
-  await loadMarket();
-  await loadMyCollection();
-  await loadMine();
-});
-
 const subTop = document.getElementById("subTop");
 const moneyEl = document.getElementById("money");
 
@@ -288,23 +647,51 @@ const refreshBtn = document.getElementById("refresh");
 const msgMarket = document.getElementById("msgMarket");
 const marketGrid = document.getElementById("marketGrid");
 
+const fMint = document.getElementById("fMint");
+const fHideMine = document.getElementById("fHideMine");
+const fGradeMin = document.getElementById("fGradeMin");
+const fPriceMax = document.getElementById("fPriceMax");
+
+const kpiCount = document.getElementById("kpiCount");
+const kpiRange = document.getElementById("kpiRange");
+
 const msgSell = document.getElementById("msgSell");
 const myCollectionGrid = document.getElementById("myCollectionGrid");
 const selectedEl = document.getElementById("selected");
 const priceEl = document.getElementById("price");
 const qtyEl = document.getElementById("qty");
 const btnList = document.getElementById("btnList");
+const qMinus = document.getElementById("qMinus");
+const qPlus = document.getElementById("qPlus");
+
+const mySearch = document.getElementById("mySearch");
+const mySort = document.getElementById("mySort");
 
 const reloadMine = document.getElementById("reloadMine");
 const msgMine = document.getElementById("msgMine");
 const mineList = document.getElementById("mineList");
 
+/* Modal */
+const modalBack = document.getElementById("modalBack");
+const modalClose = document.getElementById("modalClose");
+const modalImg = document.getElementById("modalImg");
+const modalTitle = document.getElementById("modalTitle");
+const modalSub = document.getElementById("modalSub");
+const modalBadges = document.getElementById("modalBadges");
+const modalNote = document.getElementById("modalNote");
+const mMinus = document.getElementById("mMinus");
+const mPlus  = document.getElementById("mPlus");
+const mQty   = document.getElementById("mQty");
+const mBuy   = document.getElementById("mBuy");
+
+/* State */
 let me = null;
 let myItems = [];
 let selectedItem = null;
+let lastMarketListings = [];
+let modalListing = null;
 
 function show(el, t){ el.textContent = t || ""; }
-
 function escapeHtml(s){
   return String(s||"")
     .replaceAll("&","&amp;")
@@ -313,22 +700,201 @@ function escapeHtml(s){
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
 }
-
 function gameTag(g){
   if (g === "onepiece") return "🟥 One Piece";
   if (g === "lorcana")  return "🟦 Lorcana";
   return "🟨 Pokémon";
 }
-
 function fmtCardLine(x){
   const setName = x.setName || x.set || "";
   return `${x.name} • ${setName} • Grade ${x.grade}${x.mint ? " (MINT)" : ""}`;
 }
+function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+gameSel.value = currentGame();
+gameSel.addEventListener("change", async () => {
+  localStorage.setItem(GAME_KEY, gameSel.value);
+  await boot();
+});
+
+/* Quantity steppers */
+function syncSellQty(delta){
+  const max = selectedItem ? Number(selectedItem.count||1) : 9999;
+  const cur = Number(qtyEl.value||1)|0;
+  qtyEl.value = String(clamp(cur + delta, 1, max));
+}
+qMinus.onclick = ()=> syncSellQty(-1);
+qPlus.onclick  = ()=> syncSellQty(+1);
+qtyEl.addEventListener("input", ()=> syncSellQty(0));
+
+function syncModalQty(delta){
+  if (!modalListing) return;
+  const max = Number(modalListing.qty||1);
+  const cur = Number(mQty.value||1)|0;
+  mQty.value = String(clamp(cur + delta, 1, max));
+}
+mMinus.onclick = ()=> syncModalQty(-1);
+mPlus.onclick  = ()=> syncModalQty(+1);
+mQty.addEventListener("input", ()=> syncModalQty(0));
+
+/* Modal controls */
+function openModal(listing){
+  modalListing = listing;
+  modalImg.style.backgroundImage = `url('${listing.image}')`;
+  modalTitle.textContent = listing.name || "Carte";
+  modalSub.textContent = `${listing.setName || ""} • ${gameTag(listing.game || currentGame())}`;
+
+  const mintTxt = listing.mint ? "MINT" : "Normal";
+  modalBadges.innerHTML = `
+    <span class="pill soft">Grade ${escapeHtml(listing.grade)}</span>
+    <span class="pill soft">${mintTxt}</span>
+    <span class="pill soft">Stock ${escapeHtml(listing.qty)}</span>
+    <span class="pill blue"><img src="dollax.png" class="dollaxIcon" alt=""> ${escapeHtml(listing.price)}</span>
+  `;
+
+  mQty.value = String(clamp(1, 1, Number(listing.qty||1)));
+  modalNote.textContent = `Vendeur: ${listing.sellerName || ("#" + listing.sellerUserId)}`;
+  modalBack.style.display = "grid";
+}
+function closeModal(){
+  modalBack.style.display = "none";
+  modalListing = null;
+}
+modalClose.onclick = closeModal;
+modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeModal(); });
+window.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeModal(); });
+
+mBuy.onclick = async () => {
+  if(!modalListing) return;
+  try{
+    const want = clamp(Number(mQty.value||1)|0, 1, Number(modalListing.qty||1));
+    await api("/api/market/buy", { method:"POST", body: JSON.stringify({ listingId: modalListing.id, qty: want }) });
+    closeModal();
+    await boot(true);
+  }catch(e){
+    alert("❌ " + e.message);
+  }
+};
 
 async function loadMe(){
   me = await api("/api/me", { method:"GET", headers:{} });
   moneyEl.textContent = me.money ?? 0;
   subTop.textContent = `Connecté • ${me.name} • Code ami: ${me.friendCode} • ${gameTag(currentGame())}`;
+}
+
+function applyMarketFilters(listings){
+  const mintOnly = !!fMint.checked;
+  const hideMine = !!fHideMine.checked;
+  const gradeMin = Number(fGradeMin.value||0);
+  const priceMax = Number(fPriceMax.value||0);
+
+  return (listings || []).filter(l => {
+    if (mintOnly && !l.mint) return false;
+    if (hideMine && me && (String(l.sellerName||"") === String(me.name||""))) return false;
+    if (gradeMin && Number(l.grade||0) < gradeMin) return false;
+    if (priceMax && Number(l.price||0) > priceMax) return false;
+    return true;
+  });
+}
+
+function updateKpis(listings){
+  const n = listings.length;
+  kpiCount.textContent = `${n} offre${n>1?"s":""}`;
+  if(!n){ kpiRange.textContent = "—"; return; }
+  let min = Infinity, max = 0;
+  for(const l of listings){
+    const p = Number(l.price||0);
+    if(p < min) min = p;
+    if(p > max) max = p;
+  }
+  kpiRange.textContent = (isFinite(min) ? `Prix ${min} → ${max}` : "—");
+}
+
+function renderMarket(listings){
+  marketGrid.innerHTML = "";
+  if(!listings.length){
+    show(msgMarket, "Aucune vente pour l’instant.");
+    return;
+  }
+  show(msgMarket, "");
+
+  listings.forEach(l => {
+    const el = document.createElement("div");
+    el.className = "card";
+    const g = l.game || currentGame();
+    const mintTxt = l.mint ? "MINT" : "Normal";
+
+    el.innerHTML = `
+      <div class="cardHead">
+        <div class="cardImg" style="background-image:url('${l.image}')"></div>
+        <div class="cardOverlay">
+          <span class="badge">${gameTag(g)}</span>
+          <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> ${escapeHtml(l.price)}</span>
+        </div>
+      </div>
+
+      <div class="cardBody">
+        <div class="titleRow">
+          <div>
+            <div class="cardTitle">${escapeHtml(l.name)}</div>
+            <div class="cardSet">${escapeHtml(l.setName || "")}</div>
+          </div>
+        </div>
+
+        <div class="metaRow">
+          <span class="pill soft">Grade ${escapeHtml(l.grade)}${l.mint ? " • MINT" : ""}</span>
+          <span class="pill soft">Stock ${escapeHtml(l.qty)}</span>
+        </div>
+
+        <div class="buyRow">
+          <div class="stepper" title="Quantité à acheter">
+            <button class="bMinus">−</button>
+            <input class="bQty" type="number" min="1" value="1">
+            <button class="bPlus">+</button>
+          </div>
+          <button class="buyBtn">Acheter</button>
+        </div>
+
+        <div class="small">Vendeur: ${escapeHtml(l.sellerName || ("#" + l.sellerUserId))} • ${mintTxt}</div>
+      </div>
+    `;
+
+    const qtyInput = el.querySelector(".bQty");
+    const bMinus = el.querySelector(".bMinus");
+    const bPlus = el.querySelector(".bPlus");
+    const buyBtn = el.querySelector(".buyBtn");
+
+    const max = Number(l.qty||1);
+
+    function clampLocal(){
+      const cur = Number(qtyInput.value||1)|0;
+      qtyInput.value = String(clamp(cur, 1, max));
+    }
+    clampLocal();
+
+    bMinus.onclick = () => { qtyInput.value = String(clamp((Number(qtyInput.value||1)|0)-1,1,max)); };
+    bPlus.onclick  = () => { qtyInput.value = String(clamp((Number(qtyInput.value||1)|0)+1,1,max)); };
+    qtyInput.addEventListener("input", clampLocal);
+
+    // click on image/title opens modal
+    el.querySelector(".cardImg").onclick = () => openModal(l);
+    el.querySelector(".cardTitle").onclick = () => openModal(l);
+
+    buyBtn.onclick = async () => {
+      try{
+        const want = clamp(Number(qtyInput.value||1)|0, 1, max);
+        await api("/api/market/buy", {
+          method:"POST",
+          body: JSON.stringify({ listingId: l.id, qty: want })
+        });
+        await boot(true);
+      }catch(e){
+        alert("❌ " + e.message);
+      }
+    };
+
+    marketGrid.appendChild(el);
+  });
 }
 
 async function loadMarket(){
@@ -339,94 +905,84 @@ async function loadMarket(){
   const sort = encodeURIComponent(sortEl.value || "recent");
   const data = await api(`/api/market?search=${q}&sort=${sort}`, { method:"GET", headers:{} });
 
-  const listings = data.listings || [];
-  if(!listings.length){
-    show(msgMarket, "Aucune vente pour l’instant.");
-    return;
-  }
-  show(msgMarket, "");
+  lastMarketListings = data.listings || [];
+  let listings = applyMarketFilters(lastMarketListings);
 
-  listings.forEach(l => {
-    const el = document.createElement("div");
-    el.className = "cardBox";
-    const g = l.game || currentGame();
+  updateKpis(listings);
+  renderMarket(listings);
+}
 
-    el.innerHTML = `
-      <div class="cImg" style="background-image:url('${l.image}')"></div>
-      <div class="small" style="opacity:.75;">${gameTag(g)}</div>
-      <div><b>${escapeHtml(l.name)}</b></div>
-      <div class="small">${escapeHtml(l.setName || "")}</div>
-      <div class="row">
-        <span class="pill">Grade ${escapeHtml(l.grade)}${l.mint ? " • MINT" : ""}</span>
-        <span class="pill">Stock: ${escapeHtml(l.qty)}</span>
-      </div>
-      <div class="row">
-        <span class="pill">Prix: ${escapeHtml(l.price)}💵</span>
-        <button class="buyBtn" style="margin-left:auto;">Acheter</button>
-      </div>
-      <div class="small">Vendeur: ${escapeHtml(l.sellerName || ("#" + l.sellerUserId))}</div>
-    `;
+function sortMyItems(items){
+  const mode = String(mySort.value||"recent");
+  const arr = [...(items||[])];
 
-    const buyBtn = el.querySelector(".buyBtn");
-    buyBtn.onclick = async () => {
-      try{
-        const want = Math.max(1, Number(prompt(`Quantité à acheter ? (max ${l.qty})`, "1") || "1")|0);
-        if(!want) return;
-        await api("/api/market/buy", {
-          method:"POST",
-          body: JSON.stringify({ listingId: l.id, qty: want })
-        });
-        await loadMe();
-        await loadMarket();
-        await loadMyCollection();
-        await loadMine();
-      }catch(e){
-        alert("❌ " + e.message);
-      }
-    };
+  if(mode === "grade") arr.sort((a,b)=> (Number(b.grade||0)-Number(a.grade||0)) || (Number(b.lastAt||0)-Number(a.lastAt||0)));
+  else if(mode === "name") arr.sort((a,b)=> String(a.name||"").localeCompare(String(b.name||"")));
+  else if(mode === "count") arr.sort((a,b)=> (Number(b.count||0)-Number(a.count||0)) || (Number(b.lastAt||0)-Number(a.lastAt||0)));
+  else arr.sort((a,b)=> (Number(b.lastAt||0)-Number(a.lastAt||0)));
 
-    marketGrid.appendChild(el);
-  });
+  return arr;
 }
 
 async function loadMyCollection(){
   const data = await api("/api/collection", { method:"GET", headers:{} });
   myItems = data.items || [];
-  myCollectionGrid.innerHTML = "";
 
-  if(!myItems.length){
+  const q = String(mySearch.value||"").toLowerCase().trim();
+  let items = myItems;
+
+  if(q){
+    items = items.filter(x => {
+      const n = String(x.name||"").toLowerCase();
+      const s = String(x.setName||x.set||"").toLowerCase();
+      return n.includes(q) || s.includes(q);
+    });
+  }
+
+  items = sortMyItems(items);
+
+  myCollectionGrid.innerHTML = "";
+  if(!items.length){
     myCollectionGrid.innerHTML = `<div class="small" style="opacity:.8;">Aucune carte.</div>`;
     return;
   }
 
-  myItems.forEach(x => {
+  items.forEach(x => {
     const el = document.createElement("div");
-    el.className = "cardBox clickable";
+    el.className = "card selCard" + ((selectedItem && selectedItem.idKey === x.idKey) ? " selected" : "");
     const g = x.game || currentGame();
 
     el.innerHTML = `
-      <div class="cImg" style="background-image:url('${x.image}')"></div>
-      <div class="small" style="opacity:.75;">${gameTag(g)}</div>
-      <div><b>${escapeHtml(x.name)}</b></div>
-      <div class="small">${escapeHtml(x.set || x.setName || "")}</div>
-      <div class="row">
-        <span class="pill">Grade ${escapeHtml(x.grade)}${x.mint ? " • MINT" : ""}</span>
-        <span class="pill">×${escapeHtml(x.count)}</span>
+      <div class="cardHead">
+        <div class="cardImg" style="height:170px;background-image:url('${x.image}')"></div>
+        <div class="cardOverlay">
+          <span class="badge">${gameTag(g)}</span>
+          <span class="badge">${x.count ? "×" + escapeHtml(x.count) : ""}</span>
+        </div>
+      </div>
+      <div class="cardBody">
+        <div class="cardTitle">${escapeHtml(x.name)}</div>
+        <div class="cardSet">${escapeHtml(x.set || x.setName || "")}</div>
+        <div class="metaRow">
+          <span class="pill soft">Grade ${escapeHtml(x.grade)}${x.mint ? " • MINT" : ""}</span>
+        </div>
       </div>
     `;
 
     el.onclick = () => {
       selectedItem = x;
       btnList.disabled = false;
-      selectedEl.textContent = "Sélection : " + fmtCardLine({
-        name: x.name,
-        setName: x.set || x.setName || "",
-        grade: x.grade,
-        mint: x.mint
-      }) + ` • Dispo: ×${x.count}`;
-      const q = Math.max(1, Math.min(Number(qtyEl.value||1)|0, x.count));
-      qtyEl.value = String(q);
+      selectedEl.textContent =
+        "Sélection : " + fmtCardLine({
+          name: x.name,
+          setName: x.set || x.setName || "",
+          grade: x.grade,
+          mint: x.mint
+        }) + ` • Dispo: ×${x.count}`;
+      syncSellQty(0);
       show(msgSell, "");
+      // refresh selection highlight
+      loadMyCollection();
     };
 
     myCollectionGrid.appendChild(el);
@@ -453,15 +1009,17 @@ async function loadMine(){
       <div class="thumb" style="background-image:url('${l.image}')"></div>
       <div>
         <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName || "")}</span></div>
-        <div class="small">${gameTag(g)} • Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix ${escapeHtml(l.price)}💵 • Stock ${escapeHtml(l.qty)}</div>
+        <div class="small">${gameTag(g)} • Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix <b>${escapeHtml(l.price)}</b> • Stock ${escapeHtml(l.qty)}</div>
       </div>
       <div class="spacer"></div>
       <button class="cancelBtn">Annuler…</button>
     `;
 
+    row.querySelector(".thumb").onclick = () => openModal(l);
+
     row.querySelector(".cancelBtn").onclick = async () => {
       try{
-        const want = Math.max(1, Number(prompt(`Quantité à annuler ? (max ${l.qty})`, String(l.qty)) || "0")|0);
+        const want = clamp(Number(prompt(`Quantité à annuler ? (max ${l.qty})`, String(l.qty)) || "0")|0, 1, Number(l.qty||1));
         if(!want) return;
         await api("/api/market/cancel", {
           method:"POST",
@@ -483,7 +1041,7 @@ btnList.onclick = async () => {
     if(!selectedItem) { show(msgSell, "Sélectionne une carte."); return; }
 
     const price = Math.max(1, Number(priceEl.value||1)|0);
-    const qty = Math.max(1, Number(qtyEl.value||1)|0);
+    const qty = clamp(Number(qtyEl.value||1)|0, 1, Number(selectedItem.count||1));
 
     if(qty > selectedItem.count){
       show(msgSell, `Quantité trop grande (tu as ×${selectedItem.count}).`);
@@ -511,18 +1069,22 @@ btnList.onclick = async () => {
   }
 };
 
-qtyEl.addEventListener("input", () => {
-  if(!selectedItem) return;
-  const q = Math.max(1, Math.min(Number(qtyEl.value||1)|0, selectedItem.count));
-  qtyEl.value = String(q);
-});
-
+/* listeners */
 searchEl.addEventListener("input", () => loadMarket());
 sortEl.addEventListener("change", () => loadMarket());
 refreshBtn.onclick = () => loadMarket();
+
+fMint.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
+fHideMine.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
+fGradeMin.addEventListener("change", () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
+fPriceMax.addEventListener("input",  () => { updateKpis(applyMarketFilters(lastMarketListings)); renderMarket(applyMarketFilters(lastMarketListings)); });
+
 reloadMine.onclick = () => loadMine();
 
-(async () => {
+mySearch.addEventListener("input", ()=> loadMyCollection());
+mySort.addEventListener("change", ()=> loadMyCollection());
+
+async function boot(soft=false){
   try{
     await loadMe();
     await loadMarket();
@@ -532,7 +1094,9 @@ reloadMine.onclick = () => loadMine();
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
   }
-})();
+}
+
+(async () => { await boot(); })();
 </script>
 </body>
 </html>
