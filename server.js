@@ -220,37 +220,24 @@ async function initDb() {
     ON favorites(user_id);
   `);
 
-  // =========================
-  // MIGRATION SAFE: game column (DB déjà existante)
-  // =========================
-  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS game TEXT;`);
-  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS game TEXT;`);
-  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS game TEXT;`);
+     // 2) Migrations SAFE (colonnes manquantes)
+  await pool.query(`
+    ALTER TABLE pulls ADD COLUMN IF NOT EXISTS imageHigh TEXT;
+    ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;
+    ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;
 
-  // défaut pour l'existant
-  await pool.query(`UPDATE collection SET game='pokemon' WHERE game IS NULL;`);
-  await pool.query(`UPDATE pulls SET game='pokemon' WHERE game IS NULL;`);
-  await pool.query(`UPDATE market_listings SET game='pokemon' WHERE game IS NULL;`);
+    ALTER TABLE collection ADD COLUMN IF NOT EXISTS cardId TEXT;
+    ALTER TABLE collection ADD COLUMN IF NOT EXISTS setId TEXT;
+    ALTER TABLE collection ADD COLUMN IF NOT EXISTS localId TEXT;
 
-  // ✅ imageHigh (zoom HD)
-  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
-  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
-  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+    ALTER TABLE pulls ADD COLUMN IF NOT EXISTS cardId TEXT;
+    ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;
+    ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;
 
-    // ✅ Binder fields (MARKET)
-  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS cardId TEXT;`);
-  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS setId TEXT;`);
-  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS localId TEXT;`);
-
-
-    // ✅ Binder fields (Pokémon)
-  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS cardId TEXT;`);
-  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS setId TEXT;`);
-  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS localId TEXT;`);
-
-  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS cardId TEXT;`);
-  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;`);
-  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;`);
+    ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS cardId TEXT;
+    ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS setId TEXT;
+    ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS localId TEXT;
+  `);
 
   console.log("✅ Postgres DB ready");
 }
@@ -277,7 +264,7 @@ function sellPriceFor(grade, mint){
   const g = Number(grade) || 0;
   if (g >= 10) return 10;
   if (g >= 7) return 5;
-  if (g >= 5) return 2;
+  if (g >= 5) return 3;
   return 1;
 }
 
@@ -366,11 +353,14 @@ async function auth(req, res, next) {
 }
 
 // ----- HTTP fetch with timeout -----
-async function fetchWithTimeout(url, ms = 20000) {
+async function fetchWithTimeout(url, ms = 20000, extraHeaders = null) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   try {
-    return await fetch(url, { signal: controller.signal });
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: { ...(extraHeaders || {}) }
+    });
   } finally {
     clearTimeout(id);
   }
@@ -424,47 +414,72 @@ async function getPokemonSetCardsCached(setId) {
   return cards;
 }
 
+// POKEMONTCG.IO (v2) CACHE
 // =========================
-// TCGDEX PERF: CACHE LIST + CACHE DETAILS
-// =========================
-const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000; // 6h
-const CARD_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const PTCG_BASE = "https://api.pokemontcg.io/v2";
+const PTCG_KEY = String(process.env.POKEMONTCG_API_KEY || "");
 
-let cardsBriefCache = { at: 0, list: [] };
-const cardDetailCache = new Map();
+function ptcgHeaders(){
+  // clé optionnelle mais vivement recommandée (rate limit)
+  return PTCG_KEY ? { "X-Api-Key": PTCG_KEY } : {};
+}
 
-async function getCardsBriefList() {
+const PTCG_SETS_TTL_MS = 6 * 60 * 60 * 1000;
+const PTCG_SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000;
+
+let ptcgSetsCache = { at: 0, list: [] };
+const ptcgSetCardsCache = new Map(); // setId -> {at, cards}
+
+async function getPokemonSetsPTCG(){
   const now = Date.now();
-  if (cardsBriefCache.list.length && now - cardsBriefCache.at < CARDS_LIST_TTL_MS) {
-    return cardsBriefCache.list;
+  if (ptcgSetsCache.list.length && now - ptcgSetsCache.at < PTCG_SETS_TTL_MS){
+    return ptcgSetsCache.list;
   }
 
-  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/cards", 20000);
-  if (!r.ok) throw new Error("TCGdex list failed");
+  const r = await fetchWithTimeout(`${PTCG_BASE}/sets`, 20000, ptcgHeaders());
+  // ref docs: /v2/sets returns { data: [...] } :contentReference[oaicite:1]{index=1}
+  if (!r.ok) throw new Error("PTCG sets failed HTTP " + r.status);
 
-  const list = await r.json().catch(() => null);
-  if (!Array.isArray(list) || !list.length) throw new Error("TCGdex list empty");
+  const json = await r.json().catch(()=> ({}));
+  const list = Array.isArray(json?.data) ? json.data : [];
 
-  cardsBriefCache = { at: now, list };
-  console.log(`🌐 cached cards list: ${list.length} items`);
+  ptcgSetsCache = { at: now, list };
   return list;
 }
 
-async function getCardDetailById(id) {
+async function getPokemonSetCardsPTCG(setId){
   const now = Date.now();
-  const cached = cardDetailCache.get(id);
-  if (cached && now - cached.at < CARD_DETAIL_TTL_MS) return cached.data;
+  const cached = ptcgSetCardsCache.get(setId);
+  if (cached?.cards?.length && now - cached.at < PTCG_SET_CARDS_TTL_MS){
+    return cached.cards;
+  }
 
-  const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${id}`, 20000);
-  if (!r.ok) throw new Error("TCGdex detail failed");
+  // pokemontcg.io search syntax uses q=... and returns { data: [...] } :contentReference[oaicite:2]{index=2}
+  // Query: set.id:<setId>
+  // On boucle pages au cas où un set > 250 cartes.
+  const pageSize = 250;
+  let page = 1;
+  let all = [];
 
-  const data = await r.json().catch(() => null);
-  if (!data) throw new Error("TCGdex detail invalid");
+  while (true){
+    const url = `${PTCG_BASE}/cards?q=set.id:${encodeURIComponent(setId)}&page=${page}&pageSize=${pageSize}`;
+    const r = await fetchWithTimeout(url, 20000, ptcgHeaders());
+    if (!r.ok) throw new Error("PTCG set cards failed HTTP " + r.status);
 
-  cardDetailCache.set(id, { at: now, data });
-  return data;
+    const json = await r.json().catch(()=> ({}));
+    const chunk = Array.isArray(json?.data) ? json.data : [];
+    all = all.concat(chunk);
+
+    // pagination info in body (page/pageSize/count/totalCount) :contentReference[oaicite:3]{index=3}
+    const count = Number(json?.count || chunk.length || 0);
+    if (!count || count < pageSize) break;
+    page++;
+    if (page > 30) break; // sécurité
+  }
+
+  ptcgSetCardsCache.set(setId, { at: now, cards: all });
+  return all;
 }
-
 
 // =========================
 // LORCANA (LORCAST) ONLINE CACHE
@@ -619,6 +634,7 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 // =========================
 async function drawCard(game) {
 
+
   // ----- ONE PIECE ONLINE -----
   if (game === "onepiece") {
     const list = await getOpBriefList();
@@ -756,67 +772,33 @@ if (game === "lorcana") {
   throw new Error("Lorcana: impossible de trouver une carte avec image");
 }
 
-  // ----- POKEMON ONLINE (TCGDEX) -----
-  if (FORCE_OFFLINE) {
-    if (offlineCards?.length) {
-      const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-      if (c?.image) return c;
-    }
-    throw new Error("Offline only: no cards.json");
-  }
+ 
+    // ----- POKEMON ONLINE (POKEMONTCG.IO) -----
+  if (game === "pokemon") {
+    // prend un set random
+    const sets = await getPokemonSetsPTCG();
+    const s = sets[Math.floor(Math.random() * sets.length)];
+    if (!s?.id) throw new Error("PTCG: no set");
 
-  const MAX_TRIES = 6;
-
-  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
-    let list;
-    try {
-      list = await getCardsBriefList();
-    } catch {
-      list = null;
-    }
-    if (!list?.length) break;
-
-    const pick = list[Math.floor(Math.random() * list.length)];
-    if (!pick?.id) continue;
-
-    let c;
-    try {
-      c = await getCardDetailById(pick.id);
-    } catch {
-      continue;
-    }
-
-    const imageLow = normalizeImageField(c.image, "low", "webp");
-    const imageHigh = normalizeImageField(c.image, "high", "webp");
-    if (!imageLow) continue;
-
-    console.log("🌐 source=TCGDEX (cached)");
+    // prend une carte random du set
+    const cards = await getPokemonSetCardsPTCG(s.id);
+    const c = cards[Math.floor(Math.random() * cards.length)];
+    if (!c?.id || !c?.images?.small) throw new Error("PTCG: no card image");
 
     return {
-      cardId: c.id || pick.id,                // id global tcgdex
-      setId: c.set?.id || null,               // ex: "base1", "swsh3"...
-      localId: String(c.localId || ""),       // ex: "1", "136", "TG05"...
-      name: c.name || pick.name || "Unknown",
-      set: c.set?.name || c.set?.id || "Unknown",
-      rarity: c.rarity || "",
-      image: imageLow,
-      imageHigh: imageHigh || null,
+      cardId: String(c.id),
+      setId: String(c.set?.id || s.id),
+      localId: String(c.number || ""),
+      name: String(c.name || "Unknown"),
+      set: String(c.set?.name || s.name || "Set"),
+      rarity: String(c.rarity || ""),
+      image: c.images.small,
+      imageHigh: c.images.large || c.images.small
     };
   }
 
-
-  // Si tu veux 100% online, supprime carrément ce bloc fallback :
-  if (offlineCards?.length) {
-    const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-    if (c?.image) {
-      console.log("📦 source=OFFLINE");
-      return c;
-    }
-  }
-
-  throw new Error("No card available (TCGdex + offline empty)");
+  throw new Error("Unknown game: " + game);
 }
-
 
 // ----- GRADES -----
 function rollGrade() {
@@ -867,25 +849,7 @@ app.post("/api/login", async (req, res) => {
     return res.json({ token, isNew: true, code: newCode, friendCode });
   }
 
-  app.post("/api/dev/give_money", auth, async (req, res) => {
-  // ✅ autorisé uniquement si ADMIN_KEY est défini
-  const adminKey = String(process.env.ADMIN_KEY || "");
-  if (!adminKey) return res.status(403).json({ error: "DEV route disabled" });
-
-  // ✅ check clé
-  const k = String(req.headers["x-admin-key"] || "");
-  if (k !== adminKey) return res.status(403).json({ error: "Forbidden" });
-
-  // ✅ amount
-  const amount = Math.max(1, Number(req.body?.amount || 0) | 0);
-  if (!amount) return res.status(400).json({ error: "Missing amount" });
-
-  await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [amount, req.user.id]);
-
-  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-  res.json({ ok: true, money: me.rows[0]?.money || 0, added: amount });
-});
-
+  
   // Compte existant -> code obligatoire
   if (!code || code !== u.code) {
     return res.status(401).json({ error: "Code incorrect" });
@@ -1108,8 +1072,12 @@ app.get("/api/sets", auth, async (req, res) => {
   try {
     // ===== POKEMON =====
     if (game === "pokemon") {
-      const list = await getPokemonSetsCached();
-      return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+      const list = await getPokemonSetsPTCG();
+      return res.json({
+        sets: list
+          .map(s => ({ id: String(s.id || ""), name: String(s.name || s.id || "Set") }))
+          .filter(s => s.id)
+      });
     }
 
     // ===== LORCANA =====
@@ -1154,18 +1122,18 @@ app.get("/api/set_cards", auth, async (req, res) => {
   try {
     // ===== POKEMON =====
     if (game === "pokemon") {
-      const cards = await getPokemonSetCardsCached(setId);
+      const cards = await getPokemonSetCardsPTCG(setId);
       return res.json({
         setId,
         cards: cards.map(c => ({
-          cardId: c.id,
-          localId: String(c.localId || ""),
-          name: c.name || "",
-          image: normalizeImageField(c.image, "low", "webp"),
-          imageHigh: normalizeImageField(c.image, "high", "webp"),
-        }))
+          cardId: String(c.id || ""),
+          localId: String(c.number || ""), // "1", "TG05", etc.
+          name: String(c.name || ""),
+          image: c.images?.small || null,
+          imageHigh: c.images?.large || c.images?.small || null
+        })).filter(x => x.cardId)
       });
-    }
+     }
 
     // ===== LORCANA =====
     if (game === "lorcana") {
