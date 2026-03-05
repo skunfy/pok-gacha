@@ -873,7 +873,7 @@ app.post("/api/login", async (req, res) => {
   if (!adminKey) return res.status(403).json({ error: "DEV route disabled" });
 
   // ✅ check clé
-  const k = String(req.headers["x-admin-key"] || "");
+  const k = String(req.headers["zakuro96"] || "");
   if (k !== adminKey) return res.status(403).json({ error: "Forbidden" });
 
   // ✅ amount
