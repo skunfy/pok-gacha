@@ -407,6 +407,7 @@ async function getPokemonSetsCached() {
 async function getPokemonSetCardsCached(setId) {
   const now = Date.now();
   const cached = setCardsCache.get(setId);
+
   if (cached?.cards?.length && now - cached.at < SET_CARDS_TTL_MS) {
     return cached.cards;
   }
@@ -417,24 +418,26 @@ async function getPokemonSetCardsCached(setId) {
       20000
     );
     if (!r.ok) return null;
+
     const data = await r.json().catch(() => null);
     const cards = Array.isArray(data?.cards) ? data.cards : [];
-    return cards.length ? cards : null;
+    if (!cards.length) return null;
+
+    return {
+      lang,
+      serieId: data?.serie?.id || null,
+      cards
+    };
   }
 
-  let cards = await fetchSet("fr");
+  let result = await fetchSet("fr");
+  if (!result) result = await fetchSet("en");
 
-  // fallback si FR vide/incomplet
-  if (!cards || !cards.length) {
-    cards = await fetchSet("en");
-  }
+  const safe = result || { lang: "fr", serieId: null, cards: [] };
 
-  cards = Array.isArray(cards) ? cards : [];
-
-  setCardsCache.set(setId, { at: now, cards });
-  return cards;
+  setCardsCache.set(setId, { at: now, cards: safe });
+  return safe;
 }
-
 // =========================
 // TCGDEX PERF: CACHE LIST + CACHE DETAILS
 // =========================
@@ -1157,34 +1160,41 @@ app.get("/api/set_cards", auth, async (req, res) => {
   try {
   // ===== POKEMON =====
     if (game === "pokemon") {
-    const cards = await getPokemonSetCardsCached(setId);
+    const data = await getPokemonSetCardsCached(setId);
+
+    const lang = data.lang || "fr";
+    const serieId = String(data.serieId || "").trim();
+    const cards = Array.isArray(data.cards) ? data.cards : [];
 
     return res.json({
       setId,
       cards: cards.map(c => {
-
         const localId = String(c.localId || "").trim();
 
-        const low =
-          normalizeImageField(c.image, "low", "webp") ||
-          tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
-          tcgdexAssetUrl("en", setId, localId, "low", "webp");
+        const baseFromApiLow = normalizeImageField(c.image, "low", "webp");
+        const baseFromApiHigh = normalizeImageField(c.image, "high", "webp");
 
-        const high =
-          normalizeImageField(c.image, "high", "webp") ||
-          tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
-          tcgdexAssetUrl("en", setId, localId, "high", "webp");
+        const builtLow =
+          serieId && localId
+            ? `https://assets.tcgdex.net/${lang}/${encodeURIComponent(serieId)}/${encodeURIComponent(setId)}/${encodeURIComponent(localId)}/low.webp`
+            : null;
+
+        const builtHigh =
+          serieId && localId
+            ? `https://assets.tcgdex.net/${lang}/${encodeURIComponent(serieId)}/${encodeURIComponent(setId)}/${encodeURIComponent(localId)}/high.webp`
+            : null;
 
         return {
           cardId: c.id,
           localId,
           name: c.name || "",
-          image: low,
-          imageHigh: high
+          image: baseFromApiLow || builtLow,
+          imageHigh: baseFromApiHigh || builtHigh
         };
       })
     });
   }
+  
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
