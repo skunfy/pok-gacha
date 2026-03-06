@@ -666,7 +666,11 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 function tcgdexAssetUrl(lang, setId, localId, quality = "low", ext = "webp") {
   if (!setId || !localId) return null;
 
-  const serie = setId.replace(/[0-9]+$/, ""); // ex: dp2 -> dp
+  let serie;
+
+  // cas spéciaux
+  if (setId === "basep") serie = "base";
+  else serie = setId.replace(/[0-9]+$/, "");
 
   return `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/${quality}.${ext}`;
 }
