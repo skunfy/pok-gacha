@@ -330,18 +330,9 @@ function drawOfflinePokemonCard() {
     throw new Error("Offline Pokémon pool empty");
   }
 
-  const c = offlinePokemonCards[Math.floor(Math.random() * offlinePokemonCards.length)];
-
-  return {
-    cardId: c.cardId || null,
-    setId: c.setId || null,
-    localId: String(c.localId || ""),
-    name: c.name || "Unknown",
-    set: c.set || c.setName || "Unknown",
-    rarity: c.rarity || "",
-    image: c.image || null,
-    imageHigh: c.imageHigh || c.image || null
-  };
+  return offlinePokemonCards[
+    Math.floor(Math.random() * offlinePokemonCards.length)
+  ];
 }
 
 function randFriendCode() {
