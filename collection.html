@@ -1093,7 +1093,14 @@ sellSelectedBtn.addEventListener("click", async () => {
 async function loadCollection(){
   try{
     const data = await api("/api/collection");
-    allItems = data.items || [];
+
+    // ✅ normalise les champs (imageHigh/imagehigh) + autres au besoin
+    allItems = (data.items || []).map(x => ({
+      ...x,
+      imageHigh: x.imageHigh ?? x.imagehigh ?? null,
+      image: x.image ?? null,
+    }));
+
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
@@ -1323,6 +1330,12 @@ async function loadBinderSetCards(){
     binderCards = [];
   }
 
+  binderCards = (data.cards || []).map(c => ({
+  ...c,
+  imageHigh: c.imageHigh ?? c.imagehigh ?? null,
+  image: c.image ?? null,
+}));
+
   // tri numeric-friendly
   binderCards.sort((a,b)=>{
     const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
@@ -1423,8 +1436,8 @@ function renderBinder(){
     const have = !!ownedItem;
 
     const img = have
-      ? (ownedItem.imageHigh || ownedItem.image || toHighImage(ownedItem.image))
-      : (cardBrief.imageHigh || cardBrief.image || null);
+      ? (ownedItem.imageHigh || ownedItem.imagehigh || ownedItem.image || toHighImage(ownedItem.image))
+      : (cardBrief.imageHigh || cardBrief.imagehigh || cardBrief.image || null);
 
     slot.className = "slot" + (have ? "" : " missing");
 
