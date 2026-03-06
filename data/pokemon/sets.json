@@ -1,0 +1,730 @@
+[
+  {
+    "id": "base1",
+    "name": "Set de Base"
+  },
+  {
+    "id": "base2",
+    "name": "Jungle"
+  },
+  {
+    "id": "basep",
+    "name": "Wizards Black Star Promos"
+  },
+  {
+    "id": "wp",
+    "name": "W Promotional"
+  },
+  {
+    "id": "base3",
+    "name": "Fossile"
+  },
+  {
+    "id": "jumbo",
+    "name": "Cartes Jumbo"
+  },
+  {
+    "id": "base5",
+    "name": "Team Rocket"
+  },
+  {
+    "id": "neo1",
+    "name": "Neo Genesis"
+  },
+  {
+    "id": "neo2",
+    "name": "Neo Discovery"
+  },
+  {
+    "id": "neo3",
+    "name": "Neo Revelation"
+  },
+  {
+    "id": "neo4",
+    "name": "Neo Destiny"
+  },
+  {
+    "id": "ecard1",
+    "name": "Expedition"
+  },
+  {
+    "id": "ecard2",
+    "name": "Aquapolis"
+  },
+  {
+    "id": "ex1",
+    "name": "EX Rubis & Saphir"
+  },
+  {
+    "id": "ex2",
+    "name": "EX Tempête de sable"
+  },
+  {
+    "id": "np",
+    "name": "Promo Nintendo"
+  },
+  {
+    "id": "ex3",
+    "name": "EX Dragon"
+  },
+  {
+    "id": "ex4",
+    "name": "EX Team Magma vs Team Aqua"
+  },
+  {
+    "id": "ex5",
+    "name": "EX Légendes Oubliées"
+  },
+  {
+    "id": "tk-ex-latio",
+    "name": "EX Kit dresseur (Latios)"
+  },
+  {
+    "id": "tk-ex-latia",
+    "name": "EX Kit dresseur (Latias)"
+  },
+  {
+    "id": "ex6",
+    "name": "EX Rouge Feu & Vert Feuille"
+  },
+  {
+    "id": "pop1",
+    "name": "POP Série 1"
+  },
+  {
+    "id": "ex8",
+    "name": "EX Deoxys"
+  },
+  {
+    "id": "ex9",
+    "name": "EX Émeraude"
+  },
+  {
+    "id": "pop2",
+    "name": "POP Série 2"
+  },
+  {
+    "id": "exu",
+    "name": "EX Forces Cachées Collection Zarbi"
+  },
+  {
+    "id": "ex10",
+    "name": "EX Forces Cachées"
+  },
+  {
+    "id": "ex11",
+    "name": "EX Espèces Delta"
+  },
+  {
+    "id": "ex12",
+    "name": "EX Créateurs de légendes"
+  },
+  {
+    "id": "tk-ex-p",
+    "name": "EX Kit dresseur (Positi)"
+  },
+  {
+    "id": "tk-ex-m",
+    "name": "EX Kit dresseur (Négapi)"
+  },
+  {
+    "id": "pop3",
+    "name": "POP Série 3"
+  },
+  {
+    "id": "ex13",
+    "name": "EX Fantômes Holon"
+  },
+  {
+    "id": "pop4",
+    "name": "POP Série 4"
+  },
+  {
+    "id": "ex14",
+    "name": "EX Gardiens de Cristal"
+  },
+  {
+    "id": "ex15",
+    "name": "EX Île des Dragons"
+  },
+  {
+    "id": "ex16",
+    "name": "EX Gardiens du Pouvoir"
+  },
+  {
+    "id": "dp1",
+    "name": "Diamant & Perle"
+  },
+  {
+    "id": "dpp",
+    "name": "Promo DP"
+  },
+  {
+    "id": "dp2",
+    "name": "Trésors Mystérieux"
+  },
+  {
+    "id": "tk-dp-l",
+    "name": "DP Kit dresseur (Lucario)"
+  },
+  {
+    "id": "tk-dp-m",
+    "name": "DP Kit dresseur (Manaphy)"
+  },
+  {
+    "id": "dp3",
+    "name": "Merveilles Secrètes"
+  },
+  {
+    "id": "dp4",
+    "name": "Duels au Sommets"
+  },
+  {
+    "id": "pop7",
+    "name": "POP Série 7"
+  },
+  {
+    "id": "dp5",
+    "name": "Aube Majestueuse"
+  },
+  {
+    "id": "dp6",
+    "name": "Éveil des Légendes"
+  },
+  {
+    "id": "dp7",
+    "name": "Tempête"
+  },
+  {
+    "id": "pl1",
+    "name": "Platine"
+  },
+  {
+    "id": "pop9",
+    "name": "POP Série 9"
+  },
+  {
+    "id": "pl2",
+    "name": "Rivaux Émergeants"
+  },
+  {
+    "id": "pl3",
+    "name": "Vainqueurs Suprêmes"
+  },
+  {
+    "id": "hgss1",
+    "name": "HeartGold SoulSilver"
+  },
+  {
+    "id": "hgssp",
+    "name": "Promo HGSS"
+  },
+  {
+    "id": "tk-hs-g",
+    "name": "HS Kit du dresseur (Léviator)"
+  },
+  {
+    "id": "tk-hs-r",
+    "name": "HS Kit du dresseur (Raichu)"
+  },
+  {
+    "id": "hgss2",
+    "name": "Déchaînement"
+  },
+  {
+    "id": "hgss3",
+    "name": "Indomptable"
+  },
+  {
+    "id": "hgss4",
+    "name": "Triomphant"
+  },
+  {
+    "id": "col1",
+    "name": "L'appel des Légendes"
+  },
+  {
+    "id": "bw1",
+    "name": "Noir & Blanc"
+  },
+  {
+    "id": "bwp",
+    "name": "Promo BW"
+  },
+  {
+    "id": "2011bw",
+    "name": "Promo McDonald's 2012"
+  },
+  {
+    "id": "bw2",
+    "name": "Pouvoirs Émergents"
+  },
+  {
+    "id": "tk-bw-z",
+    "name": "BW Kit du dresseur (Zoroark)"
+  },
+  {
+    "id": "tk-bw-e",
+    "name": "BW Kit du dresseur (Minitaupe)"
+  },
+  {
+    "id": "bw3",
+    "name": "Nobles Victoires"
+  },
+  {
+    "id": "bw4",
+    "name": "Destinées Futures"
+  },
+  {
+    "id": "bw5",
+    "name": "Explorateurs Obscurs"
+  },
+  {
+    "id": "bw6",
+    "name": "Dragons Éxaltés"
+  },
+  {
+    "id": "dv1",
+    "name": "Coffre des Dragons"
+  },
+  {
+    "id": "bw7",
+    "name": "Frontières Franchies"
+  },
+  {
+    "id": "bw8",
+    "name": "Tempète Plasma"
+  },
+  {
+    "id": "bw9",
+    "name": "Glaciation Plasma"
+  },
+  {
+    "id": "bw10",
+    "name": "Explosion Plasma"
+  },
+  {
+    "id": "xyp",
+    "name": "Promo XY"
+  },
+  {
+    "id": "2013bw",
+    "name": "Promo McDonald's 2013"
+  },
+  {
+    "id": "rc",
+    "name": "Radiant Collection"
+  },
+  {
+    "id": "xy0",
+    "name": "Bienvenue à Kalos"
+  },
+  {
+    "id": "xy1",
+    "name": "XY"
+  },
+  {
+    "id": "xya",
+    "name": "carte alternative A Jaune"
+  },
+  {
+    "id": "tk-xy-sy",
+    "name": "XY Kit du dresseur (Nymphali)"
+  },
+  {
+    "id": "tk-xy-n",
+    "name": "XY Kit du dresseur (Bruyverne)"
+  },
+  {
+    "id": "xy2",
+    "name": "Étincelles"
+  },
+  {
+    "id": "2014xy",
+    "name": "Promo McDonald's 2014"
+  },
+  {
+    "id": "xy3",
+    "name": "Poings Furieux"
+  },
+  {
+    "id": "tk-xy-b",
+    "name": "XY Kit du dresseur (Scalproie)"
+  },
+  {
+    "id": "tk-xy-w",
+    "name": "XY Kit du dresseur (Grodoudou)"
+  },
+  {
+    "id": "xy4",
+    "name": "Vigueur Spectrale"
+  },
+  {
+    "id": "xy5",
+    "name": "Primo-Choc"
+  },
+  {
+    "id": "dc1",
+    "name": "Double Danger"
+  },
+  {
+    "id": "tk-xy-latia",
+    "name": "XY Kit du dresseur (Latias)"
+  },
+  {
+    "id": "tk-xy-latio",
+    "name": "XY Kit du dresseur (Latios)"
+  },
+  {
+    "id": "xy6",
+    "name": "Ciel Rugissant"
+  },
+  {
+    "id": "xy7",
+    "name": "Origines Antiques"
+  },
+  {
+    "id": "xy8",
+    "name": "Impulsion Turbo"
+  },
+  {
+    "id": "2015xy",
+    "name": "Promo McDonald's 2015"
+  },
+  {
+    "id": "xy9",
+    "name": "Rupture Turbo"
+  },
+  {
+    "id": "g1",
+    "name": "Générations"
+  },
+  {
+    "id": "tk-xy-p",
+    "name": "XY Kit du dresseur (Pikachu Libre)"
+  },
+  {
+    "id": "tk-xy-su",
+    "name": "XY Kit du dresseur (Suicune)"
+  },
+  {
+    "id": "xy10",
+    "name": "Impact des Destins"
+  },
+  {
+    "id": "xy11",
+    "name": "Offensive Vapeur"
+  },
+  {
+    "id": "2016xy",
+    "name": "Promo McDonald's 2016"
+  },
+  {
+    "id": "xy12",
+    "name": "Évolutions"
+  },
+  {
+    "id": "sm1",
+    "name": "Soleil et Lune"
+  },
+  {
+    "id": "smp",
+    "name": "Promo SM"
+  },
+  {
+    "id": "tk-sm-l",
+    "name": "SM Kit du dresseur (Lougarox)"
+  },
+  {
+    "id": "tk-sm-r",
+    "name": "SM Kit du dresseur (Raichu d'Alola)"
+  },
+  {
+    "id": "sm2",
+    "name": "Gardiens Ascendants"
+  },
+  {
+    "id": "2017sm",
+    "name": "Promo McDonald's 2017"
+  },
+  {
+    "id": "sm3",
+    "name": "Ombres Ardentes"
+  },
+  {
+    "id": "sm3.5",
+    "name": "Légendes Brillantes"
+  },
+  {
+    "id": "sm4",
+    "name": "Invasion Carmin"
+  },
+  {
+    "id": "sm5",
+    "name": "Ultra-Prisme"
+  },
+  {
+    "id": "sm6",
+    "name": "Lumière Interdite"
+  },
+  {
+    "id": "2018sm-fr",
+    "name": "Promo McDonald's 2018"
+  },
+  {
+    "id": "sm7",
+    "name": "Tempête Céleste"
+  },
+  {
+    "id": "sm7.5",
+    "name": "Majesté Des Dragons"
+  },
+  {
+    "id": "sm8",
+    "name": "Tonnerre Perdu"
+  },
+  {
+    "id": "sm9",
+    "name": "Duo de Choc"
+  },
+  {
+    "id": "det1",
+    "name": "Détective Pikachu"
+  },
+  {
+    "id": "sm10",
+    "name": "Alliance Infaillible"
+  },
+  {
+    "id": "sm11",
+    "name": "Harmonie des Esprits"
+  },
+  {
+    "id": "sm115",
+    "name": "Destinées Occultes"
+  },
+  {
+    "id": "sma",
+    "name": "Carte Alternative A Jaune"
+  },
+  {
+    "id": "2019sm-fr",
+    "name": "Promo McDonald's 2019"
+  },
+  {
+    "id": "sm12",
+    "name": "Éclipse Cosmique"
+  },
+  {
+    "id": "swshp",
+    "name": "Promo SWSH"
+  },
+  {
+    "id": "swsh1",
+    "name": "Épée et Bouclier"
+  },
+  {
+    "id": "swsh2",
+    "name": "Clash des Rebelles"
+  },
+  {
+    "id": "swsh3",
+    "name": "Ténèbres Embrasées"
+  },
+  {
+    "id": "swsh3.5",
+    "name": "La Voie du Maître"
+  },
+  {
+    "id": "swsh4",
+    "name": "Voltage Éclatant"
+  },
+  {
+    "id": "2021swsh",
+    "name": "Promo McDonald's 2021"
+  },
+  {
+    "id": "swsh4.5",
+    "name": "Destinées Radieuses"
+  },
+  {
+    "id": "swsh5",
+    "name": "Styles de combat"
+  },
+  {
+    "id": "swsh6",
+    "name": "Règne de Glace"
+  },
+  {
+    "id": "swsh7",
+    "name": "Évolution Céleste"
+  },
+  {
+    "id": "cel25",
+    "name": "Célébrations"
+  },
+  {
+    "id": "swsh8",
+    "name": "Poing de Fusion"
+  },
+  {
+    "id": "swsh9",
+    "name": "Stars Étincelantes"
+  },
+  {
+    "id": "swsh10",
+    "name": "Astres Radieux"
+  },
+  {
+    "id": "swsh10.5",
+    "name": "Pokémon GO"
+  },
+  {
+    "id": "swsh11",
+    "name": "Origine Perdue"
+  },
+  {
+    "id": "swsh12",
+    "name": "Tempête Argentée"
+  },
+  {
+    "id": "swsh12.5",
+    "name": "Zénith Suprême"
+  },
+  {
+    "id": "svp",
+    "name": "SVP Black Star Promos"
+  },
+  {
+    "id": "sv01",
+    "name": "Écarlate et Violet"
+  },
+  {
+    "id": "sv02",
+    "name": "Évolutions à Paldea"
+  },
+  {
+    "id": "sv03",
+    "name": "Flammes Obsidiennes"
+  },
+  {
+    "id": "sv03.5",
+    "name": "151"
+  },
+  {
+    "id": "sv04",
+    "name": "Faille Paradoxe"
+  },
+  {
+    "id": "sv04.5",
+    "name": "Destinées de Paldea"
+  },
+  {
+    "id": "sv05",
+    "name": "Forces Temporelles"
+  },
+  {
+    "id": "sv06",
+    "name": "Mascarade Crépusculaire"
+  },
+  {
+    "id": "sv06.5",
+    "name": "Fable Nébuleuse"
+  },
+  {
+    "id": "sv07",
+    "name": "Couronne Stellaire"
+  },
+  {
+    "id": "A1",
+    "name": "Puissance Génétique"
+  },
+  {
+    "id": "P-A",
+    "name": "Promo-A"
+  },
+  {
+    "id": "sv08",
+    "name": "Étincelles Déferlantes"
+  },
+  {
+    "id": "A1a",
+    "name": "L’Île Fabuleuse"
+  },
+  {
+    "id": "sv08.5",
+    "name": "Évolutions Prismatiques"
+  },
+  {
+    "id": "A2",
+    "name": "Choc Spatio-Temporel"
+  },
+  {
+    "id": "A2a",
+    "name": "Lumière Triomphale"
+  },
+  {
+    "id": "A2b",
+    "name": "Réjouissances Rayonnantes"
+  },
+  {
+    "id": "sv09",
+    "name": "Aventures Ensemble"
+  },
+  {
+    "id": "A3",
+    "name": "Gardiens Astraux"
+  },
+  {
+    "id": "A3a",
+    "name": "Crise Interdimensionnelle"
+  },
+  {
+    "id": "sv10",
+    "name": "Rivalités Destinées"
+  },
+  {
+    "id": "A3b",
+    "name": "La Clairière d'Évoli"
+  },
+  {
+    "id": "sv10.5b",
+    "name": "Foudre Noire"
+  },
+  {
+    "id": "sv10.5w",
+    "name": "Flamme Blanche"
+  },
+  {
+    "id": "A4",
+    "name": "Sagesse Entre Ciel et Mer"
+  },
+  {
+    "id": "A4a",
+    "name": "Source Secrète"
+  },
+  {
+    "id": "me01",
+    "name": "Méga-Évolution"
+  },
+  {
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  {
+    "id": "me02",
+    "name": "Flammes Fantasmagoriques"
+  },
+  {
+    "id": "B1a",
+    "name": "Embrasement Écarlate"
+  },
+  {
+    "id": "B2",
+    "name": "Parade Onirique"
+  },
+  {
+    "id": "me02.5",
+    "name": "Héros Transcendants"
+  }
+]
