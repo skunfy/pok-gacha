@@ -398,8 +398,15 @@ function getTcgdexSerieCandidates(setId, card = null) {
   ]);
 }
 
+const tcgdexImageCache = new Map();
+
 async function firstWorkingTcgdexImages(setId, localId, card = null) {
+  const key = `${String(setId || "").trim()}__${String(localId || "").trim()}`;
   if (!setId || !localId) return null;
+
+  if (tcgdexImageCache.has(key)) {
+    return tcgdexImageCache.get(key);
+  }
 
   const langs = ["fr", "en"];
   const series = getTcgdexSerieCandidates(setId, card);
@@ -410,14 +417,17 @@ async function firstWorkingTcgdexImages(setId, localId, card = null) {
       const high = `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/high.webp`;
 
       try {
-        const r = await fetchWithTimeout(low, 8000);
+        const r = await fetchWithTimeout(low, 2500);
         if (r.ok) {
-          return { image: low, imageHigh: high, lang, serie };
+          const found = { image: low, imageHigh: high, lang, serie };
+          tcgdexImageCache.set(key, found);
+          return found;
         }
       } catch {}
     }
   }
 
+  tcgdexImageCache.set(key, null);
   return null;
 }
 
