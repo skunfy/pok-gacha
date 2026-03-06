@@ -411,14 +411,25 @@ async function getPokemonSetCardsCached(setId) {
     return cached.cards;
   }
 
-  const r = await fetchWithTimeout(
-    `https://api.tcgdex.net/v2/fr/sets/${encodeURIComponent(setId)}`,
-    20000
-  );
-  if (!r.ok) throw new Error("TCGdex set detail failed");
+  async function fetchSet(lang) {
+    const r = await fetchWithTimeout(
+      `https://api.tcgdex.net/v2/${lang}/sets/${encodeURIComponent(setId)}`,
+      20000
+    );
+    if (!r.ok) return null;
+    const data = await r.json().catch(() => null);
+    const cards = Array.isArray(data?.cards) ? data.cards : [];
+    return cards.length ? cards : null;
+  }
 
-  const data = await r.json().catch(() => null);
-  const cards = Array.isArray(data?.cards) ? data.cards : [];
+  let cards = await fetchSet("fr");
+
+  // fallback si FR vide/incomplet
+  if (!cards || !cards.length) {
+    cards = await fetchSet("en");
+  }
+
+  cards = Array.isArray(cards) ? cards : [];
 
   setCardsCache.set(setId, { at: now, cards });
   return cards;
@@ -584,18 +595,14 @@ function pickFirst(obj, keys) {
 // IMAGE URL NORMALIZATION
 // low.webp pour afficher vite, high.webp pour zoom
 // =========================
-function buildTcgdexAsset(base, quality="low", ext="webp") {
-  if (!base || typeof base !== "string") return null;
+function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
+  if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
 
-  const u = base.replace(/\/$/, "");
+  const u = urlBaseOrWithExt.replace(/\/$/, "");
 
-  // si déjà une image complète
   if (/\.(png|jpe?g|webp)(\?|$)/i.test(u)) return u;
-
-  // ✅ si l'API renvoie déjà .../low ou .../high
   if (/(\/low|\/high)$/i.test(u)) return `${u}.${ext}`;
 
-  // base "neutre" -> on ajoute /low.webp ou /high.webp
   return `${u}/${quality}.${ext}`;
 }
 
