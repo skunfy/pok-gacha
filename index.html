@@ -1257,6 +1257,35 @@
 
 .carouselViewport.dragging{ cursor: grabbing; }
 
+.siteFooter{
+  margin-top:40px;
+  padding:30px 20px;
+  text-align:center;
+  opacity:0.8;
+  font-size:13px;
+}
+
+.footerLinks{
+  margin-bottom:12px;
+}
+
+.footerLinks a{
+  color:#6aa9ff;
+  font-weight:700;
+  text-decoration:none;
+  font-size:15px;
+}
+
+.footerLinks a:hover{
+  text-decoration:underline;
+}
+
+.footerText{
+  max-width:900px;
+  margin:auto;
+  line-height:1.5;
+}
+
 </style>
 </head>
 
@@ -1290,7 +1319,7 @@
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/leaderboard.html">LEADERBOARD</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
-        <button onclick="location.href='/about.html'">ABOUT</button>
+        
 
         <!-- ✅ PROFILE DROPDOWN (avatar = bouton) -->
         <div class="profileWrap" id="profileWrap">
@@ -2561,14 +2590,20 @@ function bindCarouselDragOnce(){
   applySfxUi();
 </script>
 
-<div class="footerSignature">
-  Gachax est un fan site non officiel.
-  Ce site n’est affilié ni approuvé par The Pokémon Company, Nintendo, Game Freak, Creatures Inc., ou par les détenteurs officiels des droits de One Piece et du One Piece Card Game (Bandai).
-  Pokémon © Nintendo / Creatures Inc. / GAME FREAK.
-  One Piece © Eiichiro Oda / Shueisha / Toei Animation.
-  Développement & conception : Skunfy.
+<footer class="siteFooter">
+  <div class="footerLinks">
+    <a href="/about.html">About</a>
+  </div>
 
-</div>
+  <div class="footerText">
+    Gachax est un fan site non officiel. Ce site n'est affilié ni approuvé par
+    The Pokémon Company, Nintendo, Game Freak, Creatures Inc., Bandai,
+    Shueisha, Toei Animation ou Disney.
+    Pokémon © Nintendo / Creatures Inc. / GAME FREAK.
+    One Piece © Eiichiro Oda / Shueisha / Toei Animation.
+    Lorcana © Disney.
+  </div>
+</footer>
 
 
 </html>
