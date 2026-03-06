@@ -1325,16 +1325,15 @@ async function loadBinderSetCards(){
 
   try{
     const data = await api("/api/set_cards?setId=" + encodeURIComponent(setId));
-    binderCards = data.cards || [];
-  }catch{
+
+    binderCards = (data.cards || []).map(c => ({
+      ...c,
+      imageHigh: c.imageHigh ?? c.imagehigh ?? null,
+      image: c.image ?? null,
+    }));
+  }catch(e){
     binderCards = [];
   }
-
-  binderCards = (data.cards || []).map(c => ({
-  ...c,
-  imageHigh: c.imageHigh ?? c.imagehigh ?? null,
-  image: c.image ?? null,
-}));
 
   // tri numeric-friendly
   binderCards.sort((a,b)=>{
