@@ -1164,38 +1164,35 @@ app.get("/api/sets", auth, async (req, res) => {
       // ===== POKEMON =====
     if (game === "pokemon") {
       const data = await getPokemonSetCardsCached(setId);
-      const lang = data?.lang || "fr";              // ✅ IMPORTANT
       const cards = Array.isArray(data.cards) ? data.cards : [];
 
-      return res.json({
-        setId,
-        cards: cards.map(c => {
-          const localId = String(c.localId || "").trim();
+      // limiter le coût: on ne fetch le détail QUE si pas d'image
+      const out = [];
+      for (const c of cards) {
+        const localId = String(c.localId || "").trim();
 
-          // 1) si l'API fournit déjà c.image -> c'est la meilleure source
-          const lowFromApi  = normalizeImageField(c.image, "low", "webp");
-          const highFromApi = normalizeImageField(c.image, "high", "webp");
+        let low  = normalizeImageField(c.image, "low", "webp");
+        let high = normalizeImageField(c.image, "high", "webp");
 
-          // 2) fallback: reconstruire avec la BONNE langue (lang du set)
-          const low =
-            lowFromApi ||
-            tcgdexAssetUrl(lang, setId, localId, "low", "webp") ||
-            tcgdexAssetUrl("en", setId, localId, "low", "webp");   // ✅ dernier filet
+        // ✅ fallback solide: card detail tcgdex (contient image fiable)
+        if (!low && c.id) {
+          try {
+            const d = await getCardDetailById(c.id);
+            low  = normalizeImageField(d.image, "low", "webp");
+            high = normalizeImageField(d.image, "high", "webp");
+          } catch {}
+        }
 
-          const high =
-            highFromApi ||
-            tcgdexAssetUrl(lang, setId, localId, "high", "webp") ||
-            tcgdexAssetUrl("en", setId, localId, "high", "webp");
+        out.push({
+          cardId: c.id,
+          localId,
+          name: c.name || "",
+          image: low || null,
+          imageHigh: high || low || null
+        });
+      }
 
-          return {
-            cardId: c.id,
-            localId,
-            name: c.name || "",
-            image: low,
-            imageHigh: high
-          };
-        })
-      });
+      return res.json({ setId, cards: out });
     }
     
     // ===== LORCANA =====
