@@ -346,12 +346,15 @@ button:active{ transform: translateY(0px) scale(.99); }
         <div class="k">TOTAL ONE PIECE</div>
         <div class="v" id="statOnepiece">0</div>
       </div>
-      <div class="statCard" style="grid-column:1 / -1;">
+      <div class="statCard">
+        <div class="k">TOTAL LORCANA</div>
+        <div class="v" id="statLorcana">0</div>
+      </div>
+      <div class="statCard">
         <div class="k">TOTAL CARTES</div>
         <div class="v" id="statTotal">0</div>
       </div>
     </div>
-  </div>
 
   <div class="panel">
     <b id="favTitle">Cartes favorites</b>
@@ -453,6 +456,7 @@ function setStats(pokemon, onepiece, lorcana){
 
   document.getElementById("statPokemon").textContent = String(p);
   document.getElementById("statOnepiece").textContent = String(o);
+  document.getElementById("statLorcana").textContent = String(l);
   document.getElementById("statTotal").textContent = String(p + o + l);
 }
 

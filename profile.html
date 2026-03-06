@@ -450,7 +450,11 @@ button{cursor:pointer}
             <div class="k">TOTAL ONE PIECE</div>
             <div class="v" id="statOnepiece">0</div>
           </div>
-          <div class="statCard" style="grid-column:1 / -1;">
+          <div class="statCard">
+            <div class="k">TOTAL LORCANA</div>
+            <div class="v" id="statLorcana">0</div>
+          </div>
+          <div class="statCard">
             <div class="k">TOTAL CARTES</div>
             <div class="v" id="statTotal">0</div>
           </div>
@@ -603,6 +607,7 @@ const gameFilter = document.getElementById("gameFilter");
 const collectionTitle = document.getElementById("collectionTitle");
 const statPokemon = document.getElementById("statPokemon");
 const statOnepiece = document.getElementById("statOnepiece");
+const statLorcana = document.getElementById("statLorcana");
 const statTotal = document.getElementById("statTotal");
 
 const zoomModal = document.getElementById("zoomModal");
@@ -657,16 +662,21 @@ function gameLabel(g){
 }
 
 function updateStats(items){
-  let p = 0, o = 0;
+  let p = 0, o = 0, l = 0;
+
   for(const x of items){
     const c = Number(x.count || 0) || 0;
     const g = (x.game || "pokemon");
+
     if(g === "onepiece") o += c;
+    else if(g === "lorcana") l += c;
     else p += c;
   }
+
   statPokemon.textContent = String(p);
   statOnepiece.textContent = String(o);
-  statTotal.textContent = String(p + o);
+  statLorcana.textContent = String(l);
+  statTotal.textContent = String(p + o + l);
 }
 
 /* ✅ zoom */
