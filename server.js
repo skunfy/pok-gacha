@@ -369,33 +369,53 @@ function uniqueStrings(arr) {
   return [...new Set(arr.map(x => String(x || "").trim()).filter(Boolean))];
 }
 
-function getTcgdexSerieCandidates(setId, card = null) {
+ function getTcgdexSerieCandidates(setId, card = null) {
   const s = String(setId || "").trim().toLowerCase();
   if (!s) return [];
-
-  const specialMap = {
-    basep: "base",
-  };
 
   const fromCardSerie =
     card?.set?.serie?.id ||
     card?.set?.serieId ||
+    card?.set?.serie ||
     null;
 
-  // ex:
-  // dp1     -> dp
-  // 2011bw  -> bw
-  // basep   -> base (via map)
+  const specialMap = {
+    basep: "base",
+    bwp: "bw",
+    xyp: "xy",
+    smp: "sm",
+    swshp: "swsh",
+    svp: "sv",
+    hgssp: "hgss",
+    np: "bw",
+    dvp: "dp",
+  };
+
   const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
   const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
 
-  return uniqueStrings([
+  const inferredByPrefix =
+    s.startsWith("dp")   ? "dp" :
+    s.startsWith("pl")   ? "pl" :
+    s.startsWith("hgss") ? "hgss" :
+    s.startsWith("bw")   ? "bw" :
+    s.startsWith("xy")   ? "xy" :
+    s.startsWith("sm")   ? "sm" :
+    s.startsWith("swsh") ? "swsh" :
+    s.startsWith("sv")   ? "sv" :
+    s.startsWith("ex")   ? "ex" :
+    s.startsWith("neo")  ? "neo" :
+    s.startsWith("base") ? "base" :
+    null;
+
+  return [...new Set([
     fromCardSerie,
     specialMap[s],
+    inferredByPrefix,
     strippedTrailingDigits,
     strippedLeadingDigits,
     s
-  ]);
+  ].map(x => String(x || "").trim()).filter(Boolean))];
 }
 
 const tcgdexImageCache = new Map();
@@ -1291,41 +1311,43 @@ app.get("/api/sets", auth, async (req, res) => {
     // ===== POKEMON =====
     if (game === "pokemon") {
 
-  const data = await getPokemonSetCardsCached(setId);
-  const cards = Array.isArray(data.cards) ? data.cards : [];
+    const data = await getPokemonSetCardsCached(setId);
+    const cards = Array.isArray(data.cards) ? data.cards : [];
 
-  const out = [];
-  for (const c of cards) {
-    const localId = String(c.localId || "").trim();
+    const out = [];
+    for (const c of cards) {
+      const localId = String(c.localId || "").trim();
 
-    const lowFromApi  = normalizeImageField(c.image, "low", "webp");
-    const highFromApi = normalizeImageField(c.image, "high", "webp");
+      const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+      const highFromApi = normalizeImageField(c.image, "high", "webp");
 
-    let low = lowFromApi;
-    let high = highFromApi;
+      let low = lowFromApi;
+      let high = highFromApi;
 
-    if (!low && setId && localId) {
-      const found = await firstWorkingTcgdexImages(setId, localId, c);
-      if (found) {
-        low = found.image;
-        high = found.imageHigh;
+      if (!low && setId && localId) {
+        const found = await firstWorkingTcgdexImages(setId, localId, c);
+        if (found) {
+          low = found.image;
+          high = found.imageHigh;
+        } else {
+          console.log(`❌ no image found for set=${setId} localId=${localId} cardId=${c.id || ""}`);
+        }
       }
+
+      out.push({
+        cardId: c.id,
+        localId,
+        name: c.name || "",
+        image: low || null,
+        imageHigh: high || low || null
+      });
     }
 
-    out.push({
-      cardId: c.id,
-      localId,
-      name: c.name || "",
-      image: low || null,
-      imageHigh: high || low || null
+    return res.json({
+      setId,
+      cards: out
     });
   }
-
-  return res.json({
-    setId,
-    cards: out
-  });
-}
       
     // ===== LORCANA =====
     if (game === "lorcana") {
