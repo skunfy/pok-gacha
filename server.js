@@ -430,27 +430,6 @@ function uniqueStrings(arr) {
     dvp: "dp",
   };
 
-  function pickRandom(arr) {
-  if (!Array.isArray(arr) || !arr.length) return null;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function drawOfflinePokemonCard() {
-  const c = pickRandom(offlinePokemonCards);
-  if (!c) throw new Error("Offline Pokémon pool empty");
-
-  return {
-    cardId: c.cardId || null,
-    setId: c.setId || null,
-    localId: String(c.localId || ""),
-    name: c.name || "Unknown",
-    set: c.set || c.setName || "Unknown",
-    rarity: c.rarity || "",
-    image: c.image || null,
-    imageHigh: c.imageHigh || c.image || null,
-  };
-}
-
   const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
   const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
 
