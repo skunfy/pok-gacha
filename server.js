@@ -888,87 +888,79 @@ if (game === "lorcana") {
 }
 
   // ----- POKEMON ONLINE (TCGDEX) -----
-       if (FORCE_OFFLINE) {
-    if (offlineCards?.length) {
-      const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-      if (c?.image) return c;
-    }
-    throw new Error("Offline only: no cards.json");
-  }
-
-  const MAX_TRIES = 6;
-
-  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
-    let list;
-    try {
-      list = await getCardsBriefList();
-    } catch {
-      list = null;
-    }
-    if (!list?.length) break;
-
-    const pick = list[Math.floor(Math.random() * list.length)];
-    if (!pick?.id) continue;
-
-    let c;
-    try {
-      c = await getCardDetailById(pick.id);
-    } catch {
-      continue;
-    }
-
-    const setId = c.set?.id || null;
-    const localId = String(c.localId || "").trim();
-
-    const lowFromApi  = normalizeImageField(c.image, "low", "webp");
-    const highFromApi = normalizeImageField(c.image, "high", "webp");
-
-    let low = lowFromApi;
-    let high = highFromApi;
-
-    if (!low && setId && localId) {
-      const found = await firstWorkingTcgdexImages(setId, localId, c);
-      if (found) {
-        low = found.image;
-        high = found.imageHigh;
-        console.log(`🌐 source=TCGDEX assets lang=${found.lang} serie=${found.serie} set=${setId}`);
-      }
-    }
-
-    if (!low) continue;
-
-    // ✅ vérifie que l'image marche vraiment
-  const okLow = await imageUrlWorks(low);
-  if (!okLow) continue;
-
-  const finalHigh = (high && await imageUrlWorks(high)) ? high : low;
-
-
-    console.log(`🌐 source=TCGDEX set=${setId}`);
-
-    return {
-      cardId: c.id || pick.id,
-      setId,
-      localId,
-      name: c.name || pick.name || "Unknown",
-      set: c.set?.name || c.set?.id || "Unknown",
-      rarity: c.rarity || "",
-      image: low,
-      imageHigh: high || low,
-    };
-  }
-
+  if (FORCE_OFFLINE) {
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-    if (c?.image) {
-      console.log("📦 source=OFFLINE");
-      return c;
+    if (c?.image) return c;
+  }
+  throw new Error("Offline only: no cards.json");
+}
+
+const MAX_TRIES = 6;
+
+for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+  let list;
+  try {
+    list = await getCardsBriefList();
+  } catch {
+    list = null;
+  }
+  if (!list?.length) break;
+
+  const pick = list[Math.floor(Math.random() * list.length)];
+  if (!pick?.id) continue;
+
+  let c;
+  try {
+    c = await getCardDetailById(pick.id);
+  } catch {
+    continue;
+  }
+
+  const setId = c.set?.id || null;
+  const localId = String(c.localId || "").trim();
+
+  const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+  const highFromApi = normalizeImageField(c.image, "high", "webp");
+
+  let low = lowFromApi;
+  let high = highFromApi;
+
+  if (!low && setId && localId) {
+    const found = await firstWorkingTcgdexImages(setId, localId, c);
+    if (found) {
+      low = found.image;
+      high = found.imageHigh;
+      console.log(`🌐 source=TCGDEX assets lang=${found.lang} serie=${found.serie} set=${setId}`);
     }
   }
 
-  throw new Error("No card available (TCGdex + offline empty)");
+  if (!low) continue;
+
+  console.log(`🌐 source=TCGDEX set=${setId}`);
+
+  return {
+    cardId: c.id || pick.id,
+    setId,
+    localId,
+    name: c.name || pick.name || "Unknown",
+    set: c.set?.name || c.set?.id || "Unknown",
+    rarity: c.rarity || "",
+    image: low,
+    imageHigh: high || low,
+  };
 }
 
+if (offlineCards?.length) {
+  const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
+  if (c?.image) {
+    console.log("📦 source=OFFLINE");
+    return c;
+  }
+}
+
+throw new Error("No card available (TCGdex + offline empty)");
+}
 // ----- GRADES -----
 function rollGrade() {
   const r = Math.random();
