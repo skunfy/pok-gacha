@@ -325,6 +325,25 @@ function randToken() {
   return crypto.randomBytes(24).toString("hex");
 }
 
+function drawOfflinePokemonCard() {
+  if (!offlinePokemonCards?.length) {
+    throw new Error("Offline Pokémon pool empty");
+  }
+
+  const c = offlinePokemonCards[Math.floor(Math.random() * offlinePokemonCards.length)];
+
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: String(c.localId || ""),
+    name: c.name || "Unknown",
+    set: c.set || c.setName || "Unknown",
+    rarity: c.rarity || "",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
+
 function randFriendCode() {
   const s = crypto.randomBytes(4).toString("hex").toUpperCase();
   return s.slice(0, 4) + "-" + s.slice(4, 8);
