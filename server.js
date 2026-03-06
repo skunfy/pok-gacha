@@ -1176,115 +1176,134 @@ app.post("/api/open", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
 
   const game = getGame(req);
-  const { rows } = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-  const money = rows[0]?.money ?? 0;
+  const client = await pool.connect();
 
-  if (money < COST_ONE) {
-    return res.status(400).json({ error: "Pas assez de Pokédollars" });
-  }
-
-  // payer
-  await pool.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [COST_ONE, req.user.id]);
-
-  let c;
   try {
-    c = await drawCard(game);
+    await client.query("BEGIN");
+
+    // 1) payer en une seule requête atomique
+    const payQ = await client.query(
+      `UPDATE users
+       SET money = money - $1
+       WHERE id = $2
+         AND money >= $1
+       RETURNING money`,
+      [COST_ONE, req.user.id]
+    );
+
+    if (!payQ.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de Pokédollars" });
+    }
+
+    const moneyAfterPay = Number(payQ.rows[0].money || 0);
+
+    // 2) tirage
+    let c;
+    try {
+      c = await drawCard(game);
+    } catch (e) {
+      console.error("❌ drawCard failed:", { game, message: e?.message, stack: e?.stack });
+      await client.query("ROLLBACK");
+      return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
+    }
+
+    const grade = rollGrade();
+    const mint = rollMintForGrade(grade);
+    const now = Date.now();
+    const xpAdd = xpForOpen(grade);
+
+    // ✅ idKey stable pour TOUS les jeux
+    const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
+
+    // 3) xp
+    await client.query(
+      `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+      [xpAdd, req.user.id]
+    );
+
+    // 4) log pull
+    await client.query(
+      `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [
+        req.user.id,
+        game,
+        c.cardId || null,
+        c.setId || null,
+        c.localId || null,
+        c.name,
+        c.set,
+        c.image,
+        c.imageHigh || c.image,
+        grade,
+        mint,
+        now,
+      ]
+    );
+
+    // 5) upsert collection
+    await client.query(
+      `
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + 1,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId)
+      `,
+      [
+        req.user.id,
+        idKey,
+        game,
+        c.cardId || null,
+        c.setId || null,
+        c.localId || null,
+        c.name,
+        c.set,
+        c.image,
+        c.imageHigh || c.image,
+        grade,
+        mint,
+        now,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    return res.json({
+      money: moneyAfterPay,
+      xpAdd,
+      card: {
+        idKey,
+        game,
+        name: c.name,
+        set: c.set,
+        cardId: c.cardId || null,
+        setId: c.setId || null,
+        localId: c.localId || null,
+        image: c.image,
+        imageHigh: c.imageHigh || c.image,
+        grade,
+        mint: Boolean(mint),
+      },
+    });
   } catch (e) {
-    console.error("❌ drawCard failed:", { game, message: e?.message, stack: e?.stack });
-    await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [COST_ONE, req.user.id]);
-    return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
+    try { await client.query("ROLLBACK"); } catch {}
+    console.error("❌ /api/open failed:", e);
+    return res.status(500).json({ error: "Open failed" });
+  } finally {
+    client.release();
   }
-
-  const grade = rollGrade();
-  const mint = rollMintForGrade(grade);
-  const now = Date.now();
-
-  // XP open
-  const xpAdd = xpForOpen(grade);
-  await pool.query(`UPDATE users SET xp = xp + $1 WHERE id=$2`, [xpAdd, req.user.id]);
-
-  // idKey stable pour tous :p
-
-    // ✅ idKey stable pour TOUS les jeux (binder-friendly)
-  const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
-
-  // log pull
-  await pool.query(
-    `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-    [
-      req.user.id,
-      game,
-      c.cardId || null,
-      c.setId || null,
-      c.localId || null,
-      c.name,
-      c.set,
-      c.image,
-      c.imageHigh || c.image,
-      grade,
-      mint,
-      now,
-    ]
-  );
-
-  // upsert collection
-  await pool.query(
-    `
-    INSERT INTO collection
-      (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
-    VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13)
-    ON CONFLICT (user_id, idKey)
-    DO UPDATE SET
-      count = collection.count + 1,
-      grade = GREATEST(collection.grade, EXCLUDED.grade),
-      mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
-      imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
-      lastAt = EXCLUDED.lastAt,
-      cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
-      setId  = COALESCE(collection.setId,  EXCLUDED.setId),
-      localId= COALESCE(collection.localId,EXCLUDED.localId)
-    `,
-    [
-      req.user.id,
-      idKey,
-      game,
-      c.cardId || null,
-      c.setId || null,
-      c.localId || null,
-      c.name,
-      c.set,
-      c.image,
-      c.imageHigh || c.image,
-      grade,
-      mint,
-      now,
-    ]
-  );
-
-  // money actuel
-  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-
-  return res.json({
-    money: me.rows[0]?.money || 0,
-    xpAdd,
-    card: {
-      idKey,
-      game,
-      name: c.name,
-      set: c.set,
-      cardId: c.cardId || null,
-      setId: c.setId || null,
-      localId: c.localId || null,
-      image: c.image,
-      imageHigh: c.imageHigh || c.image,
-      grade,
-      mint: Boolean(mint),
-    },
-  });
 });
-
 
 
 app.get("/api/collection", auth, async (req, res) => {
