@@ -373,57 +373,29 @@ function getTcgdexSerieCandidates(setId, card = null) {
   const s = String(setId || "").trim().toLowerCase();
   if (!s) return [];
 
+  const specialMap = {
+    basep: "base",
+  };
+
   const fromCardSerie =
     card?.set?.serie?.id ||
     card?.set?.serieId ||
-    card?.set?.serie ||
     null;
 
-  // ✅ cas spéciaux connus
-  const specialMap = {
-    basep: "base",   // Wizards Black Star Promo
-    bwp: "bw",       // Black & White Promo
-    xyp: "xy",       // XY Promo
-    smp: "sm",       // Sun & Moon Promo
-    swshp: "swsh",   // Sword & Shield Promo
-    svp: "sv",       // Scarlet & Violet Promo
-    hgssp: "hgss",   // HGSS Promo
-    np: "bw",        // Nintendo Promo / BW-era oddities
-    dvp: "dp",       // DP promo variants (si jamais)
-  };
-
-  // exemples :
+  // ex:
   // dp1     -> dp
-  // ex12    -> ex
   // 2011bw  -> bw
-  // swshp   -> swsh (via specialMap)
+  // basep   -> base (via map)
   const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
   const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
 
-  // autres heuristiques utiles
-  const inferredByPrefix =
-    s.startsWith("swsh") ? "swsh" :
-    s.startsWith("sv")   ? "sv" :
-    s.startsWith("sm")   ? "sm" :
-    s.startsWith("xy")   ? "xy" :
-    s.startsWith("bw")   ? "bw" :
-    s.startsWith("dp")   ? "dp" :
-    s.startsWith("hgss") ? "hgss" :
-    s.startsWith("ex")   ? "ex" :
-    s.startsWith("neo")  ? "neo" :
-    s.startsWith("ecard") ? "ecard" :
-    s.startsWith("pl")   ? "pl" :
-    s.startsWith("base") ? "base" :
-    null;
-
-  return [...new Set([
+  return uniqueStrings([
     fromCardSerie,
     specialMap[s],
-    inferredByPrefix,
     strippedTrailingDigits,
     strippedLeadingDigits,
     s
-  ].map(x => String(x || "").trim()).filter(Boolean))];
+  ]);
 }
 
 async function firstWorkingTcgdexImages(setId, localId, card = null) {
@@ -966,10 +938,11 @@ if (game === "lorcana") {
     if (!low) continue;
 
     // ✅ vérifie que l'image marche vraiment
-    const okLow = await imageUrlWorks(low);
-    if (!okLow) continue;
+  const okLow = await imageUrlWorks(low);
+  if (!okLow) continue;
 
-    const finalHigh = (high && await imageUrlWorks(high)) ? high : low;
+  const finalHigh = (high && await imageUrlWorks(high)) ? high : low;
+
 
     console.log(`🌐 source=TCGDEX set=${setId}`);
 
