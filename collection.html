@@ -1447,17 +1447,29 @@ function renderBinder(){
     const mint = have ? !!ownedItem.mint : false;
 
     slot.innerHTML = `
-      ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
+    ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
 
-      <div class="slotImg" style="${img ? `background-image:url('${img}')` : ""}"></div>
-      <div class="slotTitle">${title}</div>
-      <div class="slotSub">${sub}</div>
-      <div class="slotMeta">
-        <span class="pill">#${localId || "?"}</span>
-        <span class="pill">G${grade}</span>
-        ${mint ? `<span class="pill mint">MINT</span>` : ``}
-      </div>
-    `;
+    <div class="slotImg" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      ${
+        img
+          ? `<img
+              src="${img}"
+              alt="${title}"
+              style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
+              onerror="console.error('IMG ERROR:', this.src)"
+            >`
+          : ``
+      }
+    </div>
+
+    <div class="slotTitle">${title}</div>
+    <div class="slotSub">${sub}</div>
+    <div class="slotMeta">
+      <span class="pill">#${localId || "?"}</span>
+      <span class="pill">G${grade}</span>
+      ${mint ? `<span class="pill mint">MINT</span>` : ``}
+    </div>
+  `;
 
     const imgEl = slot.querySelector(".slotImg");
     if (have){
