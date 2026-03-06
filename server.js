@@ -631,9 +631,10 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
 
 function tcgdexAssetUrl(lang, setId, localId, quality = "low", ext = "webp") {
   if (!setId || !localId) return null;
-  const s = encodeURIComponent(String(setId).trim());
-  const l = encodeURIComponent(String(localId).trim());
-  return `https://assets.tcgdex.net/${lang}/${s}/${l}/${quality}.${ext}`;
+
+  const serie = setId.replace(/[0-9]+$/, ""); // ex: dp2 -> dp
+
+  return `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/${quality}.${ext}`;
 }
 
 // =========================
@@ -1152,48 +1153,53 @@ app.get("/api/sets", auth, async (req, res) => {
   }
 });
 
-app.get("/api/set_cards", auth, async (req, res) => {
-  const game = getGame(req);
-  const setId = String(req.query.setId || "").trim();
-  if (!setId) return res.status(400).json({ error: "Missing setId" });
+  app.get("/api/set_cards", auth, async (req, res) => {
+    const game = getGame(req);
+    const setId = String(req.query.setId || "").trim();
+    if (!setId) return res.status(400).json({ error: "Missing setId" });
 
-  try {
-  // ===== POKEMON =====
-    if (game === "pokemon") {
-    const data = await getPokemonSetCardsCached(setId);
+    try {
 
-    const lang = data.lang || "fr";
-    const serieId = String(data.serieId || "").trim();
-    const cards = Array.isArray(data.cards) ? data.cards : [];
+      // ===== POKEMON =====
+      if (game === "pokemon") {
 
-    return res.json({
-      setId,
-      cards: cards.map(c => {
-        const localId = String(c.localId || "").trim();
+        const data = await getPokemonSetCardsCached(setId);
+        const cards = Array.isArray(data.cards) ? data.cards : [];
 
-        const baseFromApiLow = normalizeImageField(c.image, "low", "webp");
-        const baseFromApiHigh = normalizeImageField(c.image, "high", "webp");
+        return res.json({
+          setId,
+          cards: cards.map(c => {
 
-        const builtLow =
-          serieId && localId
-            ? `https://assets.tcgdex.net/${lang}/${encodeURIComponent(serieId)}/${encodeURIComponent(setId)}/${encodeURIComponent(localId)}/low.webp`
-            : null;
+            const localId = String(c.localId || "").trim();
 
-        const builtHigh =
-          serieId && localId
-            ? `https://assets.tcgdex.net/${lang}/${encodeURIComponent(serieId)}/${encodeURIComponent(setId)}/${encodeURIComponent(localId)}/high.webp`
-            : null;
+            const low =
+              normalizeImageField(c.image, "low", "webp") ||
+              tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
+              tcgdexAssetUrl("en", setId, localId, "low", "webp");
 
-        return {
-          cardId: c.id,
-          localId,
-          name: c.name || "",
-          image: baseFromApiLow || builtLow,
-          imageHigh: baseFromApiHigh || builtHigh
-        };
-      })
-    });
-  }
+            const high =
+              normalizeImageField(c.image, "high", "webp") ||
+              tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
+              tcgdexAssetUrl("en", setId, localId, "high", "webp");
+
+            return {
+              cardId: c.id,
+              localId,
+              name: c.name || "",
+              image: low,
+              imageHigh: high
+            };
+          })
+        });
+      }
+
+      return res.status(400).json({ error: "Unsupported game" });
+
+    } catch (e) {
+      console.error("set_cards error:", e);
+      return res.status(500).json({ error: "Failed to fetch set cards" });
+    }
+  });
   
     // ===== LORCANA =====
     if (game === "lorcana") {
