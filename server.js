@@ -355,6 +355,16 @@ function xpForSell(unitPrice, qty){
   return Math.max(1, (Number(unitPrice) || 1) * (Number(qty) || 1));
 }
 
+async function imageUrlWorks(url) {
+  if (!url) return false;
+  try {
+    const r = await fetchWithTimeout(url, 8000);
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
 function uniqueStrings(arr) {
   return [...new Set(arr.map(x => String(x || "").trim()).filter(Boolean))];
 }
