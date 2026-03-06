@@ -8,7 +8,12 @@
     :root{ --bg1:#05060d; --bg2:#090b18; }
     *{box-sizing:border-box}
     body{
-      margin:0; min-height:100vh; display:grid; place-items:center;
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
       font-family:system-ui,-apple-system,Segoe UI,Roboto;
       color:#fff;
       background:
@@ -16,9 +21,9 @@
         radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
         linear-gradient(180deg,var(--bg1),var(--bg2));
       overflow-x:hidden;
+      padding:24px 0 32px;
     }
 
-    /* ✅ nouveau wrapper pour logo au-dessus + card */
     .loginWrap{
       width:min(520px, 92vw);
       display:flex;
@@ -27,10 +32,9 @@
       gap:14px;
     }
 
-    /* ✅ logo centré au-dessus */
     .topLogo{
       display:block;
-      width:300px;              /* <-- taille du logo (augmente/réduit ici) */
+      width:300px;
       max-width:60vw;
     }
     .topLogo img{width:100%; height:auto; display:block}
@@ -93,12 +97,48 @@
       font-size:12px;
       font-weight:900;
     }
+
+    .siteFooter{
+      margin-top:28px;
+      padding:0 20px;
+      text-align:center;
+      width:min(900px, 92vw);
+    }
+
+    .footerText{
+      max-width:900px;
+      margin:0 auto 12px;
+      line-height:1.65;
+      font-size:13px;
+      opacity:.88;
+    }
+
+    .footerLinks{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .footerLinks a{
+      color:#6aa9ff;
+      font-weight:700;
+      text-decoration:none;
+    }
+
+    .footerLinks a:hover{
+      text-decoration:underline;
+    }
+
+    .footerLinks span{
+      opacity:.55;
+    }
   </style>
 </head>
 <body>
 
   <div class="loginWrap">
-    <!-- ✅ logo au-dessus du bloc -->
     <a class="topLogo" href="/" aria-label="Accueil">
       <img src="poke.png" alt="Logo" />
     </a>
@@ -131,8 +171,28 @@
 
       <div class="msg" id="msg"></div>
       <div class="muted">💡 Tu peux partager ton pseudo + code à tes amis si tu veux qu’ils se connectent au même compte (sinon chacun a le sien).</div>
+      <div class="muted">Review note: a reviewer can create a test account instantly by entering any new username.</div>
     </div>
   </div>
+
+  <footer class="siteFooter">
+    <div class="footerText">
+      Gachax est un fan site non officiel. Ce site n'est affilié ni approuvé par The Pokémon Company, Nintendo, Game Freak,
+      Creatures Inc., Bandai, Shueisha, Toei Animation, Disney, Ravensburger ou Riot Games.
+      Pokémon © Nintendo / Creatures Inc. / GAME FREAK.
+      One Piece © Eiichiro Oda / Shueisha / Toei Animation.
+      Lorcana © Disney / Ravensburger.
+      Riftbound © Riot Games.
+    </div>
+
+    <div class="footerLinks">
+      <a href="/about.html">About</a>
+      <span>·</span>
+      <a href="/legal.html">Legal</a>
+      <span>·</span>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+  </footer>
 
   <script>
     const TOKEN_KEY = "gacha_token_v1";
@@ -147,7 +207,6 @@
     const copyBtn = document.getElementById("copyBtn");
     const continueBtn = document.getElementById("continueBtn");
 
-    // Déjà connecté ? -> index
     if(localStorage.getItem(TOKEN_KEY)){
       window.location.href = "/home.html";
     }
@@ -175,10 +234,8 @@
           return;
         }
 
-        // on stocke le token
         localStorage.setItem(TOKEN_KEY, data.token);
 
-        // Nouveau compte -> on montre le code et on ATTEND
         if(data.isNew){
           codeValue.textContent = data.code;
           codeBox.style.display = "block";
@@ -186,7 +243,6 @@
           return;
         }
 
-        // Compte existant -> on va direct
         window.location.href = "/home.html";
 
       }catch(e){
