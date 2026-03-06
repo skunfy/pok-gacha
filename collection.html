@@ -1423,8 +1423,8 @@ function renderBinder(){
     const have = !!ownedItem;
 
     const img = have
-      ? (ownedItem.imageHigh || toHighImage(ownedItem.image))
-      : (cardBrief.image || null);
+      ? (ownedItem.imageHigh || ownedItem.image || toHighImage(ownedItem.image))
+      : (cardBrief.imageHigh || cardBrief.image || null);
 
     slot.className = "slot" + (have ? "" : " missing");
 
