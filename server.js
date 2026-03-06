@@ -358,7 +358,7 @@ function xpForSell(unitPrice, qty){
 async function imageUrlWorks(url) {
   if (!url) return false;
   try {
-    const r = await fetchWithTimeout(url, 8000);
+    const r = await fetchWithTimeout(url, 2000);
     return r.ok;
   } catch {
     return false;
