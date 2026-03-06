@@ -1161,20 +1161,20 @@ app.get("/api/sets", auth, async (req, res) => {
     try {
 
       // ===== POKEMON =====
-      // ===== POKEMON =====
+    
     if (game === "pokemon") {
       const data = await getPokemonSetCardsCached(setId);
       const cards = Array.isArray(data.cards) ? data.cards : [];
 
-      // limiter le coût: on ne fetch le détail QUE si pas d'image
       const out = [];
       for (const c of cards) {
         const localId = String(c.localId || "").trim();
 
+        // 1) try direct image from set endpoint
         let low  = normalizeImageField(c.image, "low", "webp");
         let high = normalizeImageField(c.image, "high", "webp");
 
-        // ✅ fallback solide: card detail tcgdex (contient image fiable)
+        // 2) fallback: fetch card detail (contains reliable image base)
         if (!low && c.id) {
           try {
             const d = await getCardDetailById(c.id);
@@ -1188,7 +1188,7 @@ app.get("/api/sets", auth, async (req, res) => {
           localId,
           name: c.name || "",
           image: low || null,
-          imageHigh: high || low || null
+          imageHigh: high || low || null,
         });
       }
 
