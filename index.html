@@ -1286,6 +1286,19 @@
   line-height:1.5;
 }
 
+.footerLinks{
+  margin-bottom:12px;
+  text-align:center;
+}
+
+.footerLinks a:hover{
+  text-decoration:underline;
+}
+
+.footerLinks span{
+  opacity:.6;
+}
+
 </style>
 </head>
 
@@ -2590,11 +2603,6 @@ function bindCarouselDragOnce(){
   applySfxUi();
 </script>
 
-<footer class="siteFooter">
-  <div class="footerLinks">
-    <a href="/about.html">About</a>
-  </div>
-
   <div class="footerText">
     Gachax est un fan site non officiel. Ce site n'est affilié ni approuvé par
     The Pokémon Company, Nintendo, Game Freak, Creatures Inc., Bandai,
@@ -2603,7 +2611,15 @@ function bindCarouselDragOnce(){
     One Piece © Eiichiro Oda / Shueisha / Toei Animation.
     Lorcana © Disney.
   </div>
-</footer>
+
+  <div class="footerLinks">
+  <a href="/about.html">About</a>
+  <span>·</span>
+  <a href="/legal.html">Legal</a>
+  <span>·</span>
+  <a href="/privacy.html">Privacy</a>
+</div>
+
 
 
 </html>
