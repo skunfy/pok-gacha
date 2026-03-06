@@ -18,34 +18,63 @@ const PORT = process.env.PORT || 8000;
 // =========================
 // OFFLINE CARDS (fallback)
 // =========================
+// =========================
+// OFFLINE POKEMON CATALOG
+// =========================
 const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
-const OFFLINE_PATH = path.join(__dirname, "data", "cards.json");
 
-let offlineCards = null;
+const OFFLINE_POKEMON_DIR = path.join(__dirname, "data", "pokemon");
+const OFFLINE_POKEMON_CARDS_PATH = path.join(OFFLINE_POKEMON_DIR, "cards.json");
+const OFFLINE_POKEMON_SETS_PATH = path.join(OFFLINE_POKEMON_DIR, "sets.json");
 
-function loadOffline() {
+let offlinePokemonCards = [];
+let offlinePokemonSets = [];
+const offlinePokemonCardsBySet = new Map();
+
+function loadOfflinePokemon() {
   try {
-    if (fs.existsSync(OFFLINE_PATH)) {
-      const raw = fs.readFileSync(OFFLINE_PATH, "utf-8");
+    offlinePokemonCards = [];
+    offlinePokemonSets = [];
+    offlinePokemonCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_POKEMON_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_POKEMON_CARDS_PATH, "utf-8");
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) {
-        offlineCards = parsed;
-        console.log(`📦 Offline loaded: ${offlineCards.length} cards`);
-      } else {
-        console.log("📦 Offline cards.json present but empty/invalid array");
+      if (Array.isArray(parsed)) {
+        offlinePokemonCards = parsed;
       }
     } else {
-      console.log("📦 No offline cards.json found at", OFFLINE_PATH);
+      console.log("📦 No offline Pokémon cards.json found at", OFFLINE_POKEMON_CARDS_PATH);
     }
+
+    if (fs.existsSync(OFFLINE_POKEMON_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_POKEMON_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlinePokemonSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Pokémon sets.json found at", OFFLINE_POKEMON_SETS_PATH);
+    }
+
+    for (const c of offlinePokemonCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlinePokemonCardsBySet.has(setId)) {
+        offlinePokemonCardsBySet.set(setId, []);
+      }
+      offlinePokemonCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Pokémon sets: ${offlinePokemonSets.length}`);
+    console.log(`📦 Offline Pokémon cards: ${offlinePokemonCards.length}`);
   } catch (e) {
-    console.log("Offline load error:", e.message);
+    console.log("Offline Pokémon load error:", e.message);
   }
 }
-loadOffline();
+loadOfflinePokemon();
 
 console.log(`🧩 FORCE_OFFLINE=${FORCE_OFFLINE ? "ON" : "OFF"}`);
-console.log(`📦 Offline cards: ${offlineCards?.length || 0}`);
-
 // =========================
 // STATIC
 // =========================
@@ -390,6 +419,27 @@ function uniqueStrings(arr) {
     np: "bw",
     dvp: "dp",
   };
+
+  function pickRandom(arr) {
+  if (!Array.isArray(arr) || !arr.length) return null;
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function drawOfflinePokemonCard() {
+  const c = pickRandom(offlinePokemonCards);
+  if (!c) throw new Error("Offline Pokémon pool empty");
+
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: String(c.localId || ""),
+    name: c.name || "Unknown",
+    set: c.set || c.setName || "Unknown",
+    rarity: c.rarity || "",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null,
+  };
+}
 
   const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
   const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
@@ -918,13 +968,12 @@ if (game === "lorcana") {
 }
 
   // ----- POKEMON ONLINE (TCGDEX) -----
+  // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
-  if (offlineCards?.length) {
-    const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-    if (c?.image) return c;
+    const c = drawOfflinePokemonCard();
+    console.log("📦 source=OFFLINE_POKEMON");
+    return c;
   }
-  throw new Error("Offline only: no cards.json");
-}
 
 const MAX_TRIES = 6;
 
@@ -981,12 +1030,10 @@ for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
   };
 }
 
-if (offlineCards?.length) {
-  const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
-  if (c?.image) {
-    console.log("📦 source=OFFLINE");
-    return c;
-  }
+if (offlinePokemonCards?.length) {
+  const c = drawOfflinePokemonCard();
+  console.log("📦 source=OFFLINE_POKEMON_FALLBACK");
+  return c;
 }
 
 throw new Error("No card available (TCGdex + offline empty)");
@@ -1262,9 +1309,18 @@ app.get("/api/sets", auth, async (req, res) => {
   try {
     // ===== POKEMON =====
     if (game === "pokemon") {
-      const list = await getPokemonSetsCached();
-      return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+    if (FORCE_OFFLINE && offlinePokemonSets.length) {
+      return res.json({
+        sets: offlinePokemonSets.map(s => ({
+          id: s.id,
+          name: s.name
+        }))
+      });
     }
+
+    const list = await getPokemonSetsCached();
+    return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+  }
 
     // ===== LORCANA =====
     if (game === "lorcana") {
@@ -1310,6 +1366,20 @@ app.get("/api/sets", auth, async (req, res) => {
     
     // ===== POKEMON =====
     if (game === "pokemon") {
+    if (FORCE_OFFLINE && offlinePokemonCards.length) {
+      const cards = offlinePokemonCardsBySet.get(setId) || [];
+
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image || null,
+          imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
 
     const data = await getPokemonSetCardsCached(setId);
     const cards = Array.isArray(data.cards) ? data.cards : [];
