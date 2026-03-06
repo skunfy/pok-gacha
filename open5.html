@@ -382,18 +382,38 @@
     }
 
     button{
-      padding:11px 16px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.06);
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+        padding:10px 14px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.15);
+        background:rgba(255,255,255,.06);
+        color:#fff;
+        font-weight:800;
+        font-size:14px;
+        cursor:pointer;
+        transition: transform .12s ease, background .12s ease, border-color .12s ease;
+        }
+
+        button:hover{
+        background:rgba(255,255,255,.10);
+        transform: translateY(-1px);
+        }
+
+        button:active{
+        transform: translateY(0px) scale(.99);
+        }
+
+        button:disabled{
+        opacity:.5;
+        cursor:not-allowed;
+        transform:none;
+        }
+
+    #openMulti .moneyIcon{
+        width:30px;
+        height:30px;
+        margin:0 2px;
+        vertical-align:-10px;
     }
-    button:hover{ background:rgba(255,255,255,.10); transform: translateY(-1px); }
-    button:active{ transform: translateY(0px) scale(.99); }
-    button:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
 
     .hint{
       opacity:.74;
