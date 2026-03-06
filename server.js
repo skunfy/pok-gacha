@@ -1153,53 +1153,45 @@ app.get("/api/sets", auth, async (req, res) => {
   }
 });
 
-  app.get("/api/set_cards", auth, async (req, res) => {
-    const game = getGame(req);
-    const setId = String(req.query.setId || "").trim();
-    if (!setId) return res.status(400).json({ error: "Missing setId" });
+pp.get("/api/set_cards", auth, async (req, res) => {
+  const game = getGame(req);
+  const setId = String(req.query.setId || "").trim();
+  if (!setId) return res.status(400).json({ error: "Missing setId" });
 
-    try {
+  try {
 
-      // ===== POKEMON =====
-      if (game === "pokemon") {
+    // ===== POKEMON =====
+    if (game === "pokemon") {
 
-        const data = await getPokemonSetCardsCached(setId);
-        const cards = Array.isArray(data.cards) ? data.cards : [];
+      const data = await getPokemonSetCardsCached(setId);
+      const cards = Array.isArray(data.cards) ? data.cards : [];
 
-        return res.json({
-          setId,
-          cards: cards.map(c => {
+      return res.json({
+        setId,
+        cards: cards.map(c => {
 
-            const localId = String(c.localId || "").trim();
+          const localId = String(c.localId || "").trim();
 
-            const low =
-              normalizeImageField(c.image, "low", "webp") ||
-              tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
-              tcgdexAssetUrl("en", setId, localId, "low", "webp");
+          const low =
+            normalizeImageField(c.image, "low", "webp") ||
+            tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
+            tcgdexAssetUrl("en", setId, localId, "low", "webp");
 
-            const high =
-              normalizeImageField(c.image, "high", "webp") ||
-              tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
-              tcgdexAssetUrl("en", setId, localId, "high", "webp");
+          const high =
+            normalizeImageField(c.image, "high", "webp") ||
+            tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
+            tcgdexAssetUrl("en", setId, localId, "high", "webp");
 
-            return {
-              cardId: c.id,
-              localId,
-              name: c.name || "",
-              image: low,
-              imageHigh: high
-            };
-          })
-        });
-      }
-
-      return res.status(400).json({ error: "Unsupported game" });
-
-    } catch (e) {
-      console.error("set_cards error:", e);
-      return res.status(500).json({ error: "Failed to fetch set cards" });
+          return {
+            cardId: c.id,
+            localId,
+            name: c.name || "",
+            image: low,
+            imageHigh: high
+          };
+        })
+      });
     }
-  });
   
     // ===== LORCANA =====
     if (game === "lorcana") {
