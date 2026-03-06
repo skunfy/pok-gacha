@@ -1140,7 +1140,7 @@ function applyFilters(){
 }
 
 function openZoom(x){
-  const img = x.imageHigh || toHighImage(x.image) || x.image;
+  const img = x.image || x.imageHigh || x.imagehigh || null;
 
   zoomImg.style.backgroundImage = `url('${img}')`;
   zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
@@ -1171,9 +1171,9 @@ function render(items){
     const selQty = selected.get(x.idKey) || 1;
 
     const imgForCard =
-      (currentGame() === "pokemon" || currentGame() === "lorcana")
-        ? (x.imageHigh || toHighImage(x.image))
-        : x.image;
+    (currentGame() === "pokemon" || currentGame() === "lorcana")
+      ? (x.image || x.imageHigh || x.imagehigh || null)
+      : x.image;
 
     el.innerHTML=`
       <div class="cImg" style="background-image:url('${imgForCard}')"></div>
@@ -1435,8 +1435,8 @@ function renderBinder(){
     const have = !!ownedItem;
 
     const img = have
-      ? (ownedItem.imageHigh || ownedItem.imagehigh || ownedItem.image || toHighImage(ownedItem.image))
-      : (cardBrief.imageHigh || cardBrief.imagehigh || cardBrief.image || null);
+  ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
+  : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
 
     slot.className = "slot" + (have ? "" : " missing");
 
