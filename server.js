@@ -1281,42 +1281,28 @@ app.get("/api/sets", auth, async (req, res) => {
     // ===== POKEMON =====
     if (game === "pokemon") {
 
-    const data = await getPokemonSetCardsCached(setId);
-    const cards = Array.isArray(data.cards) ? data.cards : [];
+      const data = await getPokemonSetCardsCached(setId);
+      const cards = Array.isArray(data.cards) ? data.cards : [];
 
-    const out = [];
-    for (const c of cards) {
-      const localId = String(c.localId || "").trim();
+      return res.json({
+        setId,
+        cards: cards.map(c => {
+          const localId = String(c.localId || "").trim();
 
-      const lowFromApi  = normalizeImageField(c.image, "low", "webp");
-      const highFromApi = normalizeImageField(c.image, "high", "webp");
+          const low = normalizeImageField(c.image, "low", "webp");
+          const high = normalizeImageField(c.image, "high", "webp");
 
-      let low = lowFromApi;
-      let high = highFromApi;
-
-      if (!low && setId && localId) {
-        const found = await firstWorkingTcgdexImages(setId, localId, c);
-        if (found) {
-          low = found.image;
-          high = found.imageHigh;
-        }
-      }
-
-      out.push({
-        cardId: c.id,
-        localId,
-        name: c.name || "",
-        image: low,
-        imageHigh: high || low
+          return {
+            cardId: c.id,
+            localId,
+            name: c.name || "",
+            image: low || null,
+            imageHigh: high || low || null
+          };
+        })
       });
     }
-
-    return res.json({
-      setId,
-      cards: out
-    });
-  }
-    
+      
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
