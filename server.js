@@ -464,21 +464,27 @@ async function getCardsBriefList() {
   return list;
 }
 
-async function getCardDetailById(id) {
+async function getCardDetailById(id, preferredLang = "fr") {
   const now = Date.now();
-  const cached = cardDetailCache.get(id);
+  const key = `${preferredLang}:${id}`;
+  const cached = cardDetailCache.get(key);
   if (cached && now - cached.at < CARD_DETAIL_TTL_MS) return cached.data;
 
-  const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/fr/cards/${id}`, 20000);
-  if (!r.ok) throw new Error("TCGdex detail failed");
+  async function fetchCard(lang) {
+    const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/${lang}/cards/${encodeURIComponent(id)}`, 20000);
+    if (!r.ok) return null;
+    return await r.json().catch(() => null);
+  }
 
-  const data = await r.json().catch(() => null);
-  if (!data) throw new Error("TCGdex detail invalid");
+  // ✅ try preferred lang, then english
+  let data = await fetchCard(preferredLang);
+  if (!data) data = await fetchCard("en");
 
-  cardDetailCache.set(id, { at: now, data });
+  if (!data) throw new Error("TCGdex detail failed");
+
+  cardDetailCache.set(key, { at: now, data });
   return data;
 }
-
 
 // =========================
 // LORCANA (LORCAST) ONLINE CACHE
@@ -1164,20 +1170,20 @@ app.get("/api/sets", auth, async (req, res) => {
     
     if (game === "pokemon") {
       const data = await getPokemonSetCardsCached(setId);
+      const lang = data?.lang || "fr";
       const cards = Array.isArray(data.cards) ? data.cards : [];
 
       const out = [];
       for (const c of cards) {
         const localId = String(c.localId || "").trim();
 
-        // 1) try direct image from set endpoint
         let low  = normalizeImageField(c.image, "low", "webp");
         let high = normalizeImageField(c.image, "high", "webp");
 
-        // 2) fallback: fetch card detail (contains reliable image base)
+        // ✅ fallback detail avec la langue du set (et EN auto si besoin)
         if (!low && c.id) {
           try {
-            const d = await getCardDetailById(c.id);
+            const d = await getCardDetailById(c.id, lang);
             low  = normalizeImageField(d.image, "low", "webp");
             high = normalizeImageField(d.image, "high", "webp");
           } catch {}
