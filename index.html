@@ -1420,6 +1420,9 @@
       <button id="open">
         OPEN (1 CARD) — 5 <img class="moneyIcon" src="dollax.png" alt="Dollax">
       </button>
+      <button id="open5">
+        OPEN (5 CARD) — 25 <img class="moneyIcon" src="dollax.png" alt="Dollax">
+      </button>
     </div>
 
     <div class="hint">
@@ -1640,6 +1643,11 @@
   const zoomMintTag = document.getElementById("zoomMintTag");
 
   const btnOpen       = document.getElementById("open");
+  const btnOpen5 = document.getElementById("open5");
+
+  btnOpen5?.addEventListener("click", () => {
+    window.location.href = "/open5.html";
+  });
   const btnLogout     = document.getElementById("logout");
   const btnChangeGame = document.getElementById("changeGame");
 
@@ -1863,6 +1871,7 @@
   function updateTopUI(me){
     if (moneyEl) moneyEl.textContent = String(me.money);
     if (btnOpen) btnOpen.disabled = (me.money < COST_ONE);
+    if (btnOpen5) btnOpen5.disabled = (me.money < 25);
   }
 
   function tierFromGrade(grade){
