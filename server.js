@@ -821,7 +821,7 @@ if (game === "lorcana") {
 }
 
   // ----- POKEMON ONLINE (TCGDEX) -----
-    if (FORCE_OFFLINE) {
+     if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
       if (c?.image) return c;
@@ -853,8 +853,13 @@ if (game === "lorcana") {
     const setId = c.set?.id || null;
     const localId = String(c.localId || "").trim();
 
-    // DP sets = assets seulement en EN
-    const forceEn = !!setId && /^dp\d+/i.test(setId);
+    // ✅ sets avec assets EN uniquement
+    const forceEn =
+      !!setId &&
+      (
+        /^dp\d+/i.test(setId) ||   // Diamant & Perle
+        /^basep$/i.test(setId)     // Black Star Promo
+      );
 
     const lowFromApi  = normalizeImageField(c.image, "low", "webp");
     const highFromApi = normalizeImageField(c.image, "high", "webp");
@@ -881,11 +886,11 @@ if (game === "lorcana") {
 
     if (!low) continue;
 
-    console.log("🌐 source=TCGDEX (cached+assets)");
+    console.log(`🌐 source=TCGDEX (cached+assets) set=${setId}`);
 
     return {
       cardId: c.id || pick.id,          // id global tcgdex
-      setId,                            // ex: "base1", "dp1", "swsh3"...
+      setId,                            // ex: "base1", "dp1", "basep", "swsh3"...
       localId,                          // ex: "1", "136", "TG05"...
       name: c.name || pick.name || "Unknown",
       set: c.set?.name || c.set?.id || "Unknown",
@@ -906,7 +911,6 @@ if (game === "lorcana") {
 
   throw new Error("No card available (TCGdex + offline empty)");
 }
-
 
 // ----- GRADES -----
 function rollGrade() {
@@ -1242,7 +1246,7 @@ app.get("/api/sets", auth, async (req, res) => {
           const highFromApi = normalizeImageField(c.image, "high", "webp");
 
           // DP sets = images seulement en EN
-          const forceEn = /^dp\d+/i.test(setId);
+          const forceEn = /^dp\d+/i.test(setId) || /^basep$/i.test(setId);
 
           const low =
             lowFromApi ||
