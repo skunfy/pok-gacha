@@ -259,6 +259,7 @@ async function initDb() {
 // =========================
 // HELPERS
 // =========================
+  
   async function fetchJson(url){
     const r = await fetch(url);
     if(!r.ok) return null;
@@ -352,6 +353,62 @@ function xpForOpen(grade){
 function xpForSell(unitPrice, qty){
   // logique simple: tu gagnes autant d'XP que d'argent (ou *2 si tu veux)
   return Math.max(1, (Number(unitPrice) || 1) * (Number(qty) || 1));
+}
+
+function uniqueStrings(arr) {
+  return [...new Set(arr.map(x => String(x || "").trim()).filter(Boolean))];
+}
+
+function getTcgdexSerieCandidates(setId, card = null) {
+  const s = String(setId || "").trim().toLowerCase();
+  if (!s) return [];
+
+  const specialMap = {
+    basep: "base",
+  };
+
+  const fromCardSerie =
+    card?.set?.serie?.id ||
+    card?.set?.serieId ||
+    null;
+
+  // ex:
+  // dp1     -> dp
+  // 2011bw  -> bw
+  // basep   -> base (via map)
+  const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
+  const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
+
+  return uniqueStrings([
+    fromCardSerie,
+    specialMap[s],
+    strippedTrailingDigits,
+    strippedLeadingDigits,
+    s
+  ]);
+}
+
+async function firstWorkingTcgdexImages(setId, localId, card = null) {
+  if (!setId || !localId) return null;
+
+  const langs = ["fr", "en"];
+  const series = getTcgdexSerieCandidates(setId, card);
+
+  for (const lang of langs) {
+    for (const serie of series) {
+      const low = `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/low.webp`;
+      const high = `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/high.webp`;
+
+      try {
+        const r = await fetchWithTimeout(low, 8000);
+        if (r.ok) {
+          return { image: low, imageHigh: high, lang, serie };
+        }
+      } catch {}
+    }
+  }
+
+  return null;
 }
 
 // ----- PAY LOOP (server-side) -----
@@ -821,7 +878,7 @@ if (game === "lorcana") {
 }
 
   // ----- POKEMON ONLINE (TCGDEX) -----
-     if (FORCE_OFFLINE) {
+       if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
       if (c?.image) return c;
@@ -853,45 +910,29 @@ if (game === "lorcana") {
     const setId = c.set?.id || null;
     const localId = String(c.localId || "").trim();
 
-    // ✅ sets avec assets EN uniquement
-    const forceEn =
-      !!setId &&
-      (
-        /^dp\d+/i.test(setId) ||   // Diamant & Perle
-        /^basep$/i.test(setId)     // Black Star Promo
-      );
-
     const lowFromApi  = normalizeImageField(c.image, "low", "webp");
     const highFromApi = normalizeImageField(c.image, "high", "webp");
 
-    const low =
-      lowFromApi ||
-      (setId && localId
-        ? (forceEn
-            ? tcgdexAssetUrl("en", setId, localId, "low", "webp")
-            : tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
-              tcgdexAssetUrl("en", setId, localId, "low", "webp")
-          )
-        : null);
+    let low = lowFromApi;
+    let high = highFromApi;
 
-    const high =
-      highFromApi ||
-      (setId && localId
-        ? (forceEn
-            ? tcgdexAssetUrl("en", setId, localId, "high", "webp")
-            : tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
-              tcgdexAssetUrl("en", setId, localId, "high", "webp")
-          )
-        : null);
+    if (!low && setId && localId) {
+      const found = await firstWorkingTcgdexImages(setId, localId, c);
+      if (found) {
+        low = found.image;
+        high = found.imageHigh;
+        console.log(`🌐 source=TCGDEX assets lang=${found.lang} serie=${found.serie} set=${setId}`);
+      }
+    }
 
     if (!low) continue;
 
-    console.log(`🌐 source=TCGDEX (cached+assets) set=${setId}`);
+    console.log(`🌐 source=TCGDEX set=${setId}`);
 
     return {
-      cardId: c.id || pick.id,          // id global tcgdex
-      setId,                            // ex: "base1", "dp1", "basep", "swsh3"...
-      localId,                          // ex: "1", "136", "TG05"...
+      cardId: c.id || pick.id,
+      setId,
+      localId,
       name: c.name || pick.name || "Unknown",
       set: c.set?.name || c.set?.id || "Unknown",
       rarity: c.rarity || "",
@@ -900,7 +941,6 @@ if (game === "lorcana") {
     };
   }
 
-  // Si tu veux 100% online, supprime carrément ce bloc fallback :
   if (offlineCards?.length) {
     const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
     if (c?.image) {
@@ -1228,52 +1268,45 @@ app.get("/api/sets", auth, async (req, res) => {
 
     try {
 
-      // ===== POKEMON =====
     
     // ===== POKEMON =====
     if (game === "pokemon") {
 
-      const data = await getPokemonSetCardsCached(setId);
-      const cards = Array.isArray(data.cards) ? data.cards : [];
+    const data = await getPokemonSetCardsCached(setId);
+    const cards = Array.isArray(data.cards) ? data.cards : [];
 
-      return res.json({
-        setId,
-        cards: cards.map(c => {
+    const out = [];
+    for (const c of cards) {
+      const localId = String(c.localId || "").trim();
 
-          const localId = String(c.localId || "").trim();
+      const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+      const highFromApi = normalizeImageField(c.image, "high", "webp");
 
-          const lowFromApi  = normalizeImageField(c.image, "low", "webp");
-          const highFromApi = normalizeImageField(c.image, "high", "webp");
+      let low = lowFromApi;
+      let high = highFromApi;
 
-          // DP sets = images seulement en EN
-          const forceEn = /^dp\d+/i.test(setId) || /^basep$/i.test(setId);
+      if (!low && setId && localId) {
+        const found = await firstWorkingTcgdexImages(setId, localId, c);
+        if (found) {
+          low = found.image;
+          high = found.imageHigh;
+        }
+      }
 
-          const low =
-            lowFromApi ||
-            (forceEn
-              ? tcgdexAssetUrl("en", setId, localId, "low", "webp")
-              : tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
-                tcgdexAssetUrl("en", setId, localId, "low", "webp")
-            );
-
-          const high =
-            highFromApi ||
-            (forceEn
-              ? tcgdexAssetUrl("en", setId, localId, "high", "webp")
-              : tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
-                tcgdexAssetUrl("en", setId, localId, "high", "webp")
-            );
-
-          return {
-            cardId: c.id,
-            localId,
-            name: c.name || "",
-            image: low,
-            imageHigh: high
-          };
-        })
+      out.push({
+        cardId: c.id,
+        localId,
+        name: c.name || "",
+        image: low,
+        imageHigh: high || low
       });
     }
+
+    return res.json({
+      setId,
+      cards: out
+    });
+  }
     
     // ===== LORCANA =====
     if (game === "lorcana") {
