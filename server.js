@@ -259,6 +259,34 @@ async function initDb() {
 // =========================
 // HELPERS
 // =========================
+  async function fetchJson(url){
+    const r = await fetch(url);
+    if(!r.ok) return null;
+    return await r.json().catch(()=> null);
+  }
+
+  async function getTcgDexCardsListFRorEN(){
+    const fr = await fetchJson("https://api.tcgdex.net/v2/fr/cards");
+    if(Array.isArray(fr) && fr.length) return { lang:"fr", list: fr };
+
+    const en = await fetchJson("https://api.tcgdex.net/v2/en/cards");
+    if(Array.isArray(en) && en.length) return { lang:"en", list: en };
+
+    return { lang:"", list: [] };
+  }
+
+  async function getTcgDexCardDetailFRorEN(id){
+    const fr = await fetchJson(`https://api.tcgdex.net/v2/fr/cards/${encodeURIComponent(id)}`);
+    if(fr && fr.id) return { lang:"fr", card: fr };
+
+    const en = await fetchJson(`https://api.tcgdex.net/v2/en/cards/${encodeURIComponent(id)}`);
+    if(en && en.id) return { lang:"en", card: en };
+
+    return { lang:"", card: null };
+  }
+
+
+
 function randCode(len = 6) {
   return String(Math.floor(Math.random() * Math.pow(10, len))).padStart(len, "0");
 }
@@ -789,7 +817,7 @@ if (game === "lorcana") {
 }
 
   // ----- POKEMON ONLINE (TCGDEX) -----
-  if (FORCE_OFFLINE) {
+    if (FORCE_OFFLINE) {
     if (offlineCards?.length) {
       const c = offlineCards[Math.floor(Math.random() * offlineCards.length)];
       if (c?.image) return c;
@@ -818,24 +846,50 @@ if (game === "lorcana") {
       continue;
     }
 
-    const imageLow = normalizeImageField(c.image, "low", "webp");
-    const imageHigh = normalizeImageField(c.image, "high", "webp");
-    if (!imageLow) continue;
+    const setId = c.set?.id || null;
+    const localId = String(c.localId || "").trim();
 
-    console.log("🌐 source=TCGDEX (cached)");
+    // DP sets = assets seulement en EN
+    const forceEn = !!setId && /^dp\d+/i.test(setId);
+
+    const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+    const highFromApi = normalizeImageField(c.image, "high", "webp");
+
+    const low =
+      lowFromApi ||
+      (setId && localId
+        ? (forceEn
+            ? tcgdexAssetUrl("en", setId, localId, "low", "webp")
+            : tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
+              tcgdexAssetUrl("en", setId, localId, "low", "webp")
+          )
+        : null);
+
+    const high =
+      highFromApi ||
+      (setId && localId
+        ? (forceEn
+            ? tcgdexAssetUrl("en", setId, localId, "high", "webp")
+            : tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
+              tcgdexAssetUrl("en", setId, localId, "high", "webp")
+          )
+        : null);
+
+    if (!low) continue;
+
+    console.log("🌐 source=TCGDEX (cached+assets)");
 
     return {
-      cardId: c.id || pick.id,                // id global tcgdex
-      setId: c.set?.id || null,               // ex: "base1", "swsh3"...
-      localId: String(c.localId || ""),       // ex: "1", "136", "TG05"...
+      cardId: c.id || pick.id,          // id global tcgdex
+      setId,                            // ex: "base1", "dp1", "swsh3"...
+      localId,                          // ex: "1", "136", "TG05"...
       name: c.name || pick.name || "Unknown",
       set: c.set?.name || c.set?.id || "Unknown",
       rarity: c.rarity || "",
-      image: imageLow,
-      imageHigh: imageHigh || null,
+      image: low,
+      imageHigh: high || low,
     };
   }
-
 
   // Si tu veux 100% online, supprime carrément ce bloc fallback :
   if (offlineCards?.length) {
