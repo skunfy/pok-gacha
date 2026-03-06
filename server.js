@@ -619,6 +619,13 @@ function normalizeImageField(imageField, quality = "low", ext = "webp") {
   return buildTcgdexAsset(base, quality, ext);
 }
 
+function tcgdexAssetUrl(lang, setId, localId, quality = "low", ext = "webp") {
+  if (!setId || !localId) return null;
+  const s = encodeURIComponent(String(setId).trim());
+  const l = encodeURIComponent(String(localId).trim());
+  return `https://assets.tcgdex.net/${lang}/${s}/${l}/${quality}.${ext}`;
+}
+
 // =========================
 // DRAW CARD
 // =========================
@@ -1142,28 +1149,28 @@ app.get("/api/set_cards", auth, async (req, res) => {
 
   try {
   // ===== POKEMON =====
-  if (game === "pokemon") {
+    if (game === "pokemon") {
     const cards = await getPokemonSetCardsCached(setId);
 
     return res.json({
       setId,
       cards: cards.map(c => {
 
+        const localId = String(c.localId || "").trim();
+
         const low =
           normalizeImageField(c.image, "low", "webp") ||
-          (c.localId
-            ? `https://assets.tcgdex.net/fr/${setId}/${c.localId}/low.webp`
-            : null);
+          tcgdexAssetUrl("fr", setId, localId, "low", "webp") ||
+          tcgdexAssetUrl("en", setId, localId, "low", "webp");
 
         const high =
           normalizeImageField(c.image, "high", "webp") ||
-          (c.localId
-            ? `https://assets.tcgdex.net/fr/${setId}/${c.localId}/high.webp`
-            : null);
+          tcgdexAssetUrl("fr", setId, localId, "high", "webp") ||
+          tcgdexAssetUrl("en", setId, localId, "high", "webp");
 
         return {
           cardId: c.id,
-          localId: String(c.localId || ""),
+          localId,
           name: c.name || "",
           image: low,
           imageHigh: high
@@ -1171,7 +1178,6 @@ app.get("/api/set_cards", auth, async (req, res) => {
       })
     });
   }
-
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
