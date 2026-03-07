@@ -3,19 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gachax — Open x5 V2</title>
+  <title>Gachax — Open x5 Premium</title>
 
   <style>
     :root{
       --bg1:#05060d;
       --bg2:#090b18;
-      --shadow: 0 35px 120px rgba(0,0,0,.65);
+      --shadow:0 35px 120px rgba(0,0,0,.65);
 
-      --tW: rgba(255,255,255,.92);
-      --tB: rgba(120,170,255,.90);
-      --tV: rgba(190,120,255,.95);
-      --tG: rgba(255,210,110,.98);
-      --tM: rgba(255,80,80,.95);
+      --tW:rgba(255,255,255,.92);
+      --tB:rgba(120,170,255,.90);
+      --tV:rgba(190,120,255,.95);
+      --tG:rgba(255,210,110,.98);
+      --tM:rgba(255,80,80,.95);
     }
 
     *{ box-sizing:border-box; }
@@ -42,18 +42,18 @@
       width:100%;
       max-width:1400px;
       margin:0 auto;
-      padding:32px 18px 40px;
+      padding:24px 16px 34px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:22px;
-      transition: transform .45s ease, filter .45s ease;
+      gap:20px;
+      transition:transform .38s ease, filter .38s ease;
       transform-origin:center center;
     }
 
     body.globalSuspense .wrap{
-      transform:scale(1.015);
-      filter:brightness(1.04);
+      transform:scale(1.012);
+      filter:brightness(1.035);
     }
 
     .head{
@@ -61,7 +61,7 @@
       display:flex;
       flex-direction:column;
       gap:8px;
-      margin-top:6px;
+      margin-top:2px;
     }
 
     #open5Logo{
@@ -69,7 +69,7 @@
       max-width:80vw;
       height:auto;
       display:block;
-      margin:10px auto 8px;
+      margin:6px auto 6px;
       filter:
         drop-shadow(0 0 20px rgba(120,170,255,.35))
         drop-shadow(0 12px 28px rgba(0,0,0,.45));
@@ -103,34 +103,22 @@
       text-align:left;
     }
 
-    @media (max-width: 620px){
-      #open5Logo{ width:170px; }
-      .moneyBox{
-        font-size:13px;
-        padding:7px 12px;
-      }
-      .moneyBox .moneyIcon{
-        width:24px;
-        height:24px;
-      }
-    }
-
     .board{
       width:100%;
       max-width:1180px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:26px;
-      margin-top:8px;
+      gap:24px;
+      margin-top:4px;
       position:relative;
-      transition: transform .4s ease, filter .4s ease;
+      transition:transform .35s ease, filter .35s ease;
       transform-origin:center center;
       isolation:isolate;
     }
 
     body.globalSuspense .board{
-      transform:scale(1.02);
+      transform:scale(1.015);
       filter:drop-shadow(0 18px 40px rgba(0,0,0,.28));
     }
 
@@ -139,7 +127,7 @@
       width:100%;
       display:flex;
       justify-content:center;
-      gap:34px;
+      gap:30px;
       flex-wrap:nowrap;
     }
 
@@ -313,7 +301,7 @@
       opacity:.85;
       background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%);
       z-index:2;
-      transition:opacity .25s ease, transform .25s ease, filter .25s ease;
+      transition:opacity .22s ease, transform .22s ease, filter .22s ease;
     }
 
     .cardPlaceholder img{
@@ -345,23 +333,35 @@
 
     .winnerAura{
       position:absolute;
-      inset:-12px;
-      border-radius:28px;
+      inset:-16px;
+      border-radius:30px;
       pointer-events:none;
       opacity:0;
       z-index:0;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.20), rgba(255,255,255,0) 60%),
-        conic-gradient(from 180deg,
-          rgba(255,255,255,0),
-          rgba(255,255,255,.16),
-          rgba(255,255,255,0),
-          rgba(255,255,255,.12),
-          rgba(255,255,255,0)
-        );
-      filter:blur(8px);
-      transform:scale(.96);
+      transform:scale(.98);
       transition:opacity .3s ease, transform .3s ease;
+      filter:blur(10px);
+    }
+
+    .winnerHalo{
+      position:absolute;
+      inset:-26px;
+      border-radius:36px;
+      pointer-events:none;
+      opacity:0;
+      z-index:0;
+      transform:scale(.95);
+      transition:opacity .28s ease, transform .28s ease;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.14), rgba(255,255,255,0) 62%);
+      filter:blur(16px);
+    }
+
+    .slab[data-tier="w"] .shell{
+      box-shadow:
+        0 30px 90px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.22),
+        0 0 65px rgba(255,255,255,.10);
     }
 
     .slab[data-tier="b"] .shell{
@@ -392,26 +392,19 @@
         0 0 130px rgba(255,80,80,.28);
     }
 
-    .slab[data-tier="w"] .shell{
-      box-shadow:
-        0 30px 90px rgba(0,0,0,.55),
-        0 0 0 1px rgba(255,255,255,.22),
-        0 0 65px rgba(255,255,255,.10);
-    }
-
     .slab.multiPop{
-      animation:multiPop .52s cubic-bezier(.2,.9,.2,1);
+      animation:multiPop .42s cubic-bezier(.2,.9,.2,1);
     }
 
     @keyframes multiPop{
       0%{
         opacity:0;
-        transform:translateY(26px) scale(.88);
-        filter:blur(8px);
+        transform:translateY(18px) scale(.91);
+        filter:blur(6px);
       }
       58%{
         opacity:1;
-        transform:translateY(-7px) scale(1.025);
+        transform:translateY(-5px) scale(1.018);
         filter:blur(0);
       }
       100%{
@@ -422,24 +415,24 @@
     }
 
     .slab.revealBurst .flash{
-      animation:slabFlash .55s ease;
+      animation:slabFlash .45s ease;
     }
 
     @keyframes slabFlash{
-      0%{ opacity:0; transform:translateZ(40px) scale(.85); }
-      35%{ opacity:.9; }
-      100%{ opacity:0; transform:translateZ(40px) scale(1.16); }
+      0%{ opacity:0; transform:translateZ(40px) scale(.88); }
+      35%{ opacity:.8; }
+      100%{ opacity:0; transform:translateZ(40px) scale(1.12); }
     }
 
     body.globalSuspense .slab{
-      animation:suspenseFloat 1.2s ease-in-out infinite;
+      animation:suspenseFloat .95s ease-in-out infinite;
     }
 
     body.globalSuspense .scene:nth-child(1) .slab{ animation-delay:0ms; }
-    body.globalSuspense .scene:nth-child(2) .slab{ animation-delay:80ms; }
-    body.globalSuspense .scene:nth-child(3) .slab{ animation-delay:160ms; }
-    body.globalSuspense .scene:nth-child(4) .slab{ animation-delay:240ms; }
-    body.globalSuspense .scene:nth-child(5) .slab{ animation-delay:320ms; }
+    body.globalSuspense .scene:nth-child(2) .slab{ animation-delay:60ms; }
+    body.globalSuspense .scene:nth-child(3) .slab{ animation-delay:120ms; }
+    body.globalSuspense .scene:nth-child(4) .slab{ animation-delay:180ms; }
+    body.globalSuspense .scene:nth-child(5) .slab{ animation-delay:240ms; }
 
     @keyframes suspenseFloat{
       0%,100%{
@@ -447,12 +440,12 @@
         filter:drop-shadow(0 20px 70px rgba(0,0,0,.35));
       }
       50%{
-        transform:translateY(-8px) scale(1.012);
-        filter:drop-shadow(0 28px 90px rgba(0,0,0,.45));
+        transform:translateY(-6px) scale(1.008);
+        filter:drop-shadow(0 26px 84px rgba(0,0,0,.42));
       }
     }
 
-    .slab.suck{ animation:slabSuck 520ms cubic-bezier(.2,.9,.2,1) forwards; }
+    .slab.suck{ animation:slabSuck 460ms cubic-bezier(.2,.9,.2,1) forwards; }
 
     @keyframes slabSuck{
       0%{ transform:rotateX(0deg) rotateY(0deg) translateZ(0) scale(1); }
@@ -461,7 +454,7 @@
     }
 
     .slab.suck .cardImg{
-      animation:cardSuck 520ms cubic-bezier(.15,.9,.15,1) forwards;
+      animation:cardSuck 460ms cubic-bezier(.15,.9,.15,1) forwards;
       transform-origin:50% 45%;
     }
 
@@ -474,7 +467,7 @@
 
     .slab.suck .flash{
       opacity:1;
-      animation:suckVortex 520ms ease forwards;
+      animation:suckVortex 460ms ease forwards;
     }
 
     @keyframes suckVortex{
@@ -491,7 +484,7 @@
       pointer-events:none;
       background:radial-gradient(circle at 50% 45%, rgba(255,255,255,.35), rgba(255,255,255,0) 60%);
       opacity:0;
-      animation:suckGlow 520ms ease forwards;
+      animation:suckGlow 460ms ease forwards;
     }
 
     @keyframes suckGlow{
@@ -504,60 +497,79 @@
 
     .slab.winner{
       z-index:7;
-      animation:winnerIntro .75s cubic-bezier(.2,.9,.2,1), winnerPulse 2.4s ease-in-out .85s infinite;
+      animation:winnerIntro .55s cubic-bezier(.2,.9,.2,1), winnerPulse 2.6s ease-in-out .6s infinite;
     }
 
-    .slab.winner .winnerAura{
+    .slab.winner + .winnerAura,
+    .scene.winnerScene .winnerAura{
+      opacity:1;
+      transform:scale(1.01);
+      animation:auraFlow 2.4s linear infinite;
+    }
+
+    .scene.winnerScene .winnerHalo{
       opacity:1;
       transform:scale(1.02);
+      animation:haloBreath 2.2s ease-in-out infinite;
     }
 
-    .slab.winner[data-tier="b"] .winnerAura{
+    .scene.winnerScene[data-tier="b"] .winnerAura{
       background:
-        radial-gradient(circle at 50% 50%, rgba(120,170,255,.24), rgba(120,170,255,0) 62%),
+        radial-gradient(circle at 50% 50%, rgba(120,170,255,.18), rgba(120,170,255,0) 62%),
         conic-gradient(from 180deg,
           rgba(120,170,255,0),
-          rgba(120,170,255,.20),
-          rgba(255,255,255,.18),
           rgba(120,170,255,.16),
+          rgba(255,255,255,.10),
+          rgba(120,170,255,.14),
           rgba(120,170,255,0)
         );
     }
 
-    .slab.winner[data-tier="v"] .winnerAura{
+    .scene.winnerScene[data-tier="v"] .winnerAura{
       background:
-        radial-gradient(circle at 50% 50%, rgba(190,120,255,.24), rgba(190,120,255,0) 62%),
+        radial-gradient(circle at 50% 50%, rgba(190,120,255,.18), rgba(190,120,255,0) 62%),
         conic-gradient(from 180deg,
           rgba(190,120,255,0),
-          rgba(190,120,255,.22),
-          rgba(255,255,255,.18),
           rgba(190,120,255,.16),
+          rgba(255,255,255,.10),
+          rgba(190,120,255,.14),
           rgba(190,120,255,0)
         );
     }
 
-    .slab.winner[data-tier="g"] .winnerAura{
+    .scene.winnerScene[data-tier="g"] .winnerAura{
       background:
-        radial-gradient(circle at 50% 50%, rgba(255,210,110,.28), rgba(255,210,110,0) 62%),
+        radial-gradient(circle at 50% 50%, rgba(255,210,110,.20), rgba(255,210,110,0) 62%),
         conic-gradient(from 180deg,
           rgba(255,210,110,0),
-          rgba(255,210,110,.24),
-          rgba(255,255,255,.20),
-          rgba(255,210,110,.18),
+          rgba(255,210,110,.17),
+          rgba(255,255,255,.12),
+          rgba(255,210,110,.15),
           rgba(255,210,110,0)
         );
     }
 
-    .slab.winner[data-mint="1"] .winnerAura{
+    .scene.winnerScene[data-tier="m"] .winnerAura{
       background:
-        radial-gradient(circle at 50% 50%, rgba(255,80,80,.28), rgba(255,80,80,0) 62%),
+        radial-gradient(circle at 50% 50%, rgba(255,80,80,.20), rgba(255,80,80,0) 62%),
         conic-gradient(from 180deg,
           rgba(255,80,80,0),
-          rgba(255,80,80,.24),
-          rgba(255,255,255,.22),
-          rgba(255,80,80,.20),
+          rgba(255,80,80,.17),
+          rgba(255,255,255,.12),
+          rgba(255,80,80,.15),
           rgba(255,80,80,0)
         );
+    }
+
+    @keyframes auraFlow{
+      0%{ transform:scale(1.00) rotate(0deg); }
+      50%{ transform:scale(1.025) rotate(180deg); }
+      100%{ transform:scale(1.00) rotate(360deg); }
+    }
+
+    @keyframes haloBreath{
+      0%,100%{ opacity:.55; transform:scale(1.00); }
+      50%{ opacity:.78; transform:scale(1.05); }
     }
 
     @keyframes winnerIntro{
@@ -566,27 +578,27 @@
         filter:drop-shadow(0 22px 70px rgba(0,0,0,.35));
       }
       45%{
-        transform:translateY(-10px) scale(1.085);
-        filter:drop-shadow(0 34px 100px rgba(0,0,0,.52));
+        transform:translateY(-7px) scale(1.05);
+        filter:drop-shadow(0 28px 88px rgba(0,0,0,.45));
       }
       100%{
-        transform:translateY(-4px) scale(1.05);
-        filter:drop-shadow(0 32px 95px rgba(0,0,0,.48));
+        transform:translateY(-2px) scale(1.025);
+        filter:drop-shadow(0 26px 84px rgba(0,0,0,.42));
       }
     }
 
     @keyframes winnerPulse{
       0%,100%{
-        transform:translateY(-4px) scale(1.05);
+        transform:translateY(-2px) scale(1.025);
       }
       50%{
-        transform:translateY(-8px) scale(1.072);
+        transform:translateY(-5px) scale(1.04);
       }
     }
 
     .slab.dimmed{
-      opacity:.6;
-      filter:grayscale(.08) brightness(.85) drop-shadow(0 14px 38px rgba(0,0,0,.22));
+      opacity:.86;
+      filter:brightness(.94) saturate(.96) drop-shadow(0 14px 38px rgba(0,0,0,.22));
     }
 
     .controls{
@@ -594,7 +606,7 @@
       gap:12px;
       flex-wrap:wrap;
       justify-content:center;
-      margin-top:4px;
+      margin-top:2px;
     }
 
     button{
@@ -656,6 +668,7 @@
       z-index:9999;
       padding:24px;
     }
+
     .modal.open{ display:grid; }
 
     .zoomSlab{
@@ -680,7 +693,7 @@
       pointer-events:none;
       z-index:9998;
       opacity:0;
-      transition:opacity .18s ease;
+      transition:opacity .16s ease;
       overflow:hidden;
     }
 
@@ -694,7 +707,7 @@
         radial-gradient(1200px 700px at 30% 20%, rgba(120,170,255,.08), transparent 60%),
         radial-gradient(1200px 800px at 80% 30%, rgba(190,120,255,.08), transparent 62%);
       opacity:0;
-      animation:fxDim .35s ease forwards;
+      animation:fxDim .26s ease forwards;
     }
 
     @keyframes fxDim{
@@ -710,20 +723,20 @@
       transform:scale(.95);
     }
 
-    .fxOverlay.reveal .fxFlash{ animation:fxFlash .5s ease; }
+    .fxOverlay.reveal .fxFlash{ animation:fxFlash .42s ease; }
 
     @keyframes fxFlash{
       0%{opacity:0; transform:scale(.95)}
       25%{opacity:.95; transform:scale(1.02)}
-      100%{opacity:0; transform:scale(1.16)}
+      100%{opacity:0; transform:scale(1.14)}
     }
 
     .fxRing{
       position:absolute;
       left:50%;
       top:42%;
-      width:min(660px, 94vw);
-      height:min(660px, 94vw);
+      width:min(620px, 92vw);
+      height:min(620px, 92vw);
       transform:translate(-50%,-50%) scale(.85);
       border-radius:999px;
       opacity:0;
@@ -739,12 +752,12 @@
       filter:blur(.5px);
     }
 
-    .fxOverlay.reveal .fxRing{ animation:fxRing 1.15s cubic-bezier(.2,.9,.2,1) forwards; }
+    .fxOverlay.reveal .fxRing{ animation:fxRing .95s cubic-bezier(.2,.9,.2,1) forwards; }
 
     @keyframes fxRing{
-      0%{opacity:0; transform:translate(-50%,-50%) scale(.68) rotate(-12deg)}
+      0%{opacity:0; transform:translate(-50%,-50%) scale(.70) rotate(-12deg)}
       20%{opacity:.82}
-      100%{opacity:0; transform:translate(-50%,-50%) scale(1.24) rotate(36deg)}
+      100%{opacity:0; transform:translate(-50%,-50%) scale(1.18) rotate(30deg)}
     }
 
     .fxShockwave{
@@ -760,7 +773,7 @@
     }
 
     .fxOverlay.reveal .fxShockwave{
-      animation:shockwave .85s ease-out forwards;
+      animation:shockwave .62s ease-out forwards;
     }
 
     @keyframes shockwave{
@@ -773,7 +786,7 @@
       }
       100%{
         opacity:0;
-        transform:translate(-50%,-50%) scale(14);
+        transform:translate(-50%,-50%) scale(11);
       }
     }
 
@@ -790,13 +803,13 @@
     }
 
     .fxOverlay.reveal .fxBeams{
-      animation:fxBeams 650ms ease forwards;
+      animation:fxBeams .52s ease forwards;
     }
 
     @keyframes fxBeams{
-      0%{opacity:0; transform:scale(.96)}
-      35%{opacity:.85}
-      100%{opacity:0; transform:scale(1.04)}
+      0%{opacity:0; transform:scale(.97)}
+      35%{opacity:.80}
+      100%{opacity:0; transform:scale(1.03)}
     }
 
     .fxParticles{ position:absolute; inset:0; }
@@ -808,7 +821,7 @@
       border-radius:999px;
       opacity:.9;
       filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));
-      animation:fxP 950ms ease forwards;
+      animation:fxP .75s ease forwards;
     }
 
     @keyframes fxP{
@@ -826,7 +839,7 @@
       border-radius:3px;
       opacity:.95;
       transform:translate3d(0,0,0) rotate(0deg);
-      animation:fxC 1300ms ease forwards;
+      animation:fxC 1s ease forwards;
     }
 
     @keyframes fxC{
@@ -835,89 +848,237 @@
       100%{ transform:translate3d(calc(var(--cx) + var(--drift)), 110vh, 0) rotate(320deg); opacity:0 }
     }
 
-    .fxOverlay[data-tier="b"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(120,170,255,.95), rgba(120,170,255,0) 60%); }
-    .fxOverlay[data-tier="v"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(190,120,255,.95), rgba(190,120,255,0) 60%); }
-    .fxOverlay[data-tier="g"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,210,110,.98), rgba(255,210,110,0) 60%); }
-    .fxOverlay[data-tier="m"] .fxFlash{ background: radial-gradient(circle at 50% 45%, rgba(255,80,80,.95), rgba(255,80,80,0) 60%); }
+    .fxOverlay[data-tier="b"] .fxFlash{ background:radial-gradient(circle at 50% 45%, rgba(120,170,255,.95), rgba(120,170,255,0) 60%); }
+    .fxOverlay[data-tier="v"] .fxFlash{ background:radial-gradient(circle at 50% 45%, rgba(190,120,255,.95), rgba(190,120,255,0) 60%); }
+    .fxOverlay[data-tier="g"] .fxFlash{ background:radial-gradient(circle at 50% 45%, rgba(255,210,110,.98), rgba(255,210,110,0) 60%); }
+    .fxOverlay[data-tier="m"] .fxFlash{ background:radial-gradient(circle at 50% 45%, rgba(255,80,80,.95), rgba(255,80,80,0) 60%); }
 
-    .cameraZoom{ animation:cameraZoom .75s cubic-bezier(.2,.9,.2,1); }
+    .cameraZoom{ animation:cameraZoom .55s cubic-bezier(.2,.9,.2,1); }
 
     @keyframes cameraZoom{
       0%{ transform:scale(1); }
-      35%{ transform:scale(1.035); }
+      35%{ transform:scale(1.026); }
       100%{ transform:scale(1); }
     }
 
     body.screenShake{
-      animation:screenShake 420ms ease;
+      animation:screenShake .28s ease;
     }
 
     @keyframes screenShake{
       0%,100%{ transform:translateX(0); }
-      15%{ transform:translateX(-3px); }
-      30%{ transform:translateX(4px); }
-      45%{ transform:translateX(-4px); }
-      60%{ transform:translateX(3px); }
-      75%{ transform:translateX(-2px); }
+      15%{ transform:translateX(-2px); }
+      30%{ transform:translateX(3px); }
+      45%{ transform:translateX(-3px); }
+      60%{ transform:translateX(2px); }
+      75%{ transform:translateX(-1px); }
     }
 
     @media (max-width: 1100px){
       .slab{ width:220px; height:325px; }
       .label{ width:190px; }
-      .cardImg, .cardPlaceholder{ width:178px; height:240px; }
+      .cardImg, .cardPlaceholder{
+        width:178px;
+        height:240px;
+      }
       .rowTop,.rowBottom{ gap:22px; }
     }
 
     @media (max-width: 860px){
       .board{ gap:18px; }
-      .rowTop,.rowBottom{ flex-wrap:wrap; gap:18px; }
-      .slab{ width:210px; height:310px; }
+      .rowTop,.rowBottom{
+        flex-wrap:wrap;
+        gap:18px;
+      }
+      .slab{
+        width:210px;
+        height:310px;
+      }
       .label{ width:180px; }
-      .cardImg, .cardPlaceholder{ width:168px; height:228px; }
+      .cardImg, .cardPlaceholder{
+        width:168px;
+        height:228px;
+      }
     }
 
     @media (max-width: 620px){
-      .rowTop, .rowBottom{ gap:14px; }
+      #open5Logo{ width:170px; }
+      .moneyBox{
+        font-size:13px;
+        padding:7px 12px;
+      }
+      .moneyBox .moneyIcon{
+        width:24px;
+        height:24px;
+      }
+
+      .wrap{ padding:18px 10px 28px; gap:16px; }
+      .board{ gap:14px; }
+      .rowTop, .rowBottom{ gap:12px; }
+
       .slab{
-        width:170px;
-        height:255px;
+        width:150px;
+        height:225px;
         border-radius:18px;
       }
+
       .label{
-        width:144px;
-        height:42px;
-        top:14px;
+        width:128px;
+        height:38px;
+        top:12px;
         border-radius:12px;
-        padding:0 8px;
+        padding:0 7px;
       }
-      .left .t{ font-size:9px; }
-      .left .s{ font-size:8px; max-width:90px; }
-      .grade{ font-size:14px; }
-      .mintBadge{ font-size:8px; padding:4px 6px; }
-      .cardImg, .cardPlaceholder{ width:134px; height:184px; }
-      .cardPlaceholder img{ width:80px; }
+
+      .left .t{ font-size:8px; }
+      .left .s{
+        font-size:7px;
+        max-width:76px;
+      }
+
+      .grade{ font-size:13px; }
+      .mintBadge{
+        font-size:7px;
+        padding:3px 5px;
+      }
+
+      .cardImg, .cardPlaceholder{
+        width:118px;
+        height:164px;
+      }
+
+      .cardPlaceholder img{ width:74px; }
+
+      .controls{ gap:10px; }
+      button{
+        font-size:13px;
+        padding:10px 12px;
+      }
     }
 
+    /* MOBILE: faire rentrer les 5 cartes entièrement */
     @media (max-width: 480px){
-      .wrap{ padding:22px 10px 32px; }
+      .wrap{
+        padding:16px 8px 24px;
+        gap:14px;
+      }
+
+      .head{ gap:6px; }
+      #open5Logo{
+        width:150px;
+        margin:4px auto 4px;
+      }
+
+      .moneyBox{
+        font-size:12px;
+        padding:6px 10px;
+      }
+
+      .moneyBox .moneyIcon{
+        width:20px;
+        height:20px;
+      }
+
+      .board{
+        gap:10px;
+        margin-top:0;
+      }
+
       .rowTop{
         display:grid;
-        grid-template-columns:repeat(2, 1fr);
+        grid-template-columns:repeat(2,1fr);
         justify-items:center;
+        gap:10px;
         width:100%;
       }
+
       .rowBottom{
         display:grid;
-        grid-template-columns:repeat(3, 1fr);
+        grid-template-columns:repeat(3,1fr);
         justify-items:center;
+        gap:10px;
         width:100%;
       }
-      .slab{ width:150px; height:225px; }
-      .label{ width:128px; height:38px; }
-      .left .t{ font-size:8px; }
-      .left .s{ font-size:7px; max-width:78px; }
-      .grade{ font-size:13px; }
-      .cardImg, .cardPlaceholder{ width:118px; height:164px; }
+
+      .slab{
+        width:130px;
+        height:195px;
+        border-radius:14px;
+      }
+
+      .shell,
+      .shine,
+      .glare,
+      .edge{
+        border-radius:14px;
+      }
+
+      .label{
+        width:110px;
+        height:32px;
+        top:10px;
+        border-radius:10px;
+        padding:0 6px;
+        gap:6px;
+      }
+
+      .left .t{ font-size:7px; }
+      .left .s{
+        font-size:6px;
+        max-width:60px;
+      }
+
+      .grade{ font-size:11px; }
+      .mintBadge{
+        font-size:6px;
+        padding:2px 4px;
+      }
+
+      .cardImg,
+      .cardPlaceholder{
+        width:100px;
+        height:140px;
+        border-radius:12px;
+      }
+
+      .cardPlaceholder img{
+        width:65px;
+      }
+
+      .hint{
+        font-size:12px;
+        max-width:95%;
+      }
+
+      .resultBox{
+        font-size:12px;
+      }
+
+      .controls{
+        gap:10px;
+      }
+
+      button{
+        font-size:12px;
+        padding:9px 12px;
+        border-radius:10px;
+      }
+
+      #openMulti .moneyIcon{
+        width:22px;
+        height:22px;
+        vertical-align:-7px;
+      }
+
+      .winnerAura{
+        inset:-10px;
+        border-radius:20px;
+      }
+
+      .winnerHalo{
+        inset:-14px;
+        border-radius:24px;
+      }
     }
   </style>
 </head>
@@ -931,7 +1092,7 @@
         <span id="moneyValue">0</span>
       </div>
 
-      <p id="subLine">Ouverture multi V2 • clique une carte pour zoom</p>
+      <p id="subLine">Ouverture multi premium • clique une carte pour zoom</p>
     </div>
 
     <div class="board">
@@ -947,7 +1108,7 @@
     </div>
 
     <div class="hint">
-      Reveal global premium V2 • la meilleure carte est mise en avant automatiquement.
+      Reveal global premium • la meilleure carte déclenche l’animation principale.
     </div>
 
     <div class="resultBox" id="resultBox"></div>
@@ -1142,7 +1303,6 @@
 
     let zoomDragging = false;
     let openingInProgress = false;
-    let lastPulls = [];
     let winnerIndex = -1;
 
     function buildSlab(index){
@@ -1153,6 +1313,8 @@
       wrap.className = "scene";
       wrap.innerHTML = `
         <div class="winnerAura"></div>
+        <div class="winnerHalo"></div>
+
         <div class="slab" id="slab${index}" data-tier="" data-mint="0">
           <div class="shine"></div>
           <div class="glare"></div>
@@ -1235,15 +1397,13 @@
       });
 
       slab.addEventListener("mouseenter", () => {
-        if (openingInProgress) return;
-        if (slab.classList.contains("winner")) return;
+        if (openingInProgress || slab.classList.contains("winner")) return;
         shine.style.opacity = "0.75";
         glare.style.opacity = "0.45";
       });
 
       slab.addEventListener("mouseleave", () => {
-        if (openingInProgress) return;
-        if (slab.classList.contains("winner")) return;
+        if (openingInProgress || slab.classList.contains("winner")) return;
         slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
         shine.style.opacity = "0";
         glare.style.opacity = "0";
@@ -1270,7 +1430,7 @@
         if(hasCard){
           jobs.push((async () => {
             slab.classList.add("suck");
-            await sleep(520);
+            await sleep(460);
             slab.classList.remove("suck");
             card.style.backgroundImage = "";
             card.dataset.high = "";
@@ -1288,6 +1448,12 @@
 
     function resetBoardVisuals(){
       winnerIndex = -1;
+
+      document.querySelectorAll(".scene").forEach(scene => {
+        scene.classList.remove("winnerScene");
+        scene.dataset.tier = "";
+      });
+
       for(let i = 0; i < 5; i++){
         const title    = document.getElementById(`title${i}`);
         const subtitle = document.getElementById(`subtitle${i}`);
@@ -1348,8 +1514,8 @@
         p.style.background = c;
 
         const a  = Math.random() * Math.PI * 2;
-        const r0 = 10 + Math.random() * 65;
-        const r1 = 130 + Math.random() * 260;
+        const r0 = 10 + Math.random() * 55;
+        const r1 = 110 + Math.random() * 220;
 
         p.style.left = center.x + "px";
         p.style.top  = center.y + "px";
@@ -1371,7 +1537,7 @@
         e.style.background = (Math.random() < 0.35) ? "rgba(255,255,255,.95)" : c;
 
         const x = Math.random() * window.innerWidth;
-        const drift = (-100 + Math.random() * 200) + "px";
+        const drift = (-90 + Math.random() * 180) + "px";
 
         e.style.left = "0px";
         e.style.setProperty("--cx", x + "px");
@@ -1394,6 +1560,7 @@
 
     function getWinnerIndex(pulls, bestPull){
       if(!bestPull || !Array.isArray(pulls)) return -1;
+
       for(let i = 0; i < pulls.length; i++){
         const p = pulls[i];
         if(
@@ -1406,6 +1573,7 @@
           return i;
         }
       }
+
       return pulls.findIndex(p => getPullPower(p) === getPullPower(bestPull));
     }
 
@@ -1441,7 +1609,7 @@
       void slab.offsetWidth;
       slab.classList.add("multiPop", "revealBurst");
 
-      setTimeout(() => slab.classList.remove("revealBurst"), 650);
+      setTimeout(() => slab.classList.remove("revealBurst"), 520);
     }
 
     function fillAllSlabs(pulls){
@@ -1452,14 +1620,22 @@
 
     function applyWinnerHighlight(index){
       winnerIndex = index;
+      const scenes = document.querySelectorAll(".scene");
+
       for(let i = 0; i < 5; i++){
         const slab = document.getElementById(`slab${i}`);
-        if(!slab) continue;
+        const scene = scenes[i];
+        if(!slab || !scene) continue;
+
         slab.classList.remove("winner", "dimmed");
         slab.style.transform = "";
+        scene.classList.remove("winnerScene");
+        scene.dataset.tier = "";
 
         if(i === index){
           slab.classList.add("winner");
+          scene.classList.add("winnerScene");
+          scene.dataset.tier = slab.dataset.mint === "1" ? "m" : (slab.dataset.tier || "w");
         }else{
           slab.classList.add("dimmed");
         }
@@ -1497,61 +1673,55 @@
 
       fxSpawnParticles(
         isMint ? "m" : tier,
-        isMint ? 155 : grade >= 10 ? 115 : grade >= 8 ? 62 : grade >= 5 ? 36 : 20,
+        isMint ? 130 : grade >= 10 ? 95 : grade >= 8 ? 52 : grade >= 5 ? 28 : 16,
         center
       );
 
       for(let i = 0; i < 5; i++){
         const ph = document.getElementById(`cardPh${i}`);
         if(ph){
-          ph.style.opacity = "0.30";
-          ph.style.filter = "blur(1px)";
-          ph.style.transform = "translate(-50%,-50%) translateZ(19px) scale(.95)";
+          ph.style.opacity = "0.34";
+          ph.style.filter = "blur(.8px)";
+          ph.style.transform = "translate(-50%,-50%) translateZ(19px) scale(.96)";
         }
       }
 
-      await sleep(isMint ? 900 : isEpic ? 760 : isBig ? 560 : 380);
+      await sleep(isMint ? 640 : isEpic ? 560 : isBig ? 420 : 300);
 
-      subLine.textContent =
-        isMint ? "..." :
-        grade >= 10 ? "..." :
-        grade >= 8 ? "..." :
-        "Révélation imminente...";
-
-      await sleep(isMint ? 260 : isEpic ? 220 : 160);
+      subLine.textContent = isEpic ? "..." : "Révélation imminente...";
+      await sleep(isEpic ? 130 : 90);
 
       fxOverlay.classList.add("reveal");
       document.body.classList.add("cameraZoom");
       document.body.classList.add("screenShake");
-      setTimeout(() => document.body.classList.remove("screenShake"), 450);
+      setTimeout(() => document.body.classList.remove("screenShake"), 300);
 
       if(isEpic){
-        fxSpawnConfetti(isMint ? "m" : tier, isMint ? 130 : 90);
+        fxSpawnConfetti(isMint ? "m" : tier, isMint ? 110 : 70);
         playSfx(sfxRevealEpic, 1);
       }else{
         if(grade >= 7){
-          fxSpawnConfetti(tier, 36);
+          fxSpawnConfetti(tier, 24);
         }
         playSfx(sfxReveal, 0.92);
       }
 
-      await sleep(isMint ? 820 : isEpic ? 760 : 620);
+      await sleep(isMint ? 560 : isEpic ? 500 : 420);
 
       fxOverlay.classList.remove("reveal");
       document.body.classList.remove("globalSuspense");
       document.body.classList.remove("cameraZoom");
       subLine.textContent = `${gameLabel(currentGame())} • clique une carte pour zoom`;
 
-      await sleep(180);
+      await sleep(120);
       fxOverlay.classList.remove("on");
       fxClear();
     }
 
-    async function revealSequenceV2(pulls, bestPull){
+    async function revealSequence(pulls, bestPull){
       await runGlobalRevealFx(bestPull);
       fillAllSlabs(pulls);
-
-      await sleep(180);
+      await sleep(110);
 
       const idx = getWinnerIndex(pulls, bestPull);
       if(idx >= 0){
@@ -1580,11 +1750,10 @@
         const pulls = Array.isArray(data.pulls) ? data.pulls : [];
         if(!pulls.length) throw new Error("Aucune carte reçue");
 
-        lastPulls = pulls;
         const bestPull = getBestPull(pulls);
 
         await preloadPullImages(pulls);
-        await revealSequenceV2(pulls, bestPull);
+        await revealSequence(pulls, bestPull);
 
         backBtn.style.display = "inline-flex";
         resultBox.textContent = `Ouverture terminée • -25 Dollax • +${data.xpAdd || 0} XP`;
