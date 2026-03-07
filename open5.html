@@ -284,6 +284,11 @@
       opacity:1;
       z-index:1;
       overflow:visible;
+
+      box-shadow:
+        0 25px 70px rgba(0,0,0,.45),
+        0 0 0 1px rgba(255,255,255,.06),
+        0 0 40px rgba(120,170,255,.08);
     }
 
     .slab:active{ cursor:grabbing; }
@@ -325,6 +330,22 @@
       transform:translateZ(10px);
       overflow:hidden;
     }
+
+    .slab::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        border-radius:22px;
+        pointer-events:none;
+
+        background:linear-gradient(
+            120deg,
+            rgba(255,255,255,.10),
+            rgba(255,255,255,0) 40%
+    );
+
+  opacity:.35;
+}
 
     .label{
       position:absolute;
