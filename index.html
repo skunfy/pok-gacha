@@ -285,10 +285,31 @@
 
   /* ===== Slab ===== */
   .slab{
-    width:320px;height:460px;border-radius:22px;position:relative;
-    transform-style:preserve-3d;will-change:transform;user-select:none;cursor:grab;
-    filter: drop-shadow(0 22px 70px rgba(0,0,0,.35));
+    width:320px;
+    height:460px;
+    border-radius:22px;
+    position:relative;
+    transform-style:preserve-3d;
+    will-change:transform, filter, opacity;
+    user-select:none;
+    cursor:grab;
+
+    filter:
+      drop-shadow(0 26px 80px rgba(0,0,0,.42))
+      drop-shadow(0 0 24px rgba(255,255,255,.06));
+
+    transition:
+      transform .18s ease,
+      filter .25s ease,
+      opacity .25s ease,
+      box-shadow .25s ease;
+
+    opacity:1;
+    z-index:1;
+    overflow:visible;
   }
+
+
   .slab:active{cursor:grabbing}
 
   .shine,.glare{
@@ -312,13 +333,38 @@
   }
 
   .shell{
-    position:absolute; inset:0; border-radius:22px;
-    background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
-    backdrop-filter: blur(6px);
-    box-shadow: var(--shadow);
-    border:1px solid rgba(255,255,255,.18);
+    position:absolute;
+    inset:0;
+    border-radius:22px;
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.16), rgba(255,255,255,.025)),
+      radial-gradient(circle at 20% 12%, rgba(255,255,255,.10), transparent 32%),
+      radial-gradient(circle at 85% 85%, rgba(120,170,255,.08), transparent 28%);
+    backdrop-filter:blur(6px);
+    box-shadow:
+      0 30px 90px rgba(0,0,0,.55),
+      inset 0 1px 0 rgba(255,255,255,.12),
+      inset 0 -1px 0 rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.16);
     transform:translateZ(10px);
     overflow:hidden;
+  }
+
+  .slab::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:22px;
+    pointer-events:none;
+    z-index:2;
+    background:
+      linear-gradient(
+        120deg,
+        rgba(255,255,255,.16) 0%,
+        rgba(255,255,255,.05) 18%,
+        rgba(255,255,255,0) 38%
+      );
+    opacity:.55;
   }
 
   .label{
