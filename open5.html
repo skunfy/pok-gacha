@@ -886,7 +886,7 @@
     const backBtn   = document.getElementById("backBtn");
     const resultBox = document.getElementById("resultBox");
     const modal     = document.getElementById("modal");
-    const headLogo  = document.getElementById("headLogo");
+    const headLogo = document.getElementById("open5Logo");
     const subLine   = document.getElementById("subLine");
     const moneyValue = document.getElementById("moneyValue");
 
@@ -1335,8 +1335,17 @@
     });
 
     (async () => {
-        initBoard();
-        await loadMe();
+        try{
+            initBoard();
+        }catch(e){
+            console.error("Erreur initBoard:", e);
+        }
+
+        try{
+            await loadMe();
+        }catch(e){
+            console.error("Erreur loadMe:", e);
+        }
     })();
   </script>
 </body>
