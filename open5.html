@@ -75,34 +75,6 @@
         drop-shadow(0 12px 28px rgba(0,0,0,.45));
     }
 
-    .moneyBox{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      margin:4px auto 0;
-      padding:8px 14px;
-      border-radius:999px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      font-size:14px;
-      font-weight:900;
-      min-width:110px;
-    }
-
-    .moneyBox .moneyIcon{
-      width:28px;
-      height:28px;
-      margin:0;
-      vertical-align:middle;
-    }
-
-    #moneyValue{
-      display:inline-block;
-      min-width:20px;
-      text-align:left;
-    }
-
     .board{
       width:100%;
       max-width:1180px;
@@ -153,6 +125,7 @@
         box-shadow .25s ease;
       opacity:1;
       z-index:1;
+      overflow:visible;
     }
 
     .slab:active{ cursor:grabbing; }
@@ -331,30 +304,45 @@
       background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.95), rgba(255,255,255,0) 60%);
     }
 
-    .winnerAura{
+    .winnerGlow{
       position:absolute;
-      inset:-16px;
-      border-radius:30px;
+      inset:-8px;
+      border-radius:28px;
       pointer-events:none;
       opacity:0;
       z-index:0;
-      transform:scale(.98);
-      transition:opacity .3s ease, transform .3s ease;
+      transition:opacity .25s ease, transform .25s ease;
+      transform:scale(1);
       filter:blur(10px);
     }
 
-    .winnerHalo{
+    .winnerShimmer{
       position:absolute;
-      inset:-26px;
-      border-radius:36px;
+      inset:-2px;
+      border-radius:24px;
       pointer-events:none;
+      overflow:hidden;
       opacity:0;
-      z-index:0;
-      transform:scale(.95);
-      transition:opacity .28s ease, transform .28s ease;
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,255,255,.14), rgba(255,255,255,0) 62%);
-      filter:blur(16px);
+      z-index:6;
+    }
+
+    .winnerShimmer::after{
+      content:"";
+      position:absolute;
+      top:-10%;
+      left:-42%;
+      width:34%;
+      height:120%;
+      transform:skewX(-18deg);
+      background:linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.08) 35%,
+        rgba(255,255,255,.26) 50%,
+        rgba(255,255,255,.08) 65%,
+        rgba(255,255,255,0) 100%
+      );
+      filter:blur(2px);
     }
 
     .slab[data-tier="w"] .shell{
@@ -497,79 +485,64 @@
 
     .slab.winner{
       z-index:7;
-      animation:winnerIntro .55s cubic-bezier(.2,.9,.2,1), winnerPulse 2.6s ease-in-out .6s infinite;
+      animation:winnerIntro .55s cubic-bezier(.2,.9,.2,1), winnerPulse 2.8s ease-in-out .65s infinite;
     }
 
-    .slab.winner + .winnerAura,
-    .scene.winnerScene .winnerAura{
+    .scene.winnerScene .winnerGlow{
       opacity:1;
-      transform:scale(1.01);
-      animation:auraFlow 2.4s linear infinite;
+      animation:glowPulse 2.2s ease-in-out infinite;
     }
 
-    .scene.winnerScene .winnerHalo{
+    .scene.winnerScene .winnerShimmer{
       opacity:1;
-      transform:scale(1.02);
-      animation:haloBreath 2.2s ease-in-out infinite;
     }
 
-    .scene.winnerScene[data-tier="b"] .winnerAura{
-      background:
-        radial-gradient(circle at 50% 50%, rgba(120,170,255,.18), rgba(120,170,255,0) 62%),
-        conic-gradient(from 180deg,
-          rgba(120,170,255,0),
-          rgba(120,170,255,.16),
-          rgba(255,255,255,.10),
-          rgba(120,170,255,.14),
-          rgba(120,170,255,0)
-        );
+    .scene.winnerScene .winnerShimmer::after{
+      animation:shimmerSweep 2.8s ease-in-out infinite;
     }
 
-    .scene.winnerScene[data-tier="v"] .winnerAura{
-      background:
-        radial-gradient(circle at 50% 50%, rgba(190,120,255,.18), rgba(190,120,255,0) 62%),
-        conic-gradient(from 180deg,
-          rgba(190,120,255,0),
-          rgba(190,120,255,.16),
-          rgba(255,255,255,.10),
-          rgba(190,120,255,.14),
-          rgba(190,120,255,0)
-        );
+    .scene.winnerScene[data-tier="b"] .winnerGlow{
+      background:radial-gradient(circle at 50% 50%, rgba(120,170,255,.20), rgba(120,170,255,0) 70%);
     }
 
-    .scene.winnerScene[data-tier="g"] .winnerAura{
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,210,110,.20), rgba(255,210,110,0) 62%),
-        conic-gradient(from 180deg,
-          rgba(255,210,110,0),
-          rgba(255,210,110,.17),
-          rgba(255,255,255,.12),
-          rgba(255,210,110,.15),
-          rgba(255,210,110,0)
-        );
+    .scene.winnerScene[data-tier="v"] .winnerGlow{
+      background:radial-gradient(circle at 50% 50%, rgba(190,120,255,.20), rgba(190,120,255,0) 70%);
     }
 
-    .scene.winnerScene[data-tier="m"] .winnerAura{
-      background:
-        radial-gradient(circle at 50% 50%, rgba(255,80,80,.20), rgba(255,80,80,0) 62%),
-        conic-gradient(from 180deg,
-          rgba(255,80,80,0),
-          rgba(255,80,80,.17),
-          rgba(255,255,255,.12),
-          rgba(255,80,80,.15),
-          rgba(255,80,80,0)
-        );
+    .scene.winnerScene[data-tier="g"] .winnerGlow{
+      background:radial-gradient(circle at 50% 50%, rgba(255,210,110,.22), rgba(255,210,110,0) 70%);
     }
 
-    @keyframes auraFlow{
-      0%{ transform:scale(1.00) rotate(0deg); }
-      50%{ transform:scale(1.025) rotate(180deg); }
-      100%{ transform:scale(1.00) rotate(360deg); }
+    .scene.winnerScene[data-tier="m"] .winnerGlow{
+      background:radial-gradient(circle at 50% 50%, rgba(255,80,80,.22), rgba(255,80,80,0) 70%);
     }
 
-    @keyframes haloBreath{
-      0%,100%{ opacity:.55; transform:scale(1.00); }
-      50%{ opacity:.78; transform:scale(1.05); }
+    @keyframes glowPulse{
+      0%,100%{
+        transform:scale(1);
+        opacity:.60;
+      }
+      50%{
+        transform:scale(1.03);
+        opacity:.92;
+      }
+    }
+
+    @keyframes shimmerSweep{
+      0%, 70%, 100%{
+        left:-42%;
+        opacity:0;
+      }
+      10%{
+        opacity:1;
+      }
+      35%{
+        left:108%;
+        opacity:1;
+      }
+      45%{
+        opacity:0;
+      }
     }
 
     @keyframes winnerIntro{
@@ -592,26 +565,49 @@
         transform:translateY(-2px) scale(1.025);
       }
       50%{
-        transform:translateY(-5px) scale(1.04);
+        transform:translateY(-4px) scale(1.035);
       }
     }
 
     .slab.dimmed{
-      opacity:.86;
-      filter:brightness(.94) saturate(.96) drop-shadow(0 14px 38px rgba(0,0,0,.22));
+      opacity:.88;
+      filter:brightness(.95) saturate(.97) drop-shadow(0 14px 38px rgba(0,0,0,.22));
     }
 
     .controls{
       display:flex;
+      align-items:center;
+      justify-content:center;
       gap:12px;
       flex-wrap:wrap;
-      justify-content:center;
       margin-top:2px;
+    }
+
+    .moneyInline{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      font-size:14px;
+      font-weight:900;
+      min-width:110px;
+      height:52px;
+    }
+
+    .moneyInline .moneyIcon{
+      width:24px;
+      height:24px;
+      margin:0;
+      vertical-align:middle;
     }
 
     button{
       padding:10px 14px;
-      border-radius:12px;
+      border-radius:14px;
       border:1px solid rgba(255,255,255,.15);
       background:rgba(255,255,255,.06);
       color:#fff;
@@ -636,19 +632,40 @@
       transform:none;
     }
 
+    #openMulti{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height:52px;
+      padding:10px 16px;
+    }
+
+    .multiOpenImg{
+      height:28px;
+      width:auto;
+      display:block;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,.28));
+    }
+
+    .openPrice{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:15px;
+      font-weight:1000;
+      white-space:nowrap;
+    }
+
     #openMulti .moneyIcon{
-      width:30px;
-      height:30px;
-      margin:0 2px;
-      vertical-align:-10px;
+      width:26px;
+      height:26px;
+      margin:0;
+      vertical-align:middle;
     }
 
     .hint{
-      opacity:.74;
-      font-size:13px;
-      text-align:center;
-      max-width:860px;
-      line-height:1.4;
+      display:none;
     }
 
     .resultBox{
@@ -903,14 +920,6 @@
 
     @media (max-width: 620px){
       #open5Logo{ width:170px; }
-      .moneyBox{
-        font-size:13px;
-        padding:7px 12px;
-      }
-      .moneyBox .moneyIcon{
-        width:24px;
-        height:24px;
-      }
 
       .wrap{ padding:18px 10px 28px; gap:16px; }
       .board{ gap:14px; }
@@ -950,13 +959,39 @@
       .cardPlaceholder img{ width:74px; }
 
       .controls{ gap:10px; }
+      .moneyInline{
+        height:46px;
+        padding:8px 12px;
+        font-size:13px;
+      }
+      .moneyInline .moneyIcon{
+        width:22px;
+        height:22px;
+      }
+
+      #openMulti{
+        min-height:46px;
+        padding:8px 12px;
+      }
+
+      .multiOpenImg{
+        height:24px;
+      }
+
+      .openPrice{
+        font-size:13px;
+      }
+
+      #openMulti .moneyIcon{
+        width:22px;
+        height:22px;
+      }
+
       button{
         font-size:13px;
-        padding:10px 12px;
       }
     }
 
-    /* MOBILE: faire rentrer les 5 cartes entièrement */
     @media (max-width: 480px){
       .wrap{
         padding:16px 8px 24px;
@@ -967,16 +1002,6 @@
       #open5Logo{
         width:150px;
         margin:4px auto 4px;
-      }
-
-      .moneyBox{
-        font-size:12px;
-        padding:6px 10px;
-      }
-
-      .moneyBox .moneyIcon{
-        width:20px;
-        height:20px;
       }
 
       .board{
@@ -1045,17 +1070,47 @@
         width:65px;
       }
 
-      .hint{
-        font-size:12px;
-        max-width:95%;
-      }
-
       .resultBox{
         font-size:12px;
       }
 
       .controls{
-        gap:10px;
+        gap:8px;
+        width:100%;
+      }
+
+      .moneyInline{
+        min-width:90px;
+        height:42px;
+        padding:7px 10px;
+        font-size:12px;
+        border-radius:12px;
+      }
+
+      .moneyInline .moneyIcon{
+        width:20px;
+        height:20px;
+      }
+
+      #openMulti{
+        min-height:42px;
+        padding:7px 10px;
+        gap:8px;
+        border-radius:12px;
+      }
+
+      .multiOpenImg{
+        height:20px;
+      }
+
+      .openPrice{
+        font-size:12px;
+        gap:4px;
+      }
+
+      #openMulti .moneyIcon{
+        width:20px;
+        height:20px;
       }
 
       button{
@@ -1064,20 +1119,13 @@
         border-radius:10px;
       }
 
-      #openMulti .moneyIcon{
-        width:22px;
-        height:22px;
-        vertical-align:-7px;
+      .winnerGlow{
+        inset:-6px;
       }
 
-      .winnerAura{
-        inset:-10px;
-        border-radius:20px;
-      }
-
-      .winnerHalo{
-        inset:-14px;
-        border-radius:24px;
+      .winnerShimmer{
+        inset:-1px;
+        border-radius:16px;
       }
     }
   </style>
@@ -1086,13 +1134,7 @@
   <div class="wrap">
     <div class="head">
       <img id="open5Logo" src="multi.png" alt="Open x5">
-
-      <div class="moneyBox">
-        <img class="moneyIcon" src="dollax.png" alt="Dollax">
-        <span id="moneyValue">0</span>
-      </div>
-
-      <p id="subLine">Ouverture multi premium • clique une carte pour zoom</p>
+      <p id="subLine">Ouverture multi • clique une carte pour zoom</p>
     </div>
 
     <div class="board">
@@ -1101,14 +1143,19 @@
     </div>
 
     <div class="controls">
-      <button id="openMulti">
-        OPEN (5 CARD) — 25 <img class="moneyIcon" src="dollax.png" alt="Dollax">
-      </button>
-      <button id="backBtn" style="display:none;">Retour</button>
-    </div>
+      <div class="moneyInline">
+        <img class="moneyIcon" src="dollax.png" alt="Dollax">
+        <span id="moneyValue">0</span>
+      </div>
 
-    <div class="hint">
-      Reveal global premium • la meilleure carte déclenche l’animation principale.
+      <button id="openMulti">
+        <img class="multiOpenImg" src="Multiopen.png" alt="Multiopen">
+        <span class="openPrice">
+          25 <img class="moneyIcon" src="dollax.png" alt="Dollax">
+        </span>
+      </button>
+
+      <button id="backBtn" style="display:none;">Retour</button>
     </div>
 
     <div class="resultBox" id="resultBox"></div>
@@ -1312,8 +1359,8 @@
       const wrap = document.createElement("div");
       wrap.className = "scene";
       wrap.innerHTML = `
-        <div class="winnerAura"></div>
-        <div class="winnerHalo"></div>
+        <div class="winnerGlow"></div>
+        <div class="winnerShimmer"></div>
 
         <div class="slab" id="slab${index}" data-tier="" data-mint="0">
           <div class="shine"></div>
