@@ -947,31 +947,30 @@
     }
 
     function initBoard(){
-      rowTop.innerHTML = "";
-      rowBottom.innerHTML = "";
-      allSlabs = [];
+        rowTop.innerHTML = "";
+        rowBottom.innerHTML = "";
+        allSlabs = [];
 
-      for(let i=0;i<5;i++){
-        const node = buildSlab(i);
-        if(i < 2) rowTop.appendChild(node);
-        else rowBottom.appendChild(node);
+        for(let i=0;i<5;i++){
+            const node = buildSlab(i);
+            if(i < 2) rowTop.appendChild(node);
+            else rowBottom.appendChild(node);
 
-        const slab = document.getElementById(`slab${i}`);
-        const shine = slab.querySelector(".shine");
-        const glare = slab.querySelector(".glare");
-        const card  = document.getElementById(`card${i}`);
+            const slab = document.getElementById(`slab${i}`);
+            const shine = slab.querySelector(".shine");
+            const glare = slab.querySelector(".glare");
+            const card  = document.getElementById(`card${i}`);
 
-        allSlabs.push({ slab, shine, glare, card, index:i });
+            allSlabs.push({ slab, shine, glare, card, index:i });
 
-        bindTilt(slab, shine, glare);
-        card?.addEventListener("click", () => openZoomFromSlab(i));
-      }
+            bindTilt(slab, shine, glare);
+            card?.addEventListener("click", () => openZoomFromSlab(i));
+        }
 
-      headLogo.src = headerLogoForGame(currentGame());
-      subLine.textContent = `${gameLabel(currentGame())} • clique une carte pour zoom`;
-      revealed = false;
-      backBtn.style.display = "none";
-      resultBox.textContent = "";
+        subLine.textContent = `${gameLabel(currentGame())} • clique une carte pour zoom`;
+        revealed = false;
+        backBtn.style.display = "none";
+        resultBox.textContent = "";
     }
 
     function bindTilt(slab, shine, glare){
