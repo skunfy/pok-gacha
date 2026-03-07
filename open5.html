@@ -74,6 +74,59 @@
       font-size:14px;
     }
 
+        #open5Logo{
+    width:220px;
+    max-width:70vw;
+    height:auto;
+    display:block;
+    margin:2px auto 2px;
+    filter: drop-shadow(0 10px 24px rgba(0,0,0,.35));
+    }
+
+    .moneyBox{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin:4px auto 0;
+    padding:8px 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.10);
+    font-size:14px;
+    font-weight:900;
+    min-width:110px;
+    }
+
+    .moneyBox .moneyIcon{
+    width:28px;
+    height:28px;
+    margin:0;
+    vertical-align:middle;
+    }
+
+    #moneyValue{
+    display:inline-block;
+    min-width:20px;
+    text-align:left;
+    }
+
+    @media (max-width: 620px){
+    #open5Logo{
+        width:170px;
+    }
+
+    .moneyBox{
+        font-size:13px;
+        padding:7px 12px;
+    }
+
+    .moneyBox .moneyIcon{
+        width:24px;
+        height:24px;
+    }
+    }
+
     .board{
       width:100%;
       max-width:1180px;
@@ -653,11 +706,18 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
-      <img id="headLogo" src="poke.png" alt="Logo">
-      <h1>OPEN ×5</h1>
-      <p id="subLine">Ouverture multi • clique une carte pour zoom</p>
+   <div class="head">
+     <img id="headLogo" src="poke.png" alt="Logo">
+
+    <img id="open5Logo" src="multi.png" alt="Open x5">
+
+    <div class="moneyBox">
+        <img class="moneyIcon" src="dollax.png" alt="Dollax">
+        <span id="moneyValue">0</span>
     </div>
+
+    <p id="subLine">Ouverture multi • clique une carte pour zoom</p>
+  </div>
 
     <div class="board">
       <div class="rowTop" id="rowTop"></div>
@@ -806,6 +866,18 @@
 
     function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
 
+    async function loadMe(){
+        try{
+            const me = await api("/api/me");
+            if(moneyValue) moneyValue.textContent = String(me.money || 0);
+            if(openBtn) openBtn.disabled = (Number(me.money || 0) < 25);
+            return me;
+        }catch{
+            if(moneyValue) moneyValue.textContent = "0";
+            return null;
+        }
+    }
+
     const rowTop    = document.getElementById("rowTop");
     const rowBottom = document.getElementById("rowBottom");
     const openBtn   = document.getElementById("openMulti");
@@ -814,6 +886,7 @@
     const modal     = document.getElementById("modal");
     const headLogo  = document.getElementById("headLogo");
     const subLine   = document.getElementById("subLine");
+    const moneyValue = document.getElementById("moneyValue");
 
     const zoomSlab     = document.getElementById("zoomSlab");
     const zoomCard     = document.getElementById("zoomCard");
@@ -1178,6 +1251,7 @@
         revealed = true;
         backBtn.style.display = "inline-flex";
         resultBox.textContent = `Ouverture terminée • -25 Dollax • +${data.xpAdd || 0} XP`;
+        await loadMe();
       }catch(e){
         resultBox.textContent = e?.message || "Erreur ouverture x5";
       }finally{
@@ -1258,7 +1332,10 @@
       window.location.href = "/index.html";
     });
 
-    initBoard();
+    (async () => {
+        initBoard();
+        await loadMe();
+    })();
   </script>
 </body>
 </html>
