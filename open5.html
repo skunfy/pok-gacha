@@ -1415,18 +1415,20 @@
   position:absolute;
   left:50%;
   top:60%;
-  width:206px;
-  height:252px;
+  width:200px;
+  height:278px;
   transform:translate(-50%,-50%) translateZ(17px);
-  border-radius:18px;
+
+  border-radius:22px;   /* ← ICI */
+
   pointer-events:none;
   z-index:1;
-  border:1px solid rgba(255,255,255,.08);
+
+  border:1px solid rgba(255,255,255,.10);
+
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.03),
-    0 0 0 1px rgba(0,0,0,.10);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+    inset 0 0 0 1px rgba(255,255,255,.04),
+    0 0 0 1px rgba(0,0,0,.15);
 }
 
 @media (max-width: 1100px){
