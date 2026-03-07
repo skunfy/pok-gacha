@@ -16,6 +16,9 @@
       --tV:rgba(190,120,255,.95);
       --tG:rgba(255,210,110,.98);
       --tM:rgba(255,80,80,.95);
+
+      --panelBg: rgba(255,255,255,.055);
+      --panelBd: rgba(255,255,255,.11);
     }
 
     *{ box-sizing:border-box; }
@@ -38,30 +41,179 @@
       display:block;
     }
 
+    .topHud{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      width:100%;
+      backdrop-filter:blur(12px);
+      background:linear-gradient(180deg, rgba(7,9,18,.88), rgba(7,9,18,.62));
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+
+    .topHudInner{
+      width:min(1400px, 100%);
+      margin:0 auto;
+      padding:10px 14px;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:12px;
+      align-items:center;
+    }
+
+    .playerBox{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+      padding:8px 10px;
+      border-radius:16px;
+      background:var(--panelBg);
+      border:1px solid var(--panelBd);
+    }
+
+    .playerAvatar{
+      width:46px;
+      height:46px;
+      border-radius:14px;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.10), transparent 52%),
+        rgba(0,0,0,.22);
+      background-position:center;
+      background-repeat:no-repeat;
+      background-size:cover;
+      border:1px solid rgba(255,255,255,.12);
+      flex:0 0 auto;
+      box-shadow:0 0 28px rgba(120,170,255,.12);
+    }
+
+    .playerMeta{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .playerName{
+      font-size:15px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:180px;
+    }
+
+    .playerSub{
+      font-size:11px;
+      opacity:.72;
+      white-space:nowrap;
+    }
+
+    .hudCenter{
+      min-width:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .hudBadge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      min-height:40px;
+      padding:8px 12px;
+      border-radius:14px;
+      background:var(--panelBg);
+      border:1px solid var(--panelBd);
+      font-weight:1000;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .hudBadge.money{
+      min-width:110px;
+    }
+
+    .hudBadge .moneyIcon{
+      width:21px;
+      height:21px;
+      flex:0 0 auto;
+    }
+
+    .hitBadge{
+      min-width:72px;
+      padding:7px 10px;
+      gap:8px;
+    }
+
+    .hitBadge .k{
+      font-size:11px;
+      opacity:.72;
+      letter-spacing:.4px;
+    }
+
+    .hitBadge .v{
+      font-size:16px;
+      font-weight:1000;
+    }
+
+    .hudRight{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+    }
+
+    .hudBtn{
+      min-height:42px;
+      padding:10px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:#fff;
+      font-weight:1000;
+      font-size:14px;
+      cursor:pointer;
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+
+    .hudBtn:hover{
+      background:rgba(255,255,255,.11);
+      transform:translateY(-1px);
+    }
+
+    .hudBtn:active{
+      transform:translateY(0) scale(.99);
+    }
+
     .wrap{
       width:100%;
       max-width:1400px;
       margin:0 auto;
-      padding:24px 16px 34px;
+      padding:18px 16px 34px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap:20px;
+      gap:18px;
       transition:transform .38s ease, filter .38s ease;
       transform-origin:center center;
     }
 
     body.globalSuspense .wrap{
-      transform:scale(1.012);
-      filter:brightness(1.035);
+      transform:scale(1.01);
+      filter:brightness(1.03);
     }
 
     .head{
       text-align:center;
       display:flex;
       flex-direction:column;
-      gap:8px;
-      margin-top:2px;
+      gap:6px;
+      margin-top:4px;
     }
 
     #open5Logo{
@@ -69,10 +221,16 @@
       max-width:80vw;
       height:auto;
       display:block;
-      margin:6px auto 6px;
+      margin:4px auto 2px;
       filter:
         drop-shadow(0 0 20px rgba(120,170,255,.35))
         drop-shadow(0 12px 28px rgba(0,0,0,.45));
+    }
+
+    #subLine{
+      margin:0;
+      opacity:.84;
+      font-size:14px;
     }
 
     .board{
@@ -82,7 +240,7 @@
       flex-direction:column;
       align-items:center;
       gap:24px;
-      margin-top:4px;
+      margin-top:2px;
       position:relative;
       transition:transform .35s ease, filter .35s ease;
       transform-origin:center center;
@@ -583,30 +741,7 @@
       margin-top:2px;
     }
 
-    .moneyInline{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding:10px 14px;
-      border-radius:14px;
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.10);
-      font-size:14px;
-      font-weight:900;
-      min-width:110px;
-      height:52px;
-    }
-
-    .moneyInline .moneyIcon{
-      width:24px;
-      height:24px;
-      margin:0;
-      vertical-align:middle;
-    }
-
     button{
-      padding:10px 14px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.15);
       background:rgba(255,255,255,.06);
@@ -636,36 +771,39 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap:10px;
-      min-height:52px;
-      padding:10px 16px;
+      gap:14px;
+      min-height:64px;
+      padding:12px 22px;
+      border-radius:18px;
+      background:rgba(255,255,255,.075);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow:0 14px 34px rgba(0,0,0,.18);
     }
 
     .multiOpenImg{
-      height:36px;
+      height:40px;
       width:auto;
+      max-width:none;
       display:block;
+      object-fit:contain;
+      flex:0 0 auto;
       filter:drop-shadow(0 4px 10px rgba(0,0,0,.28));
     }
 
     .openPrice{
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      font-size:15px;
+      gap:7px;
+      font-size:20px;
       font-weight:1000;
       white-space:nowrap;
+      line-height:1;
     }
 
     #openMulti .moneyIcon{
-      width:26px;
-      height:26px;
-      margin:0;
-      vertical-align:middle;
-    }
-
-    .hint{
-      display:none;
+      width:28px;
+      height:28px;
+      flex:0 0 auto;
     }
 
     .resultBox{
@@ -682,7 +820,7 @@
       background:rgba(0,0,0,.72);
       display:none;
       place-items:center;
-      z-index:9999;
+      z-index:99999;
       padding:24px;
     }
 
@@ -891,6 +1029,18 @@
       75%{ transform:translateX(-1px); }
     }
 
+    @media (max-width: 1200px){
+      .topHudInner{
+        grid-template-columns:1fr;
+      }
+      .playerBox,
+      .hudCenter,
+      .hudRight{
+        justify-content:center;
+      }
+      .playerName{ max-width:unset; }
+    }
+
     @media (max-width: 1100px){
       .slab{ width:220px; height:325px; }
       .label{ width:190px; }
@@ -919,9 +1069,59 @@
     }
 
     @media (max-width: 620px){
+      .topHudInner{
+        padding:8px 10px;
+        gap:8px;
+      }
+
+      .playerBox{
+        padding:7px 9px;
+        border-radius:14px;
+      }
+
+      .playerAvatar{
+        width:40px;
+        height:40px;
+        border-radius:12px;
+      }
+
+      .playerName{
+        font-size:14px;
+      }
+
+      .playerSub{
+        font-size:10px;
+      }
+
+      .hudBadge{
+        min-height:36px;
+        padding:7px 10px;
+        border-radius:12px;
+      }
+
+      .hitBadge{
+        min-width:64px;
+        gap:6px;
+      }
+
+      .hitBadge .k{
+        font-size:10px;
+      }
+
+      .hitBadge .v{
+        font-size:14px;
+      }
+
+      .hudBtn{
+        min-height:38px;
+        padding:8px 11px;
+        font-size:13px;
+        border-radius:12px;
+      }
+
       #open5Logo{ width:170px; }
 
-      .wrap{ padding:18px 10px 28px; gap:16px; }
+      .wrap{ padding:16px 10px 28px; gap:16px; }
       .board{ gap:14px; }
       .rowTop, .rowBottom{ gap:12px; }
 
@@ -958,43 +1158,54 @@
 
       .cardPlaceholder img{ width:74px; }
 
-      .controls{ gap:10px; }
-      .moneyInline{
-        height:46px;
-        padding:8px 12px;
-        font-size:13px;
-      }
-      .moneyInline .moneyIcon{
-        width:22px;
-        height:22px;
-      }
-
       #openMulti{
-        min-height:46px;
-        padding:8px 12px;
+        min-height:56px;
+        padding:10px 16px;
+        gap:10px;
       }
 
       .multiOpenImg{
-        height:30px;
+        height:32px;
       }
 
       .openPrice{
-        font-size:13px;
+        font-size:17px;
       }
 
       #openMulti .moneyIcon{
-        width:22px;
-        height:22px;
-      }
-
-      button{
-        font-size:13px;
+        width:24px;
+        height:24px;
       }
     }
 
     @media (max-width: 480px){
+      .topHudInner{
+        padding:8px;
+      }
+
+      .hudCenter{
+        gap:6px;
+      }
+
+      .hudBadge.money{
+        min-width:92px;
+      }
+
+      .hitBadge{
+        min-width:56px;
+        padding:6px 8px;
+      }
+
+      .hitBadge .k{
+        font-size:9px;
+      }
+
+      .hitBadge .v{
+        font-size:13px;
+      }
+
       .wrap{
-        padding:16px 8px 24px;
+        padding:14px 8px 24px;
         gap:14px;
       }
 
@@ -1074,29 +1285,11 @@
         font-size:12px;
       }
 
-      .controls{
-        gap:8px;
-        width:100%;
-      }
-
-      .moneyInline{
-        min-width:90px;
-        height:42px;
-        padding:7px 10px;
-        font-size:12px;
-        border-radius:12px;
-      }
-
-      .moneyInline .moneyIcon{
-        width:20px;
-        height:20px;
-      }
-
       #openMulti{
-        min-height:42px;
-        padding:7px 10px;
+        min-height:50px;
+        padding:9px 13px;
         gap:8px;
-        border-radius:12px;
+        border-radius:14px;
       }
 
       .multiOpenImg{
@@ -1104,19 +1297,13 @@
       }
 
       .openPrice{
-        font-size:12px;
-        gap:4px;
+        font-size:15px;
+        gap:5px;
       }
 
       #openMulti .moneyIcon{
-        width:20px;
-        height:20px;
-      }
-
-      button{
-        font-size:12px;
-        padding:9px 12px;
-        border-radius:10px;
+        width:21px;
+        height:21px;
       }
 
       .winnerGlow{
@@ -1131,6 +1318,54 @@
   </style>
 </head>
 <body>
+  <div class="topHud">
+    <div class="topHudInner">
+      <div class="playerBox">
+        <div class="playerAvatar" id="topAvatar"></div>
+        <div class="playerMeta">
+          <div class="playerName" id="topName">Player</div>
+          <div class="playerSub">Multi opening</div>
+        </div>
+      </div>
+
+      <div class="hudCenter">
+        <div class="hudBadge money">
+          <img class="moneyIcon" src="dollax.png" alt="Dollax">
+          <span id="moneyValue">0</span>
+        </div>
+
+        <div class="hudBadge hitBadge">
+          <span class="k">G3</span>
+          <span class="v" id="hitG3">0</span>
+        </div>
+
+        <div class="hudBadge hitBadge">
+          <span class="k">G5</span>
+          <span class="v" id="hitG5">0</span>
+        </div>
+
+        <div class="hudBadge hitBadge">
+          <span class="k">G7</span>
+          <span class="v" id="hitG7">0</span>
+        </div>
+
+        <div class="hudBadge hitBadge">
+          <span class="k">G10</span>
+          <span class="v" id="hitG10">0</span>
+        </div>
+
+        <div class="hudBadge hitBadge">
+          <span class="k">MINT</span>
+          <span class="v" id="hitMint">0</span>
+        </div>
+      </div>
+
+      <div class="hudRight">
+        <button class="hudBtn" id="backBtnTop">Retour</button>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
     <div class="head">
       <img id="open5Logo" src="multi.png" alt="Open x5">
@@ -1143,19 +1378,12 @@
     </div>
 
     <div class="controls">
-      <div class="moneyInline">
-        <img class="moneyIcon" src="dollax.png" alt="Dollax">
-        <span id="moneyValue">0</span>
-      </div>
-
       <button id="openMulti">
         <img class="multiOpenImg" src="Multiopen.png" alt="Multiopen">
         <span class="openPrice">
           25 <img class="moneyIcon" src="dollax.png" alt="Dollax">
         </span>
       </button>
-
-      <button id="backBtn" style="display:none;">Retour</button>
     </div>
 
     <div class="resultBox" id="resultBox"></div>
@@ -1313,26 +1541,22 @@
       return "w";
     }
 
-    async function loadMe(){
-      try{
-        const me = await api("/api/me");
-        if(moneyValue) moneyValue.textContent = String(me.money || 0);
-        if(openBtn) openBtn.disabled = (Number(me.money || 0) < 25);
-        return me;
-      }catch{
-        if(moneyValue) moneyValue.textContent = "0";
-        return null;
-      }
-    }
-
     const rowTop      = document.getElementById("rowTop");
     const rowBottom   = document.getElementById("rowBottom");
     const openBtn     = document.getElementById("openMulti");
-    const backBtn     = document.getElementById("backBtn");
     const resultBox   = document.getElementById("resultBox");
     const modal       = document.getElementById("modal");
     const subLine     = document.getElementById("subLine");
     const moneyValue  = document.getElementById("moneyValue");
+    const backBtnTop  = document.getElementById("backBtnTop");
+
+    const topAvatar   = document.getElementById("topAvatar");
+    const topName     = document.getElementById("topName");
+    const hitG3       = document.getElementById("hitG3");
+    const hitG5       = document.getElementById("hitG5");
+    const hitG7       = document.getElementById("hitG7");
+    const hitG10      = document.getElementById("hitG10");
+    const hitMint     = document.getElementById("hitMint");
 
     const zoomSlab     = document.getElementById("zoomSlab");
     const zoomCard     = document.getElementById("zoomCard");
@@ -1351,6 +1575,49 @@
     let zoomDragging = false;
     let openingInProgress = false;
     let winnerIndex = -1;
+
+    function setTopAvatar(url){
+      const u = String(url || "").trim();
+      if(u){
+        topAvatar.style.backgroundImage = `url("${u.replace(/"/g,'\\"')}")`;
+      }else{
+        topAvatar.style.backgroundImage = "none";
+      }
+    }
+
+    function applyTopStats(me){
+      topName.textContent = me?.name || "Player";
+      moneyValue.textContent = String(me?.money || 0);
+
+      hitG3.textContent   = String(me?.w || 0);
+      hitG5.textContent   = String(me?.b || 0);
+      hitG7.textContent   = String(me?.v || 0);
+      hitG10.textContent  = String(me?.g10 || 0);
+      hitMint.textContent = String(me?.mint || 0);
+
+      setTopAvatar(me?.avatar || "");
+      openBtn.disabled = Number(me?.money || 0) < 25;
+    }
+
+    async function loadMe(){
+      try{
+        const me = await api("/api/me");
+        applyTopStats(me);
+        return me;
+      }catch{
+        applyTopStats({
+          name: "Player",
+          money: 0,
+          w: 0,
+          b: 0,
+          v: 0,
+          g10: 0,
+          mint: 0,
+          avatar: ""
+        });
+        return null;
+      }
+    }
 
     function buildSlab(index){
       const game = currentGame();
@@ -1411,7 +1678,6 @@
       }
 
       subLine.textContent = `${gameLabel(currentGame())} • clique une carte pour zoom`;
-      backBtn.style.display = "none";
       resultBox.textContent = "";
     }
 
@@ -1781,7 +2047,6 @@
 
       openBtn.disabled = true;
       openingInProgress = true;
-      backBtn.style.display = "none";
       resultBox.textContent = "";
 
       try{
@@ -1802,7 +2067,6 @@
         await preloadPullImages(pulls);
         await revealSequence(pulls, bestPull);
 
-        backBtn.style.display = "inline-flex";
         resultBox.textContent = `Ouverture terminée • -25 Dollax • +${data.xpAdd || 0} XP`;
 
         await loadMe();
@@ -1895,7 +2159,7 @@
 
     openBtn?.addEventListener("click", openMulti);
 
-    backBtn?.addEventListener("click", () => {
+    backBtnTop?.addEventListener("click", () => {
       window.location.href = "/index.html";
     });
 
