@@ -1410,6 +1410,54 @@
   border-color:#ff4d4d;
   box-shadow:0 0 12px rgba(255,77,77,.35);
 }
+
+.cardInnerFrame{
+  position:absolute;
+  left:50%;
+  top:57%;
+  width:206px;
+  height:276px;
+  transform:translate(-50%,-50%) translateZ(17px);
+  border-radius:18px;
+  pointer-events:none;
+  z-index:1;
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 0 0 1px rgba(0,0,0,.10);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+}
+
+@media (max-width: 1100px){
+  .cardInnerFrame{
+    width:188px;
+    height:252px;
+  }
+}
+
+@media (max-width: 860px){
+  .cardInnerFrame{
+    width:178px;
+    height:240px;
+  }
+}
+
+@media (max-width: 620px){
+  .cardInnerFrame{
+    width:128px;
+    height:176px;
+    border-radius:14px;
+  }
+}
+
+@media (max-width: 480px){
+  .cardInnerFrame{
+    width:108px;
+    height:148px;
+    border-radius:12px;
+  }
+}
   </style>
 </head>
 <body>
@@ -1746,6 +1794,8 @@
           <div class="cardPlaceholder" id="cardPh${index}">
             <img src="${ph}" alt="">
           </div>
+
+          <div class="cardInnerFrame"></div>
 
           <div class="edge"></div>
           <div class="flash"></div>
