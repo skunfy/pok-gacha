@@ -482,18 +482,27 @@
 
   /* ===== Modal zoom ===== */
   .modal{
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.72);
-    display:none; place-items:center;
-    z-index:9999;
-    padding:24px;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.72);
+    display: none;
+    place-items: center;
+    z-index: 200000; /* plus haut que la topbar */
+    padding: 24px;
   }
-  .modal.open{display:grid}
+
+  .modal.open{ display:grid; }
+
   .zoomSlab{
     cursor:default;
     width:min(420px, 92vw);
     height:min(600px, 92vh);
   }
+
+  .zoomSlab{
+  position: relative;
+  z-index: 200001;
+}
   .zoomSlab .cardImg{
     width: min(340px, 78vw);
     height: min(460px, 68vh);
