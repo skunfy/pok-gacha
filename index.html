@@ -705,39 +705,49 @@
 
   /* ===== Mobile adjustments ===== */
   @media (max-width: 520px){
-    .topbar{
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 16px;
-    }
-
-    .cornerLogo{ width: 64px; }
-
-    .brand b{ font-size: 14px; }
-    .brand small{ font-size: 11px; }
-
-    .rightTop{
-      width: 100%;
-      flex: 1 1 100%;
-      justify-content: flex-start;
-      gap: 8px;
-
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .rightTop::-webkit-scrollbar{ display:none; }
-
-    .stats{ flex: 0 0 auto; overflow: visible; }
-    .stat span{ max-width: 90px; }
-
-    .topLink{
-      padding: 10px 12px; /* meilleur “tap” */
-      font-size: 12px;
-    }
+  .topbar{
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    overflow: visible; /* important */
   }
 
+  .cornerLogo{ width: 64px; }
+
+  .brand b{ font-size: 14px; }
+  .brand small{ font-size: 11px; }
+
+  .rightTop{
+    width: 100%;
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    gap: 8px;
+
+    overflow: visible; /* au lieu de overflow-x:auto */
+  }
+
+  .stats{
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .stat span{ max-width: 90px; }
+
+  .topLink{
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .profileWrap{
+    margin-left: 0; /* très important sur mobile */
+  }
+
+  .profileMenu{
+    right: 0;
+    top: 56px;
+  }
+}
   @media (max-width: 420px){
     .slab{ width:300px; height:440px; }
     .label{ width:260px; }
