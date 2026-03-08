@@ -1385,6 +1385,40 @@
   }
 }
 
+@media (max-width: 520px){
+  .zoomSlab{
+    transform: none !important;
+    width: min(420px, 92vw);
+    height: min(600px, 92vh);
+  }
+
+  .zoomSlab .shell{
+    transform: none !important;
+    z-index: 1;
+  }
+
+  .zoomSlab .label{
+    transform: translateX(-50%) !important;
+    z-index: 3;
+  }
+
+  .zoomSlab .cardImg{
+    transform: translate(-50%, -50%) !important;
+    z-index: 2;
+  }
+
+  .zoomSlab .edge{
+    transform: none !important;
+    z-index: 4;
+  }
+
+  .zoomSlab .shine,
+  .zoomSlab .glare,
+  .zoomSlab .flash{
+    z-index: 5;
+  }
+}
+
 </style>
 </head>
 
