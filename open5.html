@@ -1703,23 +1703,26 @@
     }
 
     function currentGame(){
-      const g = (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-      if (g === "onepiece") return "onepiece";
-      if (g === "lorcana")  return "lorcana";
-      return "pokemon";
-    }
+        const g = (localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
+        if (g === "onepiece") return "onepiece";
+        if (g === "lorcana")  return "lorcana";
+        if (g === "dragonball") return "dragonball";
+        return "pokemon";
+        }
 
-    function gameLabel(g){
-      if (g === "onepiece") return "ONE PIECE";
-      if (g === "lorcana")  return "LORCANA";
-      return "POKÉMON";
-    }
+        function gameLabel(g){
+        if (g === "onepiece") return "ONE PIECE";
+        if (g === "lorcana")  return "LORCANA";
+        if (g === "dragonball") return "DRAGON BALL";
+        return "POKÉMON";
+        }
 
-    function placeholderLogoForGame(g){
-      if(g === "onepiece") return "One_Piece_Logo.png";
-      if(g === "lorcana")  return "Lorcana.png";
-      return "International_Pokémon_logo.png";
-    }
+        function placeholderLogoForGame(g){
+        if(g === "onepiece") return "One_Piece_Logo.png";
+        if(g === "lorcana")  return "Lorcana.png";
+        if(g === "dragonball") return "dragonball.png";
+        return "International_Pokémon_logo.png";
+        }
 
     function toHighImage(url){
       const u = String(url || "");
