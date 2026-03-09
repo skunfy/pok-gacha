@@ -783,7 +783,7 @@ if(!TOKEN) location.href="/login.html";
 
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  if (g === "pokemon" || g === "onepiece" || g === "lorcana") return g;
+  if (g === "pokemon" || g === "onepiece" || g === "lorcana" || g === "dragonball") return g;
   return "pokemon";
 }
 
@@ -1160,10 +1160,10 @@ function render(items){
     const el=document.createElement("div");
     el.className="cardBox";
 
-    const g = (x.game || currentGame());
     const gameTag =
       g === "onepiece" ? "🟥 One Piece" :
       g === "lorcana" ? "🟦 Lorcana" :
+      g === "dragonball" ? "🟧 Dragon Ball" :
       "🟨 Pokémon";
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 

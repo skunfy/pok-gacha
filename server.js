@@ -18,6 +18,70 @@ const PORT = process.env.PORT || 8000;
 // =========================
 // OFFLINE CARDS (fallback)
 // =========================
+
+//OFFLINE DRAGON BALL //
+
+const OFFLINE_DRAGONBALL_DIR = path.join(__dirname, "data", "dragonball");
+const OFFLINE_DRAGONBALL_CARDS_PATH = path.join(OFFLINE_DRAGONBALL_DIR, "cards.json");
+const OFFLINE_DRAGONBALL_SETS_PATH = path.join(OFFLINE_DRAGONBALL_DIR, "sets.json");
+
+let offlineDragonballCards = [];
+let offlineDragonballSets = [];
+const offlineDragonballCardsBySet = new Map();
+
+function loadOfflineDragonball() {
+  try {
+    offlineDragonballCards = [];
+    offlineDragonballSets = [];
+    offlineDragonballCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_DRAGONBALL_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_DRAGONBALL_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineDragonballCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Dragon Ball cards.json found at", OFFLINE_DRAGONBALL_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_DRAGONBALL_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_DRAGONBALL_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineDragonballSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Dragon Ball sets.json found at", OFFLINE_DRAGONBALL_SETS_PATH);
+    }
+
+    for (const c of offlineDragonballCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineDragonballCardsBySet.has(setId)) {
+        offlineDragonballCardsBySet.set(setId, []);
+      }
+      offlineDragonballCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Dragon Ball sets: ${offlineDragonballSets.length}`);
+    console.log(`📦 Offline Dragon Ball cards: ${offlineDragonballCards.length}`);
+  } catch (e) {
+    console.log("Offline Dragon Ball load error:", e.message);
+  }
+}
+loadOfflineDragonball();
+
+
+function drawOfflineDragonballCard() {
+  if (!offlineDragonballCards?.length) {
+    throw new Error("Offline Dragon Ball pool empty");
+  }
+
+  return offlineDragonballCards[
+    Math.floor(Math.random() * offlineDragonballCards.length)
+  ];
+}
 // =========================
 // OFFLINE POKEMON CATALOG
 // =========================
@@ -361,6 +425,7 @@ function getGame(req){
   const g = String(req.query.game || "pokemon").toLowerCase();
   if (g === "onepiece") return "onepiece";
   if (g === "lorcana")  return "lorcana";
+  if (g === "dragonball") return "dragonball";
   return "pokemon";
 }
 
@@ -956,7 +1021,13 @@ if (game === "lorcana") {
   throw new Error("Lorcana: impossible de trouver une carte avec image");
 }
 
-  // ----- POKEMON ONLINE (TCGDEX) -----
+  //DBZ//
+
+  if (game === "dragonball") {
+  const c = drawOfflineDragonballCard();
+  console.log("📦 source=OFFLINE_DRAGONBALL");
+  return c;
+}
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
@@ -1495,6 +1566,17 @@ app.get("/api/sets", auth, async (req, res) => {
       return res.json({ sets: Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name)) });
     }
 
+    // DRAGON BALL //
+
+    if (game === "dragonball") {
+    return res.json({
+      sets: offlineDragonballSets.map(s => ({
+        id: s.id,
+        name: s.name
+      }))
+  });
+}
+
     return res.json({ sets: [] });
   } catch (e) {
     return res.status(502).json({ error: "sets failed" });
@@ -1564,6 +1646,21 @@ app.get("/api/sets", auth, async (req, res) => {
     });
   }
       
+    // DRAGON BALL //
+    if (game === "dragonball") {
+  const cards = offlineDragonballCardsBySet.get(setId) || [];
+
+  return res.json({
+    setId,
+    cards: cards.map(c => ({
+      cardId: c.cardId || "",
+      localId: String(c.localId || ""),
+      name: c.name || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    }))
+  });
+}
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
@@ -1906,7 +2003,7 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
   res.json({
     items: items.rows.map((x) => ({
       idKey: x.idkey || x.idKey,
-      game: x.game || "pokemon",
+      game: x.game || game,
       name: x.name,
       setName: x.setname || x.setName,
       image: x.image,
@@ -1995,6 +2092,7 @@ app.post("/api/market/list", auth, async (req, res) => {
   const safeGame =
     gameFromKey === "onepiece" ? "onepiece" :
     gameFromKey === "lorcana"  ? "lorcana"  :
+    gameFromKey === "dragonball" ? "dragonball" :
     "pokemon";
 
   const client = await pool.connect();
@@ -2590,15 +2688,17 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const u = uQ.rows[0];
   if (!u) return res.status(404).json({ error: "Profil introuvable" });
 
-  const [pQ, oQ, lQ] = await Promise.all([
+  const [pQ, oQ, lQ, dQ] = await Promise.all([
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='dragonball'`, [u.id]),
   ]);
 
   const pokemon = pQ.rows[0]?.total || 0;
   const onepiece = oQ.rows[0]?.total || 0;
   const lorcana = lQ.rows[0]?.total || 0;
+  const dragonball = dQ.rows[0]?.total || 0;
 
   const xp = Number(u?.xp || 0);
 
@@ -2611,11 +2711,12 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     xp,
     level: levelForXp(xp),
     stats: {
-      pokemon,
-      onepiece,
-      lorcana,
-      total: pokemon + onepiece + lorcana
-    }
+    pokemon,
+    onepiece,
+    lorcana,
+    dragonball,
+    total: pokemon + onepiece + lorcana + dragonball
+  }
   });
 });
 // =========================
