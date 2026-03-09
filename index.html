@@ -1428,6 +1428,52 @@
   }
 }
 
+.discordIconLink{
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(88,101,242,.14);
+  border:1px solid rgba(88,101,242,.35);
+  box-shadow:0 0 18px rgba(88,101,242,.18);
+  text-decoration:none;
+  transition:transform .12s ease, background .12s ease, border-color .12s ease;
+  flex:0 0 auto;
+}
+
+.discordIconLink:hover{
+  transform:translateY(-1px);
+  background:rgba(88,101,242,.22);
+  border-color:rgba(88,101,242,.55);
+}
+
+.discordIconLink:active{
+  transform:scale(.98);
+}
+
+.discordIconLink img{
+  width:24px;
+  height:24px;
+  object-fit:contain;
+  display:block;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));
+}
+
+@media (max-width:520px){
+  .discordIconLink{
+    width:42px;
+    height:42px;
+    border-radius:10px;
+  }
+
+  .discordIconLink img{
+    width:22px;
+    height:22px;
+  }
+}
+
 </style>
 </head>
 
@@ -1461,6 +1507,9 @@
         <a class="topLink" href="/market.html">MARKET</a>
         <a class="topLink" href="/leaderboard.html">LEADERBOARD</a>
         <a class="topLink" href="/friends.html">FRIENDS</a>
+        <a class="discordIconLink" href="https://discord.gg/yfFU3g4Wa7" target="_blank" rel="noopener noreferrer" aria-label="Rejoindre notre Discord">
+           <img src="discord-logo.png" alt="Discord">
+        </a>
         
 
         <!-- ✅ PROFILE DROPDOWN (avatar = bouton) -->
