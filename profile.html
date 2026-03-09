@@ -455,6 +455,10 @@ button{cursor:pointer}
             <div class="v" id="statLorcana">0</div>
           </div>
           <div class="statCard">
+            <div class="k">TOTAL DRAGON BALL</div>
+            <div class="v" id="statDragonball">0</div>
+          </div>
+          <div class="statCard">
             <div class="k">TOTAL CARTES</div>
             <div class="v" id="statTotal">0</div>
           </div>
@@ -533,6 +537,7 @@ button{cursor:pointer}
           <option value="pokemon">Pokémon</option>
           <option value="onepiece">One Piece</option>
           <option value="lorcana">Lorcana</option>
+          <option value="dragonball">Dragon Ball</option>
         </select>
         <input id="search" placeholder="Rechercher...">
       </div>
@@ -608,6 +613,7 @@ const collectionTitle = document.getElementById("collectionTitle");
 const statPokemon = document.getElementById("statPokemon");
 const statOnepiece = document.getElementById("statOnepiece");
 const statLorcana = document.getElementById("statLorcana");
+const statDragonball = document.getElementById("statDragonball");
 const statTotal = document.getElementById("statTotal");
 
 const zoomModal = document.getElementById("zoomModal");
@@ -658,11 +664,12 @@ function setBanner(url){
 function gameLabel(g){
   if (g === "onepiece") return "ONE PIECE";
   if (g === "lorcana")  return "LORCANA";
+  if (g === "dragonball") return "DRAGON BALL";
   return "POKÉMON";
 }
 
 function updateStats(items){
-  let p = 0, o = 0, l = 0;
+  let p = 0, o = 0, l = 0, d = 0;
 
   for(const x of items){
     const c = Number(x.count || 0) || 0;
@@ -670,13 +677,15 @@ function updateStats(items){
 
     if(g === "onepiece") o += c;
     else if(g === "lorcana") l += c;
+    else if(g === "dragonball") d += c;
     else p += c;
   }
 
   statPokemon.textContent = String(p);
   statOnepiece.textContent = String(o);
   statLorcana.textContent = String(l);
-  statTotal.textContent = String(p + o + l);
+  statDragonball.textContent = String(d);
+  statTotal.textContent = String(p + o + l + d);
 }
 
 /* ✅ zoom */
@@ -929,17 +938,19 @@ async function load(){
   const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
   const baseO = baseP;
 
-  const [cP, cO, cL] = await Promise.all([
-  apiGame(baseP, "pokemon",  { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-  apiGame(baseO, "onepiece", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-  apiGame(baseO, "lorcana",  { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+  const [cP, cO, cL, cD] = await Promise.all([
+    apiGame(baseP, "pokemon",    { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "onepiece",   { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "lorcana",    { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "dragonball", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
 ]);
 
-    const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",  set: x.set || x.setName || "" }));
-    const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece", set: x.set || x.setName || "" }));
-    const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",  set: x.set || x.setName || "" }));
+  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",    set: x.set || x.setName || "" }));
+  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",   set: x.set || x.setName || "" }));
+  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",    set: x.set || x.setName || "" }));
+  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball", set: x.set || x.setName || "" }));
 
-    allItems = [...itemsP, ...itemsO, ...itemsL];
+  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD];
 
   updateStats(allItems);
   renderFavs(allItems);
