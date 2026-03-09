@@ -9,6 +9,16 @@
 :root{
   --bg1:#05060d;
   --bg2:#090b18;
+
+  --panel: rgba(255,255,255,.045);
+  --panel-strong: rgba(255,255,255,.06);
+  --line: rgba(255,255,255,.07);
+  --line-soft: rgba(255,255,255,.045);
+  --text-soft: rgba(255,255,255,.72);
+
+  --shadow-big: 0 22px 70px rgba(0,0,0,.34);
+  --shadow-card: 0 18px 44px rgba(0,0,0,.30);
+  --shadow-soft: 0 10px 24px rgba(0,0,0,.22);
 }
 
 *{box-sizing:border-box}
@@ -40,16 +50,15 @@ body{
   justify-content:space-between;
   align-items:center;
   padding:14px;
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(10px);
-
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(14px);
   position: sticky;
   top: 14px;
   z-index: 50;
   gap:12px;
-  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  box-shadow: 0 20px 60px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 .controls{
@@ -61,26 +70,32 @@ body{
 
 input, select{
   padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
   background:#0f111a;
   color:#fff;
   font-weight:700;
   outline:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
 input::placeholder{opacity:.65}
 
 button{
   padding:8px 12px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.08);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
   color:#fff;
   font-weight:900;
   cursor:pointer;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
 }
-button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
+button:hover{
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05);
+}
 button:active{ transform: translateY(0px) scale(.99); }
 button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
@@ -92,11 +107,12 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
 /* ===== Grid container ===== */
 .gridWrap{
-  border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.025));
+  border:1px solid rgba(255,255,255,.06);
   padding:20px;
   flex:1;
+  box-shadow: var(--shadow-big), inset 0 1px 0 rgba(255,255,255,.03);
 }
 
 /* grid responsive auto */
@@ -128,11 +144,13 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
 .slot{
   position:relative;
-  border-radius:16px;
-  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-  border:1px solid rgba(255,255,255,.12);
+  border-radius:18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)),
+    radial-gradient(circle at top left, rgba(255,255,255,.035), transparent 40%);
+  border:1px solid rgba(255,255,255,.06);
   overflow:hidden;
-  box-shadow: 0 16px 50px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,.03);
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -140,30 +158,34 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   min-height: 340px;
 }
 .slot.empty{
-  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-  border-style:dashed;
-  opacity:.85;
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+  border:1px dashed rgba(255,255,255,.08);
+  opacity:.88;
 }
 .slot:hover{
-  border-color: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.10);
+  box-shadow: 0 22px 52px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 .slotImg{
   height:240px;
-  border-radius:12px;
-  background: rgba(0,0,0,.25) center/contain no-repeat;
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  border-radius:14px;
+  background: rgba(0,0,0,.18) center/contain no-repeat;
+  border:1px solid rgba(255,255,255,.05);
   cursor:pointer;
-  transition: transform .16s ease;
+  transition: transform .16s ease, box-shadow .16s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
 .slot.empty .slotImg{
   background:
-    radial-gradient(220px 120px at 40% 40%, rgba(255,255,255,.08), transparent 60%),
-    rgba(0,0,0,.18);
+    radial-gradient(220px 120px at 40% 40%, rgba(255,255,255,.06), transparent 60%),
+    rgba(0,0,0,.14);
   cursor:default;
 }
-.slot:hover .slotImg{ transform: scale(1.01); }
+.slot:hover .slotImg{
+  transform: scale(1.01);
+  box-shadow: 0 10px 20px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.03);
+}
 .slot.empty:hover .slotImg{ transform:none; }
 
 .slotTitle{
@@ -191,14 +213,14 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   font-weight:1000;
   padding:4px 10px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
   opacity:.92;
 }
 .pill.mint{
-  border-color: rgba(255,80,80,.55);
-  background: rgba(255,80,80,.12);
-  color: rgba(255,120,120,.98);
+  border-color: rgba(255,80,80,.35);
+  background: rgba(255,80,80,.10);
+  color: rgba(255,140,140,.98);
 }
 
 .binderPager{
@@ -207,9 +229,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   align-items:center;
   gap:10px;
   padding:10px 12px;
-  border-radius:14px;
-  background:rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  background:rgba(0,0,0,.16);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
 .binderPager .mid{
   font-weight:1000;
@@ -232,33 +255,41 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 /* ===== Card ===== */
 .cardBox{
   position:relative;
-  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:16px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025)),
+    radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 42%);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;
   padding:12px;
   overflow:hidden;
-  transition: transform .14s ease, background .14s ease, border-color .14s ease;
-  box-shadow: 0 16px 50px rgba(0,0,0,.25);
+  transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease;
+  box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255,255,255,.03);
   display:flex;
   flex-direction:column;
   gap:10px;
 }
 .cardBox:hover{
   transform: translateY(-2px);
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-  border-color: rgba(255,255,255,.18);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03)),
+    radial-gradient(circle at top left, rgba(255,255,255,.04), transparent 42%);
+  border-color: rgba(255,255,255,.10);
+  box-shadow: 0 22px 52px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.04);
 }
 
 .cImg{
   height:240px;
-  border-radius:12px;
-  background: rgba(0,0,0,.25) center/contain no-repeat;
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  border-radius:14px;
+  background: rgba(0,0,0,.18) center/contain no-repeat;
+  border:1px solid rgba(255,255,255,.05);
   cursor:pointer;
-  transition: transform .16s ease;
+  transition: transform .16s ease, box-shadow .16s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
-.cardBox:hover .cImg{ transform: scale(1.01); }
+.cardBox:hover .cImg{
+  transform: scale(1.01);
+  box-shadow: 0 12px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.03);
+}
 
 .selRow{
   display:flex;
@@ -280,23 +311,24 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .selLabel input{
   appearance:none;
   -webkit-appearance:none;
-
   width:20px;
   height:20px;
-
   background:#0f111a;
-  border:1px solid rgba(255,255,255,.25);
+  border:1px solid rgba(255,255,255,.22);
   border-radius:5px;
-
   cursor:pointer;
   position:relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
-
+.selLabel input:hover{
+  border-color: rgba(255,255,255,.32);
+  background:#131827;
+}
 .selLabel input:checked{
-  background:#9d7bff;
-  border-color:#9d7bff;
+  background:#8f79ff;
+  border-color:#8f79ff;
+  box-shadow: 0 0 14px rgba(143,121,255,.28);
 }
-
 .selLabel input:checked::after{
   content:"";
   position:absolute;
@@ -304,11 +336,12 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   top:2px;
   width:6px;
   height:10px;
-  border:2px solid white;
+  border:2px solid #fff;
   border-top:0;
   border-left:0;
   transform:rotate(45deg);
 }
+
 .cardTitle{
   font-weight:1000;
   letter-spacing:.2px;
@@ -334,22 +367,22 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   font-weight:1000;
   padding:4px 8px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
   opacity:.92;
 }
 .badge.mint{
-  border-color: rgba(255,80,80,.55);
-  background: rgba(255,80,80,.12);
-  color: rgba(255,120,120,.98);
+  border-color: rgba(255,80,80,.35);
+  background: rgba(255,80,80,.10);
+  color: rgba(255,140,140,.98);
 }
 .badge.grade{
   font-size:11px;
   font-weight:1000;
   padding:4px 10px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.18);
-  background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
   letter-spacing:.3px;
 }
 .badge.count{ opacity:.85; }
@@ -361,8 +394,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   font-weight:1000;
   padding:5px 9px;
   border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
   display:flex;
   align-items:center;
   gap:6px;
@@ -378,8 +411,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .qtyInput{
   width:88px;
   padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
   background:#0f111a;
   color:#fff;
   font-weight:1000;
@@ -387,12 +420,12 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .sellBtn{
   flex:1;
   padding:10px 12px;
-  border-radius:12px;
+  border-radius:14px;
   font-weight:1000;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.15);
+  background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.10);
 }
-.sellBtn:hover{ background: rgba(255,255,255,.12); }
+.sellBtn:hover{ background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)); }
 
 /* ===== Modal zoom slab ===== */
 .modal{
@@ -417,7 +450,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   inset:0;
   border-radius:22px;
   background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.03));
-  border:1px solid rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.12);
   backdrop-filter:blur(6px);
   box-shadow: 0 35px 120px rgba(0,0,0,.65);
 }
@@ -430,7 +463,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   height:60px;
   border-radius:14px;
   background:rgba(0,0,0,.30);
-  border:1px solid rgba(255,255,255,.20);
+  border:1px solid rgba(255,255,255,.14);
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -443,7 +476,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   border-radius:999px;
   font-size:11px;
   font-weight:1000;
-  border:1px solid rgba(255,80,80,.6);
+  border:1px solid rgba(255,80,80,.5);
   color:#ff7a7a;
   background: rgba(255,80,80,.12);
   display:none;
@@ -490,10 +523,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   position:absolute;
   inset:0;
   background:
-    linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.35)),
+    linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.28)),
     repeating-linear-gradient(45deg,
-      rgba(255,255,255,.05) 0px,
-      rgba(255,255,255,.05) 6px,
+      rgba(255,255,255,.035) 0px,
+      rgba(255,255,255,.035) 6px,
       rgba(255,255,255,0) 6px,
       rgba(255,255,255,0) 12px
     );
@@ -507,23 +540,23 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   border-radius:999px;
   font-size:11px;
   font-weight:1000;
-  border:1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.28);
   backdrop-filter: blur(6px);
   letter-spacing:.3px;
   z-index: 3;
 }
 .slot:not(.missing) .missTag{ display:none; }
 
-/* ✅ Progress (TCG Pocket vibe) */
+/* ✅ Progress */
 .progressBox{
   min-width: 240px;
   padding:10px 12px;
-  border-radius:14px;
-  background: rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;
+  background: linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.10));
+  border:1px solid rgba(255,255,255,.06);
   backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,.03);
 }
 .progressTop{
   display:flex;
@@ -554,8 +587,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .progressBar{
   height:10px;
   border-radius:999px;
-  background: rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
   overflow:hidden;
 }
 .progressFill{
@@ -575,8 +608,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   gap:10px;
   min-width: 220px;
   padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
   background:#0f111a;
   color:#fff;
   font-weight:900;
@@ -598,10 +631,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   left:0;
   width: 320px;
   max-width: 70vw;
-  border-radius:14px;
-  background: rgba(15,17,26,.92);
-  border:1px solid rgba(255,255,255,.14);
-  backdrop-filter: blur(10px);
+  border-radius:16px;
+  background: rgba(15,17,26,.94);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(12px);
   box-shadow: 0 25px 70px rgba(0,0,0,.55);
   padding:10px;
   display:none;
@@ -612,8 +645,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .setSearch{
   width:100%;
   padding:9px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.14);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.25);
   color:#fff;
   outline:none;
@@ -626,33 +659,26 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   max-height: 260px;
   overflow:auto;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.14);
 }
 .setItem{
   padding:9px 10px;
   font-weight:900;
   font-size:13px;
   cursor:pointer;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.04);
   display:flex;
   justify-content:space-between;
   gap:10px;
 }
 .setItem:last-child{ border-bottom:none; }
-.setItem:hover{ background: rgba(255,255,255,.06); }
+.setItem:hover{ background: rgba(255,255,255,.05); }
 .setItem small{ opacity:.65; font-weight:900; }
 
 .setItem.active{
   background: rgba(120,170,255,.14);
   border-left: 3px solid rgba(120,170,255,.85);
-}
-
-.setPanelHint{
-  margin-top:8px;
-  font-size:11px;
-  opacity:.7;
-  font-weight:900;
 }
 
 .setList{
@@ -673,8 +699,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 /* ===== Empty state binder ===== */
 .binderEmpty{
   border-radius:16px;
-  background: rgba(0,0,0,.18);
-  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.14);
+  border:1px solid rgba(255,255,255,.08);
   padding:22px;
   display:flex;
   flex-direction:column;
@@ -700,7 +726,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     <div><b>Gachax</b> — Collection</div>
 
     <div class="controls">
-      <!-- ✅ FILTRE JEU -->
       <select id="gameSel" title="Jeu">
         <option value="pokemon">Pokémon</option>
         <option value="onepiece">One Piece</option>
@@ -708,13 +733,11 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="dragonball">Dragon Ball</option>
       </select>
 
-      <!-- ✅ MODE -->
       <select id="viewSel" title="Affichage">
         <option value="grid">Grille</option>
         <option value="binder">Classeur 4×4</option>
       </select>
 
-      <!-- ✅ SET PICKER (aligné + panel recherche/liste) -->
       <div class="setPicker" id="setPicker" style="display:none;">
         <button type="button" class="setBtn" id="setBtn" aria-haspopup="listbox" aria-expanded="false">
           <span class="setBtnLabel" id="setBtnLabel">Choisir un set…</span>
@@ -726,13 +749,11 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
           <div class="setList" id="setList" role="listbox" tabindex="0"></div>
         </div>
 
-        <!-- garde le select caché (compat) -->
         <select id="setSel" style="display:none;"></select>
       </div>
 
       <input id="search" placeholder="Rechercher...">
 
-      <!-- ✅ TRI: ajout doublons + rareté -->
       <select id="sort" title="Tri">
         <option value="recent">Dernières obtenues</option>
         <option value="grade">Meilleure note</option>
@@ -741,7 +762,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="name">Nom A-Z</option>
       </select>
 
-      <!-- ✅ bulk sell controls -->
       <button id="sellSelectedBtn" disabled>VENDRE SÉLECTION (0)</button>
       <button id="clearSelBtn" disabled>VIDER</button>
 
@@ -751,7 +771,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     </div>
   </div>
 
-  <!-- ✅ Progress -->
   <div class="progressBox" id="progressBox" title="Progression du set">
     <div class="progressTop">
       <div class="progressTitle" id="progTitle">Set</div>
@@ -766,10 +785,8 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   </div>
 
   <div class="gridWrap">
-    <!-- GRILLE -->
     <div class="grid" id="grid"></div>
 
-    <!-- BINDER -->
     <div class="binderWrap" id="binderWrap">
       <div class="binderPager" id="binderPager" style="display:none;">
         <button id="prevPageBtn">◀</button>
@@ -787,7 +804,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal" aria-hidden="true">
   <div class="slab" id="zoomSlab" data-tier="" data-mint="0" role="dialog" aria-label="Zoom carte">
     <div class="shell"></div>
@@ -867,25 +883,21 @@ const zoomTitle = document.getElementById("zoomTitle");
 const zoomGrade = document.getElementById("zoomGrade");
 const zoomMint = document.getElementById("zoomMint");
 
-/* ===== Set picker custom ===== */
 const setPicker = document.getElementById("setPicker");
 const setBtn = document.getElementById("setBtn");
 const setBtnLabel = document.getElementById("setBtnLabel");
 const setPanel = document.getElementById("setPanel");
 const setSearch = document.getElementById("setSearch");
 const setListEl = document.getElementById("setList");
-const setSel = document.getElementById("setSel"); // hidden
+const setSel = document.getElementById("setSel");
 
-// selection: idKey -> qty
 const selected = new Map();
 
 let allItems = [];
-
-// ===== Binder state =====
 let setsList = [];
 let setsAll = [];
 let binderCards = [];
-let binderPage = 0;                // 0-based
+let binderPage = 0;
 const BINDER_PAGE_SIZE = 16;
 
 function currentView(){
@@ -903,10 +915,8 @@ gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
   selected.clear();
   refreshSelUI();
-
   localStorage.setItem(SET_KEY, "");
   binderPage = 0;
-
   await boot();
 });
 
@@ -931,7 +941,6 @@ function toHighImage(url){
   return u;
 }
 
-// affichage prix côté UI (le serveur reste la source de vérité)
 function sellPriceLabel(grade, mint){
   if (mint) return 20;
   const g = Number(grade) || 0;
@@ -949,18 +958,11 @@ function refreshSelUI(){
   sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty})`;
 }
 
-/* =========================
-   ✅ TRI RARETÉ + DOUBLONS
-   ========================= */
-
-// Rank rareté: plus grand = plus rare.
-// On a 3 sources: (1) champ rarity si tu l'ajoutes un jour, (2) setName heuristique, (3) fallback via grade/tier.
 function rarityRank(item){
   const g = Number(item?.grade || 0);
 
   const raw = String(item?.rarity || item?.rarityCode || "").trim().toUpperCase();
   if (raw){
-    // mapping large (pokemon / lorcana / onepiece possibles)
     const map = new Map([
       ["C",1],["COMMON",1],
       ["U",2],["UNCOMMON",2],
@@ -977,7 +979,6 @@ function rarityRank(item){
     if (v) return v;
   }
 
-  // Heuristique sur le nom du set / nom carte (selon tes APIs ça peut contenir "Promo", "Secret", etc.)
   const hay = (String(item?.name||"") + " " + String(item?.set||item?.setName||"")).toUpperCase();
 
   if (hay.includes("PROMO")) return 10;
@@ -990,7 +991,6 @@ function rarityRank(item){
   if (hay.includes("UNCOMMON") || hay.includes(" U ")) return 2;
   if (hay.includes("COMMON") || hay.includes(" C ")) return 1;
 
-  // fallback: approx via grade
   if (g >= 10) return 6;
   if (g >= 8) return 5;
   if (g >= 6) return 3;
@@ -1002,11 +1002,9 @@ function setGridMode(on){
   grid.style.display = on ? "" : "none";
   binderWrap.classList.toggle("on", !on);
 
-  // bulk sell uniquement en grille
   sellSelectedBtn.style.display = on ? "" : "none";
   clearSelBtn.style.display = on ? "" : "none";
 
-  // search/sort utiles en grille; en binder on garde search visible mais placeholder différent
   sortSelect.style.display = on ? "" : "none";
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
 }
@@ -1018,7 +1016,6 @@ function setBinderControlsVisible(){
   if (!isBinder) closeSetPanel();
 }
 
-/* ===== Set picker logic ===== */
 function openSetPanel(){
   setPanel.classList.add("open");
   setBtn.setAttribute("aria-expanded","true");
@@ -1081,7 +1078,6 @@ function renderSetList(list){
   }
 }
 
-/* ===== Sell buttons ===== */
 clearSelBtn.addEventListener("click", () => {
   selected.clear();
   applyFilters();
@@ -1101,7 +1097,6 @@ sellSelectedBtn.addEventListener("click", async () => {
 
     selected.clear();
 
-    // ✅ refresh immédiat (grid OU binder)
     await loadCollection();
 
     if (currentView() === "grid"){
@@ -1117,16 +1112,13 @@ sellSelectedBtn.addEventListener("click", async () => {
     }
 
     refreshSelUI();
-  }catch(e){
-    // silent
-  }
+  }catch(e){}
 });
 
 async function loadCollection(){
   try{
     const data = await api("/api/collection");
 
-    // ✅ normalise les champs (imageHigh/imagehigh) + autres au besoin
     allItems = (data.items || []).map(x => ({
       ...x,
       imageHigh: x.imageHigh ?? x.imagehigh ?? null,
@@ -1158,10 +1150,8 @@ function applyFilters(){
   } else if(sort === "name"){
     items.sort((a,b)=> (a.name||"").localeCompare(b.name||"") || (b.lastAt||0) - (a.lastAt||0));
   } else if(sort === "duplicates"){
-    // ✅ doublons: le plus grand count en premier
     items.sort((a,b)=> (b.count||0) - (a.count||0) || (b.lastAt||0) - (a.lastAt||0));
   } else if(sort === "rarity"){
-    // ✅ rareté: plus rare d'abord
     items.sort((a,b)=> rarityRank(b) - rarityRank(a) || (b.grade||0) - (a.grade||0) || (b.lastAt||0) - (a.lastAt||0));
   } else {
     items.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
@@ -1300,11 +1290,6 @@ function render(items){
   });
 }
 
-// =========================
-// BINDER: sets + cards + pages + trous vides
-// =========================
-
-// Parse idKey: game__setId__localId__cardId
 function parseIdKey(idKey){
   const p = String(idKey || "").split("__");
   return {
@@ -1315,7 +1300,6 @@ function parseIdKey(idKey){
   };
 }
 
-/* ✅ IMPORTANT: pour TOUS les jeux -> /api/sets */
 async function loadSetsForGame(){
   setsList = [];
   try{
@@ -1327,7 +1311,6 @@ async function loadSetsForGame(){
 
   setsAll = [...setsList];
 
-  // sync hidden select (compat)
   setSel.innerHTML = "";
   for (const s of setsAll){
     const o = document.createElement("option");
@@ -1351,7 +1334,6 @@ async function loadSetsForGame(){
   if (setPanel.classList.contains("open")) renderSetList(setsAll);
 }
 
-/* ✅ IMPORTANT: pour TOUS les jeux -> /api/set_cards?setId= */
 async function loadBinderSetCards(){
   binderCards = [];
   const setId = setSel.value;
@@ -1369,7 +1351,6 @@ async function loadBinderSetCards(){
     binderCards = [];
   }
 
-  // tri numeric-friendly
   binderCards.sort((a,b)=>{
     const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
     const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
@@ -1377,7 +1358,6 @@ async function loadBinderSetCards(){
   });
 }
 
-/* ✅ owned map robuste: match sur setId + cardId */
 function buildOwnedMapForSet(setId){
   const g = currentGame();
   const m = new Map();
@@ -1425,13 +1405,11 @@ function renderBinder(){
 
   const owned = buildOwnedMapForSet(setId);
 
-  // pager
   binderPager.style.display = total ? "" : "none";
   pageInfo.textContent = `Page ${binderPage + 1} / ${pages}`;
   prevPageBtn.disabled = binderPage === 0;
   nextPageBtn.disabled = binderPage >= pages - 1;
 
-  // progress set (sur tout le set)
   const fullSet = binderCards.map(c => ({
     ...c,
     have: owned.has(String(c.cardId || c.id || "").trim())
@@ -1439,7 +1417,6 @@ function renderBinder(){
   const setLabel = (setsList.find(s => s.id === setId)?.name) || setId || "Set";
   updateProgress(fullSet, setLabel);
 
-  // 16 slots fixes
   const fixed = [];
   for (let i = 0; i < BINDER_PAGE_SIZE; i++){
     fixed.push(slice[i] || null);
@@ -1469,8 +1446,8 @@ function renderBinder(){
     const have = !!ownedItem;
 
     const img = have
-  ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
-  : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
+      ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
+      : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
 
     slot.className = "slot" + (have ? "" : " missing");
 
@@ -1481,29 +1458,29 @@ function renderBinder(){
     const mint = have ? !!ownedItem.mint : false;
 
     slot.innerHTML = `
-    ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
+      ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
 
-    <div class="slotImg" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
-      ${
-        img
-          ? `<img
-              src="${img}"
-              alt="${title}"
-              style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
-              onerror="console.error('IMG ERROR:', this.src)"
-            >`
-          : ``
-      }
-    </div>
+      <div class="slotImg" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        ${
+          img
+            ? `<img
+                src="${img}"
+                alt="${title}"
+                style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
+                onerror="console.error('IMG ERROR:', this.src)"
+              >`
+            : ``
+        }
+      </div>
 
-    <div class="slotTitle">${title}</div>
-    <div class="slotSub">${sub}</div>
-    <div class="slotMeta">
-      <span class="pill">#${localId || "?"}</span>
-      <span class="pill">G${grade}</span>
-      ${mint ? `<span class="pill mint">MINT</span>` : ``}
-    </div>
-  `;
+      <div class="slotTitle">${title}</div>
+      <div class="slotSub">${sub}</div>
+      <div class="slotMeta">
+        <span class="pill">#${localId || "?"}</span>
+        <span class="pill">G${grade}</span>
+        ${mint ? `<span class="pill mint">MINT</span>` : ``}
+      </div>
+    `;
 
     const imgEl = slot.querySelector(".slotImg");
     if (have){
@@ -1538,9 +1515,6 @@ function updateProgress(cards, label = "Set"){
   progFill.style.width = pct + "%";
 }
 
-// =========================
-// Boot / sync UI
-// =========================
 async function boot(){
   gameSel.value = currentGame();
   viewSel.value = currentView();
@@ -1568,7 +1542,6 @@ async function boot(){
 searchInput.addEventListener("input", () => {
   if (currentView() === "grid") applyFilters();
   else {
-    // en binder: si tu tapes, on repasse en grille (comportement simple)
     if (searchInput.value.trim()){
       viewSel.value = "grid";
       localStorage.setItem(VIEW_KEY, "grid");
