@@ -278,12 +278,36 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 
 .selLabel input{
+  appearance:none;
+  -webkit-appearance:none;
+
   width:20px;
   height:20px;
-  accent-color:#9d7bff;
-  cursor:pointer;
+
   background:#0f111a;
-  border-radius:4px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:5px;
+
+  cursor:pointer;
+  position:relative;
+}
+
+.selLabel input:checked{
+  background:#9d7bff;
+  border-color:#9d7bff;
+}
+
+.selLabel input:checked::after{
+  content:"";
+  position:absolute;
+  left:5px;
+  top:2px;
+  width:6px;
+  height:10px;
+  border:2px solid white;
+  border-top:0;
+  border-left:0;
+  transform:rotate(45deg);
 }
 .cardTitle{
   font-weight:1000;
