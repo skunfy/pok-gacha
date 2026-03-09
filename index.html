@@ -1846,15 +1846,21 @@
   }
 
   window.setGameAndClose = async function(g){
-    const v = (g === "onepiece") ? "onepiece" : (g === "lorcana") ? "lorcana" : "pokemon";
+    const v =
+      (g === "onepiece") ? "onepiece" :
+      (g === "lorcana") ? "lorcana" :
+      (g === "dragonball") ? "dragonball" :
+      "pokemon";
+
     localStorage.setItem(GAME_KEY, v);
     closeGamePicker();
     applyGameToUI();
+
     try{
       await loadMe();
-      await loadPulls(); // refresh carousel + history for the game
+      await loadPulls();
     }catch{}
-  };
+};
 
   btnChangeGame?.addEventListener("click", (e) => {
     e.preventDefault();
