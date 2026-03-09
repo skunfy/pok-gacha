@@ -674,6 +674,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="pokemon">Pokémon</option>
         <option value="onepiece">One Piece</option>
         <option value="lorcana">Lorcana</option>
+        <option value="dragonball">Dragon Ball</option>
       </select>
 
       <!-- ✅ MODE -->
@@ -1159,6 +1160,8 @@ function render(items){
   items.forEach(x=>{
     const el=document.createElement("div");
     el.className="cardBox";
+
+    const g = (x.game || currentGame());
 
     const gameTag =
       g === "onepiece" ? "🟥 One Piece" :
