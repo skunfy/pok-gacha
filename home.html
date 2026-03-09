@@ -57,7 +57,7 @@
 
     .games {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 18px;
       justify-content: center;
     }
@@ -102,6 +102,7 @@
     .pokemon { background: linear-gradient(135deg, #ffcc00, #ff9900); color: #111; }
     .onepiece { background: linear-gradient(135deg, #d60000, #800000); }
     .lorcana{ background: linear-gradient(135deg, #2bd3ff, #6a5cff); }
+    .dragonball{background: linear-gradient(135deg, #ff7a00, #ff3d00);}
 
     .gameLogo {
       width: 160px;
@@ -178,6 +179,12 @@
         <img src="Lorcana.png" alt="Logo Lorcana" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Lorcana, collectionne et trade.</p>
       </button>
+
+      <button class="card dragonball" data-game="dragonball" type="button" aria-label="Choisir Dragon Ball">
+        <span class="badge">Sélectionné</span>
+        <img src="dragonball.png" alt="Logo Dragon Ball" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes Dragon Ball, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -190,6 +197,7 @@
       g = String(g || "").toLowerCase();
       if (g === "onepiece") return "onepiece";
       if (g === "lorcana")  return "lorcana";
+      if (g === "dragonball") return "dragonball";
       return "pokemon";
     }
 
