@@ -1569,13 +1569,26 @@ app.get("/api/sets", auth, async (req, res) => {
     // DRAGON BALL //
 
     if (game === "dragonball") {
-    return res.json({
-      sets: offlineDragonballSets.map(s => ({
-        id: s.id,
-        name: s.name
-      }))
-  });
-}
+      const bySet = new Map();
+
+      for (const c of offlineDragonballCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.set || c?.setName || setId).trim() || setId
+          });
+        }
+      }
+
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+
+      return res.json({ sets });
+    }
 
     return res.json({ sets: [] });
   } catch (e) {
