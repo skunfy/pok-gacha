@@ -219,16 +219,9 @@ async function collectAllCardsJP(page, startUrl, title, region) {
 }
 
 function buildStableLocalId(card) {
-  try {
-    const imageUrl = new URL(card.image);
-    const imageBase = path.basename(
-      imageUrl.pathname,
-      path.extname(imageUrl.pathname)
-    );
-    return `${card.cardNumber}__${imageBase}`;
-  } catch {
-    return `${card.cardNumber}__${slugify(card.name || "")}`;
-  }
+  // localId propre : juste le numéro de carte slugifié, sans __ ni /
+  // ex: "UE01BT/BLC-1-001" -> "ue01bt-blc-1-001"
+  return slugify(card.cardNumber || card.name || "unknown");
 }
 
 async function buildNaCatalog(page) {
@@ -281,7 +274,7 @@ async function buildNaCatalog(page) {
         region: "na",
         setId,
         setName,
-        cardId: `na__${setId}__${localId}`,
+        cardId: `${setId}-${localId}`,
         localId,
         name: card.name || localId,
         rarity: card.rarity || "",
@@ -348,7 +341,7 @@ async function buildJpCatalog(page) {
         region: "jp",
         setId,
         setName,
-        cardId: `jp__${setId}__${localId}`,
+        cardId: `${setId}-${localId}`,
         localId,
         name: card.name || localId,
         rarity: card.rarity || "",
