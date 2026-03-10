@@ -594,6 +594,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
         <option value="onepiece">One Piece</option>
         <option value="lorcana">Lorcana</option>
         <option value="dragonball">Dragon Ball</option>
+        <option value="unionarena">Union Arena</option>
       </select>
 
       <div class="pill">
@@ -772,8 +773,9 @@ if(!TOKEN) location.href="/login.html";
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
   if (g === "onepiece") return "onepiece";
-  if (g === "lorcana")  return "lorcana";
+  if (g === "lorcana") return "lorcana";
   if (g === "dragonball") return "dragonball";
+  if (g === "unionarena") return "unionarena";
   return "pokemon";
 }
 
@@ -808,8 +810,9 @@ function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
 
 function gameTag(g){
   if (g === "onepiece") return "🟥 One Piece";
-  if (g === "lorcana")  return "🟦 Lorcana";
+  if (g === "lorcana") return "🟦 Lorcana";
   if (g === "dragonball") return "🟧 Dragon Ball";
+  if (g === "unionarena") return "🟪 Union Arena";
   return "🟨 Pokémon";
 }
 function fmtCardLine(x){

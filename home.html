@@ -57,7 +57,7 @@
 
     .games {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 18px;
       justify-content: center;
     }
@@ -103,6 +103,7 @@
     .onepiece { background: linear-gradient(135deg, #d60000, #800000); }
     .lorcana{ background: linear-gradient(135deg, #2bd3ff, #6a5cff); }
     .dragonball{background: linear-gradient(135deg, #ff7a00, #ff3d00);}
+    .unionarena { background: linear-gradient(135deg, #8b5cf6, #4338ca); }
 
     .gameLogo {
       width: 160px;
@@ -185,6 +186,12 @@
         <img src="dragonball.png" alt="Logo Dragon Ball" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Dragon Ball, collectionne et trade.</p>
       </button>
+
+      <button class="card unionarena" data-game="unionarena" type="button" aria-label="Choisir Union Arena">
+        <span class="badge">Sélectionné</span>
+        <img src="unionarena.png" alt="Logo Union Arena" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes Union Arena, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -196,8 +203,9 @@
     function normalizeGame(g){
       g = String(g || "").toLowerCase();
       if (g === "onepiece") return "onepiece";
-      if (g === "lorcana")  return "lorcana";
+      if (g === "lorcana") return "lorcana";
       if (g === "dragonball") return "dragonball";
+      if (g === "unionarena") return "unionarena";
       return "pokemon";
     }
 

@@ -731,6 +731,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="onepiece">One Piece</option>
         <option value="lorcana">Lorcana</option>
         <option value="dragonball">Dragon Ball</option>
+        <option value="unionarena">Union Arena</option>
       </select>
 
       <select id="viewSel" title="Affichage">
@@ -831,7 +832,13 @@ if(!TOKEN) location.href="/login.html";
 
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  if (g === "pokemon" || g === "onepiece" || g === "lorcana" || g === "dragonball") return g;
+  if (
+    g === "pokemon" ||
+    g === "onepiece" ||
+    g === "lorcana" ||
+    g === "dragonball" ||
+    g === "unionarena"
+  ) return g;
   return "pokemon";
 }
 

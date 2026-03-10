@@ -568,7 +568,8 @@
   .profileWrap{ position:relative; display:inline-block; }
 
   /* marge profil friend*/
-  .profileWrap{ margin-left: 50px; }
+  .profileWrap{ margin-left: 50
+    px; }
 
   .profileMenu{
     position:absolute;
@@ -1737,6 +1738,7 @@
     if (g === "onepiece") return "onepiece";
     if (g === "lorcana")  return "lorcana";
     if (g === "dragonball") return "dragonball";
+    if (g === "unionarena") return "unionarena";
     return "pokemon";
   }
 
@@ -1744,6 +1746,7 @@
     if (g === "onepiece") return "ONE PIECE";
     if (g === "lorcana")  return "LORCANA";
     if (g === "dragonball") return "DRAGON BALL";
+    if (g === "unionarena") return "UNION ARENA";
     return "POKÉMON";
   }
 
@@ -1871,8 +1874,9 @@
 
   function placeholderLogoForGame(g){
     if(g === "onepiece") return "One_Piece_Logo.png";
-    if(g === "lorcana")  return "Lorcana.png";
+    if(g === "lorcana") return "Lorcana.png";
     if(g === "dragonball") return "dragonball.png";
+    if(g === "unionarena") return "unionarena.png";
     return "International_Pokémon_logo.png";
   }
 
@@ -1895,15 +1899,16 @@
   }
 
   window.setGameAndClose = async function(g){
-    const v =
-      (g === "onepiece") ? "onepiece" :
-      (g === "lorcana") ? "lorcana" :
-      (g === "dragonball") ? "dragonball" :
-      "pokemon";
+  const v =
+    (g === "onepiece") ? "onepiece" :
+    (g === "lorcana") ? "lorcana" :
+    (g === "dragonball") ? "dragonball" :
+    (g === "unionarena") ? "unionarena" :
+    "pokemon";
 
-    localStorage.setItem(GAME_KEY, v);
-    closeGamePicker();
-    applyGameToUI();
+  localStorage.setItem("gacha_game_v1", v);
+  applyGameToUI();
+  closeGamePicker();
 
     try{
       await loadMe();

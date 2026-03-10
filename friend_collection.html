@@ -349,10 +349,24 @@ if(!TOKEN) location.href="/login.html";
 const GAME_KEY = "gacha_game_v1";
 function currentGame(){
   const g = String(localStorage.getItem(GAME_KEY) || "pokemon").toLowerCase();
-  return (g === "onepiece") ? "onepiece" : "pokemon";
+  if (
+    g === "pokemon" ||
+    g === "onepiece" ||
+    g === "lorcana" ||
+    g === "dragonball" ||
+    g === "unionarena"
+  ) return g;
+  return "pokemon";
 }
 function setGame(g){
-  const safe = (String(g).toLowerCase() === "onepiece") ? "onepiece" : "pokemon";
+  const v = String(g || "").toLowerCase();
+  const safe =
+    v === "onepiece" ? "onepiece" :
+    v === "lorcana" ? "lorcana" :
+    v === "dragonball" ? "dragonball" :
+    v === "unionarena" ? "unionarena" :
+    "pokemon";
+
   localStorage.setItem(GAME_KEY, safe);
 }
 
@@ -385,6 +399,9 @@ if(!friendCode){
   sel.innerHTML = `
     <option value="pokemon">Pokémon</option>
     <option value="onepiece">One Piece</option>
+    <option value="lorcana">Lorcana</option>
+    <option value="dragonball">Dragon Ball</option>
+    <option value="unionarena">Union Arena</option>
   `;
   sel.value = currentGame();
 

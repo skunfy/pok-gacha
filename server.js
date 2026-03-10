@@ -82,6 +82,70 @@ function drawOfflineDragonballCard() {
     Math.floor(Math.random() * offlineDragonballCards.length)
   ];
 }
+
+// OFFLINE UNION ARENA //
+
+const OFFLINE_UNIONARENA_DIR = path.join(__dirname, "data", "unionarena");
+const OFFLINE_UNIONARENA_CARDS_PATH = path.join(OFFLINE_UNIONARENA_DIR, "cards.json");
+const OFFLINE_UNIONARENA_SETS_PATH = path.join(OFFLINE_UNIONARENA_DIR, "sets.json");
+
+let offlineUnionArenaCards = [];
+let offlineUnionArenaSets = [];
+const offlineUnionArenaCardsBySet = new Map();
+
+function loadOfflineUnionArena() {
+  try {
+    offlineUnionArenaCards = [];
+    offlineUnionArenaSets = [];
+    offlineUnionArenaCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_UNIONARENA_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_UNIONARENA_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineUnionArenaCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Union Arena cards.json found at", OFFLINE_UNIONARENA_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_UNIONARENA_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_UNIONARENA_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineUnionArenaSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Union Arena sets.json found at", OFFLINE_UNIONARENA_SETS_PATH);
+    }
+
+    for (const c of offlineUnionArenaCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+
+      if (!offlineUnionArenaCardsBySet.has(setId)) {
+        offlineUnionArenaCardsBySet.set(setId, []);
+      }
+      offlineUnionArenaCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Union Arena sets: ${offlineUnionArenaSets.length}`);
+    console.log(`📦 Offline Union Arena cards: ${offlineUnionArenaCards.length}`);
+  } catch (e) {
+    console.log("Offline Union Arena load error:", e.message);
+  }
+}
+loadOfflineUnionArena();
+
+function drawOfflineUnionArenaCard() {
+  if (!offlineUnionArenaCards?.length) {
+    throw new Error("Offline Union Arena pool empty");
+  }
+
+  return offlineUnionArenaCards[
+    Math.floor(Math.random() * offlineUnionArenaCards.length)
+  ];
+}
 // =========================
 // OFFLINE POKEMON CATALOG
 // =========================
@@ -424,8 +488,9 @@ async function notify(userId, type, title, body, meta = null) {
 function getGame(req){
   const g = String(req.query.game || "pokemon").toLowerCase();
   if (g === "onepiece") return "onepiece";
-  if (g === "lorcana")  return "lorcana";
+  if (g === "lorcana") return "lorcana";
   if (g === "dragonball") return "dragonball";
+  if (g === "unionarena") return "unionarena";
   return "pokemon";
 }
 
@@ -1028,6 +1093,19 @@ if (game === "lorcana") {
   console.log("📦 source=OFFLINE_DRAGONBALL");
   return c;
 }
+// UNION ARENA //
+if (game === "unionarena") {
+    const c = drawOfflineUnionArenaCard();
+    return {
+      cardId: c.cardId || null,
+      setId: c.setId || null,
+      localId: c.localId || null,
+      name: c.name || "",
+      set: c.set || c.setName || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    };
+  }
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
@@ -1590,6 +1668,28 @@ app.get("/api/sets", auth, async (req, res) => {
       return res.json({ sets });
     }
 
+    if (game === "unionarena") {
+  const bySet = new Map();
+
+  for (const c of offlineUnionArenaCards) {
+    const setId = String(c?.setId || "").trim();
+    if (!setId) continue;
+
+    if (!bySet.has(setId)) {
+      bySet.set(setId, {
+        id: setId,
+        name: String(c?.set || c?.setName || setId).trim() || setId
+      });
+    }
+  }
+
+  const sets = Array.from(bySet.values()).sort((a, b) =>
+    a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+  );
+
+  return res.json({ sets });
+}
+
     return res.json({ sets: [] });
   } catch (e) {
     return res.status(502).json({ error: "sets failed" });
@@ -1662,6 +1762,21 @@ app.get("/api/sets", auth, async (req, res) => {
     // DRAGON BALL //
     if (game === "dragonball") {
   const cards = offlineDragonballCardsBySet.get(setId) || [];
+
+  return res.json({
+    setId,
+    cards: cards.map(c => ({
+      cardId: c.cardId || "",
+      localId: String(c.localId || ""),
+      name: c.name || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    }))
+  });
+}
+//UNION ARENA //
+    if (game === "unionarena") {
+  const cards = offlineUnionArenaCardsBySet.get(setId) || [];
 
   return res.json({
     setId,
@@ -2104,8 +2219,9 @@ app.post("/api/market/list", auth, async (req, res) => {
   const gameFromKey = String(idKey.split("__")[0] || "pokemon").toLowerCase();
   const safeGame =
     gameFromKey === "onepiece" ? "onepiece" :
-    gameFromKey === "lorcana"  ? "lorcana"  :
+    gameFromKey === "lorcana" ? "lorcana" :
     gameFromKey === "dragonball" ? "dragonball" :
+    gameFromKey === "unionarena" ? "unionarena" :
     "pokemon";
 
   const client = await pool.connect();
@@ -2701,17 +2817,19 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const u = uQ.rows[0];
   if (!u) return res.status(404).json({ error: "Profil introuvable" });
 
-  const [pQ, oQ, lQ, dQ] = await Promise.all([
+  const [pQ, oQ, lQ, dQ, uAQ] = await Promise.all([
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='dragonball'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='unionarena'`, [u.id]),
   ]);
 
   const pokemon = pQ.rows[0]?.total || 0;
   const onepiece = oQ.rows[0]?.total || 0;
   const lorcana = lQ.rows[0]?.total || 0;
   const dragonball = dQ.rows[0]?.total || 0;
+  const unionarena = uAQ.rows[0]?.total || 0;
 
   const xp = Number(u?.xp || 0);
 
@@ -2728,7 +2846,8 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     onepiece,
     lorcana,
     dragonball,
-    total: pokemon + onepiece + lorcana + dragonball
+    unionarena,
+    total: pokemon + onepiece + lorcana + dragonball + unionarena
   }
   });
 });
