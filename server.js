@@ -1799,27 +1799,27 @@ app.get("/api/sets", auth, async (req, res) => {
 }
 //UNION ARENA //
     if (game === "unionarena") {
-  const cards = (offlineUnionArenaCardsBySet.get(setId) || [])
-    .filter(c =>
-      isValidUnionArenaImage(c?.image) || isValidUnionArenaImage(c?.imageHigh)
-    );
+
+  const rawCards = offlineUnionArenaCardsBySet.get(setId) || [];
+
+  console.log("------ UNION ARENA DEBUG ------");
+  console.log("setId =", setId);
+  console.log("raw cards count =", rawCards.length);
+
+  const cards = rawCards;
+
+  console.log("final cards count =", cards.length);
+  console.log("-------------------------------");
 
   return res.json({
     setId,
-    cards: cards.map(c => {
-      const img =
-        isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
-        isValidUnionArenaImage(c.image) ? c.image :
-        null;
-
-      return {
-        cardId: c.cardId || "",
-        localId: String(c.localId || ""),
-        name: c.name || "",
-        image: img,
-        imageHigh: img
-      };
-    }).filter(c => c.image)
+    cards: cards.map(c => ({
+      cardId: c.cardId || "",
+      localId: String(c.localId || ""),
+      name: c.name || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    }))
   });
 }
     // ===== LORCANA =====
