@@ -137,14 +137,27 @@ function loadOfflineUnionArena() {
 }
 loadOfflineUnionArena();
 
+function isValidUnionArenaImage(url) {
+  const u = String(url || "").trim().toLowerCase();
+  if (!u) return false;
+  if (u.includes("dummy.gif")) return false;
+  return true;
+}
+
 function drawOfflineUnionArenaCard() {
   if (!offlineUnionArenaCards?.length) {
     throw new Error("Offline Union Arena pool empty");
   }
 
-  return offlineUnionArenaCards[
-    Math.floor(Math.random() * offlineUnionArenaCards.length)
-  ];
+  const valid = offlineUnionArenaCards.filter(c =>
+    isValidUnionArenaImage(c?.image) || isValidUnionArenaImage(c?.imageHigh)
+  );
+
+  if (!valid.length) {
+    throw new Error("Offline Union Arena has no valid images");
+  }
+
+  return valid[Math.floor(Math.random() * valid.length)];
 }
 // =========================
 // OFFLINE POKEMON CATALOG
@@ -1095,17 +1108,27 @@ if (game === "lorcana") {
 }
 // UNION ARENA //
 if (game === "unionarena") {
-    const c = drawOfflineUnionArenaCard();
-    return {
-      cardId: c.cardId || null,
-      setId: c.setId || null,
-      localId: c.localId || null,
-      name: c.name || "",
-      set: c.set || c.setName || "",
-      image: c.image || null,
-      imageHigh: c.imageHigh || c.image || null
-    };
+  const c = drawOfflineUnionArenaCard();
+
+  const img =
+    isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
+    isValidUnionArenaImage(c.image) ? c.image :
+    null;
+
+  if (!img) {
+    throw new Error("Union Arena: image invalide");
   }
+
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.set || c.setName || c.series || "Union Arena",
+    image: img,
+    imageHigh: img
+  };
+}
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
@@ -1776,17 +1799,27 @@ app.get("/api/sets", auth, async (req, res) => {
 }
 //UNION ARENA //
     if (game === "unionarena") {
-  const cards = offlineUnionArenaCardsBySet.get(setId) || [];
+  const cards = (offlineUnionArenaCardsBySet.get(setId) || [])
+    .filter(c =>
+      isValidUnionArenaImage(c?.image) || isValidUnionArenaImage(c?.imageHigh)
+    );
 
   return res.json({
     setId,
-    cards: cards.map(c => ({
-      cardId: c.cardId || "",
-      localId: String(c.localId || ""),
-      name: c.name || "",
-      image: c.image || null,
-      imageHigh: c.imageHigh || c.image || null
-    }))
+    cards: cards.map(c => {
+      const img =
+        isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
+        isValidUnionArenaImage(c.image) ? c.image :
+        null;
+
+      return {
+        cardId: c.cardId || "",
+        localId: String(c.localId || ""),
+        name: c.name || "",
+        image: img,
+        imageHigh: img
+      };
+    }).filter(c => c.image)
   });
 }
     // ===== LORCANA =====
