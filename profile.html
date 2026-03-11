@@ -676,7 +676,7 @@ function gameLabel(g){
 }
 
 function updateStats(items){
-  let p = 0, o = 0, l = 0, d = 0;
+  let p = 0, o = 0, l = 0, d = 0, u = 0;
 
   for(const x of items){
     const c = Number(x.count || 0) || 0;
@@ -685,6 +685,7 @@ function updateStats(items){
     if(g === "onepiece") o += c;
     else if(g === "lorcana") l += c;
     else if(g === "dragonball") d += c;
+    else if(g === "unionarena") u += c;
     else p += c;
   }
 
@@ -692,7 +693,8 @@ function updateStats(items){
   statOnepiece.textContent = String(o);
   statLorcana.textContent = String(l);
   statDragonball.textContent = String(d);
-  statTotal.textContent = String(p + o + l + d);
+  statUnionarena.textContent = String(u);
+  statTotal.textContent = String(p + o + l + d + u);
 }
 
 /* ✅ zoom */
