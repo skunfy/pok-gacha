@@ -1,134 +1,1136 @@
 [
   {
-    "id": "unionarena-na-bleach-thousand-year-blood-war",
+    "id": "unionarena-na-bleach-thousand-year-blood-war-ue01bt",
     "name": "BLEACH: Thousand-Year Blood War",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE01BT"
   },
   {
-    "id": "unionarena-na-hunter-x-hunter",
+    "id": "unionarena-na-bleach-thousand-year-blood-war-ue01nc",
+    "name": "BLEACH: Thousand-Year Blood War",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE01NC"
+  },
+  {
+    "id": "unionarena-na-bleach-thousand-year-blood-war-ue01st",
+    "name": "BLEACH: Thousand-Year Blood War",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE01ST"
+  },
+  {
+    "id": "unionarena-na-bleach-thousand-year-blood-war-uepr",
+    "name": "BLEACH: Thousand-Year Blood War",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-bleach-thousand-year-blood-war-uex01bt",
+    "name": "BLEACH: Thousand-Year Blood War",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX01BT"
+  },
+  {
+    "id": "unionarena-na-hunter-x-hunter-ue02bt",
     "name": "HUNTER X HUNTER",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE02BT"
   },
   {
-    "id": "unionarena-na-jujutsu-kaisen",
+    "id": "unionarena-na-hunter-x-hunter-ue02st",
+    "name": "HUNTER X HUNTER",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE02ST"
+  },
+  {
+    "id": "unionarena-na-hunter-x-hunter-uepr",
+    "name": "HUNTER X HUNTER",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-hunter-x-hunter-uex04bt",
+    "name": "HUNTER X HUNTER",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX04BT"
+  },
+  {
+    "id": "unionarena-na-jujutsu-kaisen-ue03bt",
     "name": "JUJUTSU KAISEN",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE03BT"
   },
   {
-    "id": "unionarena-na-code-geass-lelouch-of-the-rebellion",
+    "id": "unionarena-na-jujutsu-kaisen-ue03st",
+    "name": "JUJUTSU KAISEN",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE03ST"
+  },
+  {
+    "id": "unionarena-na-jujutsu-kaisen-uepr",
+    "name": "JUJUTSU KAISEN",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-jujutsu-kaisen-uex02bt",
+    "name": "JUJUTSU KAISEN",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX02BT"
+  },
+  {
+    "id": "unionarena-na-code-geass-lelouch-of-the-rebellion-ue04bt",
     "name": "CODE GEASS Lelouch of the Rebellion",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE04BT"
   },
   {
-    "id": "unionarena-na-demon-slayer-kimetsu-no-yaiba",
+    "id": "unionarena-na-code-geass-lelouch-of-the-rebellion-uepr",
+    "name": "CODE GEASS Lelouch of the Rebellion",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-code-geass-lelouch-of-the-rebellion-uex03bt",
+    "name": "CODE GEASS Lelouch of the Rebellion",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX03BT"
+  },
+  {
+    "id": "unionarena-na-demon-slayer-kimetsu-no-yaiba-ue05bt",
     "name": "Demon Slayer: Kimetsu no Yaiba",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE05BT"
   },
   {
-    "id": "unionarena-na-one-punch-man",
+    "id": "unionarena-na-demon-slayer-kimetsu-no-yaiba-ue05st",
+    "name": "Demon Slayer: Kimetsu no Yaiba",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE05ST"
+  },
+  {
+    "id": "unionarena-na-demon-slayer-kimetsu-no-yaiba-uepr",
+    "name": "Demon Slayer: Kimetsu no Yaiba",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-demon-slayer-kimetsu-no-yaiba-uex05bt",
+    "name": "Demon Slayer: Kimetsu no Yaiba",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX05BT"
+  },
+  {
+    "id": "unionarena-na-one-punch-man-ue06bt",
     "name": "ONE PUNCH MAN",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE06BT"
   },
   {
-    "id": "unionarena-na-sword-art-online",
+    "id": "unionarena-na-one-punch-man-ue06st",
+    "name": "ONE PUNCH MAN",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE06ST"
+  },
+  {
+    "id": "unionarena-na-one-punch-man-uepr",
+    "name": "ONE PUNCH MAN",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-sword-art-online-ue07bt",
     "name": "Sword Art Online",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE07BT"
   },
   {
-    "id": "unionarena-na-black-clover",
+    "id": "unionarena-na-sword-art-online-ue07st",
+    "name": "Sword Art Online",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE07ST"
+  },
+  {
+    "id": "unionarena-na-sword-art-online-uepr",
+    "name": "Sword Art Online",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-sword-art-online-uex06bt",
+    "name": "Sword Art Online",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEX06BT"
+  },
+  {
+    "id": "unionarena-na-black-clover-ue08bt",
     "name": "Black Clover",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE08BT"
   },
   {
-    "id": "unionarena-na-fullmetal-alchemist",
+    "id": "unionarena-na-black-clover-ue08st",
+    "name": "Black Clover",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE08ST"
+  },
+  {
+    "id": "unionarena-na-black-clover-uepr",
+    "name": "Black Clover",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-fullmetal-alchemist-ue09bt",
     "name": "FULLMETAL ALCHEMIST",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE09BT"
   },
   {
-    "id": "unionarena-na-attack-on-titan",
+    "id": "unionarena-na-fullmetal-alchemist-ue09st",
+    "name": "FULLMETAL ALCHEMIST",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE09ST"
+  },
+  {
+    "id": "unionarena-na-fullmetal-alchemist-uepr",
+    "name": "FULLMETAL ALCHEMIST",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-attack-on-titan-ue10bt",
     "name": "Attack on Titan",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE10BT"
   },
   {
-    "id": "unionarena-na-rurouni-kenshin",
+    "id": "unionarena-na-attack-on-titan-ue10st",
+    "name": "Attack on Titan",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE10ST"
+  },
+  {
+    "id": "unionarena-na-attack-on-titan-uepr",
+    "name": "Attack on Titan",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-rurouni-kenshin-ue11bt",
     "name": "Rurouni Kenshin",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE11BT"
   },
   {
-    "id": "unionarena-na-kaiju-no-8",
+    "id": "unionarena-na-rurouni-kenshin-ue11st",
+    "name": "Rurouni Kenshin",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE11ST"
+  },
+  {
+    "id": "unionarena-na-rurouni-kenshin-uepr",
+    "name": "Rurouni Kenshin",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-kaiju-no-8-ue12bt",
     "name": "Kaiju No. 8",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE12BT"
   },
   {
-    "id": "unionarena-na-yu-yu-hakusho-ghost-files",
+    "id": "unionarena-na-kaiju-no-8-uepr",
+    "name": "Kaiju No. 8",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-yu-yu-hakusho-ghost-files-ue13bt",
     "name": "Yu Yu Hakusho: Ghost Files",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE13BT"
   },
   {
-    "id": "unionarena-na-goddess-of-victory-nikke",
+    "id": "unionarena-na-yu-yu-hakusho-ghost-files-uepr",
+    "name": "Yu Yu Hakusho: Ghost Files",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-goddess-of-victory-nikke-ue14bt",
     "name": "GODDESS OF VICTORY: NIKKE",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE14BT"
   },
   {
-    "id": "unionarena-na-evangelion-new-theatrical-edition",
+    "id": "unionarena-na-goddess-of-victory-nikke-uepr",
+    "name": "GODDESS OF VICTORY: NIKKE",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-evangelion-new-theatrical-edition-ue15bt",
     "name": "Evangelion: New Theatrical Edition",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE15BT"
   },
   {
-    "id": "unionarena-na-solo-leveling",
+    "id": "unionarena-na-evangelion-new-theatrical-edition-ue15st",
+    "name": "Evangelion: New Theatrical Edition",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UE15ST"
+  },
+  {
+    "id": "unionarena-na-evangelion-new-theatrical-edition-uepr",
+    "name": "Evangelion: New Theatrical Edition",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-solo-leveling-ue17bt",
     "name": "SOLO LEVELING",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE17BT"
   },
   {
-    "id": "unionarena-na-kagurabachi",
+    "id": "unionarena-na-solo-leveling-uepr",
+    "name": "SOLO LEVELING",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-na-kagurabachi-ue16bt",
     "name": "KAGURABACHI",
     "region": "na",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UE16BT"
   },
   {
-    "id": "unionarena-jp-re-セ-ロから始める異世界生活-ua40bt",
-    "name": "Re:ゼロから始める異世界生活 【UA40BT】",
+    "id": "unionarena-na-kagurabachi-uepr",
+    "name": "KAGURABACHI",
+    "region": "na",
+    "game": "unionarena",
+    "product": "UEPR"
+  },
+  {
+    "id": "unionarena-jp-コート-キ-アス-反逆のルルーシュ-ua01st-ua01st",
+    "name": "コードギアス 反逆のルルーシュ 【UA01ST】",
     "region": "jp",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UA01ST"
   },
   {
-    "id": "unionarena-jp-to-loveる-とらふ-る-memory-of-heroines-ua45bt",
-    "name": "To LOVEる-とらぶる- Memory of Heroines【UA45BT】",
+    "id": "unionarena-jp-コート-キ-アス-反逆のルルーシュ-ua01bt-ua01bt",
+    "name": "コードギアス 反逆のルルーシュ 【UA01BT】",
     "region": "jp",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UA01BT"
   },
   {
-    "id": "unionarena-jp-銀魂-ua11bt",
+    "id": "unionarena-jp-コート-キ-アス-反逆のルルーシュ-vol-2-ex02bt-ex02bt",
+    "name": "コードギアス 反逆のルルーシュ Vol.2 【EX02BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX02BT"
+  },
+  {
+    "id": "unionarena-jp-呪術廻戦-ua02st-ua02st",
+    "name": "呪術廻戦 【UA02ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA02ST"
+  },
+  {
+    "id": "unionarena-jp-呪術廻戦-ua02bt-ua02bt",
+    "name": "呪術廻戦 【UA02BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA02BT"
+  },
+  {
+    "id": "unionarena-jp-呪術廻戦-vol-2-ex04bt-ex04bt",
+    "name": "呪術廻戦 Vol.2 【EX04BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX04BT"
+  },
+  {
+    "id": "unionarena-jp-new-card-selection-呪術廻戦-ua02nc",
+    "name": "NEW CARD SELECTION 呪術廻戦",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA02NC"
+  },
+  {
+    "id": "unionarena-jp-hunter-hunter-ua03st-ua03st",
+    "name": "HUNTER×HUNTER 【UA03ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA03ST"
+  },
+  {
+    "id": "unionarena-jp-hunter-hunter-ua03bt-ua03bt",
+    "name": "HUNTER×HUNTER 【UA03BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA03BT"
+  },
+  {
+    "id": "unionarena-jp-hunter-hunter-vol-2-ex01bt-ex01bt",
+    "name": "HUNTER×HUNTER Vol.2 【EX01BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX01BT"
+  },
+  {
+    "id": "unionarena-jp-アイト-ルマスター-シャイニーカラース-ua04st-ua04st",
+    "name": "アイドルマスター シャイニーカラーズ 【UA04ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA04ST"
+  },
+  {
+    "id": "unionarena-jp-アイト-ルマスター-シャイニーカラース-ua04bt-ua04bt",
+    "name": "アイドルマスター シャイニーカラーズ 【UA04BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA04BT"
+  },
+  {
+    "id": "unionarena-jp-アイト-ルマスター-シャイニーカラース-vol-2-ex03bt-ex03bt",
+    "name": "アイドルマスター シャイニーカラーズ Vol.2 【EX03BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX03BT"
+  },
+  {
+    "id": "unionarena-jp-アイト-ルマスター-シャイニーカラース-pc01bt-pc01bt",
+    "name": "アイドルマスター シャイニーカラーズ 【PC01BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "PC01BT"
+  },
+  {
+    "id": "unionarena-jp-鬼滅の刃-ua05st-ua05st",
+    "name": "鬼滅の刃 【UA05ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA05ST"
+  },
+  {
+    "id": "unionarena-jp-鬼滅の刃-ua05bt-ua05bt",
+    "name": "鬼滅の刃 【UA05BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA05BT"
+  },
+  {
+    "id": "unionarena-jp-鬼滅の刃-vol-2-ex05bt-ex05bt",
+    "name": "鬼滅の刃 Vol.2 【EX05BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX05BT"
+  },
+  {
+    "id": "unionarena-jp-new-card-selection-鬼滅の刃-ua01nc",
+    "name": "NEW CARD SELECTION 鬼滅の刃",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA01NC"
+  },
+  {
+    "id": "unionarena-jp-tales-of-arise-ua06st-ua06st",
+    "name": "Tales of ARISE 【UA06ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA06ST"
+  },
+  {
+    "id": "unionarena-jp-tales-of-arise-ua06bt-ua06bt",
+    "name": "Tales of ARISE 【UA06BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA06BT"
+  },
+  {
+    "id": "unionarena-jp-転生したらスライムた-った件-ua07st-ua07st",
+    "name": "転生したらスライムだった件 【UA07ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA07ST"
+  },
+  {
+    "id": "unionarena-jp-転生したらスライムた-った件-ua07bt-ua07bt",
+    "name": "転生したらスライムだった件 【UA07BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA07BT"
+  },
+  {
+    "id": "unionarena-jp-転生したらスライムた-った件-vol-2-ex09bt-ex09bt",
+    "name": "転生したらスライムだった件 Vol.2 【EX09BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX09BT"
+  },
+  {
+    "id": "unionarena-jp-bleach-千年血戦篇-ua08st-ua08st",
+    "name": "BLEACH 千年血戦篇 【UA08ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA08ST"
+  },
+  {
+    "id": "unionarena-jp-bleach-千年血戦篇-ua08bt-ua08bt",
+    "name": "BLEACH 千年血戦篇 【UA08BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA08BT"
+  },
+  {
+    "id": "unionarena-jp-bleach-千年血戦篇-vol-2-ex07bt-ex07bt",
+    "name": "BLEACH 千年血戦篇 Vol.2 【EX07BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX07BT"
+  },
+  {
+    "id": "unionarena-jp-new-card-selection-bleach-千年血戦篇-ua04nc",
+    "name": "NEW CARD SELECTION BLEACH 千年血戦篇",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA04NC"
+  },
+  {
+    "id": "unionarena-jp-僕とロホ-コ-ua09st-ua09st",
+    "name": "僕とロボコ 【UA09ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA09ST"
+  },
+  {
+    "id": "unionarena-jp-僕とロホ-コ-ua09bt-ua09bt",
+    "name": "僕とロボコ 【UA09BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA09BT"
+  },
+  {
+    "id": "unionarena-jp-僕のヒーローアカテ-ミア-ua10st-ua10st",
+    "name": "僕のヒーローアカデミア 【UA10ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA10ST"
+  },
+  {
+    "id": "unionarena-jp-僕のヒーローアカテ-ミア-ua10bt-ua10bt",
+    "name": "僕のヒーローアカデミア 【UA10BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA10BT"
+  },
+  {
+    "id": "unionarena-jp-僕のヒーローアカテ-ミア-vol-2-ex06bt-ex06bt",
+    "name": "僕のヒーローアカデミア Vol.2 【EX06BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX06BT"
+  },
+  {
+    "id": "unionarena-jp-銀魂-ua11st-ua11st",
+    "name": "銀魂 【UA11ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA11ST"
+  },
+  {
+    "id": "unionarena-jp-銀魂-ua11bt-ua11bt",
     "name": "銀魂 【UA11BT】",
     "region": "jp",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UA11BT"
   },
   {
-    "id": "unionarena-jp-君のことか-大大大大大好きな100人の彼女-ua26bt",
+    "id": "unionarena-jp-フ-ルーロック-ua12st-ua12st",
+    "name": "ブルーロック 【UA12ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA12ST"
+  },
+  {
+    "id": "unionarena-jp-フ-ルーロック-ua12bt-ua12bt",
+    "name": "ブルーロック 【UA12BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA12BT"
+  },
+  {
+    "id": "unionarena-jp-new-card-selection-フ-ルーロック-ua03nc",
+    "name": "NEW CARD SELECTION ブルーロック",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA03NC"
+  },
+  {
+    "id": "unionarena-jp-鉄拳7-ua13st-ua13st",
+    "name": "鉄拳7 【UA13ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA13ST"
+  },
+  {
+    "id": "unionarena-jp-鉄拳7-ua13bt-ua13bt",
+    "name": "鉄拳7 【UA13BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA13BT"
+  },
+  {
+    "id": "unionarena-jp-dr-stone-ua14st-ua14st",
+    "name": "Dr.STONE 【UA14ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA14ST"
+  },
+  {
+    "id": "unionarena-jp-dr-stone-ua14bt-ua14bt",
+    "name": "Dr.STONE 【UA14BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA14BT"
+  },
+  {
+    "id": "unionarena-jp-ソート-アート-オンライン-ua15st-ua15st",
+    "name": "ソードアート・オンライン 【UA15ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA15ST"
+  },
+  {
+    "id": "unionarena-jp-ソート-アート-オンライン-ua15bt-ua15bt",
+    "name": "ソードアート・オンライン 【UA15BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA15BT"
+  },
+  {
+    "id": "unionarena-jp-ソート-アート-オンライン-vol-2-ex08bt-ex08bt",
+    "name": "ソードアート・オンライン Vol.2 【EX08BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX08BT"
+  },
+  {
+    "id": "unionarena-jp-synduality-noir-ua16st-ua16st",
+    "name": "SYNDUALITY Noir 【UA16ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA16ST"
+  },
+  {
+    "id": "unionarena-jp-synduality-noir-ua16bt-ua16bt",
+    "name": "SYNDUALITY Noir 【UA16BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA16BT"
+  },
+  {
+    "id": "unionarena-jp-トリコ-ua17st-ua17st",
+    "name": "トリコ 【UA17ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA17ST"
+  },
+  {
+    "id": "unionarena-jp-トリコ-ua17bt-ua17bt",
+    "name": "トリコ 【UA17BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA17BT"
+  },
+  {
+    "id": "unionarena-jp-勝利の女神-nikke-ua18st-ua18st",
+    "name": "勝利の女神：NIKKE 【UA18ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA18ST"
+  },
+  {
+    "id": "unionarena-jp-勝利の女神-nikke-ua18bt-ua18bt",
+    "name": "勝利の女神：NIKKE 【UA18BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA18BT"
+  },
+  {
+    "id": "unionarena-jp-勝利の女神-nikke-pc02bt-pc02bt",
+    "name": "勝利の女神：NIKKE【PC02BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "PC02BT"
+  },
+  {
+    "id": "unionarena-jp-ハイキュー-ua19st-ua19st",
+    "name": "ハイキュー‼ 【UA19ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA19ST"
+  },
+  {
+    "id": "unionarena-jp-ハイキュー-ua19bt-ua19bt",
+    "name": "ハイキュー‼ 【UA19BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA19BT"
+  },
+  {
+    "id": "unionarena-jp-フ-ラッククローハ-ー-ua20st-ua20st",
+    "name": "ブラッククローバー 【UA20ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA20ST"
+  },
+  {
+    "id": "unionarena-jp-フ-ラッククローハ-ー-ua20bt-ua20bt",
+    "name": "ブラッククローバー 【UA20BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA20BT"
+  },
+  {
+    "id": "unionarena-jp-幽-遊-白書-ua21st-ua21st",
+    "name": "幽☆遊☆白書 【UA21ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA21ST"
+  },
+  {
+    "id": "unionarena-jp-幽-遊-白書-ua21bt-ua21bt",
+    "name": "幽☆遊☆白書 【UA21BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA21BT"
+  },
+  {
+    "id": "unionarena-jp-gamera-rebirth-ua22bt-ua22bt",
+    "name": "GAMERA -Rebirth- 【UA22BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA22BT"
+  },
+  {
+    "id": "unionarena-jp-進撃の巨人-ua23st-ua23st",
+    "name": "進撃の巨人 【UA23ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA23ST"
+  },
+  {
+    "id": "unionarena-jp-進撃の巨人-ua23bt-ua23bt",
+    "name": "進撃の巨人 【UA23BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA23BT"
+  },
+  {
+    "id": "unionarena-jp-進撃の巨人-vol-2-ex10bt-ex10bt",
+    "name": "進撃の巨人 Vol.2 【EX10BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX10BT"
+  },
+  {
+    "id": "unionarena-jp-shy-ua24bt-ua24bt",
+    "name": "SHY 【UA24BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA24BT"
+  },
+  {
+    "id": "unionarena-jp-アンテ-ット-アンラック-ua25bt-ua25bt",
+    "name": "アンデッドアンラック 【UA25BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA25BT"
+  },
+  {
+    "id": "unionarena-jp-君のことか-大大大大大好きな100人の彼女-ua26bt-ua26bt",
     "name": "君のことが大大大大大好きな100人の彼女 【UA26BT】",
     "region": "jp",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UA26BT"
   },
   {
-    "id": "unionarena-jp-物語-シリース-ua42bt",
+    "id": "unionarena-jp-学園アイト-ルマスター-ua27bt-ua27bt",
+    "name": "学園アイドルマスター 【UA27BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA27BT"
+  },
+  {
+    "id": "unionarena-jp-学園アイト-ルマスター-ex13bt-ex13bt",
+    "name": "学園アイドルマスター【EX13BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX13BT"
+  },
+  {
+    "id": "unionarena-jp-怪獣8号-ua28bt-ua28bt",
+    "name": "怪獣８号 【UA28BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA28BT"
+  },
+  {
+    "id": "unionarena-jp-仮面ライタ-ー-ua29st-ua29st",
+    "name": "仮面ライダー 【UA29ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA29ST"
+  },
+  {
+    "id": "unionarena-jp-仮面ライタ-ー-ua29bt-ua29bt",
+    "name": "仮面ライダー 【UA29BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA29BT"
+  },
+  {
+    "id": "unionarena-jp-仮面ライタ-ー-vol-2-ex12bt-ex12bt",
+    "name": "仮面ライダー Vol.2 【EX12BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX12BT"
+  },
+  {
+    "id": "unionarena-jp-アークナイツ-ua30st-ua30st",
+    "name": "アークナイツ 【UA30ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA30ST"
+  },
+  {
+    "id": "unionarena-jp-アークナイツ-ua30bt-ua30bt",
+    "name": "アークナイツ 【UA30BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA30BT"
+  },
+  {
+    "id": "unionarena-jp-アークナイツ-vol-2-ex11bt-ex11bt",
+    "name": "アークナイツ Vol.2 【EX11BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "EX11BT"
+  },
+  {
+    "id": "unionarena-jp-魔法少女まと-か-マキ-カ-ua31st-ua31st",
+    "name": "魔法少女まどか☆マギカ 【UA31ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA31ST"
+  },
+  {
+    "id": "unionarena-jp-魔法少女まと-か-マキ-カ-ua31bt-ua31bt",
+    "name": "魔法少女まどか☆マギカ 【UA31BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA31BT"
+  },
+  {
+    "id": "unionarena-jp-シャンク-リラ-フロンティア-ua32bt-ua32bt",
+    "name": "シャングリラ・フロンティア 【UA32BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA32BT"
+  },
+  {
+    "id": "unionarena-jp-2-5次元の誘惑-ua33bt-ua33bt",
+    "name": "2.5次元の誘惑 【UA33BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA33BT"
+  },
+  {
+    "id": "unionarena-jp-コート-キ-アス-奪還のロセ-ua34bt-ua34bt",
+    "name": "コードギアス 奪還のロゼ 【UA34BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA34BT"
+  },
+  {
+    "id": "unionarena-jp-ワンハ-ンマン-ua35st-ua35st",
+    "name": "ワンパンマン 【UA35ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA35ST"
+  },
+  {
+    "id": "unionarena-jp-ワンハ-ンマン-ua35bt-ua35bt",
+    "name": "ワンパンマン 【UA35BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA35BT"
+  },
+  {
+    "id": "unionarena-jp-マクロス-シリース-ua36st-ua36st",
+    "name": "「マクロス」シリーズ 【UA36ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA36ST"
+  },
+  {
+    "id": "unionarena-jp-マクロス-シリース-ua36bt-ua36bt",
+    "name": "「マクロス」シリーズ 【UA36BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA36BT"
+  },
+  {
+    "id": "unionarena-jp-鋼の錬金術師-fullmetal-alchemist-ua37st-ua37st",
+    "name": "鋼の錬金術師 FULLMETAL ALCHEMIST 【UA37ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA37ST"
+  },
+  {
+    "id": "unionarena-jp-鋼の錬金術師-fullmetal-alchemist-ua37bt-ua37bt",
+    "name": "鋼の錬金術師 FULLMETAL ALCHEMIST 【UA37BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA37BT"
+  },
+  {
+    "id": "unionarena-jp-wind-breaker-ua38bt-ua38bt",
+    "name": "WIND BREAKER 【UA38BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA38BT"
+  },
+  {
+    "id": "unionarena-jp-premium-card-set-wind-breaker-ua01pc",
+    "name": "PREMIUM CARD SET WIND BREAKER",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA01PC"
+  },
+  {
+    "id": "unionarena-jp-キン肉マン-完璧超人始祖編-ua39bt-ua39bt",
+    "name": "『キン肉マン』完璧超人始祖編 【UA39BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA39BT"
+  },
+  {
+    "id": "unionarena-jp-re-セ-ロから始める異世界生活-ua40st-ua40st",
+    "name": "Re:ゼロから始める異世界生活 【UA40ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA40ST"
+  },
+  {
+    "id": "unionarena-jp-re-セ-ロから始める異世界生活-ua40bt-ua40bt",
+    "name": "Re:ゼロから始める異世界生活 【UA40BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA40BT"
+  },
+  {
+    "id": "unionarena-jp-るろうに剣心-明治剣客浪漫譚-ua41st-ua41st",
+    "name": "るろうに剣心 －明治剣客浪漫譚－ 【UA41ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA41ST"
+  },
+  {
+    "id": "unionarena-jp-るろうに剣心-明治剣客浪漫譚-ua41bt-ua41bt",
+    "name": "るろうに剣心 －明治剣客浪漫譚－ 【UA41BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA41BT"
+  },
+  {
+    "id": "unionarena-jp-物語-シリース-ua42st-ua42st",
+    "name": "〈物語〉シリーズ 【UA42ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA42ST"
+  },
+  {
+    "id": "unionarena-jp-物語-シリース-ua42bt-ua42bt",
     "name": "〈物語〉シリーズ 【UA42BT】",
     "region": "jp",
-    "game": "unionarena"
+    "game": "unionarena",
+    "product": "UA42BT"
+  },
+  {
+    "id": "unionarena-jp-sakamoto-days-ua43bt-ua43bt",
+    "name": "SAKAMOTO DAYS【UA43BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA43BT"
+  },
+  {
+    "id": "unionarena-jp-ヱウ-ァンケ-リヲン新劇場版-ua44st-ua44st",
+    "name": "ヱヴァンゲリヲン新劇場版【UA44ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA44ST"
+  },
+  {
+    "id": "unionarena-jp-ヱウ-ァンケ-リヲン新劇場版-ua44bt-ua44bt",
+    "name": "ヱヴァンゲリヲン新劇場版【UA44BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA44BT"
+  },
+  {
+    "id": "unionarena-jp-to-loveる-とらふ-る-memory-of-heroines-ua45bt-ua45bt",
+    "name": "To LOVEる-とらぶる- Memory of Heroines【UA45BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA45BT"
+  },
+  {
+    "id": "unionarena-jp-カク-ラハ-チ-ua46bt-ua46bt",
+    "name": "カグラバチ【UA46BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA46BT"
+  },
+  {
+    "id": "unionarena-jp-東京喰種トーキョーク-ール-ua47st-ua47st",
+    "name": "東京喰種トーキョーグール【UA47ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA47ST"
+  },
+  {
+    "id": "unionarena-jp-東京喰種トーキョーク-ール-シリース-ua47bt-ua47bt",
+    "name": "「東京喰種トーキョーグール」シリーズ【UA47BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA47BT"
+  },
+  {
+    "id": "unionarena-jp-キンク-タ-ム-ua48st-ua48st",
+    "name": "キングダム【UA48ST】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA48ST"
+  },
+  {
+    "id": "unionarena-jp-キンク-タ-ム-ua48bt-ua48bt",
+    "name": "キングダム【UA48BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA48BT"
+  },
+  {
+    "id": "unionarena-jp-魔都精兵のスレイフ-ua49bt-ua49bt",
+    "name": "魔都精兵のスレイブ【UA49BT】",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA49BT"
+  },
+  {
+    "id": "unionarena-jp-フ-ロモーションカート-pcpr",
+    "name": "プロモーションカード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "PCPR"
+  },
+  {
+    "id": "unionarena-jp-フ-ロモーションカート-uapb",
+    "name": "プロモーションカード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UAPB"
+  },
+  {
+    "id": "unionarena-jp-フ-ロモーションカート-uapr",
+    "name": "プロモーションカード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UAPR"
+  },
+  {
+    "id": "unionarena-jp-限定商品収録カート-ua01pb",
+    "name": "限定商品収録カード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA01PB"
+  },
+  {
+    "id": "unionarena-jp-限定商品収録カート-ua02pb",
+    "name": "限定商品収録カード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA02PB"
+  },
+  {
+    "id": "unionarena-jp-限定商品収録カート-ua03pb",
+    "name": "限定商品収録カード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UA03PB"
+  },
+  {
+    "id": "unionarena-jp-限定商品収録カート-uapb",
+    "name": "限定商品収録カード",
+    "region": "jp",
+    "game": "unionarena",
+    "product": "UAPB"
   }
 ]
