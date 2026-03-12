@@ -160,6 +160,69 @@ function drawOfflineUnionArenaCard() {
   return valid[Math.floor(Math.random() * valid.length)];
 }
 // =========================
+// OFFLINE SENPAI GODDESS HAVEN
+// =========================
+const OFFLINE_SENPAI_DIR = path.join(__dirname, "data", "senpai-goddess-haven");
+const OFFLINE_SENPAI_CARDS_PATH = path.join(OFFLINE_SENPAI_DIR, "cards.json");
+const OFFLINE_SENPAI_SETS_PATH = path.join(OFFLINE_SENPAI_DIR, "sets.json");
+
+let offlineSenpaiCards = [];
+let offlineSenpaiSets = [];
+const offlineSenpaiCardsBySet = new Map();
+
+function loadOfflineSenpai() {
+  try {
+    offlineSenpaiCards = [];
+    offlineSenpaiSets = [];
+    offlineSenpaiCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_SENPAI_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_SENPAI_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineSenpaiCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Senpai Goddess Haven cards.json found at", OFFLINE_SENPAI_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_SENPAI_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_SENPAI_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineSenpaiSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Senpai Goddess Haven sets.json found at", OFFLINE_SENPAI_SETS_PATH);
+    }
+
+    for (const c of offlineSenpaiCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineSenpaiCardsBySet.has(setId)) {
+        offlineSenpaiCardsBySet.set(setId, []);
+      }
+      offlineSenpaiCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Senpai Goddess Haven sets: ${offlineSenpaiSets.length}`);
+    console.log(`📦 Offline Senpai Goddess Haven cards: ${offlineSenpaiCards.length}`);
+  } catch (e) {
+    console.log("Offline Senpai Goddess Haven load error:", e.message);
+  }
+}
+loadOfflineSenpai();
+
+function drawOfflineSenpaiCard() {
+  if (!offlineSenpaiCards?.length) {
+    throw new Error("Offline Senpai Goddess Haven pool empty");
+  }
+  const valid = offlineSenpaiCards.filter(c => c?.image);
+  if (!valid.length) throw new Error("Senpai Goddess Haven: no valid images");
+  return valid[Math.floor(Math.random() * valid.length)];
+}
+
+// =========================
 // OFFLINE POKEMON CATALOG
 // =========================
 const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
@@ -504,6 +567,7 @@ function getGame(req){
   if (g === "lorcana") return "lorcana";
   if (g === "dragonball") return "dragonball";
   if (g === "unionarena") return "unionarena";
+  if (g === "senpaigodesshaven") return "senpaigodesshaven";
   return "pokemon";
 }
 
@@ -1129,6 +1193,19 @@ if (game === "unionarena") {
     imageHigh: img
   };
 }
+// SENPAI GODDESS HAVEN //
+if (game === "senpaigodesshaven") {
+  const c = drawOfflineSenpaiCard();
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.setName || "Senpai Goddess Haven",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
@@ -1713,6 +1790,24 @@ app.get("/api/sets", auth, async (req, res) => {
   return res.json({ sets });
 }
 
+    if (game === "senpaigodesshaven") {
+      const bySet = new Map();
+      for (const c of offlineSenpaiCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.setName || setId).trim() || setId
+          });
+        }
+      }
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+      return res.json({ sets });
+    }
+
     return res.json({ sets: [] });
   } catch (e) {
     return res.status(502).json({ error: "sets failed" });
@@ -1822,6 +1917,20 @@ app.get("/api/sets", auth, async (req, res) => {
     }))
   });
 }
+    // SENPAI GODDESS HAVEN //
+    if (game === "senpaigodesshaven") {
+      const cards = offlineSenpaiCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image || null,
+          imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
@@ -2255,6 +2364,7 @@ app.post("/api/market/list", auth, async (req, res) => {
     gameFromKey === "lorcana" ? "lorcana" :
     gameFromKey === "dragonball" ? "dragonball" :
     gameFromKey === "unionarena" ? "unionarena" :
+    gameFromKey === "senpaigodesshaven" ? "senpaigodesshaven" :
     "pokemon";
 
   const client = await pool.connect();
@@ -2850,12 +2960,13 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const u = uQ.rows[0];
   if (!u) return res.status(404).json({ error: "Profil introuvable" });
 
-  const [pQ, oQ, lQ, dQ, uAQ] = await Promise.all([
+  const [pQ, oQ, lQ, dQ, uAQ, sGQ] = await Promise.all([
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='dragonball'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='unionarena'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='senpaigodesshaven'`, [u.id]),
   ]);
 
   const pokemon = pQ.rows[0]?.total || 0;
@@ -2863,6 +2974,7 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const lorcana = lQ.rows[0]?.total || 0;
   const dragonball = dQ.rows[0]?.total || 0;
   const unionarena = uAQ.rows[0]?.total || 0;
+  const senpaigodesshaven = sGQ.rows[0]?.total || 0;
 
   const xp = Number(u?.xp || 0);
 
@@ -2880,7 +2992,8 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     lorcana,
     dragonball,
     unionarena,
-    total: pokemon + onepiece + lorcana + dragonball + unionarena
+    senpaigodesshaven,
+    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven
   }
   });
 });

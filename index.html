@@ -1704,6 +1704,10 @@
         <button class="gameBtn" type="button" onclick="setGameAndClose('unionarena')" aria-label="unionarena">
            <img src="unionarena.png" alt="unionarena">
         </button>
+
+        <button class="gameBtn" type="button" onclick="setGameAndClose('senpaigodesshaven')" aria-label="Senpai Goddess Haven">
+          <img src="senpai.png" alt="Senpai Goddess Haven">
+        </button>
       </div>
 
       <div class="gameHint">Tu peux rechanger à tout moment avec “TCG” en haut.</div>
@@ -1743,6 +1747,7 @@
     if (g === "lorcana")  return "lorcana";
     if (g === "dragonball") return "dragonball";
     if (g === "unionarena") return "unionarena";
+    if (g === "senpaigodesshaven") return "senpaigodesshaven";
     return "pokemon";
   }
 
@@ -1751,6 +1756,7 @@
     if (g === "lorcana")  return "LORCANA";
     if (g === "dragonball") return "DRAGON BALL";
     if (g === "unionarena") return "UNION ARENA";
+    if (g === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
     return "POKÉMON";
   }
 
@@ -1881,6 +1887,7 @@
     if(g === "lorcana") return "Lorcana.png";
     if(g === "dragonball") return "dragonball.png";
     if(g === "unionarena") return "unionarena.png";
+    if(g === "senpaigodesshaven") return "senpai.png";
     return "International_Pokémon_logo.png";
   }
 
@@ -1908,6 +1915,7 @@
     (g === "lorcana") ? "lorcana" :
     (g === "dragonball") ? "dragonball" :
     (g === "unionarena") ? "unionarena" :
+    (g === "senpaigodesshaven") ? "senpaigodesshaven" :
     "pokemon";
 
   localStorage.setItem("gacha_game_v1", v);

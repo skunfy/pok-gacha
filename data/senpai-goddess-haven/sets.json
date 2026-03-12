@@ -1,0 +1,20 @@
+[
+  {
+    "id": "set1",
+    "name": "Senpai Goddess Haven 1",
+    "game": "senpaigodesshaven",
+    "cardCount": 162
+  },
+  {
+    "id": "set2",
+    "name": "Senpai Goddess Haven 2",
+    "game": "senpaigodesshaven",
+    "cardCount": 162
+  },
+  {
+    "id": "set3",
+    "name": "Senpai Goddess Haven 3",
+    "game": "senpaigodesshaven",
+    "cardCount": 204
+  }
+]
