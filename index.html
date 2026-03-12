@@ -406,12 +406,17 @@
     border-radius:16px;
     overflow:hidden;
     background-image: linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
-    background-position:center;
+    background-position:center center;
     background-repeat:no-repeat;
     background-size:cover;
     box-shadow:0 18px 40px rgba(0,0,0,.45);
     transition: transform .22s ease, filter .22s ease;
     cursor:pointer;
+  }
+  /* Cartes horizontales : on pivote le conteneur */
+  .cardImg.is-horizontal{
+    width:340px;
+    height:260px;
   }
 
   .edge{
@@ -2114,9 +2119,23 @@
     const imgHigh = toHighImage(p.imageHigh || p.image);
 
     if(card){
-      card.style.backgroundImage = `url("${imgHigh || imgLow}")`;
+      const imgUrl = imgHigh || imgLow;
+      card.style.backgroundImage = `url("${imgUrl}")`;
       card.dataset.high = imgHigh || "";
+      // Detection carte horizontale
+      const tmpImg = new Image();
+      tmpImg.onload = () => {
+        const isH = tmpImg.naturalWidth > tmpImg.naturalHeight;
+        card.classList.toggle("is-horizontal", isH);
+        if(zoomCard) zoomCard.classList.toggle("is-horizontal", isH);
+      };
+      tmpImg.src = imgUrl;
     }
+
+
+
+
+
 
     if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${p.grade}`;
     if(subtitle) subtitle.textContent = `${p.name} • ${p.set}`;
