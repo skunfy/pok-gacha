@@ -2533,9 +2533,10 @@ function bindCarouselDragOnce(){
   }
 
   async function openOne(){
-    await suckAwayCurrentCard();
-
+    if(openOne._busy) return;
+    openOne._busy = true;
     if(btnOpen) btnOpen.disabled = true;
+    await suckAwayCurrentCard();
 
     const hasCard = (card?.style?.backgroundImage || "") &&
                     !(card.style.backgroundImage || "").includes("linear-gradient");
@@ -2645,6 +2646,8 @@ function bindCarouselDragOnce(){
           : "Problème temporaire, réessaie";
       }
       await loadMe();
+    } finally {
+      setTimeout(() => { openOne._busy = false; }, 1500);
     }
   }
 
