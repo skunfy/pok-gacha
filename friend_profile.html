@@ -357,6 +357,18 @@ button:active{ transform: translateY(0px) scale(.99); }
         <div class="v" id="statLorcana">0</div>
       </div>
       <div class="statCard">
+        <div class="k">TOTAL DRAGON BALL</div>
+        <div class="v" id="statDragonball">0</div>
+      </div>
+      <div class="statCard">
+        <div class="k">TOTAL UNION ARENA</div>
+        <div class="v" id="statUnionarena">0</div>
+      </div>
+      <div class="statCard">
+        <div class="k">TOTAL SENPAI</div>
+        <div class="v" id="statSenpai">0</div>
+      </div>
+      <div class="statCard">
         <div class="k">TOTAL CARTES</div>
         <div class="v" id="statTotal">0</div>
       </div>
@@ -458,15 +470,21 @@ function setAvatarGlowByLevel(level){
 }
 
 /* ✅ STATS */
-function setStats(pokemon, onepiece, lorcana){
+function setStats(pokemon, onepiece, lorcana, dragonball, unionarena, senpai){
   const p = Number(pokemon||0)||0;
   const o = Number(onepiece||0)||0;
   const l = Number(lorcana||0)||0;
+  const d = Number(dragonball||0)||0;
+  const u = Number(unionarena||0)||0;
+  const s = Number(senpai||0)||0;
 
   document.getElementById("statPokemon").textContent = String(p);
   document.getElementById("statOnepiece").textContent = String(o);
   document.getElementById("statLorcana").textContent = String(l);
-  document.getElementById("statTotal").textContent = String(p + o + l);
+  document.getElementById("statDragonball").textContent = String(d);
+  document.getElementById("statUnionarena").textContent = String(u);
+  document.getElementById("statSenpai").textContent = String(s);
+  document.getElementById("statTotal").textContent = String(p + o + l + d + u + s);
 }
 
 /* ✅ ZOOM */
@@ -563,17 +581,17 @@ async function load(){
 
   // stats : route publique les a, route amis non
   if (data.stats){
-    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana);
+    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana, data.stats.dragonball, data.stats.unionarena, data.stats.senpaigodesshaven);
   } else {
     try {
       const publicData = await api("/api/profile_public/" + encodeURIComponent(friendCode));
       if (publicData.stats) {
-        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana);
+        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana, publicData.stats.dragonball, publicData.stats.unionarena, publicData.stats.senpaigodesshaven);
       } else {
-        setStats(0,0,0);
+        setStats(0,0,0,0,0,0);
       }
     } catch {
-      setStats(0,0,0);
+      setStats(0,0,0,0,0,0);
     }
   }
 
