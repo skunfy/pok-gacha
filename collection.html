@@ -536,11 +536,11 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 /* carte non possédée = grisée */
 .slot.missing{ opacity: .95; }
 /* Blur puzzle PZL - mystère total */
-.slot.pzl-blur .slotImg img{
+.slot.senpai-blur .slotImg img{
   filter: blur(18px) brightness(.7);
   transform: scale(1.08);
 }
-.slot.pzl-blur .slotImg{
+.slot.senpai-blur .slotImg{
   overflow:hidden;
 }
 .slot.missing .slotImg{
@@ -1643,8 +1643,8 @@ function renderBinder(){
       ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
       : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
 
-    const isPzlCard = /^PZL[12]-/.test(String(cardBrief.localId || ""));
-    slot.className = "slot" + (have ? "" : " missing") + (isPzlCard ? " pzl-blur" : "");
+    const isSenpaiMissing = !have && currentGame() === "senpaigodesshaven";
+    slot.className = "slot" + (have ? "" : " missing") + (isSenpaiMissing ? " senpai-blur" : "");
 
     const localId = String(cardBrief.localId || "");
     const title = cardBrief.name || "Carte";
