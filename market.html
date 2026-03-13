@@ -341,7 +341,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .cardImg{
   height:200px;
   border-radius:16px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.055);
   cursor:pointer;
@@ -527,7 +528,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 @media (max-width: 880px){ .modalInner{ grid-template-columns:1fr; } }
 .modalImg{
   min-height:360px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   background-color: rgba(0,0,0,.25);
   border-right:1px solid rgba(255,255,255,.06);
 }
@@ -595,6 +597,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
         <option value="lorcana">Lorcana</option>
         <option value="dragonball">Dragon Ball</option>
         <option value="unionarena">Union Arena</option>
+        <option value="senpaigodesshaven">Senpai Goddess Haven</option>
       </select>
 
       <div class="pill">
@@ -776,6 +779,7 @@ function currentGame(){
   if (g === "lorcana") return "lorcana";
   if (g === "dragonball") return "dragonball";
   if (g === "unionarena") return "unionarena";
+  if (g === "senpaigodesshaven") return "senpaigodesshaven";
   return "pokemon";
 }
 
@@ -813,6 +817,7 @@ function gameTag(g){
   if (g === "lorcana") return "🟦 Lorcana";
   if (g === "dragonball") return "🟧 Dragon Ball";
   if (g === "unionarena") return "🟪 Union Arena";
+  if (g === "senpaigodesshaven") return "🩷 Senpai Goddess Haven";
   return "🟨 Pokémon";
 }
 function fmtCardLine(x){
