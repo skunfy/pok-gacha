@@ -449,6 +449,8 @@
     }
     /* Cartes horizontales Senpai */
     .cardImg.is-horizontal{
+      width:342px;
+      height:255px;
       transform:translate(-50%,-50%) translateZ(18px) rotate(90deg);
       background-size:auto 115%;
     }
@@ -914,11 +916,6 @@
   top:58%;
   cursor:default;
   opacity:1;
-}
-.slab.zoomSlab .cardImg.is-horizontal{
-  width:min(460px, 68vh);
-  height:min(340px, 78vw);
-  transform:translate(-50%, -50%) translateZ(18px) rotate(90deg);
 }
 
 .slab.zoomSlab .label{
@@ -2398,7 +2395,6 @@
 
       const high = card?.dataset?.high;
       zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
-      zoomCard.classList.toggle("is-horizontal", card?.classList.contains("is-horizontal") || false);
       zoomTitle.textContent = title?.textContent || "";
       zoomSubtitle.textContent = subtitle?.textContent || "";
       zoomGrade.textContent = gradeEl?.textContent || "";
