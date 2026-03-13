@@ -591,12 +591,16 @@
         const spinTurns = 3 + Math.floor(Math.random()*3); // nb tours
         const target = spinTurns * totalItems;
 
-        // Trouver un slot avec le bon symbole
-        let landIdx = strip.findIndex(s => s.id === targetSymbol.id);
-        if(landIdx === -1){
-          strip[0] = targetSymbol;
-          reelEl.children[0].querySelector('img').src = targetSymbol.src;
-          landIdx = 0;
+        // Trouver toutes les occurrences et en choisir une au hasard
+        const allIdxs = strip.reduce((acc, s, i) => { if(s.id === targetSymbol.id) acc.push(i); return acc; }, []);
+        let landIdx;
+        if(allIdxs.length > 0){
+          landIdx = allIdxs[Math.floor(Math.random() * allIdxs.length)];
+        } else {
+          // Forcer un slot aléatoire à prendre ce symbole
+          landIdx = Math.floor(Math.random() * strip.length);
+          strip[landIdx] = targetSymbol;
+          reelEl.children[landIdx].querySelector('img').src = targetSymbol.src;
         }
 
         const finalPos = (target + landIdx) * itemH;
