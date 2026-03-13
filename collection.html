@@ -171,9 +171,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 
 .slotImg{
-  height:240px;
+  width:100%;
+  aspect-ratio: 63 / 88;
   border-radius:14px;
-  background: rgba(0,0,0,.18) center/cover no-repeat;
+  background: rgba(0,0,0,.18) center/contain no-repeat;
   border:1px solid rgba(255,255,255,.05);
   cursor:pointer;
   overflow:hidden;
@@ -282,9 +283,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 
 .cImg{
-  height:240px;
+  width:100%;
+  aspect-ratio: 63 / 88;
   border-radius:14px;
-  background: rgba(0,0,0,.18) center/cover no-repeat;
+  background: rgba(0,0,0,.18) center/contain no-repeat;
   border:1px solid rgba(255,255,255,.05);
   cursor:pointer;
   overflow:hidden;
@@ -725,6 +727,70 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   font-weight:900;
   opacity:.7;
   font-size:12px;
+}
+
+/* ===== Modale Puzzle ===== */
+.puzzleModal{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.85);
+  display:none;
+  place-items:center;
+  z-index:99999;
+  padding:20px;
+  backdrop-filter:blur(6px);
+}
+.puzzleModal.open{ display:grid; }
+.puzzleInner{
+  max-width:min(900px, 96vw);
+  width:100%;
+  border-radius:18px;
+  background:rgba(15,17,26,.96);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 22px 70px rgba(0,0,0,.65);
+  padding:16px;
+}
+.puzzleHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+  gap:10px;
+}
+.puzzleTitle{ font-weight:1000; font-size:16px; }
+.puzzleClose{
+  padding:8px 14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  cursor:pointer;
+  font-weight:900;
+}
+.puzzleClose:hover{ background:rgba(255,255,255,.14); }
+.puzzleGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:0;
+  border-radius:12px;
+  overflow:hidden;
+}
+.puzzleCell{
+  aspect-ratio: 63 / 88;
+  background:center/cover no-repeat rgba(0,0,0,.3);
+  position:relative;
+}
+.puzzleCell.missing{
+  filter:grayscale(1) brightness(.4);
+}
+.puzzleCell.missing::after{
+  content:"?";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size:2.5rem;
+  font-weight:1000;
+  color:rgba(255,255,255,.3);
 }
 </style>
 </head>
@@ -1472,6 +1538,26 @@ function renderBinder(){
   prevPageBtn.disabled = binderPage === 0;
   nextPageBtn.disabled = binderPage >= pages - 1;
 
+  // Bouton puzzle pour Senpai set3 page 1 (PZL1) et page 2 (PZL2)
+  const existingPuzzleBtn = document.getElementById("puzzleBtn");
+  if(existingPuzzleBtn) existingPuzzleBtn.remove();
+  if(currentGame() === "senpaigodesshaven" && setId === "set3"){
+    const isPzl1 = binderPage === 0;
+    const isPzl2 = binderPage === 1;
+    if(isPzl1 || isPzl2){
+      const pzlPrefix = isPzl1 ? "PZL1" : "PZL2";
+      const pzlLabel  = isPzl1 ? "Puzzle 1" : "Puzzle 2";
+      const btn = document.createElement("button");
+      btn.id = "puzzleBtn";
+      btn.textContent = "🧩 Voir " + pzlLabel;
+      btn.style.cssText = "padding:8px 16px;border-radius:12px;border:1px solid rgba(255,100,200,.4);background:rgba(255,100,200,.12);color:#fff;font-weight:900;cursor:pointer;margin-top:10px;width:100%;font-size:14px;";
+      btn.onmouseenter = () => btn.style.background = "rgba(255,100,200,.22)";
+      btn.onmouseleave = () => btn.style.background = "rgba(255,100,200,.12)";
+      btn.onclick = () => openPuzzleModal(pzlPrefix, pzlLabel);
+      binderGrid.parentElement.insertBefore(btn, binderGrid);
+    }
+  }
+
   const fullSet = binderCards.map(c => ({
     ...c,
     have: owned.has(String(c.cardId || c.id || "").trim())
@@ -1629,7 +1715,77 @@ document.addEventListener("keydown", (e) => {
 });
 
 boot();
+
+/* ===== PUZZLE ===== */
+const puzzleModal = document.getElementById("puzzleModal");
+const puzzleGrid  = document.getElementById("puzzleGrid");
+const puzzleTitle = document.getElementById("puzzleTitle");
+
+function openPuzzleModal(pzlPrefix, label){
+  // Trouver les 9 cartes du puzzle dans binderCards
+  const cells = [];
+  for(let i = 1; i <= 9; i++){
+    const num = String(i).padStart(3,"0");
+    const localId = pzlPrefix + "-" + num; // ex: PZL1-001
+    const card = binderCards.find(c => String(c.localId||"") === localId);
+    cells.push(card || null);
+  }
+
+  // Construire la grille owned map
+  const owned = buildOwnedMapForSet(setSel.value);
+
+  puzzleTitle.textContent = "🧩 " + label;
+  puzzleGrid.innerHTML = "";
+
+  cells.forEach((card, i) => {
+    const div = document.createElement("div");
+    div.className = "puzzleCell";
+
+    if(!card){
+      div.classList.add("missing");
+    } else {
+      const key = String(card.cardId || card.id || "").trim();
+      const ownedItem = owned.get(key);
+      const img = ownedItem
+        ? (ownedItem.imageHigh || ownedItem.image || card.imageHigh || card.image || "")
+        : (card.imageHigh || card.image || "");
+
+      if(img){
+        div.style.backgroundImage = `url("${img}")`;
+      } else {
+        div.classList.add("missing");
+      }
+    }
+
+    puzzleGrid.appendChild(div);
+  });
+
+  puzzleModal.classList.add("open");
+}
+
+function closePuzzleModal(){
+  puzzleModal.classList.remove("open");
+  puzzleGrid.innerHTML = "";
+}
+
+puzzleModal.addEventListener("click", e => {
+  if(e.target === puzzleModal) closePuzzleModal();
+});
+window.addEventListener("keydown", e => {
+  if(e.key === "Escape" && puzzleModal.classList.contains("open")) closePuzzleModal();
+});
 </script>
 
+
+<!-- ===== MODALE PUZZLE ===== -->
+<div class="puzzleModal" id="puzzleModal">
+  <div class="puzzleInner">
+    <div class="puzzleHead">
+      <div class="puzzleTitle" id="puzzleTitle">🧩 Puzzle</div>
+      <button class="puzzleClose" onclick="closePuzzleModal()">✕ Fermer</button>
+    </div>
+    <div class="puzzleGrid" id="puzzleGrid"></div>
+  </div>
+</div>
 </body>
 </html>
