@@ -3032,12 +3032,12 @@ app.post("/api/slots/spin", auth, async (req, res) => {
 
     // Tirage pondéré (même proba que côté client)
     const SYMBOLS = [
-      { id:"diamant", weight:1  },  // ultra rare  ×5000
-      { id:"star",    weight:3  },  // très rare   ×1000
-      { id:"cards",   weight:8  },  // rare        ×400
-      { id:"heart",   weight:15 },  // peu commun  ×250
+      { id:"diamant", weight:4  },  // ultra rare  ×5000
+      { id:"star",    weight:6  },  // très rare   ×1000
+      { id:"cards",   weight:15  },  // rare        ×400
+      { id:"heart",   weight:20 },  // peu commun  ×250
       { id:"dollax",  weight:25 },  // commun      ×150
-      { id:"thunder", weight:48 },  // très commun ×80
+      { id:"thunder", weight:30 },  // commun      ×80
     ];
     const MULTS = { diamant:5000, star:1000, cards:400, heart:250, dollax:150, thunder:80 };
     const POOL  = SYMBOLS.flatMap(s => Array(s.weight).fill(s.id));
