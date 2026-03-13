@@ -122,7 +122,10 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   gap:18px;
 }
 
-/* ===== Binder 4x4 ===== */
+/* ===== Binder 4x4 / 3x3 Senpai ===== */
+.binderGrid.senpai{
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .binderWrap{
   display:none;
   flex-direction:column;
@@ -914,7 +917,9 @@ let setsList = [];
 let setsAll = [];
 let binderCards = [];
 let binderPage = 0;
-const BINDER_PAGE_SIZE = 16;
+function getBinderPageSize() {
+  return currentGame() === "senpaigodesshaven" ? 9 : 16;
+}
 
 function currentView(){
   const v = String(localStorage.getItem(VIEW_KEY) || "grid").toLowerCase();
@@ -1380,11 +1385,38 @@ async function loadBinderSetCards(){
     binderCards = [];
   }
 
-  binderCards.sort((a,b)=>{
-    const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
-    const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
-    return Number(ax) - Number(bx);
-  });
+  // Tri Senpai par rareté, sinon par numéro
+  const SENPAI_RARITY_SET1_2 = ["SSR","UR","ZR","MR","SP","ECG","SSP","LSP","XR","TCX","TCR","SLR","SER","ETR","SEXR"];
+  const SENPAI_RARITY_SET3   = ["PZL1","PZL2","SR","SSR","UR","CR","CP","ZR","MR","NX","SP","OL","SXR","MAX","SEX","ESR","SSS","SES","SSP","LSP"];
+
+  function senpaiRarityOrder(card, setId) {
+    const localId = String(card.localId || "");
+    const rarity = localId.replace(/-\d+$/, ""); // ex: "SSR-001" → "SSR"
+    const list = (setId === "set3") ? SENPAI_RARITY_SET3 : SENPAI_RARITY_SET1_2;
+    const idx = list.indexOf(rarity);
+    return idx === -1 ? 9999 : idx;
+  }
+
+  const isSenpai = currentGame() === "senpaigodesshaven";
+  const currentSetId2 = setSel.value;
+
+  if (isSenpai) {
+    binderCards.sort((a, b) => {
+      const ra = senpaiRarityOrder(a, currentSetId2);
+      const rb = senpaiRarityOrder(b, currentSetId2);
+      if (ra !== rb) return ra - rb;
+      // même rareté → tri par numéro
+      const na = Number(String(a.localId || "").match(/\d+/)?.[0] || 0);
+      const nb = Number(String(b.localId || "").match(/\d+/)?.[0] || 0);
+      return na - nb;
+    });
+  } else {
+    binderCards.sort((a,b)=>{
+      const ax = String(a.localId || "").match(/\d+/)?.[0] || "0";
+      const bx = String(b.localId || "").match(/\d+/)?.[0] || "0";
+      return Number(ax) - Number(bx);
+    });
+  }
 }
 
 function buildOwnedMapForSet(setId){
@@ -1409,6 +1441,7 @@ function renderBinder(){
 
   setBinderControlsVisible();
   binderGrid.innerHTML = "";
+  binderGrid.classList.toggle("senpai", currentGame() === "senpaigodesshaven");
 
   if (!isBinder) return;
 
@@ -1426,11 +1459,11 @@ function renderBinder(){
   }
 
   const total = binderCards.length;
-  const pages = Math.max(1, Math.ceil(total / BINDER_PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / getBinderPageSize()));
   binderPage = Math.max(0, Math.min(binderPage, pages - 1));
 
-  const start = binderPage * BINDER_PAGE_SIZE;
-  const slice = binderCards.slice(start, start + BINDER_PAGE_SIZE);
+  const start = binderPage * getBinderPageSize();
+  const slice = binderCards.slice(start, start + getBinderPageSize());
 
   const owned = buildOwnedMapForSet(setId);
 
@@ -1447,7 +1480,7 @@ function renderBinder(){
   updateProgress(fullSet, setLabel);
 
   const fixed = [];
-  for (let i = 0; i < BINDER_PAGE_SIZE; i++){
+  for (let i = 0; i < getBinderPageSize(); i++){
     fixed.push(slice[i] || null);
   }
 
