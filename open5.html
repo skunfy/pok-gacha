@@ -449,8 +449,6 @@
     }
     /* Cartes horizontales Senpai */
     .cardImg.is-horizontal{
-      width:262px;
-      height:195px;
       transform:translate(-50%,-50%) translateZ(18px) rotate(90deg);
       background-size:auto 115%;
     }
@@ -2400,6 +2398,7 @@
 
       const high = card?.dataset?.high;
       zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
+      zoomCard.classList.toggle("is-horizontal", card?.classList.contains("is-horizontal") || false);
       zoomTitle.textContent = title?.textContent || "";
       zoomSubtitle.textContent = subtitle?.textContent || "";
       zoomGrade.textContent = gradeEl?.textContent || "";
