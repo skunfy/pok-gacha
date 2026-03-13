@@ -384,11 +384,11 @@
     <span>🎟️</span> Tickets <span class="hudVal" id="hudTickets">0</span>
     <span id="nextTicketTimer" style="font-size:10px;opacity:.5;margin-left:4px;"></span>
   </div>
-  <div class="hudPill"><img src="/slot/dollax.png" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;"> Dollax <span class="hudVal" id="hudDollax">0</span></div>
+  <div class="hudPill"><img src="slot/dollax.png" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;"> Dollax <span class="hudVal" id="hudDollax">0</span></div>
 </div>
 
 <div class="wrap">
-  <img src="/slot/slot.png" alt="Slot GachaX" style="height:90px;object-fit:contain;margin-bottom:-8px;">
+  <img src="slot/slot.png" alt="Slot GachaX" style="height:90px;object-fit:contain;margin-bottom:-8px;">
 
   <!-- Machine -->
   <div class="machine" id="machine">
@@ -430,12 +430,12 @@
   <!-- Table des gains -->
   <div class="payTable">
     <div class="payTitle">Table des gains</div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/diamant.png"><img src="/slot/diamant.png"><img src="/slot/diamant.png"></span><span class="payMult">× 5 000 dollax / ticket</span></div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/star.png"><img src="/slot/star.png"><img src="/slot/star.png"></span><span class="payMult">× 1 000 dollax / ticket</span></div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/cards.png"><img src="/slot/cards.png"><img src="/slot/cards.png"></span><span class="payMult">× 400 dollax / ticket</span></div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/heart.png"><img src="/slot/heart.png"><img src="/slot/heart.png"></span><span class="payMult">× 250 dollax / ticket</span></div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/dollax.png"><img src="/slot/dollax.png"><img src="/slot/dollax.png"></span><span class="payMult">× 150 dollax / ticket</span></div>
-    <div class="payRow"><span class="payIcons"><img src="/slot/thunder.png"><img src="/slot/thunder.png"><img src="/slot/thunder.png"></span><span class="payMult">× 80 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/diamant.png"><img src="slot/diamant.png"><img src="slot/diamant.png"></span><span class="payMult">× 5 000 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/star.png"><img src="slot/star.png"><img src="slot/star.png"></span><span class="payMult">× 1 000 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/cards.png"><img src="slot/cards.png"><img src="slot/cards.png"></span><span class="payMult">× 400 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/heart.png"><img src="slot/heart.png"><img src="slot/heart.png"></span><span class="payMult">× 250 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/dollax.png"><img src="slot/dollax.png"><img src="slot/dollax.png"></span><span class="payMult">× 150 dollax / ticket</span></div>
+    <div class="payRow"><span class="payIcons"><img src="slot/thunder.png"><img src="slot/thunder.png"><img src="slot/thunder.png"></span><span class="payMult">× 80 dollax / ticket</span></div>
     <div class="payRow"><span class="payEmojis">Deux identiques</span><span class="payMult">× 15 dollax / ticket</span></div>
     <div class="payRow"><span class="payEmojis">Aucun match</span><span class="payMult" style="color:rgba(255,120,120,.8)">−ticket(s)</span></div>
   </div>
@@ -451,12 +451,12 @@
   // ── État
   // Symboles avec images PNG
   const SYMBOLS = [
-    { id:'diamant',  src:'/slot/diamant.png'  },
-    { id:'star',     src:'/slot/star.png'     },
-    { id:'cards',    src:'/slot/cards.png'    },
-    { id:'heart',    src:'/slot/heart.png'    },
-    { id:'dollax',   src:'/slot/dollax.png'   },
-    { id:'thunder',  src:'/slot/thunder.png'  },
+    { id:'diamant',  src:'slot/diamant.png'  },
+    { id:'star',     src:'slot/star.png'     },
+    { id:'cards',    src:'slot/cards.png'    },
+    { id:'heart',    src:'slot/heart.png'    },
+    { id:'dollax',   src:'slot/dollax.png'   },
+    { id:'thunder',  src:'slot/thunder.png'  },
   ];
   const MULTIPLIERS = {
     'diamant':5000, 'star':1000, 'cards':400,
@@ -534,7 +534,7 @@
     // Appel API serveur
     let serverData = null;
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('gacha_token_v1');
       const res = await fetch('/api/slots/spin', {
         method: 'POST',
         headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + token },
@@ -722,7 +722,7 @@
   // ── Init : charger les vraies données depuis le serveur
   async function initFromServer() {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('gacha_token_v1');
       if (!token) {
         spinBtn.disabled = true;
         spinBtn.textContent = '🔒 Connecte-toi pour jouer';
@@ -736,6 +736,9 @@
       tickets = data.tickets ?? 0;
       dollax  = data.dollax  ?? 0;
       updateHud();
+      // Réactiver le bouton spin maintenant qu'on est connecté
+      spinBtn.disabled = false;
+      spinBtn.textContent = '🎰 SPIN';
       if (data.nextTicketInMs > 0 && tickets < data.ticketCap) {
         startTicketCountdown(data.nextTicketInMs);
       }
