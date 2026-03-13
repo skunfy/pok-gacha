@@ -717,7 +717,7 @@ function openZoomCard(x){
   zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
   zoomMint.style.display = x.mint ? "inline-flex" : "none";
 
-  const img = (x.imageHigh || x.image || "").trim();
+  const img = (x.imageHigh || x.imagehigh || x.imageHi || x.image || "").trim();
   zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
 
   zoomModal.classList.add("open");
@@ -968,12 +968,12 @@ async function load(){
     apiGame(baseO, "senpaigodesshaven", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
 ]);
 
-  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",           set: x.set || x.setName || "" }));
-  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",          set: x.set || x.setName || "" }));
-  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",           set: x.set || x.setName || "" }));
-  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball",        set: x.set || x.setName || "" }));
-  const itemsU = (cU.items||[]).map(x => ({ ...x, game: x.game || "unionarena",        set: x.set || x.setName || "" }));
-  const itemsS = (cS.items||[]).map(x => ({ ...x, game: x.game || "senpaigodesshaven", set: x.set || x.setName || "" }));
+  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",           set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",          set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",           set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball",        set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  const itemsU = (cU.items||[]).map(x => ({ ...x, game: x.game || "unionarena",        set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  const itemsS = (cS.items||[]).map(x => ({ ...x, game: x.game || "senpaigodesshaven", set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
 
   allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU, ...itemsS];
 
