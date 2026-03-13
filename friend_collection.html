@@ -88,7 +88,8 @@ button{
 }
 .cImg{
   height:220px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   border-radius:10px;
   cursor:pointer;
 }
@@ -154,8 +155,13 @@ button{
   transform:translate(-50%,-50%);
   width:300px;
   height:420px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   border-radius:16px;
+}
+.cardImgZoom.is-horizontal{
+  transform:translate(-50%,-50%) rotate(90deg);
+  background-size:auto 115%;
 }
 .msg{opacity:.8; font-size:13px; padding:10px 2px}
 
@@ -354,7 +360,8 @@ function currentGame(){
     g === "onepiece" ||
     g === "lorcana" ||
     g === "dragonball" ||
-    g === "unionarena"
+    g === "unionarena" ||
+    g === "senpaigodesshaven"
   ) return g;
   return "pokemon";
 }
@@ -365,6 +372,7 @@ function setGame(g){
     v === "lorcana" ? "lorcana" :
     v === "dragonball" ? "dragonball" :
     v === "unionarena" ? "unionarena" :
+    v === "senpaigodesshaven" ? "senpaigodesshaven" :
     "pokemon";
 
   localStorage.setItem(GAME_KEY, safe);
@@ -402,6 +410,7 @@ if(!friendCode){
     <option value="lorcana">Lorcana</option>
     <option value="dragonball">Dragon Ball</option>
     <option value="unionarena">Union Arena</option>
+    <option value="senpaigodesshaven">Senpai Goddess Haven</option>
   `;
   sel.value = currentGame();
 
@@ -474,6 +483,18 @@ function openZoom(x){
   zoomGrade.textContent = x.grade;
 
   zoomMint.style.display = x.mint ? "block" : "none";
+
+  // Détection carte horizontale
+  if(img){
+    const tmp = new Image();
+    tmp.onload = () => {
+      zoomImg.classList.toggle("is-horizontal", tmp.naturalWidth > tmp.naturalHeight);
+    };
+    tmp.src = img;
+  } else {
+    zoomImg.classList.remove("is-horizontal");
+  }
+
   modal.classList.add("open");
 }
 
