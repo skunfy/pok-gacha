@@ -505,6 +505,15 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   width: min(470px, 88vw);
   height: min(340px, 52vh);
 }
+/* Zoom agrandi pour Senpai */
+.slab.senpai-zoom{
+  width:min(520px, 96vw);
+  height:min(760px, 96vh);
+}
+.slab.senpai-zoom .cardImg{
+  width: min(440px, 88vw);
+  height: min(610px, 82vh);
+}
 
 /* ===== Scrollbar dark ===== */
 .gridWrap{
@@ -526,6 +535,14 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
 /* carte non possédée = grisée */
 .slot.missing{ opacity: .95; }
+/* Blur puzzle PZL - mystère total */
+.slot.pzl-blur .slotImg img{
+  filter: blur(18px) brightness(.7);
+  transform: scale(1.08);
+}
+.slot.pzl-blur .slotImg{
+  overflow:hidden;
+}
 .slot.missing .slotImg{
   filter: grayscale(1) saturate(.15) brightness(.85) contrast(.95);
   transform: scale(.99);
@@ -1260,6 +1277,7 @@ function applyFilters(){
 }
 
 function openZoom(x){
+  zoomSlab.classList.toggle("senpai-zoom", currentGame() === "senpaigodesshaven");
   const img = x.image || x.imageHigh || x.imagehigh || null;
 
   zoomImg.style.backgroundImage = `url('${img}')`;
@@ -1625,7 +1643,8 @@ function renderBinder(){
       ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
       : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
 
-    slot.className = "slot" + (have ? "" : " missing");
+    const isPzlCard = /^PZL[12]-/.test(String(cardBrief.localId || ""));
+    slot.className = "slot" + (have ? "" : " missing") + (isPzlCard ? " pzl-blur" : "");
 
     const localId = String(cardBrief.localId || "");
     const title = cardBrief.name || "Carte";
