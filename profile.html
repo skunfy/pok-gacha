@@ -3,179 +3,99 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Profil — Gachax</title>
+<title>Profil Ami — Gachax</title>
+
 <style>
 :root{ --bg1:#05060d; --bg2:#090b18; }
 *{box-sizing:border-box}
 body{
-  margin:0; min-height:100vh;
-  font-family:system-ui; color:#fff;
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui;
+  color:#fff;
   background:
     radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.22), transparent 60%),
     radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.18), transparent 62%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
-  background-attachment: fixed;
-  overflow-x:hidden;
 }
-.wrap{ width:min(1200px,95vw); margin:24px auto; display:grid; gap:16px; }
-.topbar{
-  display:flex; justify-content:space-between; align-items:center; gap:12px;
-  padding:14px; border-radius:16px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  backdrop-filter:blur(10px);
+
+.wrap{
+  width:min(1100px,95vw);
+  margin:24px auto;
+  display:grid;
+  gap:16px;
 }
-.controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
-button,
-input,
-textarea,
-select{
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.06);
-  color:#fff;
-  font-weight:900;
-  outline:none;
-  transition: all .15s ease;
-}
-button:hover,
-select:hover{
-  background:rgba(255,255,255,.10);
-  border-color:rgba(255,255,255,.25);
-}
-button:focus,
-input:focus,
-textarea:focus,
-select:focus{
-  border-color:rgba(255,255,255,.35);
-  box-shadow:0 0 0 3px rgba(255,255,255,.08);
-}
-select option{ background:#0f1116; color:#fff; }
-select{ appearance:none; -webkit-appearance:none; -moz-appearance:none; cursor:pointer; }
-textarea{font-weight:700; resize:none; min-height:90px; width:100%}
-button{cursor:pointer}
 
 .panel{
   border-radius:16px;
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.10);
-  padding:16px;
+  padding:20px;
   backdrop-filter:blur(10px);
+  overflow:hidden;
 }
 
-/* ✅ Banner support (cover) */
-.profilePanel{ position:relative; overflow:hidden; }
-.profileBanner{
-  position:absolute;
-  inset:0;
-  background:center/cover no-repeat;
-  transform: translateZ(0);
-  opacity:.95;
-}
-.profileBanner::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background: linear-gradient(90deg,
-    rgba(5,6,13,.88) 0%,
-    rgba(5,6,13,.72) 35%,
-    rgba(5,6,13,.38) 70%,
-    rgba(5,6,13,.18) 100%
-  );
-}
-.profileContent{ position:relative; z-index:2; }
-
-/* ✅ LVL THEME + GLOW (banner + stars) */
-.profilePanel{
-  --bGlow: rgba(120,170,255,.22);
-  --bGlow2: rgba(190,120,255,.22);
-  --bIntensity: 0.25;
-}
-.profilePanel::before{
-  content:"";
-  position:absolute;
-  inset:-3px;
-  border-radius:18px;
-  pointer-events:none;
-  opacity: calc(.25 + var(--bIntensity) * .75);
-  filter: blur(calc(10px + var(--bIntensity) * 18px));
+/* ✅ BANNIÈRE */
+.banner{
+  width:100%;
+  height:260px;
+  border-radius:16px;
   background:
-    radial-gradient(circle at 18% 22%, color-mix(in oklab, var(--bGlow) 80%, transparent), transparent 55%),
-    radial-gradient(circle at 82% 65%, color-mix(in oklab, var(--bGlow2) 70%, transparent), transparent 55%);
-  z-index:0;
+    radial-gradient(900px 420px at 15% 20%, rgba(80,130,255,.20), transparent 60%),
+    radial-gradient(900px 520px at 80% 35%, rgba(255,80,220,.16), transparent 62%),
+    rgba(0,0,0,.25);
+  border:1px solid rgba(255,255,255,.10);
+  position:relative;
+  overflow:hidden;
 }
-.profilePanel{
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.08),
-    0 0 calc(18px + var(--bIntensity) * 42px) color-mix(in oklab, var(--bGlow) 70%, transparent);
+.banner.hasImg{
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
 }
-
-.bannerStars{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  opacity:0;
-  transition: opacity .25s ease;
-  z-index:1;
-  mix-blend-mode: screen;
-}
-.bannerStars::before,
-.bannerStars::after{
+.banner::after{
   content:"";
-  position:absolute;
-  inset:-20%;
-  background-repeat:repeat;
-  transform: translateZ(0);
-  opacity: calc(.10 + var(--bIntensity) * .35);
-  filter: blur(.2px);
-  animation: starsFloat 10s linear infinite;
+  position:absolute; inset:0;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
+  pointer-events:none;
 }
-.bannerStars::before{
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,.85) 0 1px, transparent 2px),
-    radial-gradient(circle, rgba(255,255,255,.55) 0 1px, transparent 2px);
-  background-size: 120px 120px, 180px 180px;
-  background-position: 0 0, 40px 70px;
-}
-.bannerStars::after{
-  background-image:
-    radial-gradient(circle, color-mix(in oklab, var(--bGlow) 70%, rgba(255,255,255,.95)) 0 1.4px, transparent 3px),
-    radial-gradient(circle, color-mix(in oklab, var(--bGlow2) 70%, rgba(255,255,255,.95)) 0 1.8px, transparent 3.6px);
-  background-size: 260px 260px, 340px 340px;
-  background-position: 20px 20px, 140px 120px;
-  animation-duration: 14s;
-}
-@keyframes starsFloat{
-  from{ transform: translate3d(0,0,0) }
-  to  { transform: translate3d(-80px, 60px, 0) }
-}
-.profilePanel.starsOn .bannerStars{
-  opacity: calc(.18 + var(--bIntensity) * .70);
+.bannerInner{
+  position:relative;
+  z-index:2;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:12px;
+  padding:12px;
 }
 
-.grid2{display:grid; grid-template-columns: 1fr 1fr; gap:16px;}
-@media (max-width: 900px){ .grid2{grid-template-columns:1fr;} }
+.profileRow{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  flex-wrap:wrap;
+}
 
-.profileRow{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
-
-/* ✅ AVATAR + GLOW (vars) */
+/* ✅ avatar + glow via variables */
 .avatar{
-  --glow: rgba(120,170,255,.22);
-  --glow2: rgba(190,120,255,.22);
+  --glow: rgba(120,170,255,.18);
+  --glow2: rgba(190,120,255,.25);
 
-  width:90px; height:90px; border-radius:18px;
+  width:110px;
+  height:110px;
+  border-radius:20px;
   background:rgba(0,0,0,.25) center/cover no-repeat;
   border:1px solid rgba(255,255,255,.12);
   position:relative;
   box-shadow:
     0 0 0 1px rgba(255,255,255,.10),
-    0 0 30px var(--glow);
+    0 0 34px var(--glow);
 }
 .avatar::after{
   content:"";
   position:absolute; inset:-2px;
-  border-radius:20px;
+  border-radius:22px;
   pointer-events:none;
   background:
     radial-gradient(circle at 30% 30%, var(--glow), transparent 55%),
@@ -185,61 +105,34 @@ button{cursor:pointer}
 }
 
 .badge{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:8px 10px; border-radius:999px;
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(0,0,0,.18);
-  font-size:12px; font-weight:900;
+  font-weight:900;
+  font-size:12px;
 }
-.msg{opacity:.85; font-size:13px; white-space:pre-line; margin-top:10px}
 
-/* ✅ LVL UI */
-.lvlRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:10px; }
-.lvlRing{
-  --p: 0;
-  width:44px; height:44px;
-  border-radius:999px;
+.grid{
   display:grid;
-  place-items:center;
-  background:
-    conic-gradient(from 180deg, rgba(255,255,255,.70) calc(var(--p) * 1turn), rgba(255,255,255,.10) 0);
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow: 0 0 26px rgba(255,255,255,.10);
-  position:relative;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
 }
-.lvlRing::before{
-  content:"";
-  position:absolute; inset:4px;
-  border-radius:999px;
-  background: rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.10);
+@media (max-width: 900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+  .banner{height:200px;}
 }
-.lvlRing b{ position:relative; z-index:1; font-size:13px; }
-.xpWrap{ min-width:220px; flex:1; }
-.xpTop{
-  display:flex; justify-content:space-between; gap:10px;
-  font-size:12px; opacity:.85; font-weight:900;
-}
-.xpBar{
-  margin-top:6px;
-  height:10px;
-  border-radius:999px;
-  background: rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.12);
-  overflow:hidden;
-}
-.xpFill{ height:100%; width:0%; border-radius:999px; background: rgba(255,255,255,.70); }
 
-.grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
-@media (max-width: 980px){ .grid{grid-template-columns:repeat(3,1fr);} }
-@media (max-width: 720px){ .grid{grid-template-columns:repeat(2,1fr);} }
-
+/* ✅ cards + hover */
 .cardBox{
   background:rgba(255,255,255,.06);
   border-radius:14px;
   padding:12px;
   border:1px solid rgba(255,255,255,.12);
-  display:flex; flex-direction:column; gap:8px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
   transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
 .cardBox:hover{
@@ -247,38 +140,41 @@ button{cursor:pointer}
   background:rgba(255,255,255,.08);
   border-color:rgba(255,255,255,.18);
 }
+
 .cImg{
-  height:190px;
+  height:180px;
   overflow:hidden;
   background:center/cover no-repeat;
   border-radius:10px;
   cursor:pointer;
 }
-.row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
 .small{font-size:12px; opacity:.75}
-.star{
-  margin-left:auto;
-  padding:8px 10px;
+.msg{opacity:.85;font-size:13px}
+
+button{
+  padding:8px 12px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  cursor:pointer;
-}
-.star.on{border-color: rgba(255,210,110,.45); box-shadow:0 0 40px rgba(255,210,110,.12)}
-.gameTag{
-  display:inline-flex;
-  padding:4px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  font-size:11px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.08);
+  color:#fff;
   font-weight:900;
-  opacity:.85;
+  cursor:pointer;
+  transition: transform .12s ease, background .12s ease;
 }
+button:hover{ background:rgba(255,255,255,.12); transform: translateY(-1px); }
+button:active{ transform: translateY(0px) scale(.99); }
 
 /* ✅ STATS */
 .statsGrid{
-  margin-top:12px;
+  margin-top:14px;
   display:grid;
   grid-template-columns: 1fr 1fr;
   gap:10px;
@@ -292,6 +188,45 @@ button{cursor:pointer}
 .statCard .k{opacity:.75; font-size:11px; font-weight:900; letter-spacing:.3px}
 .statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
 
+/* ✅ LVL + XP */
+.levelRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.lvlPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-weight:1000;
+  font-size:12px;
+}
+.xpBar{
+  width:min(320px, 86vw);
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);
+  overflow:hidden;
+}
+.xpFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background: rgba(120,170,255,.85);
+  transition: width .25s ease;
+}
+.xpText{
+  font-size:12px;
+  opacity:.75;
+}
+
 /* ✅ MODAL ZOOM */
 .modal{
   position:fixed; inset:0;
@@ -302,6 +237,7 @@ button{cursor:pointer}
   padding:24px;
 }
 .modal.open{display:grid}
+
 .zoomCard{
   width:min(520px, 92vw);
   border-radius:18px;
@@ -311,6 +247,7 @@ button{cursor:pointer}
   padding:14px;
   backdrop-filter: blur(10px);
 }
+
 .zoomHead{
   display:flex;
   justify-content:space-between;
@@ -321,6 +258,18 @@ button{cursor:pointer}
 .zoomTitle{ font-weight:1000; letter-spacing:.3px; }
 .zoomSub{ opacity:.75; font-size:12px; margin-top:2px; }
 .zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+
+.gameTag{
+  display:inline-flex;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-size:11px;
+  font-weight:900;
+  opacity:.85;
+}
+
 .mintBadge{
   padding:5px 9px;
   border-radius:999px;
@@ -340,6 +289,7 @@ button{cursor:pointer}
   background: rgba(255,255,255,.08);
   border: 1px solid rgba(255,255,255,.18);
 }
+
 .zoomImg{
   width:100%;
   height:min(64vh, 560px);
@@ -349,216 +299,76 @@ button{cursor:pointer}
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.10);
 }
+.zoomImg.is-horizontal{
+  transform:rotate(90deg);
+  background-size:auto 115%;
+}
+
 .zoomHint{
   margin-top:10px;
   opacity:.7;
   font-size:12px;
   text-align:center;
 }
-
-/* =========================================================
-   ✅ APERÇU PUBLIC (remplacé par un bouton)
-   ========================================================= */
-.publicHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-end;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:10px;
-}
-.publicHint{opacity:.75; font-size:12px}
-
-.publicCard{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.18);
-  padding:12px;
-}
-.publicRow{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.publicMeta{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.publicAvatarMini{
-  width:46px;
-  height:46px;
-  border-radius:14px;
-  background:rgba(0,0,0,.25) center/cover no-repeat;
-  border:1px solid rgba(255,255,255,.12);
-}
-.publicText b{ font-weight:1000; }
-.publicText .small{ opacity:.8; }
-.publicBtns{ display:flex; gap:10px; flex-wrap:wrap; }
 </style>
 </head>
+
 <body>
 
 <div class="wrap">
-  <div class="topbar">
-    <div><b>Gachax</b> — Profil</div>
-    <div class="controls">
-      <button onclick="location.href='/collection.html'">COLLECTION</button>
-      <button onclick="location.href='/'">← Retour</button>
-    </div>
-  </div>
 
-  <div class="grid2">
-    <!-- =======================
-         ✅ TON PROFIL (édition)
-         ======================= -->
-    <div class="panel profilePanel" id="profilePanel">
-      <div class="profileBanner" id="bannerPreview" style="display:none;"></div>
-      <div class="bannerStars" aria-hidden="true"></div>
+  <div class="panel">
+    <button onclick="history.back()">← Retour</button>
 
-      <div class="profileContent">
+    <div class="banner" id="banner" style="margin-top:16px">
+      <div class="bannerInner">
         <div class="profileRow">
-          <div class="avatar" id="avatarPreview"></div>
-          <div style="min-width:240px">
-            <div style="font-size:18px;font-weight:1000" id="pname">...</div>
-            <div class="badge">
-              Code ami: <span id="pcode">----</span>
-              <button id="copyCode" style="padding:6px 10px;border-radius:999px;">Copier</button>
-            </div>
+          <div class="avatar" id="avatar"></div>
+          <div>
+            <div style="font-size:20px;font-weight:1000" id="name">...</div>
+            <div class="badge" id="code">----</div>
 
-            <!-- ✅ LVL + XP -->
-            <div class="lvlRow">
-              <div class="lvlRing" id="lvlRing" title="Progression niveau"><b id="lvlNum">1</b></div>
-              <div class="xpWrap">
-                <div class="xpTop">
-                  <span id="lvlLabel">Niveau 1</span>
-                  <span id="xpLabel">0 / 100 XP</span>
-                </div>
+            <div class="levelRow" aria-label="Niveau et XP">
+              <div class="lvlPill">LVL <span id="lvl">1</span></div>
+              <div>
                 <div class="xpBar"><div class="xpFill" id="xpFill"></div></div>
+                <div class="xpText" id="xpText">0 / 100 XP</div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div class="statsGrid" aria-label="Statistiques">
-          <div class="statCard">
-            <div class="k">TOTAL POKÉMON</div>
-            <div class="v" id="statPokemon">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL ONE PIECE</div>
-            <div class="v" id="statOnepiece">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL LORCANA</div>
-            <div class="v" id="statLorcana">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL DRAGON BALL</div>
-            <div class="v" id="statDragonball">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL CARTES</div>
-            <div class="v" id="statTotal">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL UNION ARENA</div>
-            <div class="v" id="statUnionarena">0</div>
-          </div>
-          <div class="statCard">
-            <div class="k">TOTAL SENPAI</div>
-            <div class="v" id="statSenpai">0</div>
-          </div>
-        </div>
-
-        <div class="msg" id="msg"></div>
-
-        <div id="editZone">
-          <div style="margin-top:12px" class="small">Avatar (URL d’image)</div>
-          <input id="avatarUrl" placeholder="https://..." />
-
-          <div style="margin-top:12px" class="small">Bannière (URL d’image)</div>
-          <input id="bannerUrl" placeholder="https://... (ou /data/monbanner.jpg)" />
-
-          <div style="margin-top:12px" class="small">Description (max 140)</div>
-          <textarea id="bio" maxlength="140" placeholder="Une petite description..."></textarea>
-
-          <div class="row" style="margin-top:12px">
-            <button id="save">ENREGISTRER</button>
-            <div class="small" id="bioCount"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===========================
-         ✅ COLONNE DROITE
-         - Bouton profil public
-         - Cartes favorites
-         =========================== -->
-    <div style="display:grid; gap:16px;">
-      <!-- ✅ PROFIL PUBLIC (bouton) -->
-      <div class="panel" id="publicPanel">
-        <div class="publicHead">
-          <b>Profil public</b>
-          <span class="publicHint">Ouvre la vue “amis”</span>
-        </div>
+    <div class="msg" id="bio" style="margin-top:14px"></div>
 
-        <div class="publicCard">
-          <div class="publicRow">
-            <div class="publicMeta">
-              <div class="publicAvatarMini" id="publicAvatarMini"></div>
-              <div class="publicText">
-                <div><b id="publicName">...</b></div>
-                <div class="small">Code ami: <span id="publicFriendCode">----</span></div>
-              </div>
-            </div>
-            <div class="publicBtns">
-              <button id="openPublic">VOIR</button>
-              <button id="copyPublicLink">COPIER LE LIEN</button>
-            </div>
-          </div>
-          <div class="small" id="publicLinkHint" style="margin-top:10px; opacity:.8;"></div>
-        </div>
+    <div class="statsGrid" aria-label="Statistiques" style="margin-top:12px">
+      <div class="statCard">
+        <div class="k">TOTAL POKÉMON</div>
+        <div class="v" id="statPokemon">0</div>
       </div>
-
-      <!-- ✅ FAVORIS -->
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
-          <b>Cartes favorites</b>
-          <span class="small">Max 12</span>
-        </div>
-        <div class="msg small">Ajoute/enlève des ⭐ depuis ta collection en bas.</div>
-        <div class="grid" id="favGrid" style="margin-top:12px"></div>
+      <div class="statCard">
+        <div class="k">TOTAL ONE PIECE</div>
+        <div class="v" id="statOnepiece">0</div>
+      </div>
+      <div class="statCard">
+        <div class="k">TOTAL LORCANA</div>
+        <div class="v" id="statLorcana">0</div>
+      </div>
+      <div class="statCard">
+        <div class="k">TOTAL CARTES</div>
+        <div class="v" id="statTotal">0</div>
       </div>
     </div>
+
+  <div class="panel">
+    <b id="favTitle">Cartes favorites</b>
+    <div class="grid" id="favGrid" style="margin-top:12px"></div>
   </div>
 
-  <!-- ✅ COLLECTION -->
-  <div class="panel" id="myCollectionPanel">
-    <div style="display:flex;justify-content:space-between;align-items:end;gap:10px;flex-wrap:wrap">
-      <b id="collectionTitle">Ta collection (clic ⭐ pour favori)</b>
-      <div class="row">
-        <select id="gameFilter" title="Filtrer par jeu">
-          <option value="all">Tous</option>
-          <option value="pokemon">Pokémon</option>
-          <option value="onepiece">One Piece</option>
-          <option value="lorcana">Lorcana</option>
-          <option value="dragonball">Dragon Ball</option>
-          <option value="unionarena">Union Arena</option>
-          <option value="senpaigodesshaven">Senpai Goddess Haven</option>
-        </select>
-        <input id="search" placeholder="Rechercher...">
-      </div>
-    </div>
-    <div class="grid" id="colGrid" style="margin-top:12px"></div>
-  </div>
 </div>
 
-<!-- ✅ ZOOM -->
 <div class="modal" id="zoomModal" aria-hidden="true">
   <div class="zoomCard" role="dialog" aria-modal="true">
     <div class="zoomHead">
@@ -578,79 +388,19 @@ button{cursor:pointer}
 </div>
 
 <script>
-const TOKEN_KEY = "gacha_token_v1";
-const TOKEN = localStorage.getItem(TOKEN_KEY);
-if(!TOKEN) location.href="/login.html";
+const TOKEN = localStorage.getItem("gacha_token_v1");
 
-async function api(path, opts={}){
-  const r = await fetch(path, {
-    ...opts,
-    headers:{
-      ...(opts.headers||{}),
-      "Authorization":"Bearer " + localStorage.getItem(TOKEN_KEY),
-      "Content-Type":"application/json"
-    }
-  });
+/* ✅ API helper: met Authorization seulement si présent */
+async function api(path){
+  const headers = {};
+  if (TOKEN) headers.Authorization = "Bearer " + TOKEN;
+
+  const r = await fetch(path, { headers });
   const data = await r.json().catch(()=> ({}));
   if(!r.ok) throw new Error(data.error || ("HTTP " + r.status));
   return data;
 }
-async function apiGame(path, game, opts={}){
-  const sep = path.includes("?") ? "&" : "?";
-  return api(path + sep + "game=" + encodeURIComponent(game), opts);
-}
 
-const avatarPreview = document.getElementById("avatarPreview");
-const bannerPreview = document.getElementById("bannerPreview");
-const profilePanel = document.getElementById("profilePanel");
-
-const pname = document.getElementById("pname");
-const pcode = document.getElementById("pcode");
-const msg = document.getElementById("msg");
-
-const editZone = document.getElementById("editZone");
-const avatarUrl = document.getElementById("avatarUrl");
-const bannerUrl = document.getElementById("bannerUrl");
-const bio = document.getElementById("bio");
-const saveBtn = document.getElementById("save");
-const bioCount = document.getElementById("bioCount");
-const copyCode = document.getElementById("copyCode");
-
-const favGrid = document.getElementById("favGrid");
-const colGrid = document.getElementById("colGrid");
-const search = document.getElementById("search");
-const gameFilter = document.getElementById("gameFilter");
-
-const collectionTitle = document.getElementById("collectionTitle");
-const statPokemon = document.getElementById("statPokemon");
-const statOnepiece = document.getElementById("statOnepiece");
-const statLorcana = document.getElementById("statLorcana");
-const statDragonball = document.getElementById("statDragonball");
-const statUnionarena = document.getElementById("statUnionarena");
-const statSenpai = document.getElementById("statSenpai");
-const statTotal = document.getElementById("statTotal");
-
-const zoomModal = document.getElementById("zoomModal");
-const zoomTitle = document.getElementById("zoomTitle");
-const zoomSub = document.getElementById("zoomSub");
-const zoomGameTag = document.getElementById("zoomGameTag");
-const zoomGrade = document.getElementById("zoomGrade");
-const zoomMint = document.getElementById("zoomMint");
-const zoomImg = document.getElementById("zoomImg");
-
-/* ✅ profil public (bouton) DOM */
-const publicAvatarMini = document.getElementById("publicAvatarMini");
-const publicName = document.getElementById("publicName");
-const publicFriendCode = document.getElementById("publicFriendCode");
-const openPublic = document.getElementById("openPublic");
-const copyPublicLink = document.getElementById("copyPublicLink");
-const publicLinkHint = document.getElementById("publicLinkHint");
-
-let favorites = new Set();
-let allItems = [];
-let myFriendCode = "";
-
-function show(t){ msg.textContent = t || ""; }
 function escapeHtml(s){
   return String(s||"")
     .replaceAll("&","&amp;")
@@ -660,64 +410,94 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
-function setAvatar(url){
-  const u = (url||"").trim();
-  avatarPreview.style.backgroundImage = u ? `url('${u.replace(/'/g,"\\'")}')` : "none";
-}
-function setBanner(url){
-  const u = (url||"").trim();
-  if(!u){
-    bannerPreview.style.display = "none";
-    bannerPreview.style.backgroundImage = "none";
-    return;
-  }
-  bannerPreview.style.display = "block";
-  bannerPreview.style.backgroundImage = `url("${u.replace(/"/g,'\\"')}")`;
-}
-
 function gameLabel(g){
-  if (g === "onepiece") return "ONE PIECE";
-  if (g === "lorcana")  return "LORCANA";
-  if (g === "dragonball") return "DRAGON BALL";
-  if (g === "unionarena") return "UNION ARENA";
-  if (g === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
+  const gg = String(g||"").toLowerCase();
+  if (gg === "onepiece") return "ONE PIECE";
+  if (gg === "lorcana")  return "LORCANA";
+  if (gg === "dragonball") return "DRAGON BALL";
+  if (gg === "unionarena") return "UNION ARENA";
+  if (gg === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
   return "POKÉMON";
 }
 
-function updateStats(items){
-  let p = 0, o = 0, l = 0, d = 0, u = 0, s = 0;
+/* ✅ XP math (doit matcher backend levelForXp) */
+function xpForLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+  return 100 * Math.pow(l - 1, 2);
+}
+function applyXpUi(xp, level){
+  const l = Math.max(1, Number(level) || 1);
+  const curNeed = xpForLevel(l);
+  const nextNeed = xpForLevel(l + 1);
 
-  for(const x of items){
-    const c = Number(x.count || 0) || 0;
-    const g = (x.game || "pokemon");
+  const x = Math.max(0, Number(xp) || 0);
+  const inLevel = Math.max(0, x - curNeed);
+  const span = Math.max(1, nextNeed - curNeed);
+  const pct = Math.max(0, Math.min(100, (inLevel / span) * 100));
 
-    if(g === "onepiece") o += c;
-    else if(g === "lorcana") l += c;
-    else if(g === "dragonball") d += c;
-    else if(g === "unionarena") u += c;
-    else if(g === "senpaigodesshaven") s += c;
-    else p += c;
-  }
-
-  statPokemon.textContent = String(p);
-  statOnepiece.textContent = String(o);
-  statLorcana.textContent = String(l);
-  statDragonball.textContent = String(d);
-  statUnionarena.textContent = String(u);
-  statSenpai.textContent = String(s);
-  statTotal.textContent = String(p + o + l + d + u + s);
+  document.getElementById("lvl").textContent = String(l);
+  document.getElementById("xpFill").style.width = pct.toFixed(1) + "%";
+  document.getElementById("xpText").textContent = `${inLevel} / ${span} XP`;
 }
 
-/* ✅ zoom */
+/* ✅ Glow selon level */
+function setAvatarGlowByLevel(level){
+  const l = Math.max(1, Number(level) || 1);
+  const av = document.getElementById("avatar");
+
+  let glow = "rgba(120,170,255,.18)";
+  let glow2 = "rgba(190,120,255,.25)";
+
+  if (l >= 5)  { glow = "rgba(120,255,200,.18)"; glow2 = "rgba(120,255,200,.28)"; }
+  if (l >= 10) { glow = "rgba(255,210,120,.20)"; glow2 = "rgba(255,180,90,.30)"; }
+  if (l >= 20) { glow = "rgba(255,120,220,.22)"; glow2 = "rgba(190,120,255,.30)"; }
+  if (l >= 35) { glow = "rgba(255,80,80,.22)";  glow2 = "rgba(255,130,90,.30)"; }
+
+  av.style.setProperty("--glow", glow);
+  av.style.setProperty("--glow2", glow2);
+}
+
+/* ✅ STATS */
+function setStats(pokemon, onepiece, lorcana){
+  const p = Number(pokemon||0)||0;
+  const o = Number(onepiece||0)||0;
+  const l = Number(lorcana||0)||0;
+
+  document.getElementById("statPokemon").textContent = String(p);
+  document.getElementById("statOnepiece").textContent = String(o);
+  document.getElementById("statLorcana").textContent = String(l);
+  document.getElementById("statTotal").textContent = String(p + o + l);
+}
+
+/* ✅ ZOOM */
+const zoomModal = document.getElementById("zoomModal");
+const zoomTitle = document.getElementById("zoomTitle");
+const zoomSub = document.getElementById("zoomSub");
+const zoomGameTag = document.getElementById("zoomGameTag");
+const zoomGrade = document.getElementById("zoomGrade");
+const zoomMint = document.getElementById("zoomMint");
+const zoomImg = document.getElementById("zoomImg");
+
 function openZoomCard(x){
   zoomTitle.textContent = x.name || "";
-  zoomSub.textContent = `${x.set || ""}`.trim();
+  zoomSub.textContent = `${x.setName || x.set || ""}`.trim();
   zoomGameTag.textContent = gameLabel(x.game || "pokemon");
   zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
   zoomMint.style.display = x.mint ? "inline-flex" : "none";
 
   const img = (x.imageHigh || x.image || "").trim();
   zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
+
+  // Détection carte horizontale
+  if(img){
+    const tmp = new Image();
+    tmp.onload = () => {
+      zoomImg.classList.toggle("is-horizontal", tmp.naturalWidth > tmp.naturalHeight);
+    };
+    tmp.src = img;
+  } else {
+    zoomImg.classList.remove("is-horizontal");
+  }
 
   zoomModal.classList.add("open");
   zoomModal.setAttribute("aria-hidden","false");
@@ -726,318 +506,122 @@ function closeZoom(){
   zoomModal.classList.remove("open");
   zoomModal.setAttribute("aria-hidden","true");
   zoomImg.style.backgroundImage = "none";
+  zoomImg.classList.remove("is-horizontal");
 }
 zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(); });
 window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
 
-function renderFavs(items){
-  favGrid.innerHTML = "";
-  const favs = items.filter(x => favorites.has(x.idKey)).slice(0,12);
-  if(!favs.length){
-    favGrid.innerHTML = `<div class="small" style="opacity:.8;">Aucune favorite.</div>`;
+const params = new URLSearchParams(location.search);
+const friendCode = String(params.get("code") || "").trim().toUpperCase();
+
+async function load(){
+  if(!friendCode){
+    alert("Code ami manquant dans l’URL ?code=XXXX-XXXX");
+    history.back();
     return;
   }
+
+  let data = null;
+  let canSeeFavorites = false;
+
+  if (TOKEN) {
+    try {
+      data = await api("/api/profile/" + encodeURIComponent(friendCode));
+      canSeeFavorites = true;
+    } catch (e) {
+      data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+      canSeeFavorites = false;
+    }
+  } else {
+    data = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+    canSeeFavorites = false;
+  }
+
+  document.getElementById("name").textContent = data.name || "...";
+  document.getElementById("code").textContent = "Code ami: " + (data.friendCode || "----");
+  document.getElementById("bio").textContent = data.bio || "";
+
+  // avatar
+  const av = document.getElementById("avatar");
+  const avUrl = String(data.avatar || "").trim();
+  av.style.backgroundImage = avUrl ? `url("${avUrl.replace(/"/g,'\\"')}")` : "none";
+
+  // bannière
+  const bannerEl = document.getElementById("banner");
+  const b = String(data.banner || "").trim();
+  if(b){
+    bannerEl.classList.add("hasImg");
+    bannerEl.style.backgroundImage = `url("${b.replace(/"/g,'\\"')}")`;
+  } else {
+    bannerEl.classList.remove("hasImg");
+    bannerEl.style.backgroundImage = "";
+  }
+
+  // lvl/xp + glow
+  applyXpUi(data.xp || 0, data.level || 1);
+  setAvatarGlowByLevel(data.level || 1);
+
+  // stats : route publique les a, route amis non
+  if (data.stats){
+    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana);
+  } else {
+    try {
+      const publicData = await api("/api/profile_public/" + encodeURIComponent(friendCode));
+      if (publicData.stats) {
+        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana);
+      } else {
+        setStats(0,0,0);
+      }
+    } catch {
+      setStats(0,0,0);
+    }
+  }
+
+  const favTitle = document.getElementById("favTitle");
+  const grid = document.getElementById("favGrid");
+  grid.innerHTML = "";
+
+  if (!canSeeFavorites) {
+    favTitle.textContent = "Cartes favorites";
+    grid.innerHTML = `<div class="small" style="opacity:.85;">
+      Les cartes favorites sont visibles uniquement pour les amis.
+    </div>`;
+    return;
+  }
+
+  const favs = Array.isArray(data.favorites) ? data.favorites : [];
+  if(!favs.length){
+    favTitle.textContent = "Cartes favorites";
+    grid.innerHTML = `<div class="small" style="opacity:.85;">
+      Aucune carte favorite.
+    </div>`;
+    return;
+  }
+
   favs.forEach(x=>{
     const el = document.createElement("div");
-    el.className = "cardBox";
-    el.innerHTML = `
-      <div class="cImg" style="background-image:url('${x.image}')"></div>
+    el.className="cardBox";
+    el.innerHTML=`
+      <div class="cImg" style="background-image:url('${String(x.image||"").replace(/'/g,"\\'")}')"></div>
       <div class="row">
         <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
       </div>
       <div><b>${escapeHtml(x.name)}</b></div>
-      <div class="small">${escapeHtml(x.set)}</div>
+      <div class="small">${escapeHtml(x.setName || x.set || "")}</div>
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
-    el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
-    favGrid.appendChild(el);
-  });
-}
-
-function renderCollection(items, canEditFavs){
-  colGrid.innerHTML = "";
-  items.forEach(x=>{
-    const el = document.createElement("div");
-    el.className = "cardBox";
-    const isOn = favorites.has(x.idKey);
-
-    el.innerHTML = `
-      <div class="cImg" style="background-image:url('${x.image}')"></div>
-      <div class="row">
-        <div style="min-width:0">
-          <div class="row" style="gap:8px">
-            <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
-            <div><b>${escapeHtml(x.name)}</b></div>
-          </div>
-          <div class="small">${escapeHtml(x.set)}</div>
-        </div>
-        ${canEditFavs ? `<button class="star ${isOn ? "on" : ""}" title="Favori">${isOn ? "⭐" : "☆"}</button>` : ""}
-      </div>
-      <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""} • ×${escapeHtml(x.count)}</div>
-    `;
 
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
-
-    if(canEditFavs){
-      el.querySelector(".star").onclick = async (e) => {
-        e.preventDefault();
-        try{
-          const r = await api("/api/favorites/toggle", {
-            method:"POST",
-            body: JSON.stringify({ idKey: x.idKey })
-          });
-          if(r.isFav) favorites.add(x.idKey);
-          else favorites.delete(x.idKey);
-
-          renderFavs(allItems);
-          renderCollection(filteredItems(), true);
-        }catch(err){
-          alert("❌ " + err.message);
-        }
-      };
-    }
-    colGrid.appendChild(el);
+    grid.appendChild(el);
   });
 }
 
-function filteredItems(){
-  const q = (search.value||"").toLowerCase().trim();
-  const gf = gameFilter.value || "all";
-  let items = allItems;
-  if(gf !== "all") items = items.filter(x => (x.game || "pokemon") === gf);
-  if(!q) return items;
-  return items.filter(x =>
-    (x.name||"").toLowerCase().includes(q) ||
-    (x.set||"").toLowerCase().includes(q) ||
-    String(x.grade||"").includes(q)
-  );
-}
-
-function getFriendCodeFromUrl(){
-  const u = new URL(location.href);
-  const v = (u.searchParams.get("friendCode") || u.searchParams.get("code") || "").trim();
-  return v ? v.toUpperCase() : "";
-}
-
-/* ✅ XP UI (profil) */
-function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
-function prevXpForLevel(lvl){ return 100 * Math.pow(Math.max(0,lvl-1), 2); }
-function nextXpForLevel(lvl){ return 100 * Math.pow(Math.max(1,lvl), 2); }
-function applyXpUi(xp, level){
-  const x = Math.max(0, Number(xp)||0);
-  const lvl = clamp(Number(level)||1, 1, 100);
-  const prev = prevXpForLevel(lvl);
-  const next = nextXpForLevel(lvl);
-  const need = Math.max(1, next - prev);
-  const prog = clamp((x - prev) / need, 0, 1);
-
-  document.getElementById("lvlNum").textContent = String(lvl);
-  document.getElementById("lvlLabel").textContent = `Niveau ${lvl}`;
-  document.getElementById("xpLabel").textContent = `${Math.min(x, next)} / ${next} XP`;
-  document.getElementById("xpFill").style.width = `${Math.round(prog*100)}%`;
-  document.getElementById("lvlRing").style.setProperty("--p", String(prog));
-}
-
-/* ✅ Level theme + glow */
-function hexToRgba(hex, a){
-  const h = String(hex||"").replace("#","").trim();
-  const full = (h.length===3) ? h.split("").map(ch=>ch+ch).join("") : h.padEnd(6,"0").slice(0,6);
-  const r = parseInt(full.slice(0,2),16) || 0;
-  const g = parseInt(full.slice(2,4),16) || 0;
-  const b = parseInt(full.slice(4,6),16) || 0;
-  return `rgba(${r},${g},${b},${clamp(Number(a)||0,0,1)})`;
-}
-function themeForLevel(level){
-  const l = clamp(Number(level)||1, 1, 100);
-  if (l >= 100) return { glow:"#ff5b5b", glow2:"#ffd36a" };
-  if (l >= 50)  return { glow:"#ff78dc", glow2:"#8b7bff" };
-  if (l >= 25)  return { glow:"#ffd36a", glow2:"#ff9a5c" };
-  if (l >= 10)  return { glow:"#78ffc8", glow2:"#52d7ff" };
-  return          { glow:"#78aaff", glow2:"#be78ff" };
-}
-function intensityForLevel(level){
-  const l = clamp(Number(level)||1, 1, 100);
-  if (l < 50){
-    const t = (l - 1) / 49;
-    return 0.15 + t * 0.40;
-  }
-  const t = (l - 50) / 50;
-  return 0.55 + t * 0.45;
-}
-function applyLevelTheme(level){
-  const l = clamp(Number(level)||1, 1, 100);
-  const t = themeForLevel(l);
-  const intensity = intensityForLevel(l);
-
-  /* profil (gauche) */
-  avatarPreview.style.setProperty("--glow",  hexToRgba(t.glow,  0.22 + intensity*0.25));
-  avatarPreview.style.setProperty("--glow2", hexToRgba(t.glow2, 0.22 + intensity*0.25));
-
-  profilePanel.style.setProperty("--bGlow", hexToRgba(t.glow, 0.25 + intensity*0.30));
-  profilePanel.style.setProperty("--bGlow2", hexToRgba(t.glow2, 0.22 + intensity*0.28));
-  profilePanel.style.setProperty("--bIntensity", String(intensity));
-
-  if (l >= 50) profilePanel.classList.add("starsOn");
-  else profilePanel.classList.remove("starsOn");
-}
-
-/* ✅ Profil public (bouton) */
-function publicUrlFor(friendCode){
-  // Si tu as déjà une page dédiée : /friend.html?code=XXXX-XXXX
-  // Sinon, tu peux aussi utiliser /profile.html?code=XXXX-XXXX (ton profil gère la vue ami)
-  return `/friend_profile.html?code=${encodeURIComponent(friendCode)}`;
-}
-function renderPublicButton(p){
-  myFriendCode = (p.friendCode || "").trim().toUpperCase();
-
-  publicName.textContent = p.name || "...";
-  publicFriendCode.textContent = myFriendCode || "----";
-  publicLinkHint.textContent = myFriendCode
-    ? `Lien: ${location.origin}${publicUrlFor(myFriendCode)}`
-    : "";
-
-  const av = String(p.avatar || "").trim();
-  publicAvatarMini.style.backgroundImage = av ? `url("${av.replace(/"/g,'\\"')}")` : "none";
-
-  openPublic.onclick = () => {
-    if(!myFriendCode) return;
-    location.href = publicUrlFor(myFriendCode);
-  };
-
-  copyPublicLink.onclick = async () => {
-    if(!myFriendCode) return;
-    const link = location.origin + publicUrlFor(myFriendCode);
-    try{
-      await navigator.clipboard.writeText(link);
-      show("✅ Lien du profil public copié !");
-    }catch{
-      show("Copie manuelle: " + link);
-    }
-  };
-}
-
-async function load(){
-  const friendCode = getFriendCodeFromUrl();
-  const isFriendView = !!friendCode;
-
-  const p = isFriendView
-    ? await api("/api/profile/" + encodeURIComponent(friendCode), { method:"GET", headers:{} })
-    : await api("/api/profile/me", { method:"GET", headers:{} });
-
-  pname.textContent = p.name || "...";
-  pcode.textContent = p.friendCode || "----";
-
-  setAvatar(p.avatar || "");
-  setBanner(p.banner || "");
-
-  applyXpUi(p.xp || 0, p.level || 1);
-  applyLevelTheme(p.level || 1);
-
-  // ✅ bouton profil public seulement sur "mon profil"
-  if(!isFriendView){
-    renderPublicButton(p);
-  }else{
-    // si tu arrives en vue ami, tu peux cacher le panel
-    const publicPanel = document.getElementById("publicPanel");
-    if(publicPanel) publicPanel.style.display = "none";
-  }
-
-  if(isFriendView){
-    editZone.style.display = "none";
-    collectionTitle.textContent = "Collection de ton ami";
-  }else{
-    editZone.style.display = "block";
-    avatarUrl.value = p.avatar || "";
-    bannerUrl.value = p.banner || "";
-    bio.value = p.bio || "";
-    bioCount.textContent = `${bio.value.length}/140`;
-  }
-
-  favorites = new Set((p.favorites||[]).map(x=>x.idKey));
-
-  const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
-  const baseO = baseP;
-
-  const [cP, cO, cL, cD, cU, cS] = await Promise.all([
-    apiGame(baseP, "pokemon",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "onepiece",          { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "lorcana",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "dragonball",        { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "unionarena",        { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "senpaigodesshaven", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-]);
-
-  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",           set: x.set || x.setName || "" }));
-  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",          set: x.set || x.setName || "" }));
-  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",           set: x.set || x.setName || "" }));
-  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball",        set: x.set || x.setName || "" }));
-  const itemsU = (cU.items||[]).map(x => ({ ...x, game: x.game || "unionarena",        set: x.set || x.setName || "" }));
-  const itemsS = (cS.items||[]).map(x => ({ ...x, game: x.game || "senpaigodesshaven", set: x.set || x.setName || "" }));
-
-  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU, ...itemsS];
-
-  
-
-  updateStats(allItems);
-  renderFavs(allItems);
-  renderCollection(filteredItems(), !isFriendView);
-}
-
-if(bio){
-  bio.addEventListener("input", ()=>{
-    bioCount.textContent = `${bio.value.length}/140`;
-  });
-}
-
-if(avatarUrl){
-  avatarUrl.addEventListener("input", ()=>{
-    setAvatar(avatarUrl.value);
-    const u = String(avatarUrl.value||"").trim();
-    if(publicAvatarMini){
-      publicAvatarMini.style.backgroundImage = u ? `url("${u.replace(/"/g,'\\"')}")` : "none";
-    }
-  });
-}
-
-if(bannerUrl){
-  bannerUrl.addEventListener("input", ()=>{
-    setBanner(bannerUrl.value);
-  });
-}
-
-if(saveBtn){
-  saveBtn.onclick = async () => {
-    try{
-      saveBtn.disabled = true;
-      await api("/api/profile/update", {
-        method:"POST",
-        body: JSON.stringify({ avatar: avatarUrl.value, banner: bannerUrl.value, bio: bio.value })
-      });
-      show("✅ Profil enregistré !");
-    }catch(e){
-      show("❌ " + e.message);
-    }finally{
-      saveBtn.disabled = false;
-    }
-  };
-}
-
-copyCode.onclick = async () => {
-  try{
-    await navigator.clipboard.writeText(pcode.textContent);
-    show("✅ Code ami copié !");
-  }catch{
-    show("Copie manuelle: sélectionne le code et Ctrl+C");
-  }
-};
-
-search.addEventListener("input", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
-gameFilter.addEventListener("change", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
-
-load().catch(()=>{
-  localStorage.removeItem(TOKEN_KEY);
-  location.href="/login.html";
+load().catch((e)=>{
+  console.error(e);
+  alert("Impossible de charger le profil");
+  history.back();
 });
 </script>
+
 </body>
 </html>
