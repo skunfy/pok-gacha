@@ -126,13 +126,6 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .binderGrid.senpai{
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.binderGrid.senpai .slot{
-  font-size: 12px;
-}
-.binderGrid.senpai .slotImg{
-  height: 200px;
-  aspect-ratio: unset;
-}
 .binderWrap{
   display:none;
   flex-direction:column;
@@ -1565,13 +1558,30 @@ function renderBinder(){
     if(isPzl1 || isPzl2){
       const pzlPrefix = isPzl1 ? "PZL1" : "PZL2";
       const pzlLabel  = isPzl1 ? "Puzzle 1" : "Puzzle 2";
+
+      // Vérifier si toutes les 9 cartes du puzzle sont possédées
+      let pzlComplete = true;
+      for(let i = 1; i <= 9; i++){
+        const num = String(i).padStart(3,"0");
+        const card = binderCards.find(c => String(c.localId||"") === pzlPrefix+"-"+num);
+        if(!card){ pzlComplete = false; break; }
+        const key = String(card.cardId || card.id || "").trim();
+        if(!owned.has(key)){ pzlComplete = false; break; }
+      }
+
       const btn = document.createElement("button");
       btn.id = "puzzleBtn";
-      btn.textContent = "🧩 Voir " + pzlLabel;
-      btn.style.cssText = "padding:8px 16px;border-radius:12px;border:1px solid rgba(255,100,200,.4);background:rgba(255,100,200,.12);color:#fff;font-weight:900;cursor:pointer;margin-top:10px;width:100%;font-size:14px;";
-      btn.onmouseenter = () => btn.style.background = "rgba(255,100,200,.22)";
-      btn.onmouseleave = () => btn.style.background = "rgba(255,100,200,.12)";
-      btn.onclick = () => openPuzzleModal(pzlPrefix, pzlLabel);
+      if(pzlComplete){
+        btn.textContent = "🧩 Voir " + pzlLabel;
+        btn.style.cssText = "padding:8px 16px;border-radius:12px;border:1px solid rgba(255,100,200,.4);background:rgba(255,100,200,.12);color:#fff;font-weight:900;cursor:pointer;margin-top:10px;width:100%;font-size:14px;";
+        btn.onmouseenter = () => btn.style.background = "rgba(255,100,200,.22)";
+        btn.onmouseleave = () => btn.style.background = "rgba(255,100,200,.12)";
+        btn.onclick = () => openPuzzleModal(pzlPrefix, pzlLabel);
+      } else {
+        btn.textContent = "🔒 " + pzlLabel + " — puzzle incomplet";
+        btn.style.cssText = "padding:8px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:rgba(255,255,255,.3);font-weight:900;cursor:not-allowed;margin-top:10px;width:100%;font-size:14px;";
+        btn.disabled = true;
+      }
       binderGrid.parentElement.insertBefore(btn, binderGrid);
     }
   }
