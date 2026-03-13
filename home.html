@@ -104,6 +104,7 @@
     .lorcana{ background: linear-gradient(135deg, #2bd3ff, #6a5cff); }
     .dragonball{background: linear-gradient(135deg, #ff7a00, #ff3d00);}
     .unionarena { background: linear-gradient(135deg, #8b5cf6, #4338ca); }
+    .senpaigodesshaven { background: linear-gradient(135deg, #ff6fa8, #c2185b); }
 
     .gameLogo {
       width: 160px;
@@ -192,6 +193,12 @@
         <img src="unionarena.png" alt="Logo Union Arena" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Union Arena, collectionne et trade.</p>
       </button>
+
+      <button class="card senpaigodesshaven" data-game="senpaigodesshaven" type="button" aria-label="Choisir Senpai Goddess Haven">
+        <span class="badge">Sélectionné</span>
+        <img src="senpai.png" alt="Logo Senpai Goddess Haven" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes Senpai Goddess Haven, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -206,6 +213,7 @@
       if (g === "lorcana") return "lorcana";
       if (g === "dragonball") return "dragonball";
       if (g === "unionarena") return "unionarena";
+      if (g === "senpaigodesshaven") return "senpaigodesshaven";
       return "pokemon";
     }
 
