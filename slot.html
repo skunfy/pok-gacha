@@ -466,13 +466,17 @@
   // ── État
   // Symboles avec images PNG
   const SYMBOLS = [
-    { id:'diamant',  src:'slot/diamant.png'  },
-    { id:'star',     src:'slot/star.png'     },
-    { id:'cards',    src:'slot/cards.png'    },
-    { id:'heart',    src:'slot/heart.png'    },
-    { id:'dollax',   src:'slot/dollax.png'   },
-    { id:'thunder',  src:'slot/thunder.png'  },
+    { id:'diamant',  src:'slot/diamant.png',  weight:1  }, // ×5000 — ultra rare
+    { id:'star',     src:'slot/star.png',     weight:3  }, // ×1000 — très rare
+    { id:'cards',    src:'slot/cards.png',    weight:8  }, // ×400  — rare
+    { id:'heart',    src:'slot/heart.png',    weight:15 }, // ×250  — peu commun
+    { id:'dollax',   src:'slot/dollax.png',   weight:25 }, // ×150  — commun
+    { id:'thunder',  src:'slot/thunder.png',  weight:48 }, // ×80   — très commun
   ];
+
+  // Pool pondéré pour le strip visuel
+  const SYMBOL_POOL = SYMBOLS.flatMap(s => Array(s.weight).fill(s));
+  function randSymbol(){ return SYMBOL_POOL[Math.floor(Math.random() * SYMBOL_POOL.length)]; }
   const MULTIPLIERS = {
     'diamant':5000, 'star':1000, 'cards':400,
     'heart':250,    'dollax':150, 'thunder':80,
@@ -499,7 +503,7 @@
     reelEl.innerHTML = '';
     const items = [];
     for(let i=0;i<STRIP_LEN;i++){
-      const s = SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+      const s = randSymbol();
       items.push(s);
       const div = document.createElement('div');
       div.className = 'reelItem';
@@ -588,19 +592,17 @@
       setTimeout(() => {
         const itemH = 110;
         const totalItems = strip.length;
+        // Reset position
+        reelEl.style.transform = 'translateY(0)';
         const spinTurns = 3 + Math.floor(Math.random()*3); // nb tours
         const target = spinTurns * totalItems;
 
-        // Trouver toutes les occurrences et en choisir une au hasard
-        const allIdxs = strip.reduce((acc, s, i) => { if(s.id === targetSymbol.id) acc.push(i); return acc; }, []);
-        let landIdx;
-        if(allIdxs.length > 0){
-          landIdx = allIdxs[Math.floor(Math.random() * allIdxs.length)];
-        } else {
-          // Forcer un slot aléatoire à prendre ce symbole
-          landIdx = Math.floor(Math.random() * strip.length);
-          strip[landIdx] = targetSymbol;
-          reelEl.children[landIdx].querySelector('img').src = targetSymbol.src;
+        // Trouver un slot avec le bon symbole
+        let landIdx = strip.findIndex(s => s.id === targetSymbol.id);
+        if(landIdx === -1){
+          strip[0] = targetSymbol;
+          reelEl.children[0].querySelector('img').src = targetSymbol.src;
+          landIdx = 0;
         }
 
         const finalPos = (target + landIdx) * itemH;

@@ -3030,17 +3030,26 @@ app.post("/api/slots/spin", auth, async (req, res) => {
       return res.status(400).json({ error: "Pas assez de tickets" });
     }
 
-    // Tirage
-    const SYMBOLS   = ["💎","⭐","🍒","🍋","🔔","🍇","🍀","🎯","🌟","💫"];
-    const MULTS     = { "💎":5000,"⭐":1000,"🍒":400,"🍋":250,"🔔":150,"🍇":80,"🍀":50,"🎯":30,"🌟":20,"💫":15 };
-    const result    = [0,1,2].map(() => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+    // Tirage pondéré (même proba que côté client)
+    const SYMBOLS = [
+      { id:"diamant", weight:1  },  // ultra rare  ×5000
+      { id:"star",    weight:3  },  // très rare   ×1000
+      { id:"cards",   weight:8  },  // rare        ×400
+      { id:"heart",   weight:15 },  // peu commun  ×250
+      { id:"dollax",  weight:25 },  // commun      ×150
+      { id:"thunder", weight:48 },  // très commun ×80
+    ];
+    const MULTS = { diamant:5000, star:1000, cards:400, heart:250, dollax:150, thunder:80 };
+    const POOL  = SYMBOLS.flatMap(s => Array(s.weight).fill(s.id));
+    const rand  = () => POOL[Math.floor(Math.random() * POOL.length)];
+    const result    = [rand(), rand(), rand()];
     const [a,b,c]   = result;
 
     let gain = 0;
     let winType = "none";
     if (a === b && b === c) {
       gain    = bet * (MULTS[a] ?? 20);
-      winType = a === "💎" ? "jackpot" : "triple";
+      winType = a === "diamant" ? "jackpot" : "triple";
     } else if (a === b || b === c || a === c) {
       gain    = bet * 15;
       winType = "pair";
