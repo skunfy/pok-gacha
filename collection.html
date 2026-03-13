@@ -126,6 +126,13 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 .binderGrid.senpai{
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.binderGrid.senpai .slot{
+  font-size: 12px;
+}
+.binderGrid.senpai .slotImg{
+  height: 200px;
+  aspect-ratio: unset;
+}
 .binderWrap{
   display:none;
   flex-direction:column;
@@ -895,6 +902,17 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
     </div>
 
     <div class="cardImg" id="zoomImg"></div>
+  </div>
+</div>
+
+<!-- ===== MODALE PUZZLE ===== -->
+<div class="puzzleModal" id="puzzleModal">
+  <div class="puzzleInner">
+    <div class="puzzleHead">
+      <div class="puzzleTitle" id="puzzleTitle">🧩 Puzzle</div>
+      <button class="puzzleClose" onclick="closePuzzleModal()">✕ Fermer</button>
+    </div>
+    <div class="puzzleGrid" id="puzzleGrid"></div>
   </div>
 </div>
 
@@ -1776,16 +1794,5 @@ window.addEventListener("keydown", e => {
 });
 </script>
 
-
-<!-- ===== MODALE PUZZLE ===== -->
-<div class="puzzleModal" id="puzzleModal">
-  <div class="puzzleInner">
-    <div class="puzzleHead">
-      <div class="puzzleTitle" id="puzzleTitle">🧩 Puzzle</div>
-      <button class="puzzleClose" onclick="closePuzzleModal()">✕ Fermer</button>
-    </div>
-    <div class="puzzleGrid" id="puzzleGrid"></div>
-  </div>
-</div>
 </body>
 </html>
