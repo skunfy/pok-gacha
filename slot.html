@@ -32,11 +32,22 @@
     /* ── HUD ── */
     .hud{
       position:sticky; top:0; z-index:100;
-      display:flex; justify-content:center; gap:24px; padding:14px 24px;
+      display:flex; justify-content:center; align-items:center; gap:24px; padding:14px 24px;
       backdrop-filter:blur(14px);
       background:linear-gradient(180deg,rgba(7,9,18,.88),rgba(7,9,18,.62));
       border-bottom:1px solid rgba(255,255,255,.07);
     }
+    .hudBack{
+      position:absolute; left:18px;
+      display:flex; align-items:center; gap:6px;
+      padding:7px 14px; border-radius:999px;
+      background:var(--panelBg); border:1px solid var(--panelBd);
+      color:rgba(255,255,255,.7); font-size:13px; font-weight:700;
+      text-decoration:none; letter-spacing:.03em;
+      transition:background .15s, color .15s, transform .12s;
+    }
+    .hudBack:hover{ background:rgba(255,255,255,.1); color:#fff; transform:translateX(-2px); }
+    .hudBack svg{ width:14px; height:14px; flex-shrink:0; }
     .hudPill{
       display:flex; align-items:center; gap:8px;
       background:var(--panelBg); border:1px solid var(--panelBd);
@@ -380,6 +391,10 @@
 
 <!-- HUD -->
 <div class="hud">
+  <a class="hudBack" href="/index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Retour
+  </a>
   <div class="hudPill">
     <span>🎟️</span> Tickets <span class="hudVal" id="hudTickets">0</span>
     <span id="nextTicketTimer" style="font-size:10px;opacity:.5;margin-left:4px;"></span>

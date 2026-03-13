@@ -1377,7 +1377,7 @@ app.get("/api/me", auth, async (req, res) => {
   await applyTicketsForUser(req.user.id);
 
   const userQ = await pool.query(
-  `SELECT name, money, friendCode, xp, avatar, tickets, dollax FROM users WHERE id=$1`,
+  `SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`,
   [req.user.id]
 );
   const u = userQ.rows[0];
@@ -1428,7 +1428,7 @@ app.get("/api/me", auth, async (req, res) => {
     level: levelForXp(u?.xp || 0),
     avatar: u?.avatar || "",
     tickets: Number(u?.tickets || 0),
-    dollax:  Number(u?.dollax  || 0),
+    dollax:  Number(u?.money  || 0),
   });
 });
 app.post("/api/open", auth, async (req, res) => {
@@ -2989,12 +2989,12 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
 app.get("/api/tickets", auth, async (req, res) => {
   await applyTicketsForUser(req.user.id);
   const { rows } = await pool.query(
-    `SELECT tickets, dollax, lastTicketPay FROM users WHERE id=$1`,
+    `SELECT tickets, money, lastTicketPay FROM users WHERE id=$1`,
     [req.user.id]
   );
   const u = rows[0];
   const tickets       = Number(u?.tickets || 0);
-  const dollax        = Number(u?.dollax  || 0);
+  const dollax        = Number(u?.money   || 0);
   const lastTicketPay = Number(u?.lastticketpay ?? u?.lastTicketPay ?? 0);
   const now           = Date.now();
 
@@ -3021,7 +3021,7 @@ app.post("/api/slots/spin", auth, async (req, res) => {
 
     // Vérifier et déduire les tickets
     const uQ = await client.query(
-      `SELECT tickets, dollax FROM users WHERE id=$1 FOR UPDATE`,
+      `SELECT tickets, money FROM users WHERE id=$1 FOR UPDATE`,
       [req.user.id]
     );
     const u = uQ.rows[0];
@@ -3048,14 +3048,14 @@ app.post("/api/slots/spin", auth, async (req, res) => {
 
     // Mettre à jour DB
     await client.query(
-      `UPDATE users SET tickets = tickets - $1, dollax = dollax + $2 WHERE id=$3`,
+      `UPDATE users SET tickets = tickets - $1, money = money + $2 WHERE id=$3`,
       [bet, gain, req.user.id]
     );
     await client.query("COMMIT");
 
     // Retourner résultat + nouveau solde
     const newQ = await pool.query(
-      `SELECT tickets, dollax FROM users WHERE id=$1`,
+      `SELECT tickets, money FROM users WHERE id=$1`,
       [req.user.id]
     );
     res.json({
@@ -3063,7 +3063,7 @@ app.post("/api/slots/spin", auth, async (req, res) => {
       gain,
       winType,
       tickets: Number(newQ.rows[0]?.tickets || 0),
-      dollax:  Number(newQ.rows[0]?.dollax  || 0),
+      dollax:  Number(newQ.rows[0]?.money   || 0),
     });
   } catch(e) {
     await client.query("ROLLBACK");
