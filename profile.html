@@ -249,7 +249,8 @@ button{cursor:pointer}
 }
 .cImg{
   height:190px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   border-radius:10px;
   cursor:pointer;
 }
@@ -343,7 +344,8 @@ button{cursor:pointer}
   width:100%;
   height:min(64vh, 560px);
   border-radius:14px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.10);
 }
@@ -466,6 +468,10 @@ button{cursor:pointer}
             <div class="k">TOTAL UNION ARENA</div>
             <div class="v" id="statUnionarena">0</div>
           </div>
+          <div class="statCard">
+            <div class="k">TOTAL SENPAI</div>
+            <div class="v" id="statSenpai">0</div>
+          </div>
         </div>
 
         <div class="msg" id="msg"></div>
@@ -543,6 +549,7 @@ button{cursor:pointer}
           <option value="lorcana">Lorcana</option>
           <option value="dragonball">Dragon Ball</option>
           <option value="unionarena">Union Arena</option>
+          <option value="senpaigodesshaven">Senpai Goddess Haven</option>
         </select>
         <input id="search" placeholder="Rechercher...">
       </div>
@@ -620,6 +627,7 @@ const statOnepiece = document.getElementById("statOnepiece");
 const statLorcana = document.getElementById("statLorcana");
 const statDragonball = document.getElementById("statDragonball");
 const statUnionarena = document.getElementById("statUnionarena");
+const statSenpai = document.getElementById("statSenpai");
 const statTotal = document.getElementById("statTotal");
 
 const zoomModal = document.getElementById("zoomModal");
@@ -672,11 +680,12 @@ function gameLabel(g){
   if (g === "lorcana")  return "LORCANA";
   if (g === "dragonball") return "DRAGON BALL";
   if (g === "unionarena") return "UNION ARENA";
+  if (g === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
   return "POKÉMON";
 }
 
 function updateStats(items){
-  let p = 0, o = 0, l = 0, d = 0, u = 0;
+  let p = 0, o = 0, l = 0, d = 0, u = 0, s = 0;
 
   for(const x of items){
     const c = Number(x.count || 0) || 0;
@@ -686,6 +695,7 @@ function updateStats(items){
     else if(g === "lorcana") l += c;
     else if(g === "dragonball") d += c;
     else if(g === "unionarena") u += c;
+    else if(g === "senpaigodesshaven") s += c;
     else p += c;
   }
 
@@ -694,7 +704,8 @@ function updateStats(items){
   statLorcana.textContent = String(l);
   statDragonball.textContent = String(d);
   statUnionarena.textContent = String(u);
-  statTotal.textContent = String(p + o + l + d + u);
+  statSenpai.textContent = String(s);
+  statTotal.textContent = String(p + o + l + d + u + s);
 }
 
 /* ✅ zoom */
@@ -947,21 +958,23 @@ async function load(){
   const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
   const baseO = baseP;
 
-  const [cP, cO, cL, cD, cU] = await Promise.all([
-    apiGame(baseP, "pokemon",     { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "onepiece",    { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "lorcana",     { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "dragonball",  { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
-    apiGame(baseO, "unionarena",  { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+  const [cP, cO, cL, cD, cU, cS] = await Promise.all([
+    apiGame(baseP, "pokemon",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "onepiece",          { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "lorcana",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "dragonball",        { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "unionarena",        { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "senpaigodesshaven", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
 ]);
 
-  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",    set: x.set || x.setName || "" }));
-  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",   set: x.set || x.setName || "" }));
-  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",    set: x.set || x.setName || "" }));
-  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball", set: x.set || x.setName || "" }));
-  const itemsU = (cU.items||[]).map(x => ({ ...x, game: x.game || "unionarena", set: x.set || x.setName || "" }));
+  const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",           set: x.set || x.setName || "" }));
+  const itemsO = (cO.items||[]).map(x => ({ ...x, game: x.game || "onepiece",          set: x.set || x.setName || "" }));
+  const itemsL = (cL.items||[]).map(x => ({ ...x, game: x.game || "lorcana",           set: x.set || x.setName || "" }));
+  const itemsD = (cD.items||[]).map(x => ({ ...x, game: x.game || "dragonball",        set: x.set || x.setName || "" }));
+  const itemsU = (cU.items||[]).map(x => ({ ...x, game: x.game || "unionarena",        set: x.set || x.setName || "" }));
+  const itemsS = (cS.items||[]).map(x => ({ ...x, game: x.game || "senpaigodesshaven", set: x.set || x.setName || "" }));
 
-  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU];
+  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU, ...itemsS];
 
   
 
