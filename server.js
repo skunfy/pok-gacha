@@ -485,6 +485,15 @@ async function initDb() {
   await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;`);
   await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;`);
 
+  // =========================
+  // TICKETS & DOLLAX
+  // =========================
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tickets INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lastTicketPay BIGINT NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS dollax BIGINT NOT NULL DEFAULT 0;`);
+  // Donner 10 tickets de départ aux anciens comptes qui n'en ont pas encore
+  await pool.query(`UPDATE users SET tickets = 10 WHERE tickets = 0 AND lastTicketPay = 0;`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -701,6 +710,11 @@ async function firstWorkingTcgdexImages(setId, localId, card = null) {
 const PAY_AMOUNT = 10;
 const PAY_EVERY_MS = 15 * 60 * 1000;
 
+// ----- TICKETS -----
+const TICKET_AMOUNT   = 1;
+const TICKET_EVERY_MS = 2 * 60 * 60 * 1000; // 1 ticket toutes les 2h
+const TICKET_CAP      = 50;                  // max 50 tickets stockés
+
 async function applyPayForUser(userId) {
   const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
   const u = rows[0];
@@ -717,6 +731,30 @@ async function applyPayForUser(userId) {
     await pool.query(
       `UPDATE users SET money = money + $1, lastPay=$2 WHERE id=$3`,
       [add, newLast, userId]
+    );
+  }
+}
+
+// ----- TICKET LOOP (server-side) -----
+async function applyTicketsForUser(userId) {
+  const { rows } = await pool.query(`SELECT tickets, lastTicketPay FROM users WHERE id=$1`, [userId]);
+  const u = rows[0];
+  if (!u) return;
+
+  const now     = Date.now();
+  const tickets = Number(u.tickets || 0);
+  if (tickets >= TICKET_CAP) return; // déjà au max
+
+  const last  = Number(u.lastticketpay ?? u.lastTicketPay ?? 0) || now;
+  const delta = Math.max(0, now - last);
+  const ticks = Math.floor(delta / TICKET_EVERY_MS);
+
+  if (ticks > 0) {
+    const add      = Math.min(ticks * TICKET_AMOUNT, TICKET_CAP - tickets);
+    const newLast  = last + ticks * TICKET_EVERY_MS;
+    await pool.query(
+      `UPDATE users SET tickets = LEAST(tickets + $1, $2), lastTicketPay=$3 WHERE id=$4`,
+      [add, TICKET_CAP, newLast, userId]
     );
   }
 }
@@ -1336,9 +1374,10 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/me", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
+  await applyTicketsForUser(req.user.id);
 
   const userQ = await pool.query(
-  `SELECT name, money, friendCode, xp, avatar FROM users WHERE id=$1`,
+  `SELECT name, money, friendCode, xp, avatar, tickets, dollax FROM users WHERE id=$1`,
   [req.user.id]
 );
   const u = userQ.rows[0];
@@ -1388,7 +1427,8 @@ app.get("/api/me", auth, async (req, res) => {
     xp: Number(u?.xp || 0),
     level: levelForXp(u?.xp || 0),
     avatar: u?.avatar || "",
-    
+    tickets: Number(u?.tickets || 0),
+    dollax:  Number(u?.dollax  || 0),
   });
 });
 app.post("/api/open", auth, async (req, res) => {
@@ -2939,6 +2979,99 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
       rank: Number(meRankQ.rows[0]?.rnk || 0),
     }
   });
+});
+
+// =========================
+// TICKETS
+// =========================
+
+// GET solde tickets + dollax + temps avant prochain ticket
+app.get("/api/tickets", auth, async (req, res) => {
+  await applyTicketsForUser(req.user.id);
+  const { rows } = await pool.query(
+    `SELECT tickets, dollax, lastTicketPay FROM users WHERE id=$1`,
+    [req.user.id]
+  );
+  const u = rows[0];
+  const tickets       = Number(u?.tickets || 0);
+  const dollax        = Number(u?.dollax  || 0);
+  const lastTicketPay = Number(u?.lastticketpay ?? u?.lastTicketPay ?? 0);
+  const now           = Date.now();
+
+  // Calcul du prochain ticket
+  let nextTicketInMs = 0;
+  if (tickets < TICKET_CAP) {
+    const elapsed = now - lastTicketPay;
+    const remaining = TICKET_EVERY_MS - (elapsed % TICKET_EVERY_MS);
+    nextTicketInMs = remaining;
+  }
+
+  res.json({ tickets, dollax, nextTicketInMs, ticketCap: TICKET_CAP });
+});
+
+// POST jouer la slot machine
+app.post("/api/slots/spin", auth, async (req, res) => {
+  const bet = Math.max(1, Math.min(1000, Number(req.body?.bet) | 0));
+
+  await applyTicketsForUser(req.user.id);
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Vérifier et déduire les tickets
+    const uQ = await client.query(
+      `SELECT tickets, dollax FROM users WHERE id=$1 FOR UPDATE`,
+      [req.user.id]
+    );
+    const u = uQ.rows[0];
+    if (!u || Number(u.tickets) < bet) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de tickets" });
+    }
+
+    // Tirage
+    const SYMBOLS   = ["💎","⭐","🍒","🍋","🔔","🍇","🍀","🎯","🌟","💫"];
+    const MULTS     = { "💎":5000,"⭐":1000,"🍒":400,"🍋":250,"🔔":150,"🍇":80,"🍀":50,"🎯":30,"🌟":20,"💫":15 };
+    const result    = [0,1,2].map(() => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+    const [a,b,c]   = result;
+
+    let gain = 0;
+    let winType = "none";
+    if (a === b && b === c) {
+      gain    = bet * (MULTS[a] ?? 20);
+      winType = a === "💎" ? "jackpot" : "triple";
+    } else if (a === b || b === c || a === c) {
+      gain    = bet * 15;
+      winType = "pair";
+    }
+
+    // Mettre à jour DB
+    await client.query(
+      `UPDATE users SET tickets = tickets - $1, dollax = dollax + $2 WHERE id=$3`,
+      [bet, gain, req.user.id]
+    );
+    await client.query("COMMIT");
+
+    // Retourner résultat + nouveau solde
+    const newQ = await pool.query(
+      `SELECT tickets, dollax FROM users WHERE id=$1`,
+      [req.user.id]
+    );
+    res.json({
+      result,
+      gain,
+      winType,
+      tickets: Number(newQ.rows[0]?.tickets || 0),
+      dollax:  Number(newQ.rows[0]?.dollax  || 0),
+    });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    console.error("Slots spin error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally {
+    client.release();
+  }
 });
 
 // =========================

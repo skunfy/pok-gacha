@@ -267,6 +267,21 @@
   .topLink:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
   .topLink:active{transform: translateY(0px) scale(.99)}
 
+  .topLink--slot{
+    background: linear-gradient(135deg, rgba(168,85,247,.25), rgba(74,127,255,.25));
+    border-color: rgba(168,85,247,.45);
+    display:flex; align-items:center; gap:5px;
+  }
+  .topLink--slot:hover{
+    background: linear-gradient(135deg, rgba(168,85,247,.4), rgba(74,127,255,.4));
+    border-color: rgba(168,85,247,.7);
+    transform: translateY(-1px);
+  }
+  .topLink--slot img{
+    width:15px; height:15px; object-fit:contain;
+    filter: drop-shadow(0 0 4px rgba(168,85,247,.6));
+  }
+
   /* ===== Buttons row ===== */
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:920px}
   button{
@@ -1524,6 +1539,9 @@
 
         <!-- ✅ bouton pour changer de jeu (ouvre le picker) -->
         <a class="topLink" href="#" id="changeGame">TCG</a>
+        <a class="topLink topLink--slot" href="/slot.html">
+          <img src="slot.png" alt="Slot"> SLOT
+        </a>
 
         <a class="topLink" href="/collection.html">COLLECTION</a>
         <a class="topLink" href="/market.html">MARKET</a>
