@@ -143,7 +143,8 @@ body{
 
 .cImg{
   height:180px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   border-radius:10px;
   cursor:pointer;
 }
@@ -293,9 +294,14 @@ button:active{ transform: translateY(0px) scale(.99); }
   width:100%;
   height:min(64vh, 560px);
   border-radius:14px;
-  background:center/contain no-repeat;
+  overflow:hidden;
+  background:center/cover no-repeat;
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.10);
+}
+.zoomImg.is-horizontal{
+  transform:rotate(90deg);
+  background-size:auto 115%;
 }
 
 .zoomHint{
@@ -408,6 +414,9 @@ function gameLabel(g){
   const gg = String(g||"").toLowerCase();
   if (gg === "onepiece") return "ONE PIECE";
   if (gg === "lorcana")  return "LORCANA";
+  if (gg === "dragonball") return "DRAGON BALL";
+  if (gg === "unionarena") return "UNION ARENA";
+  if (gg === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
   return "POKÉMON";
 }
 
@@ -479,6 +488,17 @@ function openZoomCard(x){
   const img = (x.imageHigh || x.image || "").trim();
   zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
 
+  // Détection carte horizontale
+  if(img){
+    const tmp = new Image();
+    tmp.onload = () => {
+      zoomImg.classList.toggle("is-horizontal", tmp.naturalWidth > tmp.naturalHeight);
+    };
+    tmp.src = img;
+  } else {
+    zoomImg.classList.remove("is-horizontal");
+  }
+
   zoomModal.classList.add("open");
   zoomModal.setAttribute("aria-hidden","false");
 }
@@ -486,6 +506,7 @@ function closeZoom(){
   zoomModal.classList.remove("open");
   zoomModal.setAttribute("aria-hidden","true");
   zoomImg.style.backgroundImage = "none";
+  zoomImg.classList.remove("is-horizontal");
 }
 zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(); });
 window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
