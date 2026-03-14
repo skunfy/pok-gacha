@@ -483,7 +483,6 @@
       transition:transform .22s ease, filter .22s ease, opacity .22s ease;
       cursor:pointer;
       z-index:2;
-      opacity:0;
     }
     /* 102% uniquement pour Senpai (bords blancs natifs) */
     body.senpai-active .cardImg{
@@ -2475,6 +2474,14 @@
       openBtn.disabled = true;
       openingInProgress = true;
       resultBox.textContent = "";
+      // Reset tilt de toutes les slabs
+      for(let i=0;i<5;i++){
+        const s=document.getElementById(`slab${i}`);
+        if(s){
+          s.style.transform="rotateX(0deg) rotateY(0deg)";
+          s.style.filter="drop-shadow(0 26px 80px rgba(0,0,0,.42)) drop-shadow(0 0 24px rgba(255,255,255,.06))";
+        }
+      }
 
       try{
         await suckAwayCurrentCards();
