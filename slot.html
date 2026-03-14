@@ -466,12 +466,12 @@
   // ── État
   // Symboles avec images PNG
   const SYMBOLS = [
-    { id:'diamant',  src:'slot/diamant.png',  weight:4  }, // ×5000 — ultra rare
-    { id:'star',     src:'slot/star.png',     weight:6 }, // ×1000 — très rare
-    { id:'cards',    src:'slot/cards.png',    weight:15  }, // ×400  — rare
-    { id:'heart',    src:'slot/heart.png',    weight:20 }, // ×250  — peu commun
-    { id:'dollax',   src:'slot/dollax.png',   weight:25 }, // ×150  — commun
-    { id:'thunder',  src:'slot/thunder.png',  weight:30 }, // ×80   — commun
+    { id:'diamant',  src:'slot/diamant.png',  weight:1  }, // ×5000 — ultra rare
+    { id:'star',     src:'slot/star.png',     weight:3  }, // ×1000 — très rare
+    { id:'cards',    src:'slot/cards.png',    weight:8  }, // ×400  — rare
+    { id:'heart',    src:'slot/heart.png',    weight:15 }, // ×250  — peu commun
+    { id:'dollax',   src:'slot/dollax.png',   weight:28 }, // ×150  — commun
+    { id:'thunder',  src:'slot/thunder.png',  weight:28 }, // ×80   — commun
   ];
 
   // Pool pondéré pour le strip visuel
@@ -542,6 +542,7 @@
   // ── Spin
   spinBtn.onclick = async () => {
     if(spinning) return;
+    sfxClick();
     if(tickets < bet){ showMsg('Pas assez de tickets !', 'lose'); return; }
 
     spinning = true;
@@ -549,6 +550,7 @@
     machine.classList.remove('win','jackpot');
     machine.classList.add('spinning');
     hideMsg();
+    sfxRollStart();
 
     // Appel API serveur
     let serverData = null;
@@ -644,6 +646,7 @@
 
   function finalize(results, gain = 0, winType = 'none'){
     spinning = false;
+    sfxRollStop();
     machine.classList.remove('spinning');
     spinBtn.disabled = false;
     setBet(bet);
@@ -683,7 +686,7 @@
     machine.classList.toggle('jackpot', isJackpot);
 
     showMsg(msg, isWin ? 'win' : 'lose');
-    if(gain > 0) showGainAnim(gain);
+    if(gain > 0){ showGainAnim(gain); setTimeout(() => sfxWin(gain), 150); }
     if(isJackpot) launchConfetti(120);
     else if(isWin) launchConfetti(40);
   }
@@ -739,6 +742,108 @@
       setTimeout(() => el.remove(), (dur + 0.6)*1000);
     }
   }
+
+  // ── SFX (Web Audio API) ──
+  const SFX_KEY = 'gacha_sfx_v1';
+  let sfxOn = (localStorage.getItem(SFX_KEY) ?? '1') === '1';
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function resumeCtx(){ if(audioCtx.state === 'suspended') audioCtx.resume(); }
+
+  // Générateur de son de base
+  function playTone({ type='sine', freq=440, freq2=null, duration=0.15, volume=0.18, attack=0.01, decay=0.05, release=0.09, delay=0 }){
+    if(!sfxOn) return;
+    resumeCtx();
+    setTimeout(() => {
+      const osc   = audioCtx.createOscillator();
+      const gain  = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = type;
+      const t = audioCtx.currentTime;
+      osc.frequency.setValueAtTime(freq, t);
+      if(freq2) osc.frequency.linearRampToValueAtTime(freq2, t + duration * 0.6);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(volume, t + attack);
+      gain.gain.setValueAtTime(volume, t + attack + decay);
+      gain.gain.linearRampToValueAtTime(0, t + duration);
+      osc.start(t);
+      osc.stop(t + duration + release);
+    }, delay);
+  }
+
+  // Bruit blanc filtré (pour le roulement)
+  function playNoise({ duration=0.08, volume=0.06, freq=800, delay=0 }){
+    if(!sfxOn) return;
+    resumeCtx();
+    setTimeout(() => {
+      const bufSize = audioCtx.sampleRate * duration;
+      const buf  = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<bufSize;i++) data[i] = Math.random()*2-1;
+      const src    = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const gain   = audioCtx.createGain();
+      src.buffer = buf;
+      filter.type = 'bandpass';
+      filter.frequency.value = freq;
+      filter.Q.value = 0.8;
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+      src.start();
+    }, delay);
+  }
+
+  // ── Sons spécifiques ──
+
+  function sfxClick(){
+    playTone({ type:'sine', freq:520, freq2:480, duration:0.06, volume:0.12, attack:0.005, decay:0.01 });
+  }
+
+  let rollInterval = null;
+  function sfxRollStart(){
+    if(!sfxOn) return;
+    let tick = 0;
+    rollInterval = setInterval(() => {
+      const freqs = [180, 200, 220, 240, 260];
+      playNoise({ duration:0.045, volume:0.07, freq: freqs[tick % freqs.length] });
+      tick++;
+    }, 60);
+  }
+  function sfxRollStop(){
+    if(rollInterval){ clearInterval(rollInterval); rollInterval = null; }
+    // Clunk d'arrêt
+    playTone({ type:'square', freq:120, freq2:80, duration:0.12, volume:0.14, attack:0.005, decay:0.02 });
+  }
+
+  function sfxWin(gain){
+    if(gain >= 1000){
+      // Jackpot — fanfare montante
+      [0,120,240,360,480].forEach((d,i) => {
+        const notes = [523,659,784,1047,1319];
+        playTone({ type:'triangle', freq:notes[i], duration:0.22, volume:0.18, attack:0.01, delay:d });
+      });
+      // Shimmer
+      [0,80,160,240,320,400].forEach(d => {
+        playTone({ type:'sine', freq:2000+Math.random()*1000, duration:0.08, volume:0.06, attack:0.005, delay:d });
+      });
+    } else if(gain >= 200){
+      // Gros gain — accord majeur
+      playTone({ type:'triangle', freq:523, duration:0.3, volume:0.15, attack:0.01 });
+      playTone({ type:'triangle', freq:659, duration:0.3, volume:0.13, attack:0.01, delay:80 });
+      playTone({ type:'triangle', freq:784, duration:0.3, volume:0.12, attack:0.01, delay:160 });
+    } else {
+      // Petit gain — ding simple
+      playTone({ type:'sine', freq:880, freq2:1100, duration:0.18, volume:0.14, attack:0.01 });
+      playTone({ type:'sine', freq:1100, duration:0.14, volume:0.10, attack:0.01, delay:120 });
+    }
+  }
+
+  // Bouton toggle SFX (on réutilise la même logique que l'index)
+  // (pas d'UI dédiée ici, contrôlé par la même clé localStorage)
 
   // ── Init : charger les vraies données depuis le serveur
   async function initFromServer() {
