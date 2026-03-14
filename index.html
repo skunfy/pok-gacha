@@ -331,20 +331,75 @@
     position:absolute; inset:0; border-radius:22px;
     transform: translateZ(0px);
     pointer-events:none;
-    mix-blend-mode:screen;
     opacity:0;
-    transition:opacity .12s ease;
+    transition:opacity .15s ease;
   }
-  .shine{ background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.80), rgba(255,255,255,0) 60%); }
-  .glare{
-    background:conic-gradient(from 180deg,
-      rgba(255,0,200,0),
-      rgba(0,255,255,.55),
-      rgba(255,255,0,.45),
-      rgba(255,0,200,.35),
-      rgba(0,255,255,0)
+
+  /* foil doré — dégradé warm qui suit l'angle */
+  .shine{
+    mix-blend-mode: color-dodge;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px, rgba(255,255,255,.012) 1px,
+        transparent 2px, transparent 5px
+      ),
+      linear-gradient(
+        var(--foil-angle, 125deg),
+        rgba(255,235,120,0)    0%,
+        rgba(255,210,80,.20)  20%,
+        rgba(255,180,40,.32)  38%,
+        rgba(255,240,160,.26) 50%,
+        rgba(230,160,20,.28)  62%,
+        rgba(255,210,80,.16)  80%,
+        rgba(255,235,120,0)  100%
+      );
+  }
+  .shine::before{
+    content:"";
+    position:absolute; inset:0; border-radius:22px;
+    background: repeating-linear-gradient(
+      var(--bar-angle, 90deg),
+      transparent 0%,
+      transparent var(--bar-gap, 5%),
+      rgba(255,240,180,.16) calc(var(--bar-gap, 5%) + 0.4%),
+      transparent calc(var(--bar-gap, 5%) + 0.8%)
     );
-    filter:blur(12px);
+    mix-blend-mode: hard-light;
+    opacity:.65;
+  }
+  .shine::after{
+    content:"";
+    position:absolute; inset:0; border-radius:22px;
+    background: radial-gradient(
+      ellipse at var(--shine-x,50%) var(--shine-y,50%),
+      rgba(255,235,160,.26) 0%,
+      rgba(255,200,80,.10)  28%,
+      transparent 58%
+    );
+    mix-blend-mode: luminosity;
+  }
+
+  /* reflet glare doux */
+  .glare{
+    mix-blend-mode: soft-light;
+    background: radial-gradient(
+      ellipse at var(--glare-x,50%) var(--glare-y,50%),
+      rgba(255,255,230,.50) 0%,
+      rgba(255,240,180,.12) 35%,
+      transparent 62%
+    );
+  }
+
+  /* canvas sparkles — dans le shell */
+  .sparkleCanvas{
+    position:absolute; inset:0;
+    border-radius:22px;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s ease;
+    mix-blend-mode:screen;
+    z-index:3;
   }
 
   .shell{
@@ -1615,6 +1670,7 @@
       <div class="slab" id="slab" data-tier="" data-mint="0">
         <div class="shine" id="shine"></div>
         <div class="glare" id="glare"></div>
+        <canvas class="sparkleCanvas" id="sparkleCanvas" width="320" height="460"></canvas>
         <div class="shell"></div>
 
         <div class="label">
@@ -1678,6 +1734,7 @@
     <div class="slab zoomSlab" id="zoomSlab" data-tier="" data-mint="0">
       <div class="shine" id="zoomShine"></div>
       <div class="glare" id="zoomGlare"></div>
+      <canvas class="sparkleCanvas" id="zoomSparkleCanvas" width="420" height="600"></canvas>
       <div class="shell"></div>
 
       <div class="label">
@@ -2372,94 +2429,117 @@ function bindCarouselDragOnce(){
   btnHistClose?.addEventListener("click", closeHistory);
   histModal?.addEventListener("click", (e) => { if(e.target === histModal) closeHistory(); });
 
-  // ---------- HOLO / TILT ----------
+  // ---------- HOLO / TILT — Foil doré avec sparkles ----------
+
+  function makeSparkles(n){
+    return Array.from({length:n}, ()=>({
+      x: Math.random(), y: Math.random(),
+      r: 0.5 + Math.random() * 2.0,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.4 + Math.random() * 1.1,
+      hue: 38 + (Math.random() - 0.5) * 20,
+      sat: 70 + Math.random() * 28,
+      lit: 65 + Math.random() * 28,
+    }));
+  }
+
+  const sparkCv   = document.getElementById("sparkleCanvas");
+  const sparkCtx  = sparkCv  ? sparkCv.getContext("2d")  : null;
+  const sparks    = makeSparkles(100);
+  let sparkActive = false, sparkRAF = null, sparkT = 0;
+  let sparkMx = 0.5, sparkMy = 0.5;
+
+  const zoomSparkCv   = document.getElementById("zoomSparkleCanvas");
+  const zoomSparkCtx  = zoomSparkCv ? zoomSparkCv.getContext("2d") : null;
+  const zoomSparks    = makeSparkles(100);
+  let zoomSparkActive = false, zoomSparkRAF = null, zoomSparkT = 0;
+  let zoomSparkMx = 0.5, zoomSparkMy = 0.5;
+
+  function drawSparkles(ctx, cv, arr, mx, my, t){
+    t += 0.04;
+    if(!ctx || !cv) return t;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    arr.forEach(s => {
+      const pulse = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
+      const dx = s.x - mx, dy = s.y - my;
+      const prox = Math.max(0, 1 - Math.sqrt(dx*dx + dy*dy) / 0.42);
+      const alpha = pulse * (0.12 + prox * 0.72);
+      if(alpha < 0.04) return;
+      const px = s.x * cv.width, py = s.y * cv.height;
+      const r = s.r * (1 + prox * 1.3);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `hsl(${s.hue},${s.sat}%,${s.lit}%)`;
+      if(r > 2.0){
+        ctx.save(); ctx.translate(px, py); ctx.rotate(t * 0.25 + s.phase);
+        for(let i=0;i<4;i++){
+          ctx.beginPath();
+          ctx.ellipse(0,0,r*0.22,r*2.0,(Math.PI/4)*i,0,Math.PI*2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else {
+        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+    return t;
+  }
+
+  function loopSparks(){ if(!sparkActive){sparkRAF=null;return;} sparkT=drawSparkles(sparkCtx,sparkCv,sparks,sparkMx,sparkMy,sparkT); sparkRAF=requestAnimationFrame(loopSparks); }
+  function loopZoomSparks(){ if(!zoomSparkActive){zoomSparkRAF=null;return;} zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT); zoomSparkRAF=requestAnimationFrame(loopZoomSparks); }
+
+  function applyFoil(sh, gl, cv, px, py){
+    if(!sh) return;
+    sh.style.setProperty("--foil-angle", `${115+(px-0.5)*55}deg`);
+    sh.style.setProperty("--bar-angle",  `${88+(px-0.5)*35}deg`);
+    sh.style.setProperty("--bar-gap",    `${4.5+Math.abs(px-0.5)*3}%`);
+    sh.style.setProperty("--shine-x",    `${px*100}%`);
+    sh.style.setProperty("--shine-y",    `${py*100}%`);
+    sh.style.opacity = "1"; sh.style.transform = "translateZ(0)";
+    if(gl){ gl.style.setProperty("--glare-x",`${px*100}%`); gl.style.setProperty("--glare-y",`${py*100}%`); gl.style.opacity="1"; gl.style.transform="translateZ(0)"; }
+    if(cv) cv.style.opacity = "1";
+  }
+
+  function resetFoil(el, sh, gl, cv, ctx){
+    if(el) el.style.transform = "rotateX(0deg) rotateY(0deg)";
+    if(sh){ sh.style.opacity="0"; sh.style.transform="translateZ(0)"; }
+    if(gl){ gl.style.opacity="0"; gl.style.transform="translateZ(0)"; }
+    if(cv){ cv.style.opacity="0"; ctx?.clearRect(0,0,cv.width,cv.height); }
+  }
+
   function setTilt(clientX, clientY) {
     if(!slab) return;
     const r = slab.getBoundingClientRect();
-    const px = (clientX - r.left) / r.width;
-    const py = (clientY - r.top) / r.height;
-
-    const rx = (0.5 - py) * 18;
-    const ry = (px - 0.5) * 22;
-    slab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-
-    const x = Math.max(0, Math.min(1, px));
-    const y = Math.max(0, Math.min(1, py));
-
-    if(shine){
-      shine.style.opacity = "0.75";
-      shine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-    }
-    if(glare){
-      glare.style.opacity = "0.45";
-      glare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
-    }
+    const px = Math.max(0, Math.min(1, (clientX-r.left)/r.width));
+    const py = Math.max(0, Math.min(1, (clientY-r.top)/r.height));
+    slab.style.transform = `rotateX(${(0.5-py)*18}deg) rotateY(${(px-0.5)*22}deg)`;
+    sparkMx=px; sparkMy=py;
+    applyFoil(shine, glare, sparkCv, px, py);
   }
 
-  slab?.addEventListener("mousemove", (e) => { if (!dragging) setTilt(e.clientX, e.clientY); });
-  slab?.addEventListener("mouseenter", () => {
-    if(shine) shine.style.opacity = "0.75";
-    if(glare) glare.style.opacity = "0.45";
-  });
-  slab?.addEventListener("mouseleave", () => {
-    if(!slab) return;
-    slab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-    if(shine){
-      shine.style.opacity = "0";
-      shine.style.transform = `translateZ(0px)`;
-    }
-    if(glare){
-      glare.style.opacity = "0";
-      glare.style.transform = `translateZ(0px)`;
-    }
-  });
-  slab?.addEventListener("mousedown", () => dragging = true);
-  window.addEventListener("mouseup", () => dragging = false);
-  window.addEventListener("mousemove", (e) => { if (dragging) setTilt(e.clientX, e.clientY); });
+  slab?.addEventListener("mousemove",  (e) => { if(!dragging) setTilt(e.clientX, e.clientY); });
+  slab?.addEventListener("mouseenter", () => { sparkActive=true; if(!sparkRAF) loopSparks(); });
+  slab?.addEventListener("mouseleave", () => { sparkActive=false; resetFoil(slab,shine,glare,sparkCv,sparkCtx); });
+  slab?.addEventListener("mousedown",  () => dragging=true);
+  window.addEventListener("mouseup",  () => dragging=false);
+  window.addEventListener("mousemove", (e) => { if(dragging) setTilt(e.clientX, e.clientY); });
 
   function setZoomTilt(clientX, clientY){
     if(!zoomSlab) return;
     const r = zoomSlab.getBoundingClientRect();
-    const px = (clientX - r.left) / r.width;
-    const py = (clientY - r.top) / r.height;
-
-    const rx = (0.5 - py) * 14;
-    const ry = (px - 0.5) * 18;
-    zoomSlab.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-
-    const x = Math.max(0, Math.min(1, px));
-    const y = Math.max(0, Math.min(1, py));
-
-    if(zoomShine){
-      zoomShine.style.opacity = "0.80";
-      zoomShine.style.transform = `translateZ(0px) translate(${(x-0.5)*18}px, ${(y-0.5)*18}px)`;
-    }
-    if(zoomGlare){
-      zoomGlare.style.opacity = "0.50";
-      zoomGlare.style.transform = `translateZ(0px) rotate(${(x-0.5)*18}deg)`;
-    }
+    const px = Math.max(0, Math.min(1, (clientX-r.left)/r.width));
+    const py = Math.max(0, Math.min(1, (clientY-r.top)/r.height));
+    zoomSlab.style.transform = `rotateX(${(0.5-py)*14}deg) rotateY(${(px-0.5)*18}deg)`;
+    zoomSparkMx=px; zoomSparkMy=py;
+    applyFoil(zoomShine, zoomGlare, zoomSparkCv, px, py);
   }
 
-  zoomSlab?.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
-  zoomSlab?.addEventListener("mouseenter", ()=>{
-    if(zoomShine) zoomShine.style.opacity="0.80";
-    if(zoomGlare) zoomGlare.style.opacity="0.50";
-  });
-  zoomSlab?.addEventListener("mouseleave", ()=>{
-    if(!zoomSlab) return;
-    zoomSlab.style.transform = `rotateX(0deg) rotateY(0deg)`;
-    if(zoomShine){
-      zoomShine.style.opacity="0";
-      zoomShine.style.transform = `translateZ(0px)`;
-    }
-    if(zoomGlare){
-      zoomGlare.style.opacity="0";
-      zoomGlare.style.transform = `translateZ(0px)`;
-    }
-  });
-  zoomSlab?.addEventListener("mousedown", ()=> zoomDragging = true);
-  window.addEventListener("mouseup", ()=> zoomDragging = false);
-  window.addEventListener("mousemove", (e)=>{ if(zoomDragging && modal?.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
+  zoomSlab?.addEventListener("mousemove",  (e) => { if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
+  zoomSlab?.addEventListener("mouseenter", () => { zoomSparkActive=true; if(!zoomSparkRAF) loopZoomSparks(); });
+  zoomSlab?.addEventListener("mouseleave", () => { zoomSparkActive=false; resetFoil(zoomSlab,zoomShine,zoomGlare,zoomSparkCv,zoomSparkCtx); });
+  zoomSlab?.addEventListener("mousedown",  () => zoomDragging=true);
+  window.addEventListener("mouseup",  () => zoomDragging=false);
+  window.addEventListener("mousemove", (e) => { if(zoomDragging && modal?.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
 
   function openZoomFromCurrent(){
     const bg = card?.style?.backgroundImage || "";
