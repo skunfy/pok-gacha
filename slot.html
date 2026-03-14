@@ -550,7 +550,6 @@
     machine.classList.remove('win','jackpot');
     machine.classList.add('spinning');
     hideMsg();
-    setTimeout(() => sfxRollStart(), 120);
 
     // Appel API serveur
     let serverData = null;
@@ -583,6 +582,7 @@
     tickets = serverData.tickets ?? tickets;
     dollax  = serverData.dollax  ?? dollax;
 
+    sfxRollStart();
     const promises = reels.map((reelEl, i) => spinReel(reelEl, strips[i], results[i], i * 180));
     Promise.all(promises).then(() => {
       finalize(results, serverData.gain, serverData.winType);
