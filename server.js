@@ -714,8 +714,8 @@ const PAY_AMOUNT = 10;
 const PAY_EVERY_MS = 15 * 60 * 1000;
 
 // ----- TICKETS -----
-const TICKET_AMOUNT   = 2;
-const TICKET_EVERY_MS = 2 * 60 * 60 * 1000; // 1 ticket toutes les 2h
+const TICKET_AMOUNT   = 1;
+const TICKET_EVERY_MS = 1 * 60 * 60 * 1000; // 1 ticket toutes les 1h
 const TICKET_CAP      = 9999;                  // max 9999 tickets stockés
 
 async function applyPayForUser(userId) {
