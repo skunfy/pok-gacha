@@ -385,6 +385,102 @@
       50%{ box-shadow:0 0 0 4px rgba(255,210,110,.8), 0 0 120px rgba(255,210,110,.4); }
     }
     .machine.jackpot{ animation:jackpotPulse .7s ease-in-out infinite; }
+
+    /* ── SCREEN SHAKE ── */
+    @keyframes screenShake{
+      0%,100%{ transform:translate(0,0) rotate(0deg); }
+      10%{ transform:translate(-4px,-2px) rotate(-.4deg); }
+      20%{ transform:translate(4px, 2px) rotate( .4deg); }
+      30%{ transform:translate(-3px, 3px) rotate(-.3deg); }
+      40%{ transform:translate( 3px,-3px) rotate( .3deg); }
+      50%{ transform:translate(-2px, 1px) rotate(-.2deg); }
+      60%{ transform:translate( 2px,-1px) rotate( .2deg); }
+      70%{ transform:translate(-1px, 2px) rotate(-.1deg); }
+      80%{ transform:translate( 1px,-2px) rotate( .1deg); }
+    }
+    .machine.shake{ animation:screenShake .45s ease both; }
+    @keyframes jackpotShake{
+      0%,100%{ transform:translate(0,0) rotate(0deg); }
+      8% { transform:translate(-8px,-4px) rotate(-.8deg); }
+      16%{ transform:translate( 8px, 4px) rotate( .8deg); }
+      24%{ transform:translate(-6px, 6px) rotate(-.6deg); }
+      32%{ transform:translate( 6px,-6px) rotate( .6deg); }
+      40%{ transform:translate(-4px, 2px) rotate(-.4deg); }
+      48%{ transform:translate( 4px,-2px) rotate( .4deg); }
+      56%{ transform:translate(-2px, 4px) rotate(-.2deg); }
+      64%{ transform:translate( 2px,-4px) rotate( .2deg); }
+    }
+    .machine.jackpot-shake{ animation:jackpotShake .6s ease both, jackpotPulse .7s ease-in-out infinite; }
+
+    /* ── REEL FLASH ── */
+    .reelWrap.flash-reel::before{
+      background:linear-gradient(to bottom,rgba(255,255,255,.55),transparent) !important;
+      animation:reelFlash .35s ease forwards;
+    }
+    @keyframes reelFlash{
+      0%  { opacity:1; }
+      40% { opacity:.9; }
+      100%{ opacity:0; }
+    }
+    .reelWrap.flash-reel-gold::before{
+      background:linear-gradient(to bottom,rgba(255,210,110,.7),transparent) !important;
+      animation:reelFlash .5s ease forwards;
+    }
+    .reelWrap.flash-reel-jackpot{
+      animation:jackpotReelPulse .4s ease 2;
+    }
+    @keyframes jackpotReelPulse{
+      0%,100%{ box-shadow:none; }
+      50%{ box-shadow:0 0 0 2px rgba(255,210,110,.9), 0 0 30px rgba(255,210,110,.5); }
+    }
+
+    /* ── HUD COIN PULSE ── */
+    @keyframes hudPop{
+      0%  { transform:scale(1); }
+      35% { transform:scale(1.22); }
+      65% { transform:scale(.95); }
+      100%{ transform:scale(1); }
+    }
+    .hudVal.pop-green{ animation:hudPop .4s cubic-bezier(.2,.9,.3,1); color:#50ffb0 !important; transition:color .6s; }
+    .hudVal.pop-gold { animation:hudPop .4s cubic-bezier(.2,.9,.3,1); color:#fff07a !important; transition:color .6s; }
+
+    /* ── LIGHTNING OVERLAY (jackpot) ── */
+    #lightningCanvas{
+      position:fixed; inset:0; pointer-events:none; z-index:490;
+      opacity:0; transition:opacity .15s;
+    }
+    #lightningCanvas.show{ opacity:1; }
+
+    /* ── CHROMATIC ABERRATION (jackpot) ── */
+    @keyframes chromaShift{
+      0%,100%{ text-shadow:none; }
+      20%{ text-shadow:-4px 0 0 rgba(255,0,80,.7), 4px 0 0 rgba(0,150,255,.7); }
+      40%{ text-shadow: 3px 0 0 rgba(255,0,80,.5),-3px 0 0 rgba(0,150,255,.5); }
+      60%{ text-shadow:-2px 0 0 rgba(255,0,80,.4), 2px 0 0 rgba(0,150,255,.4); }
+    }
+    .gainNumber.tier4{ animation: gainPop4 3.4s cubic-bezier(.1,.95,.2,1) forwards, rainbowShift .7s linear infinite, chromaShift .3s linear infinite; }
+
+    /* ── BURST RAYS (jackpot) ── */
+    #burstCanvas{
+      position:fixed; inset:0; pointer-events:none; z-index:488;
+    }
+
+    /* ── SPIN BTN READY PULSE ── */
+    @keyframes btnReady{
+      0%,100%{ box-shadow:0 8px 32px rgba(80,130,255,.35); }
+      50%{ box-shadow:0 8px 48px rgba(80,130,255,.65), 0 0 0 4px rgba(80,130,255,.18); }
+    }
+    .spinBtn.ready-pulse{ animation:btnReady 1.4s ease-in-out infinite; }
+
+    /* ── REEL STOP BOUNCE ── */
+    @keyframes reelBounce{
+      0%  { transform:translateY(0); }
+      30% { transform:translateY(8px); }
+      60% { transform:translateY(-4px); }
+      80% { transform:translateY(2px); }
+      100%{ transform:translateY(0); }
+    }
+    .reelWrap.bounce{ animation:reelBounce .3s ease; }
   </style>
 </head>
 <body>
@@ -456,10 +552,12 @@
   </div>
 </div>
 
-<div id="gainDisplay">
+
   <div class="gainNumber" id="gainNumber"></div>
   <div class="gainLabel" id="gainLabel">DOLLAX</div>
 </div>
+<canvas id="burstCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:488;"></canvas>
+<canvas id="lightningCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:490;opacity:0;transition:opacity .15s;"></canvas>
 <div class="confetti-container" id="confettiBox"></div>
 
 <script>
@@ -583,13 +681,13 @@
     dollax  = serverData.dollax  ?? dollax;
 
     sfxRollStart();
-    const promises = reels.map((reelEl, i) => spinReel(reelEl, strips[i], results[i], i * 180));
+    const promises = reels.map((reelEl, i) => spinReel(reelEl, strips[i], results[i], i * 180, i, false));
     Promise.all(promises).then(() => {
       finalize(results, serverData.gain, serverData.winType);
     });
   };
 
-  function spinReel(reelEl, strip, targetSymbol, delay){
+  function spinReel(reelEl, strip, targetSymbol, delay, reelIdx, isJackpot){
     return new Promise(resolve => {
       setTimeout(() => {
         const itemH = 110;
@@ -636,6 +734,7 @@
           else {
             // Snap sur la cible
             reelEl.style.transform = `translateY(-${landIdx * itemH}px)`;
+            flashReel(reelIdx, isJackpot);
             resolve();
           }
         }
@@ -685,10 +784,26 @@
     machine.classList.toggle('win', isWin);
     machine.classList.toggle('jackpot', isJackpot);
 
+    // ── Epic visual feedback
+    if(isJackpot){
+      shakeM(true);
+      launchBurst();
+      launchLightning(2800);
+    } else if(isWin){
+      shakeM(false);
+    }
+    if(gain > 0){
+      popHud(hudD, isJackpot ? 'pop-gold' : 'pop-green');
+      popHud(hudT, 'pop-green');
+    }
+
     showMsg(msg, isWin ? 'win' : 'lose');
     if(gain > 0){ showGainAnim(gain); setTimeout(() => sfxWin(gain), 150); }
     if(isJackpot) launchConfetti(120);
     else if(isWin) launchConfetti(40);
+
+    // Remet le pulse idle sur le bouton
+    setTimeout(() => spinBtn.classList.add('ready-pulse'), 600);
   }
 
   function showMsg(txt, type){
@@ -741,6 +856,113 @@
       box.appendChild(el);
       setTimeout(() => el.remove(), (dur + 0.6)*1000);
     }
+  }
+
+  // ── EPIC ANIMATIONS ──
+
+  function shakeM(isJackpot){
+    machine.classList.remove('shake','jackpot-shake');
+    void machine.offsetWidth;
+    machine.classList.add(isJackpot ? 'jackpot-shake' : 'shake');
+    setTimeout(() => machine.classList.remove('shake','jackpot-shake'), isJackpot ? 700 : 500);
+  }
+
+  function flashReel(idx, isJackpot){
+    const wrap = reels[idx].closest('.reelWrap');
+    if(!wrap) return;
+    const cls = isJackpot ? 'flash-reel-jackpot' : 'flash-reel';
+    wrap.classList.remove(cls,'bounce','flash-reel-gold');
+    void wrap.offsetWidth;
+    wrap.classList.add(cls,'bounce');
+    setTimeout(() => wrap.classList.remove(cls,'bounce','flash-reel-gold'), 600);
+  }
+
+  function popHud(el, type){
+    el.classList.remove('pop-green','pop-gold');
+    void el.offsetWidth;
+    el.classList.add(type);
+    setTimeout(() => el.classList.remove(type), 500);
+  }
+
+  const burstC   = document.getElementById('burstCanvas');
+  const burstCtx = burstC.getContext('2d');
+  let burstAnim  = null;
+
+  function launchBurst(){
+    burstC.width  = window.innerWidth;
+    burstC.height = window.innerHeight;
+    const cx = burstC.width  / 2;
+    const cy = burstC.height / 2;
+    const RAY_COUNT = 18;
+    const CB = ['#ffd26e','#a855f7','#4a7fff','#ff5050','#50ffb0','#fff','#ff9a3c'];
+    let t = 0;
+    const rays = Array.from({length:RAY_COUNT}, (_,i) => ({
+      angle: (i/RAY_COUNT)*Math.PI*2 + Math.random()*0.2,
+      len:   80 + Math.random()*200,
+      width: 1.5 + Math.random()*3,
+      color: CB[Math.floor(Math.random()*CB.length)],
+      speed: 0.6 + Math.random()*0.8,
+      delay: Math.random()*0.3,
+    }));
+    if(burstAnim) cancelAnimationFrame(burstAnim);
+    function drawB(){
+      burstCtx.clearRect(0,0,burstC.width,burstC.height);
+      t += 0.022;
+      let alive = false;
+      rays.forEach(r => {
+        if(t < r.delay) return;
+        const p = Math.min((t-r.delay)/1.8, 1);
+        const a = p < 0.15 ? p/0.15 : 1-((p-0.15)/0.85);
+        if(a <= 0) return;
+        alive = true;
+        const curLen = Math.min(r.len*(1+t*r.speed*2.5), r.len*4.5);
+        burstCtx.save();
+        burstCtx.globalAlpha = a*0.75;
+        burstCtx.strokeStyle = r.color;
+        burstCtx.lineWidth   = r.width*(1-p*0.5);
+        burstCtx.lineCap     = 'round';
+        burstCtx.beginPath();
+        burstCtx.moveTo(cx,cy);
+        burstCtx.lineTo(cx+Math.cos(r.angle+t*0.04)*curLen, cy+Math.sin(r.angle+t*0.04)*curLen);
+        burstCtx.stroke();
+        burstCtx.restore();
+      });
+      if(alive && t<3.5) burstAnim = requestAnimationFrame(drawB);
+      else { burstCtx.clearRect(0,0,burstC.width,burstC.height); burstAnim=null; }
+    }
+    drawB();
+  }
+
+  const lightC   = document.getElementById('lightningCanvas');
+  const lightCtx = lightC.getContext('2d');
+  let lightTimer = null;
+
+  function drawBolt(x1,y1,x2,y2,branches){
+    const mx = (x1+x2)/2 + (Math.random()-0.5)*(Math.abs(y2-y1)*0.6);
+    const my = (y1+y2)/2;
+    lightCtx.beginPath();
+    lightCtx.moveTo(x1,y1); lightCtx.lineTo(mx,my); lightCtx.lineTo(x2,y2);
+    lightCtx.strokeStyle = `rgba(180,210,255,${0.5+Math.random()*0.5})`;
+    lightCtx.lineWidth   = 1+Math.random()*1.5;
+    lightCtx.shadowColor = '#a0c0ff';
+    lightCtx.shadowBlur  = 8;
+    lightCtx.stroke();
+    if(branches>0 && Math.random()>0.4) drawBolt(mx,my,mx+(Math.random()-0.5)*120,my+60+Math.random()*80,branches-3);
+  }
+
+  function drawLightningFrame(){
+    lightC.width=window.innerWidth; lightC.height=window.innerHeight;
+    lightCtx.clearRect(0,0,lightC.width,lightC.height);
+    const n = 4+Math.floor(Math.random()*4);
+    for(let i=0;i<n;i++) drawBolt(Math.random()*lightC.width,0,Math.random()*lightC.width-lightC.width/2+Math.random()*300,lightC.height*(0.4+Math.random()*0.5),8);
+    lightC.style.opacity='1';
+    setTimeout(()=>{ lightC.style.opacity='0'; lightCtx.clearRect(0,0,lightC.width,lightC.height); },80);
+  }
+
+  function launchLightning(duration){
+    const end = Date.now()+duration;
+    function loop(){ if(Date.now()>end) return; drawLightningFrame(); lightTimer=setTimeout(loop,80+Math.random()*120); }
+    loop();
   }
 
   // ── SFX (Web Audio API) ──
@@ -891,8 +1113,27 @@
     }, 1000);
   }
 
+  // Pulse idle sur le bouton spin
+  function addReadyPulse(){
+    setTimeout(() => spinBtn.classList.add('ready-pulse'), 400);
+  }
+  spinBtn.addEventListener('mousedown', () => spinBtn.classList.remove('ready-pulse'));
+
+  // Resize canvases
+  window.addEventListener('resize', () => {
+    burstC.width  = window.innerWidth;
+    burstC.height = window.innerHeight;
+    lightC.width  = window.innerWidth;
+    lightC.height = window.innerHeight;
+  });
+
+  // Re-add pulse après chaque spin terminé
+  const _origFinalize = finalize;
+  window._finalizeHooked = true;
+
   updateHud();
   initFromServer();
+  addReadyPulse();
 </script>
 </body>
 </html>
