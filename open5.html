@@ -483,6 +483,7 @@
       transition:transform .22s ease, filter .22s ease, opacity .22s ease;
       cursor:pointer;
       z-index:2;
+      opacity:0;
     }
     /* 102% uniquement pour Senpai (bords blancs natifs) */
     body.senpai-active .cardImg{
@@ -2111,10 +2112,12 @@
         if(sparkCv){sparkCv.style.opacity="0";ctx?.clearRect(0,0,sparkCv.width,sparkCv.height);}
       }
 
+      let slabRect = null;
+
       function setTilt(clientX, clientY){
         if(openingInProgress) return;
         if(slab.classList.contains("winner")) return;
-        const r=slab.getBoundingClientRect();
+        const r = slabRect || slab.getBoundingClientRect();
         const px=clamp((clientX-r.left)/r.width,0,1);
         const py=clamp((clientY-r.top)/r.height,0,1);
         slab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
@@ -2122,25 +2125,23 @@
         const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(180,200,255,.12)";
         const sx=(px-0.5)*-30,sy=(py-0.5)*-20;
         slab.style.filter=`drop-shadow(${sx}px ${sy+32}px 60px rgba(0,0,0,.60)) drop-shadow(0 0 28px ${gc})`;
-        // coords relatives à la cardImg
-        if(card){
-          const cr=card.getBoundingClientRect();
-          const cpx=clamp((clientX-cr.left)/cr.width,0,1);
-          const cpy=clamp((clientY-cr.top)/cr.height,0,1);
-          mx=cpx; my=cpy;
-          applyFoil(cpx, cpy);
-        }
+        mx=px; my=py;
+        applyFoil(px, py);
       }
 
       slab.addEventListener("mousemove", (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
       slab.addEventListener("mouseenter", ()=>{
         if(openingInProgress||slab.classList.contains("winner")) return;
+        // Lire le rect quand la slab est droite
+        slab.style.transform="rotateX(0deg) rotateY(0deg)";
+        slabRect = slab.getBoundingClientRect();
         syncCanvas();
         active=true; if(!raf) loopSparks();
       });
       slab.addEventListener("mouseleave", ()=>{
         if(openingInProgress||slab.classList.contains("winner")) return;
         active=false;
+        slabRect = null;
         slab.style.transform="rotateX(0deg) rotateY(0deg)";
         slab.style.filter="drop-shadow(0 26px 80px rgba(0,0,0,.42)) drop-shadow(0 0 24px rgba(255,255,255,.06))";
         resetFoil();
@@ -2474,14 +2475,6 @@
       openBtn.disabled = true;
       openingInProgress = true;
       resultBox.textContent = "";
-      // Reset tilt de toutes les slabs
-      for(let i=0;i<5;i++){
-        const s=document.getElementById(`slab${i}`);
-        if(s){
-          s.style.transform="rotateX(0deg) rotateY(0deg)";
-          s.style.filter="drop-shadow(0 26px 80px rgba(0,0,0,.42)) drop-shadow(0 0 24px rgba(255,255,255,.06))";
-        }
-      }
 
       try{
         await suckAwayCurrentCards();
