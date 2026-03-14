@@ -315,16 +315,17 @@
 
     transition:
       transform .10s ease,
-      filter .25s ease,
+      filter .20s ease,
       opacity .25s ease,
-      box-shadow .25s ease;
+      scale .18s ease;
 
     opacity:1;
     z-index:1;
     overflow:visible;
+    scale:1;
   }
 
-  .slab:hover { scale: 1.03; }
+  .slab:hover { scale: 1.025; }
   .slab:active{ cursor:grabbing; scale: 1.01; }
 
   /* shine/glare anciens — cachés, gardés pour ne pas casser le JS */
@@ -425,8 +426,47 @@
       inset 0 1px 0 rgba(255,255,255,.12),
       inset 0 -1px 0 rgba(255,255,255,.04);
     border:1px solid rgba(255,255,255,.16);
-    transform:translateZ(10px);
+    transform:translateZ(14px);
     overflow:hidden;
+  }
+
+  /* ── Tranche épaisseur — visible quand la slab se penche ── */
+  .slab::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:22px;
+    pointer-events:none;
+    /* décalage négatif en Z = crée la face arrière de la tranche */
+    transform:translateZ(-14px);
+    background: linear-gradient(145deg,
+      rgba(30,30,45,.95) 0%,
+      rgba(20,20,35,.98) 100%
+    );
+    box-shadow:
+      /* bord gauche visible */
+      -2px 0 0 0 rgba(255,255,255,.08),
+      /* bord droit */
+       2px 0 0 0 rgba(0,0,0,.5);
+    z-index:0;
+  }
+
+  /* épaisseur latérale simulée par box-shadow sur le shell */
+  .shell::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:22px;
+    pointer-events:none;
+    box-shadow:
+      /* tranche droite */
+      14px 0 0 -13px rgba(80,80,120,.6),
+      /* tranche gauche */
+      -14px 0 0 -13px rgba(80,80,120,.4),
+      /* tranche bas */
+      0 14px 0 -13px rgba(0,0,0,.7),
+      /* tranche haut */
+      0 -14px 0 -13px rgba(255,255,255,.08);
   }
 
   .slab::before{
@@ -481,14 +521,14 @@
   .cardImg{
     position:absolute; left:50%; top:56%;
     width:228px;height:310px;
-    transform:translate(-50%,-50%) translateZ(60px);
+    transform:translate(-50%,-50%) translateZ(55px);
     border-radius:16px;
     overflow:hidden;
     background-image: linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
     background-position:center center;
     background-repeat:no-repeat;
     background-size:cover;
-    box-shadow:0 18px 40px rgba(0,0,0,.45);
+    box-shadow:0 22px 50px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.08);
     transition: transform .22s ease, filter .22s ease;
     cursor:pointer;
   }
@@ -500,10 +540,13 @@
   .cardImg.is-horizontal{
     width:310px;
     height:228px;
-    transform:translate(-50%,-50%) translateZ(60px) rotate(90deg);
+    transform:translate(-50%,-50%) translateZ(18px) rotate(90deg);
+  }
+
+  .edge{
     position:absolute; inset:0; border-radius:22px;
     box-shadow:inset 0 0 0 2px rgba(255,255,255,.05);
-    transform:translateZ(65px); pointer-events:none;
+    transform:translateZ(60px); pointer-events:none;
   }
 
   /* tiers */
@@ -2564,10 +2607,10 @@ function bindCarouselDragOnce(){
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     slab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
-    const sx=(px-0.5)*-32, sy=(py-0.5)*-22;
+    const sx=(px-0.5)*-35, sy=(py-0.5)*-25;
     const tier=getSlabTier(slab);
-    const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(200,220,255,.14)";
-    slab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
+    const gc=tier==="g"?"rgba(255,200,0,.30)":tier==="v"?"rgba(190,100,255,.30)":tier==="b"?"rgba(80,160,255,.30)":tier==="m"?"rgba(255,60,60,.30)":"rgba(180,200,255,.15)";
+    slab.style.filter=`drop-shadow(${sx}px ${sy+38}px 70px rgba(0,0,0,.65)) drop-shadow(0 0 32px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,card);
     sparkMx=cpx; sparkMy=cpy;
     applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy);
@@ -2594,10 +2637,10 @@ function bindCarouselDragOnce(){
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     zoomSlab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
-    const sx=(px-0.5)*-32, sy=(py-0.5)*-22;
+    const sx=(px-0.5)*-35, sy=(py-0.5)*-25;
     const tier=getSlabTier(zoomSlab);
-    const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(200,220,255,.14)";
-    zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
+    const gc=tier==="g"?"rgba(255,200,0,.30)":tier==="v"?"rgba(190,100,255,.30)":tier==="b"?"rgba(80,160,255,.30)":tier==="m"?"rgba(255,60,60,.30)":"rgba(180,200,255,.15)";
+    zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+38}px 70px rgba(0,0,0,.65)) drop-shadow(0 0 32px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,zoomCard);
     zoomSparkMx=cpx; zoomSparkMy=cpy;
     applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy);
