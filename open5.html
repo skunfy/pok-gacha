@@ -2393,11 +2393,14 @@
       card.style.backgroundImage = `url("${_imgUrl}")`;
       card.dataset.high = imgHigh || "";
       card.style.opacity = "1";
-      // Extraction couleurs adaptatives
-      slabAdaptiveColors[index]=null; slabAdaptivePal[index]=null;
-      extractDominantColors(_imgUrl,(colors)=>{
-        if(colors){slabAdaptiveColors[index]=colors;slabAdaptivePal[index]=colorsToSparkPal(colors);}
-      });
+      // Couleurs adaptatives depuis le serveur
+      if(pull.foilColors){
+        slabAdaptiveColors[index] = pull.foilColors;
+        slabAdaptivePal[index]    = colorsToSparkPal(pull.foilColors);
+      } else {
+        slabAdaptiveColors[index] = null;
+        slabAdaptivePal[index]    = null;
+      }
       // Détection carte horizontale
       const _tmp = new Image();
       _tmp.onload = () => {
@@ -2593,13 +2596,10 @@
       const high = card?.dataset?.high;
       zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
       zoomCard.classList.toggle("is-horizontal", card?.classList.contains("is-horizontal") || false);
-      // Couleurs adaptatives zoom = copie depuis la slab source
+      // Réutiliser les couleurs de la slab source
       const srcIndex = parseInt(index);
       zoomAdaptiveColors = slabAdaptiveColors[srcIndex] || null;
       zoomAdaptivePal    = slabAdaptivePal[srcIndex]    || null;
-      // Re-extraction sur la high-res si dispo
-      const rawUrl = high || (bg.replace(/^url\(["']?/,"").replace(/["']?\)$/,""));
-      if(rawUrl) extractDominantColors(rawUrl,(colors)=>{ if(colors){zoomAdaptiveColors=colors;zoomAdaptivePal=colorsToSparkPal(colors);} });
       zoomTitle.textContent = title?.textContent || "";
       zoomSubtitle.textContent = subtitle?.textContent || "";
       zoomGrade.textContent = gradeEl?.textContent || "";

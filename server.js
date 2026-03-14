@@ -716,7 +716,7 @@ const PAY_EVERY_MS = 15 * 60 * 1000;
 // ----- TICKETS -----
 const TICKET_AMOUNT   = 1;
 const TICKET_EVERY_MS = 1 * 60 * 60 * 1000; // 1 ticket toutes les 1h
-const TICKET_CAP      = 9999;                  // max 9999 tickets stockés
+const TICKET_CAP      = 999;                  // max 999 tickets stockés
 
 async function applyPayForUser(userId) {
   const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
@@ -1712,6 +1712,20 @@ app.post("/api/open_multi", auth, async (req, res) => {
   }
 });
 
+
+// Route proxy pour extraction couleurs — contourne le CORS pour collection.html
+app.get("/api/foil_colors", auth, async (req, res) => {
+  const url = String(req.query.url || "").trim();
+  if (!url || !/^https?:\/\//.test(url)) {
+    return res.json({ colors: null });
+  }
+  try {
+    const colors = await extractFoilColors(url);
+    return res.json({ colors: colors || null });
+  } catch {
+    return res.json({ colors: null });
+  }
+});
 
 app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);

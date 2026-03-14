@@ -2228,11 +2228,6 @@
       const imgUrl = imgHigh || imgLow;
       card.style.backgroundImage = `url("${imgUrl}")`;
       card.dataset.high = imgHigh || "";
-      // Extraction couleurs adaptatives
-      currentCardColors = null; currentCardPal = null;
-      extractDominantColors(imgUrl, (colors)=>{
-        if(colors){ currentCardColors=colors; currentCardPal=colorsToSparkPal(colors); }
-      });
       // Detection carte horizontale
       const tmpImg = new Image();
       tmpImg.onload = () => {
@@ -2700,13 +2695,9 @@ function bindCarouselDragOnce(){
     const imgUrl = high ? `url("${high}")` : bg;
     if(zoomCard) zoomCard.style.backgroundImage = imgUrl;
 
-    // Extraction couleurs zoom (même image, résolution high)
+    // Réutiliser les couleurs de la slab principale
     currentZoomColors = currentCardColors;
-    currentZoomPal = currentCardPal;
-    const rawUrl = (high || bg.replace(/^url\(["']?/,"").replace(/["']?\)$/,""));
-    if(rawUrl) extractDominantColors(rawUrl, (colors)=>{
-      if(colors){ currentZoomColors=colors; currentZoomPal=colorsToSparkPal(colors); }
-    });
+    currentZoomPal    = currentCardPal;
 
     if(zoomTitle)    zoomTitle.textContent    = title?.textContent || "";
     if(zoomSubtitle) zoomSubtitle.textContent = subtitle?.textContent || "";
@@ -2855,10 +2846,20 @@ function bindCarouselDragOnce(){
         imageHigh: c.imageHigh || c.image,
         grade: c.grade,
         mint: !!c.mint,
+        foilColors: c.foilColors || null,
         at: Date.now()
       };
 
       const tier = tierFromGrade(pull.grade);
+
+      // Appliquer les couleurs adaptatives dès maintenant
+      if(pull.foilColors){
+        currentCardColors = pull.foilColors;
+        currentCardPal    = colorsToSparkPal(pull.foilColors);
+      } else {
+        currentCardColors = null;
+        currentCardPal    = null;
+      }
 
       if(title)    title.textContent = `${gameLabel(currentGame())} • GRADE ${pull.grade}`;
       if(subtitle) subtitle.textContent = `${pull.name} • ${pull.set}`;

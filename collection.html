@@ -1344,11 +1344,16 @@ function openZoom(x){
   const img = x.image || x.imageHigh || x.imagehigh || null;
 
   zoomImg.style.backgroundImage = `url('${img}')`;
-  // Extraction couleurs adaptatives
+  // Extraction via proxy serveur (contourne CORS)
   zoomAdaptiveColors=null; zoomAdaptivePal=null;
-  if(img) extractDominantColors(img,(colors)=>{
-    if(colors){zoomAdaptiveColors=colors;zoomAdaptivePal=colorsToSparkPal(colors);}
-  });  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
+  if(img){
+    fetch(`/api/foil_colors?url=${encodeURIComponent(img)}`, {
+      headers:{ "Authorization": `Bearer ${localStorage.getItem("gacha_token_v1")||""}` }
+    })
+    .then(r=>r.json())
+    .then(d=>{ if(d.colors){zoomAdaptiveColors=d.colors;zoomAdaptivePal=colorsToSparkPal(d.colors);} })
+    .catch(()=>{});
+  }  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
   zoomGrade.textContent = (x.grade ?? "?");
 
   zoomSlab.dataset.tier = tierFromGrade(Number(x.grade)||0);
@@ -1833,29 +1838,6 @@ document.addEventListener("keydown", (e) => {
 // ══ FOIL ADAPTATIF — collection zoom ══
 const _analyseCvC = document.createElement("canvas");
 const _analyseCtxC = _analyseCvC.getContext("2d");
-
-function extractDominantColors(imgUrl, cb){
-  const img=new Image();
-  img.crossOrigin="anonymous";
-  img.onload=()=>{
-    _analyseCvC.width=60;_analyseCvC.height=60;
-    _analyseCtxC.drawImage(img,0,0,60,60);
-    let data;try{data=_analyseCtxC.getImageData(0,0,60,60).data;}catch(e){cb(null);return;}
-    const buckets={};
-    for(let i=0;i<data.length;i+=4){
-      if(data[i+3]<128) continue;
-      const qr=Math.round(data[i]/32)*32,qg=Math.round(data[i+1]/32)*32,qb=Math.round(data[i+2]/32)*32;
-      const lum=0.299*qr+0.587*qg+0.114*qb;
-      if(lum<18||lum>235) continue;
-      const k=`${qr},${qg},${qb}`;buckets[k]=(buckets[k]||0)+1;
-    }
-    const colors=Object.entries(buckets).sort((a,b)=>b[1]-a[1]).slice(0,6)
-      .map(([k])=>{const[r,g,b]=k.split(",").map(Number);return{r,g,b};});
-    cb(colors.length?colors:null);
-  };
-  img.onerror=()=>cb(null);
-  img.src=imgUrl;
-}
 
 function rgbToHslC(r,g,b){
   r/=255;g/=255;b/=255;
