@@ -315,17 +315,16 @@
 
     transition:
       transform .10s ease,
-      filter .20s ease,
+      filter .25s ease,
       opacity .25s ease,
-      scale .18s ease;
+      box-shadow .25s ease;
 
     opacity:1;
     z-index:1;
     overflow:visible;
-    scale:1;
   }
 
-  .slab:hover { scale: 1.025; }
+  .slab:hover { scale: 1.03; }
   .slab:active{ cursor:grabbing; scale: 1.01; }
 
   /* shine/glare anciens — cachés, gardés pour ne pas casser le JS */
@@ -430,45 +429,7 @@
     overflow:hidden;
   }
 
-  /* ── Épaisseur slab — 4 faces latérales ── */
-  .slabFace {
-    position: absolute;
-    background: linear-gradient(180deg, rgba(60,60,90,.9) 0%, rgba(20,20,35,.95) 100%);
-    pointer-events: none;
-    backface-visibility: hidden;
-  }
-  /* gauche */
-  .slabFace.l {
-    width: 18px; top: 22px; bottom: 22px; left: 0;
-    transform-origin: left center;
-    transform: rotateY(-90deg) translateZ(0px);
-    border-radius: 4px 0 0 4px;
-    background: linear-gradient(180deg, rgba(80,80,120,.7) 0%, rgba(20,20,40,.9) 100%);
-  }
-  /* droite */
-  .slabFace.r {
-    width: 18px; top: 22px; bottom: 22px; right: 0;
-    transform-origin: right center;
-    transform: rotateY(90deg) translateZ(0px);
-    border-radius: 0 4px 4px 0;
-    background: linear-gradient(180deg, rgba(40,40,70,.7) 0%, rgba(10,10,25,.9) 100%);
-  }
-  /* haut */
-  .slabFace.t {
-    height: 18px; left: 22px; right: 22px; top: 0;
-    transform-origin: center top;
-    transform: rotateX(90deg) translateZ(0px);
-    border-radius: 4px 4px 0 0;
-    background: linear-gradient(90deg, rgba(80,90,130,.7) 0%, rgba(100,110,150,.8) 50%, rgba(80,90,130,.7) 100%);
-  }
-  /* bas */
-  .slabFace.b {
-    height: 18px; left: 22px; right: 22px; bottom: 0;
-    transform-origin: center bottom;
-    transform: rotateX(-90deg) translateZ(0px);
-    border-radius: 0 0 4px 4px;
-    background: linear-gradient(90deg, rgba(20,20,40,.8) 0%, rgba(30,30,55,.7) 50%, rgba(20,20,40,.8) 100%);
-  }
+  .slab::before{
     content:"";
     position:absolute;
     inset:0;
@@ -487,7 +448,7 @@
 
   .label{
     position:absolute; left:50%; top:26px;
-    transform:translateX(-50%) translateZ(20px);
+    transform:translateX(-50%) translateZ(50px);
     width:280px;height:58px;border-radius:14px;
     background:rgba(0,0,0,.25);
     border:1px solid rgba(255,255,255,.18);
@@ -520,7 +481,7 @@
   .cardImg{
     position:absolute; left:50%; top:56%;
     width:228px;height:310px;
-    transform:translate(-50%,-50%) translateZ(18px);
+    transform:translate(-50%,-50%) translateZ(60px);
     border-radius:16px;
     overflow:hidden;
     background-image: linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
@@ -539,13 +500,10 @@
   .cardImg.is-horizontal{
     width:310px;
     height:228px;
-    transform:translate(-50%,-50%) translateZ(18px) rotate(90deg);
-  }
-
-  .edge{
+    transform:translate(-50%,-50%) translateZ(60px) rotate(90deg);
     position:absolute; inset:0; border-radius:22px;
     box-shadow:inset 0 0 0 2px rgba(255,255,255,.05);
-    transform:translateZ(12px); pointer-events:none;
+    transform:translateZ(65px); pointer-events:none;
   }
 
   /* tiers */
@@ -1718,10 +1676,6 @@
 
     <div class="scene">
       <div class="slab" id="slab" data-tier="" data-mint="0">
-        <div class="slabFace l"></div>
-        <div class="slabFace r"></div>
-        <div class="slabFace t"></div>
-        <div class="slabFace b"></div>
         <div class="shine" id="shine"></div>
         <div class="glare" id="glare"></div>
         <div class="shell"></div>
@@ -1789,10 +1743,6 @@
   <!-- MODAL ZOOM -->
   <div class="modal" id="modal">
     <div class="slab zoomSlab" id="zoomSlab" data-tier="" data-mint="0">
-      <div class="slabFace l"></div>
-      <div class="slabFace r"></div>
-      <div class="slabFace t"></div>
-      <div class="slabFace b"></div>
       <div class="shine" id="zoomShine"></div>
       <div class="glare" id="zoomGlare"></div>
       <div class="shell"></div>
@@ -2614,10 +2564,10 @@ function bindCarouselDragOnce(){
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     slab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
-    const sx=(px-0.5)*-35, sy=(py-0.5)*-25;
+    const sx=(px-0.5)*-32, sy=(py-0.5)*-22;
     const tier=getSlabTier(slab);
-    const gc=tier==="g"?"rgba(255,200,0,.30)":tier==="v"?"rgba(190,100,255,.30)":tier==="b"?"rgba(80,160,255,.30)":tier==="m"?"rgba(255,60,60,.30)":"rgba(180,200,255,.15)";
-    slab.style.filter=`drop-shadow(${sx}px ${sy+38}px 70px rgba(0,0,0,.65)) drop-shadow(0 0 32px ${gc})`;
+    const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(200,220,255,.14)";
+    slab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,card);
     sparkMx=cpx; sparkMy=cpy;
     applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy);
@@ -2644,10 +2594,10 @@ function bindCarouselDragOnce(){
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     zoomSlab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
-    const sx=(px-0.5)*-35, sy=(py-0.5)*-25;
+    const sx=(px-0.5)*-32, sy=(py-0.5)*-22;
     const tier=getSlabTier(zoomSlab);
-    const gc=tier==="g"?"rgba(255,200,0,.30)":tier==="v"?"rgba(190,100,255,.30)":tier==="b"?"rgba(80,160,255,.30)":tier==="m"?"rgba(255,60,60,.30)":"rgba(180,200,255,.15)";
-    zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+38}px 70px rgba(0,0,0,.65)) drop-shadow(0 0 32px ${gc})`;
+    const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(200,220,255,.14)";
+    zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,zoomCard);
     zoomSparkMx=cpx; zoomSparkMy=cpy;
     applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy);
