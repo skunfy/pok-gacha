@@ -492,7 +492,10 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lastTicketPay BIGINT NOT NULL DEFAULT 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS dollax BIGINT NOT NULL DEFAULT 0;`);
   // Donner 10 tickets de départ aux anciens comptes qui n'en ont pas encore
-  await pool.query(`UPDATE users SET tickets = 10 WHERE tickets = 0 AND lastTicketPay = 0;`);
+  // Donner 10 tickets de départ et initialiser le timer pour les nouveaux comptes
+  await pool.query(`UPDATE users SET tickets = 10, lastTicketPay = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000 WHERE tickets = 0 AND lastTicketPay = 0;`);
+  // Initialiser lastTicketPay pour les comptes qui ont des tickets mais pas de timer
+  await pool.query(`UPDATE users SET lastTicketPay = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000 WHERE lastTicketPay = 0;`);
 
   console.log("✅ Postgres DB ready");
 }
@@ -745,13 +748,21 @@ async function applyTicketsForUser(userId) {
   const tickets = Number(u.tickets || 0);
   if (tickets >= TICKET_CAP) return; // déjà au max
 
-  const last  = Number(u.lastticketpay ?? u.lastTicketPay ?? 0) || now;
+  const last = Number(u.lastticketpay ?? u.lastTicketPay ?? 0);
+
+  // Si lastTicketPay n'a jamais été initialisé, on l'initialise à now
+  // sans donner de tickets (le compteur démarre maintenant)
+  if (last === 0) {
+    await pool.query(`UPDATE users SET lastTicketPay=$1 WHERE id=$2`, [now, userId]);
+    return;
+  }
+
   const delta = Math.max(0, now - last);
   const ticks = Math.floor(delta / TICKET_EVERY_MS);
 
   if (ticks > 0) {
-    const add      = Math.min(ticks * TICKET_AMOUNT, TICKET_CAP - tickets);
-    const newLast  = last + ticks * TICKET_EVERY_MS;
+    const add     = Math.min(ticks * TICKET_AMOUNT, TICKET_CAP - tickets);
+    const newLast = last + ticks * TICKET_EVERY_MS;
     await pool.query(
       `UPDATE users SET tickets = LEAST(tickets + $1, $2), lastTicketPay=$3 WHERE id=$4`,
       [add, TICKET_CAP, newLast, userId]
