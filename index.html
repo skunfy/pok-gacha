@@ -327,80 +327,109 @@
 
   .slab:active{cursor:grabbing}
 
-  .shine,.glare{
-    position:absolute; inset:0; border-radius:22px;
-    transform: translateZ(0px);
+  /* shine/glare anciens — cachés, gardés pour ne pas casser le JS */
+  .shine,.glare{ display:none; }
+
+  /* ── Foil sur la carte uniquement ── */
+  .cardFoil, .cardGlare {
+    position:absolute; inset:0;
+    border-radius:16px;
     pointer-events:none;
     opacity:0;
-    transition:opacity .15s ease;
+    transition: opacity .15s ease;
+    z-index:2;
   }
 
-  /* foil doré — dégradé warm qui suit l'angle */
-  .shine{
+  .cardFoil {
     mix-blend-mode: color-dodge;
     background:
       repeating-linear-gradient(
         0deg,
-        transparent 0px, rgba(255,255,255,.012) 1px,
+        transparent 0px, rgba(255,255,255,.014) 1px,
         transparent 2px, transparent 5px
       ),
       linear-gradient(
         var(--foil-angle, 125deg),
-        rgba(255,235,120,0)    0%,
-        rgba(255,210,80,.20)  20%,
-        rgba(255,180,40,.32)  38%,
-        rgba(255,240,160,.26) 50%,
-        rgba(230,160,20,.28)  62%,
-        rgba(255,210,80,.16)  80%,
-        rgba(255,235,120,0)  100%
+        rgba(0,0,0,0) 0%,
+        var(--fc1, rgba(255,210,80,.20)) 20%,
+        var(--fc2, rgba(255,180,40,.32)) 38%,
+        var(--fc3, rgba(255,240,160,.26)) 50%,
+        var(--fc2, rgba(255,180,40,.28)) 62%,
+        var(--fc1, rgba(255,210,80,.16)) 80%,
+        rgba(0,0,0,0) 100%
       );
   }
-  .shine::before{
-    content:"";
-    position:absolute; inset:0; border-radius:22px;
+  .cardFoil::before {
+    content:""; position:absolute; inset:0; border-radius:16px;
     background: repeating-linear-gradient(
       var(--bar-angle, 90deg),
       transparent 0%,
       transparent var(--bar-gap, 5%),
-      rgba(255,240,180,.16) calc(var(--bar-gap, 5%) + 0.4%),
+      var(--fc-bar, rgba(255,240,180,.16)) calc(var(--bar-gap, 5%) + 0.4%),
       transparent calc(var(--bar-gap, 5%) + 0.8%)
     );
     mix-blend-mode: hard-light;
     opacity:.65;
   }
-  .shine::after{
-    content:"";
-    position:absolute; inset:0; border-radius:22px;
+  .cardFoil::after {
+    content:""; position:absolute; inset:0; border-radius:16px;
     background: radial-gradient(
       ellipse at var(--shine-x,50%) var(--shine-y,50%),
-      rgba(255,235,160,.26) 0%,
-      rgba(255,200,80,.10)  28%,
-      transparent 58%
+      var(--fc3, rgba(255,235,160,.26)) 0%,
+      rgba(0,0,0,0) 55%
     );
     mix-blend-mode: luminosity;
   }
 
-  /* reflet glare doux */
-  .glare{
+  .cardGlare {
     mix-blend-mode: soft-light;
     background: radial-gradient(
       ellipse at var(--glare-x,50%) var(--glare-y,50%),
-      rgba(255,255,230,.50) 0%,
-      rgba(255,240,180,.12) 35%,
-      transparent 62%
+      var(--gc, rgba(255,255,230,.50)) 0%,
+      rgba(0,0,0,0) 62%
     );
   }
 
-  /* canvas sparkles — dans le shell */
-  .sparkleCanvas{
+  .cardSparkle {
     position:absolute; inset:0;
-    border-radius:22px;
+    border-radius:16px;
     pointer-events:none;
     opacity:0;
-    transition:opacity .15s ease;
-    mix-blend-mode:screen;
+    transition: opacity .15s ease;
+    mix-blend-mode: screen;
     z-index:3;
   }
+
+  /* ── Couleurs par tier ── */
+  .slab[data-tier="w"] .cardFoil {
+    --fc1: rgba(220,230,255,.22); --fc2: rgba(200,215,255,.32);
+    --fc3: rgba(240,245,255,.26); --fc-bar: rgba(220,230,255,.18);
+  }
+  .slab[data-tier="w"] .cardGlare { --gc: rgba(230,240,255,.55); }
+
+  .slab[data-tier="b"] .cardFoil {
+    --fc1: rgba(80,160,255,.22); --fc2: rgba(60,130,255,.35);
+    --fc3: rgba(160,210,255,.28); --fc-bar: rgba(100,180,255,.18);
+  }
+  .slab[data-tier="b"] .cardGlare { --gc: rgba(160,210,255,.55); }
+
+  .slab[data-tier="v"] .cardFoil {
+    --fc1: rgba(170,80,255,.22); --fc2: rgba(140,60,255,.35);
+    --fc3: rgba(210,160,255,.28); --fc-bar: rgba(180,100,255,.18);
+  }
+  .slab[data-tier="v"] .cardGlare { --gc: rgba(210,170,255,.55); }
+
+  .slab[data-tier="g"] .cardFoil {
+    --fc1: rgba(255,210,80,.22); --fc2: rgba(255,175,40,.35);
+    --fc3: rgba(255,240,160,.28); --fc-bar: rgba(255,230,140,.18);
+  }
+  .slab[data-tier="g"] .cardGlare { --gc: rgba(255,240,180,.55); }
+
+  .slab[data-mint="1"] .cardFoil {
+    --fc1: rgba(255,80,80,.22); --fc2: rgba(255,50,50,.35);
+    --fc3: rgba(255,160,160,.28); --fc-bar: rgba(255,120,120,.18);
+  }
+  .slab[data-mint="1"] .cardGlare { --gc: rgba(255,180,180,.55); }
 
   .shell{
     position:absolute;
@@ -1670,7 +1699,6 @@
       <div class="slab" id="slab" data-tier="" data-mint="0">
         <div class="shine" id="shine"></div>
         <div class="glare" id="glare"></div>
-        <canvas class="sparkleCanvas" id="sparkleCanvas" width="320" height="460"></canvas>
         <div class="shell"></div>
 
         <div class="label">
@@ -1685,7 +1713,11 @@
           </div>
         </div>
 
-        <div class="cardImg" id="card"></div>
+        <div class="cardImg" id="card">
+          <canvas class="cardSparkle" id="cardSparkle"></canvas>
+          <div class="cardFoil" id="cardFoil"></div>
+          <div class="cardGlare" id="cardGlare"></div>
+        </div>
 
         <div class="cardPlaceholder" id="cardPh" aria-hidden="true">
           <img id="phLogo" src="poke.png" alt="">
@@ -1734,7 +1766,6 @@
     <div class="slab zoomSlab" id="zoomSlab" data-tier="" data-mint="0">
       <div class="shine" id="zoomShine"></div>
       <div class="glare" id="zoomGlare"></div>
-      <canvas class="sparkleCanvas" id="zoomSparkleCanvas" width="420" height="600"></canvas>
       <div class="shell"></div>
 
       <div class="label">
@@ -1749,7 +1780,11 @@
         </div>
       </div>
 
-      <div class="cardImg" id="zoomCard"></div>
+      <div class="cardImg" id="zoomCard">
+        <canvas class="cardSparkle" id="zoomCardSparkle"></canvas>
+        <div class="cardFoil" id="zoomCardFoil"></div>
+        <div class="cardGlare" id="zoomCardGlare"></div>
+      </div>
       <div class="edge"></div>
       <div class="flash"></div>
     </div>
@@ -2190,10 +2225,10 @@
   }
 
   function tierFromGrade(grade){
-    if (grade >= 10) return "g";
-    if (grade >= 7)  return "v";
-    if (grade >= 5)  return "b";
-    return "w";
+    if (grade >= 10) return "g";   // G10 → doré
+    if (grade >= 7)  return "v";   // G7-G9 → violet
+    if (grade >= 5)  return "b";   // G5-G6 → bleu
+    return "w";                    // G1-G4 → blanc/argent
   }
 
   function tagClass(tier, isMint){ return isMint ? "m" : tier; }
@@ -2429,48 +2464,48 @@ function bindCarouselDragOnce(){
   btnHistClose?.addEventListener("click", closeHistory);
   histModal?.addEventListener("click", (e) => { if(e.target === histModal) closeHistory(); });
 
-  // ---------- HOLO / TILT — Foil doré avec sparkles ----------
+  // ---------- HOLO / TILT — Foil sur la carte, couleur par tier ----------
+
+  // Couleurs de paillettes selon tier
+  const SPARK_COLORS = {
+    w: { h:210, s:40,  l:90  },  // blanc/argent
+    b: { h:210, s:90,  l:72  },  // bleu
+    v: { h:270, s:85,  l:72  },  // violet
+    g: { h:42,  s:95,  l:68  },  // doré
+    m: { h:0,   s:95,  l:68  },  // rouge mint
+  };
+
+  function getSlabTier(sl){ return sl?.dataset?.mint === "1" ? "m" : (sl?.dataset?.tier || "w"); }
 
   function makeSparkles(n){
     return Array.from({length:n}, ()=>({
-      x: Math.random(), y: Math.random(),
-      r: 0.5 + Math.random() * 2.0,
-      phase: Math.random() * Math.PI * 2,
-      speed: 0.4 + Math.random() * 1.1,
-      hue: 38 + (Math.random() - 0.5) * 20,
-      sat: 70 + Math.random() * 28,
-      lit: 65 + Math.random() * 28,
+      x:Math.random(), y:Math.random(),
+      r:0.5+Math.random()*1.8,
+      phase:Math.random()*Math.PI*2,
+      speed:0.4+Math.random()*1.1,
+      hOff:(Math.random()-0.5)*18,
+      sat:68+Math.random()*28,
+      lit:62+Math.random()*30,
     }));
   }
 
-  const sparkCv   = document.getElementById("sparkleCanvas");
-  const sparkCtx  = sparkCv  ? sparkCv.getContext("2d")  : null;
-  const sparks    = makeSparkles(100);
-  let sparkActive = false, sparkRAF = null, sparkT = 0;
-  let sparkMx = 0.5, sparkMy = 0.5;
-
-  const zoomSparkCv   = document.getElementById("zoomSparkleCanvas");
-  const zoomSparkCtx  = zoomSparkCv ? zoomSparkCv.getContext("2d") : null;
-  const zoomSparks    = makeSparkles(100);
-  let zoomSparkActive = false, zoomSparkRAF = null, zoomSparkT = 0;
-  let zoomSparkMx = 0.5, zoomSparkMy = 0.5;
-
-  function drawSparkles(ctx, cv, arr, mx, my, t){
+  function drawSparkles(ctx, cv, arr, mx, my, t, tier){
     t += 0.04;
-    if(!ctx || !cv) return t;
-    ctx.clearRect(0, 0, cv.width, cv.height);
+    if(!ctx||!cv) return t;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    const col = SPARK_COLORS[tier] || SPARK_COLORS.g;
     arr.forEach(s => {
-      const pulse = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
-      const dx = s.x - mx, dy = s.y - my;
-      const prox = Math.max(0, 1 - Math.sqrt(dx*dx + dy*dy) / 0.42);
-      const alpha = pulse * (0.12 + prox * 0.72);
-      if(alpha < 0.04) return;
-      const px = s.x * cv.width, py = s.y * cv.height;
-      const r = s.r * (1 + prox * 1.3);
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = `hsl(${s.hue},${s.sat}%,${s.lit}%)`;
-      if(r > 2.0){
-        ctx.save(); ctx.translate(px, py); ctx.rotate(t * 0.25 + s.phase);
+      const pulse = 0.5+0.5*Math.sin(t*s.speed+s.phase);
+      const dx=s.x-mx, dy=s.y-my;
+      const prox=Math.max(0, 1-Math.sqrt(dx*dx+dy*dy)/0.42);
+      const alpha=pulse*(0.10+prox*0.72);
+      if(alpha<0.03) return;
+      const px=s.x*cv.width, py=s.y*cv.height;
+      const r=s.r*(1+prox*1.4);
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=`hsl(${col.h+s.hOff},${col.s}%,${col.l}%)`;
+      if(r>1.9){
+        ctx.save(); ctx.translate(px,py); ctx.rotate(t*0.25+s.phase);
         for(let i=0;i<4;i++){
           ctx.beginPath();
           ctx.ellipse(0,0,r*0.22,r*2.0,(Math.PI/4)*i,0,Math.PI*2);
@@ -2478,68 +2513,124 @@ function bindCarouselDragOnce(){
         }
         ctx.restore();
       } else {
-        ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
       }
     });
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha=1;
     return t;
   }
 
-  function loopSparks(){ if(!sparkActive){sparkRAF=null;return;} sparkT=drawSparkles(sparkCtx,sparkCv,sparks,sparkMx,sparkMy,sparkT); sparkRAF=requestAnimationFrame(loopSparks); }
-  function loopZoomSparks(){ if(!zoomSparkActive){zoomSparkRAF=null;return;} zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT); zoomSparkRAF=requestAnimationFrame(loopZoomSparks); }
+  // ── Instances slab principale ──
+  const cardFoilEl   = document.getElementById("cardFoil");
+  const cardGlareEl  = document.getElementById("cardGlare");
+  const cardSparkCv  = document.getElementById("cardSparkle");
+  const cardSparkCtx = cardSparkCv ? cardSparkCv.getContext("2d") : null;
+  const sparks       = makeSparkles(100);
+  let sparkActive=false, sparkRAF=null, sparkT=0, sparkMx=0.5, sparkMy=0.5;
 
-  function applyFoil(sh, gl, cv, px, py){
-    if(!sh) return;
-    sh.style.setProperty("--foil-angle", `${115+(px-0.5)*55}deg`);
-    sh.style.setProperty("--bar-angle",  `${88+(px-0.5)*35}deg`);
-    sh.style.setProperty("--bar-gap",    `${4.5+Math.abs(px-0.5)*3}%`);
-    sh.style.setProperty("--shine-x",    `${px*100}%`);
-    sh.style.setProperty("--shine-y",    `${py*100}%`);
-    sh.style.opacity = "1"; sh.style.transform = "translateZ(0)";
-    if(gl){ gl.style.setProperty("--glare-x",`${px*100}%`); gl.style.setProperty("--glare-y",`${py*100}%`); gl.style.opacity="1"; gl.style.transform="translateZ(0)"; }
-    if(cv) cv.style.opacity = "1";
+  // ── Instances zoom ──
+  const zoomCardFoilEl  = document.getElementById("zoomCardFoil");
+  const zoomCardGlareEl = document.getElementById("zoomCardGlare");
+  const zoomSparkCv     = document.getElementById("zoomCardSparkle");
+  const zoomSparkCtx    = zoomSparkCv ? zoomSparkCv.getContext("2d") : null;
+  const zoomSparks      = makeSparkles(100);
+  let zoomSparkActive=false, zoomSparkRAF=null, zoomSparkT=0, zoomSparkMx=0.5, zoomSparkMy=0.5;
+
+  function syncCanvasSize(cv, el){
+    if(!cv||!el) return;
+    const r=el.getBoundingClientRect();
+    if(r.width>0){ cv.width=Math.round(r.width); cv.height=Math.round(r.height); }
   }
 
-  function resetFoil(el, sh, gl, cv, ctx){
-    if(el) el.style.transform = "rotateX(0deg) rotateY(0deg)";
-    if(sh){ sh.style.opacity="0"; sh.style.transform="translateZ(0)"; }
-    if(gl){ gl.style.opacity="0"; gl.style.transform="translateZ(0)"; }
+  function loopSparks(){
+    if(!sparkActive){sparkRAF=null;return;}
+    sparkT=drawSparkles(cardSparkCtx,cardSparkCv,sparks,sparkMx,sparkMy,sparkT,getSlabTier(slab));
+    sparkRAF=requestAnimationFrame(loopSparks);
+  }
+  function loopZoomSparks(){
+    if(!zoomSparkActive){zoomSparkRAF=null;return;}
+    zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT,getSlabTier(zoomSlab));
+    zoomSparkRAF=requestAnimationFrame(loopZoomSparks);
+  }
+
+  function applyCardFoil(foil, glare, cv, px, py){
+    if(!foil) return;
+    foil.style.setProperty("--foil-angle",`${115+(px-0.5)*55}deg`);
+    foil.style.setProperty("--bar-angle", `${88+(px-0.5)*35}deg`);
+    foil.style.setProperty("--bar-gap",   `${4.5+Math.abs(px-0.5)*3}%`);
+    foil.style.setProperty("--shine-x",   `${px*100}%`);
+    foil.style.setProperty("--shine-y",   `${py*100}%`);
+    foil.style.opacity="1";
+    if(glare){ glare.style.setProperty("--glare-x",`${px*100}%`); glare.style.setProperty("--glare-y",`${py*100}%`); glare.style.opacity="1"; }
+    if(cv) cv.style.opacity="1";
+  }
+
+  function resetCardFoil(foil, glare, cv, ctx){
+    if(foil) foil.style.opacity="0";
+    if(glare) glare.style.opacity="0";
     if(cv){ cv.style.opacity="0"; ctx?.clearRect(0,0,cv.width,cv.height); }
+  }
+
+  // Convertit coords souris en position relative dans la cardImg
+  function cardRelPos(clientX, clientY, cardEl){
+    if(!cardEl) return [0.5,0.5];
+    const r=cardEl.getBoundingClientRect();
+    return [
+      Math.max(0,Math.min(1,(clientX-r.left)/r.width)),
+      Math.max(0,Math.min(1,(clientY-r.top)/r.height))
+    ];
   }
 
   function setTilt(clientX, clientY) {
     if(!slab) return;
-    const r = slab.getBoundingClientRect();
-    const px = Math.max(0, Math.min(1, (clientX-r.left)/r.width));
-    const py = Math.max(0, Math.min(1, (clientY-r.top)/r.height));
-    slab.style.transform = `rotateX(${(0.5-py)*18}deg) rotateY(${(px-0.5)*22}deg)`;
-    sparkMx=px; sparkMy=py;
-    applyFoil(shine, glare, sparkCv, px, py);
+    const r=slab.getBoundingClientRect();
+    const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+    const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
+    slab.style.transform=`rotateX(${(0.5-py)*18}deg) rotateY(${(px-0.5)*22}deg)`;
+    // foil sur la carte : position relative à la cardImg
+    const [cpx,cpy]=cardRelPos(clientX,clientY,card);
+    sparkMx=cpx; sparkMy=cpy;
+    applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy);
   }
 
-  slab?.addEventListener("mousemove",  (e) => { if(!dragging) setTilt(e.clientX, e.clientY); });
-  slab?.addEventListener("mouseenter", () => { sparkActive=true; if(!sparkRAF) loopSparks(); });
-  slab?.addEventListener("mouseleave", () => { sparkActive=false; resetFoil(slab,shine,glare,sparkCv,sparkCtx); });
-  slab?.addEventListener("mousedown",  () => dragging=true);
-  window.addEventListener("mouseup",  () => dragging=false);
-  window.addEventListener("mousemove", (e) => { if(dragging) setTilt(e.clientX, e.clientY); });
+  slab?.addEventListener("mousemove",  (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
+  slab?.addEventListener("mouseenter", ()=>{
+    syncCanvasSize(cardSparkCv, card);
+    sparkActive=true; if(!sparkRAF) loopSparks();
+  });
+  slab?.addEventListener("mouseleave", ()=>{
+    sparkActive=false;
+    slab.style.transform="rotateX(0deg) rotateY(0deg)";
+    resetCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cardSparkCtx);
+  });
+  slab?.addEventListener("mousedown", ()=>dragging=true);
+  window.addEventListener("mouseup",  ()=>dragging=false);
+  window.addEventListener("mousemove",(e)=>{ if(dragging) setTilt(e.clientX,e.clientY); });
 
   function setZoomTilt(clientX, clientY){
     if(!zoomSlab) return;
-    const r = zoomSlab.getBoundingClientRect();
-    const px = Math.max(0, Math.min(1, (clientX-r.left)/r.width));
-    const py = Math.max(0, Math.min(1, (clientY-r.top)/r.height));
-    zoomSlab.style.transform = `rotateX(${(0.5-py)*14}deg) rotateY(${(px-0.5)*18}deg)`;
-    zoomSparkMx=px; zoomSparkMy=py;
-    applyFoil(zoomShine, zoomGlare, zoomSparkCv, px, py);
+    const r=zoomSlab.getBoundingClientRect();
+    const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+    const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
+    zoomSlab.style.transform=`rotateX(${(0.5-py)*14}deg) rotateY(${(px-0.5)*18}deg)`;
+    const [cpx,cpy]=cardRelPos(clientX,clientY,zoomCard);
+    zoomSparkMx=cpx; zoomSparkMy=cpy;
+    applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy);
   }
 
-  zoomSlab?.addEventListener("mousemove",  (e) => { if(!zoomDragging) setZoomTilt(e.clientX, e.clientY); });
-  zoomSlab?.addEventListener("mouseenter", () => { zoomSparkActive=true; if(!zoomSparkRAF) loopZoomSparks(); });
-  zoomSlab?.addEventListener("mouseleave", () => { zoomSparkActive=false; resetFoil(zoomSlab,zoomShine,zoomGlare,zoomSparkCv,zoomSparkCtx); });
-  zoomSlab?.addEventListener("mousedown",  () => zoomDragging=true);
-  window.addEventListener("mouseup",  () => zoomDragging=false);
-  window.addEventListener("mousemove", (e) => { if(zoomDragging && modal?.classList.contains("open")) setZoomTilt(e.clientX, e.clientY); });
+  zoomSlab?.addEventListener("mousemove",  (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX,e.clientY); });
+  zoomSlab?.addEventListener("mouseenter", ()=>{
+    syncCanvasSize(zoomSparkCv, zoomCard);
+    zoomSparkActive=true; if(!zoomSparkRAF) loopZoomSparks();
+  });
+  zoomSlab?.addEventListener("mouseleave", ()=>{
+    zoomSparkActive=false;
+    zoomSlab.style.transform="rotateX(0deg) rotateY(0deg)";
+    resetCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,zoomSparkCtx);
+  });
+  zoomSlab?.addEventListener("mousedown", ()=>zoomDragging=true);
+  window.addEventListener("mouseup",  ()=>zoomDragging=false);
+  window.addEventListener("mousemove",(e)=>{ if(zoomDragging&&modal?.classList.contains("open")) setZoomTilt(e.clientX,e.clientY); });
 
   function openZoomFromCurrent(){
     const bg = card?.style?.backgroundImage || "";
