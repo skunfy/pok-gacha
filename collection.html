@@ -1344,7 +1344,11 @@ function openZoom(x){
   const img = x.image || x.imageHigh || x.imagehigh || null;
 
   zoomImg.style.backgroundImage = `url('${img}')`;
-  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
+  // Extraction couleurs adaptatives
+  zoomAdaptiveColors=null; zoomAdaptivePal=null;
+  if(img) extractDominantColors(img,(colors)=>{
+    if(colors){zoomAdaptiveColors=colors;zoomAdaptivePal=colorsToSparkPal(colors);}
+  });  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
   zoomGrade.textContent = (x.grade ?? "?");
 
   zoomSlab.dataset.tier = tierFromGrade(Number(x.grade)||0);
@@ -1826,6 +1830,59 @@ document.addEventListener("keydown", (e) => {
 
 // ══ TILT + FOIL + ÉTOILES — zoom collection ══
 
+// ══ FOIL ADAPTATIF — collection zoom ══
+const _analyseCvC = document.createElement("canvas");
+const _analyseCtxC = _analyseCvC.getContext("2d");
+
+function extractDominantColors(imgUrl, cb){
+  const img=new Image();
+  img.crossOrigin="anonymous";
+  img.onload=()=>{
+    _analyseCvC.width=60;_analyseCvC.height=60;
+    _analyseCtxC.drawImage(img,0,0,60,60);
+    let data;try{data=_analyseCtxC.getImageData(0,0,60,60).data;}catch(e){cb(null);return;}
+    const buckets={};
+    for(let i=0;i<data.length;i+=4){
+      if(data[i+3]<128) continue;
+      const qr=Math.round(data[i]/32)*32,qg=Math.round(data[i+1]/32)*32,qb=Math.round(data[i+2]/32)*32;
+      const lum=0.299*qr+0.587*qg+0.114*qb;
+      if(lum<18||lum>235) continue;
+      const k=`${qr},${qg},${qb}`;buckets[k]=(buckets[k]||0)+1;
+    }
+    const colors=Object.entries(buckets).sort((a,b)=>b[1]-a[1]).slice(0,6)
+      .map(([k])=>{const[r,g,b]=k.split(",").map(Number);return{r,g,b};});
+    cb(colors.length?colors:null);
+  };
+  img.onerror=()=>cb(null);
+  img.src=imgUrl;
+}
+
+function rgbToHslC(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}else{
+    const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;default:h=((r-g)/d+4)/6;}
+  }
+  return[Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+}
+
+function buildAdaptiveFoil(colors,angle){
+  if(!colors||!colors.length) return null;
+  const stops=colors.map((c,i)=>{
+    const[h,s,l]=rgbToHslC(c.r,c.g,c.b);
+    const pct=Math.round(8+(i/(colors.length-1||1))*84);
+    return `hsla(${h},${Math.min(100,s+30)}%,${Math.min(85,Math.max(55,l+10))}%,${(0.32-0.05*(i/(colors.length-1||1))).toFixed(2)}) ${pct}%`;
+  });
+  return `linear-gradient(${angle}deg,rgba(0,0,0,0) 0%,${stops.join(",")},rgba(0,0,0,0) 100%)`;
+}
+
+function colorsToSparkPal(colors){
+  if(!colors||!colors.length) return [[45,95,74],[200,90,74],[300,85,74],[55,90,76],[355,95,74]];
+  return colors.map(c=>{const[h,s,l]=rgbToHslC(c.r,c.g,c.b);return[h,Math.min(100,s+30),Math.min(88,Math.max(60,l+15))];});
+}
+
 const STAR_PAL = {
   w:[[200,50,90],[215,40,88],[205,45,92],[195,35,86],[210,55,90]],
   b:[[200,90,74],[185,88,76],[210,92,72],[195,85,78],[205,88,70]],
@@ -1833,6 +1890,8 @@ const STAR_PAL = {
   g:[[45,95,74],[55,90,76],[35,92,70],[50,88,72],[40,94,68]],
   m:[[355,95,74],[10,90,76],[345,88,70],[5,92,72],[350,85,68]],
 };
+
+let zoomAdaptiveColors=null, zoomAdaptivePal=null;
 
 function getZoomTier(){ return zoomSlab?.dataset?.mint==="1"?"m":(zoomSlab?.dataset?.tier||"w"); }
 
@@ -1857,15 +1916,16 @@ function drawZoomSparks(){
   zT+=0.036;
   if(!zoomSparkCtx||!zoomSparkCv) return;
   zoomSparkCtx.clearRect(0,0,zoomSparkCv.width,zoomSparkCv.height);
-  const pal=STAR_PAL[getZoomTier()]||STAR_PAL.g;
+  const pal=zoomAdaptivePal||STAR_PAL[getZoomTier()]||STAR_PAL.g;
+  const sc=2; // étoiles x2 en mode zoom
   zoomSparks.forEach(s=>{
     const pulse=0.5+0.5*Math.sin(zT*s.speed+s.phase);
     const dx=s.x-zMx,dy=s.y-zMy;
     const prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/0.40);
     const alpha=pulse*(0.08+prox*0.80);
     if(alpha<0.03) return;
-    const px=s.x*zoomSparkCv.width,py=s.y*zoomSparkCv.height,r=s.r*(1+prox*1.6);
-    const [h,sat,lit]=pal[s.ci];
+    const px=s.x*zoomSparkCv.width,py=s.y*zoomSparkCv.height,r=s.r*sc*(1+prox*1.6);
+    const[h,sat,lit]=pal[s.ci%pal.length];
     zoomSparkCtx.globalAlpha=alpha;
     zoomSparkCtx.fillStyle=`hsl(${h},${sat}%,${lit}%)`;
     if(s.big&&r>1.6){
@@ -1884,7 +1944,10 @@ function drawZoomSparks(){
 
 function applyZoomFoil(px,py){
   if(!zoomFoilEl) return;
-  zoomFoilEl.style.setProperty("--foil-angle",`${115+(px-0.5)*60}deg`);
+  const angle=115+(px-0.5)*60;
+  const grad=zoomAdaptiveColors?buildAdaptiveFoil(zoomAdaptiveColors,angle):null;
+  if(grad) zoomFoilEl.style.background=grad;
+  zoomFoilEl.style.setProperty("--foil-angle",`${angle}deg`);
   zoomFoilEl.style.setProperty("--shine-x",`${px*100}%`);
   zoomFoilEl.style.setProperty("--shine-y",`${py*100}%`);
   zoomFoilEl.style.opacity="1";

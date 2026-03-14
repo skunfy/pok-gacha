@@ -2228,6 +2228,11 @@
       const imgUrl = imgHigh || imgLow;
       card.style.backgroundImage = `url("${imgUrl}")`;
       card.dataset.high = imgHigh || "";
+      // Extraction couleurs adaptatives
+      currentCardColors = null; currentCardPal = null;
+      extractDominantColors(imgUrl, (colors)=>{
+        if(colors){ currentCardColors=colors; currentCardPal=colorsToSparkPal(colors); }
+      });
       // Detection carte horizontale
       const tmpImg = new Image();
       tmpImg.onload = () => {
@@ -2445,14 +2450,79 @@ function bindCarouselDragOnce(){
 
   // ---------- HOLO / TILT — Style D irisé + étoiles 4 branches ----------
 
-  // Palettes irisées — 5 couleurs par tier, toujours arc-en-ciel
+  // ══ FOIL ADAPTATIF — couleurs extraites de l'image ══
+
+  // Canvas caché pour l'analyse
+  const _analyseCv = document.createElement("canvas");
+  const _analyseCtx = _analyseCv.getContext("2d");
+
+  function extractDominantColors(imgUrl, cb){
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      _analyseCv.width = 60; _analyseCv.height = 60;
+      _analyseCtx.drawImage(img, 0, 0, 60, 60);
+      let data;
+      try { data = _analyseCtx.getImageData(0,0,60,60).data; } catch(e){ cb(null); return; }
+      const buckets = {};
+      for(let i=0;i<data.length;i+=4){
+        if(data[i+3]<128) continue;
+        const qr=Math.round(data[i]/32)*32, qg=Math.round(data[i+1]/32)*32, qb=Math.round(data[i+2]/32)*32;
+        const lum=0.299*qr+0.587*qg+0.114*qb;
+        if(lum<18||lum>235) continue;
+        const k=`${qr},${qg},${qb}`;
+        buckets[k]=(buckets[k]||0)+1;
+      }
+      const colors = Object.entries(buckets)
+        .sort((a,b)=>b[1]-a[1]).slice(0,6)
+        .map(([k])=>{ const [r,g,b]=k.split(",").map(Number); return {r,g,b}; });
+      cb(colors.length ? colors : null);
+    };
+    img.onerror = () => cb(null);
+    img.src = imgUrl;
+  }
+
+  function rgbToHsl(r,g,b){
+    r/=255;g/=255;b/=255;
+    const max=Math.max(r,g,b),min=Math.min(r,g,b);
+    let h,s,l=(max+min)/2;
+    if(max===min){h=s=0;}else{
+      const d=max-min;
+      s=l>.5?d/(2-max-min):d/(max+min);
+      switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;default:h=((r-g)/d+4)/6;}
+    }
+    return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+  }
+
+  function buildAdaptiveFoil(colors, angle){
+    if(!colors||!colors.length) return null;
+    const stops = colors.map((c,i)=>{
+      const [h,s,l]=rgbToHsl(c.r,c.g,c.b);
+      const pct=Math.round(8+(i/(colors.length-1||1))*84);
+      return `hsla(${h},${Math.min(100,s+30)}%,${Math.min(85,Math.max(55,l+10))}%,${(0.32-0.05*(i/(colors.length-1||1))).toFixed(2)}) ${pct}%`;
+    });
+    return `linear-gradient(${angle}deg,rgba(0,0,0,0) 0%,${stops.join(",")},rgba(0,0,0,0) 100%)`;
+  }
+
+  function colorsToSparkPal(colors){
+    if(!colors||!colors.length) return [[45,95,74],[200,90,74],[300,85,74],[55,90,76],[355,95,74]];
+    return colors.map(c=>{ const [h,s,l]=rgbToHsl(c.r,c.g,c.b); return [h,Math.min(100,s+30),Math.min(88,Math.max(60,l+15))]; });
+  }
+
+  // Palettes courantes (utilisées tant que l'image n'est pas analysée)
   const STAR_PAL = {
-    w: [[200,50,90],[215,40,88],[205,45,92],[195,35,86],[210,55,90]],
-    b: [[200,90,74],[185,88,76],[210,92,72],[195,85,78],[205,88,70]],
-    v: [[300,85,74],[280,88,72],[315,82,76],[290,90,70],[305,80,74]],
-    g: [[45,95,74], [55,90,76],[35,92,70], [50,88,72], [40,94,68]],
-    m: [[355,95,74],[10,90,76], [345,88,70],[5,92,72],  [350,85,68]],
+    w:[[200,50,90],[215,40,88],[205,45,92],[195,35,86],[210,55,90]],
+    b:[[200,90,74],[185,88,76],[210,92,72],[195,85,78],[205,88,70]],
+    v:[[300,85,74],[280,88,72],[315,82,76],[290,90,70],[305,80,74]],
+    g:[[45,95,74],[55,90,76],[35,92,70],[50,88,72],[40,94,68]],
+    m:[[355,95,74],[10,90,76],[345,88,70],[5,92,72],[350,85,68]],
   };
+
+  // Palettes adaptatives courantes
+  let currentCardPal = null;   // slab principale
+  let currentZoomPal = null;   // zoom
+  let currentCardColors = null;
+  let currentZoomColors = null;
 
   function getSlabTier(sl){ return sl?.dataset?.mint==="1" ? "m" : (sl?.dataset?.tier||"w"); }
 
@@ -2467,11 +2537,12 @@ function bindCarouselDragOnce(){
     }));
   }
 
-  function drawSparkles(ctx, cv, arr, mx, my, t, tier){
+  function drawSparkles(ctx, cv, arr, mx, my, t, tier, pal, scale){
     t += 0.036;
     if(!ctx||!cv) return t;
     ctx.clearRect(0,0,cv.width,cv.height);
-    const pal = STAR_PAL[tier] || STAR_PAL.g;
+    const p = pal || STAR_PAL[tier] || STAR_PAL.g;
+    const sc = scale || 1;
     arr.forEach(s=>{
       const pulse=0.5+0.5*Math.sin(t*s.speed+s.phase);
       const dx=s.x-mx, dy=s.y-my;
@@ -2479,8 +2550,8 @@ function bindCarouselDragOnce(){
       const alpha=pulse*(0.08+prox*0.80);
       if(alpha<0.03) return;
       const px=s.x*cv.width, py=s.y*cv.height;
-      const r=s.r*(1+prox*1.6);
-      const [h,sat,lit]=pal[s.ci];
+      const r=s.r*sc*(1+prox*1.6);
+      const [h,sat,lit]=p[s.ci % p.length];
       ctx.globalAlpha=alpha;
       ctx.fillStyle=`hsl(${h},${sat}%,${lit}%)`;
       if(s.big&&r>1.6){
@@ -2524,18 +2595,21 @@ function bindCarouselDragOnce(){
 
   function loopSparks(){
     if(!sparkActive){sparkRAF=null;return;}
-    sparkT=drawSparkles(cardSparkCtx,cardSparkCv,sparks,sparkMx,sparkMy,sparkT,getSlabTier(slab));
+    sparkT=drawSparkles(cardSparkCtx,cardSparkCv,sparks,sparkMx,sparkMy,sparkT,getSlabTier(slab),currentCardPal,1);
     sparkRAF=requestAnimationFrame(loopSparks);
   }
   function loopZoomSparks(){
     if(!zoomSparkActive){zoomSparkRAF=null;return;}
-    zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT,getSlabTier(zoomSlab));
+    zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT,getSlabTier(zoomSlab),currentZoomPal,2);
     zoomSparkRAF=requestAnimationFrame(loopZoomSparks);
   }
 
-  function applyCardFoil(foil, glare, cv, px, py){
+  function applyCardFoil(foil, glare, cv, px, py, colors){
     if(!foil) return;
-    foil.style.setProperty("--foil-angle", `${115+(px-0.5)*60}deg`);
+    const angle = 115+(px-0.5)*60;
+    const grad = colors ? buildAdaptiveFoil(colors, angle) : null;
+    if(grad) foil.style.background = grad;
+    foil.style.setProperty("--foil-angle", `${angle}deg`);
     foil.style.setProperty("--shine-x",    `${px*100}%`);
     foil.style.setProperty("--shine-y",    `${py*100}%`);
     foil.style.opacity="1";
@@ -2570,7 +2644,7 @@ function bindCarouselDragOnce(){
     slab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,card);
     sparkMx=cpx; sparkMy=cpy;
-    applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy);
+    applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy,currentCardColors);
   }
 
   slab?.addEventListener("mousemove",  (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
@@ -2600,7 +2674,7 @@ function bindCarouselDragOnce(){
     zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,zoomCard);
     zoomSparkMx=cpx; zoomSparkMy=cpy;
-    applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy);
+    applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy,currentZoomColors);
   }
 
   zoomSlab?.addEventListener("mousemove",  (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX,e.clientY); });
@@ -2623,7 +2697,16 @@ function bindCarouselDragOnce(){
     if (!bg || bg.includes("linear-gradient")) return;
 
     const high = card?.dataset?.high;
-    if(zoomCard) zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
+    const imgUrl = high ? `url("${high}")` : bg;
+    if(zoomCard) zoomCard.style.backgroundImage = imgUrl;
+
+    // Extraction couleurs zoom (même image, résolution high)
+    currentZoomColors = currentCardColors;
+    currentZoomPal = currentCardPal;
+    const rawUrl = (high || bg.replace(/^url\(["']?/,"").replace(/["']?\)$/,""));
+    if(rawUrl) extractDominantColors(rawUrl, (colors)=>{
+      if(colors){ currentZoomColors=colors; currentZoomPal=colorsToSparkPal(colors); }
+    });
 
     if(zoomTitle)    zoomTitle.textContent    = title?.textContent || "";
     if(zoomSubtitle) zoomSubtitle.textContent = subtitle?.textContent || "";

@@ -2003,13 +2003,72 @@
     }
 
     // ── Palettes étoiles irisées par tier ──
+    // ══ FOIL ADAPTATIF ══
+    const _analyseCv5 = document.createElement("canvas");
+    const _analyseCtx5 = _analyseCv5.getContext("2d");
+
+    function extractDominantColors(imgUrl, cb){
+      const img = new Image();
+      img.crossOrigin="anonymous";
+      img.onload=()=>{
+        _analyseCv5.width=60;_analyseCv5.height=60;
+        _analyseCtx5.drawImage(img,0,0,60,60);
+        let data; try{data=_analyseCtx5.getImageData(0,0,60,60).data;}catch(e){cb(null);return;}
+        const buckets={};
+        for(let i=0;i<data.length;i+=4){
+          if(data[i+3]<128) continue;
+          const qr=Math.round(data[i]/32)*32,qg=Math.round(data[i+1]/32)*32,qb=Math.round(data[i+2]/32)*32;
+          const lum=0.299*qr+0.587*qg+0.114*qb;
+          if(lum<18||lum>235) continue;
+          const k=`${qr},${qg},${qb}`;buckets[k]=(buckets[k]||0)+1;
+        }
+        const colors=Object.entries(buckets).sort((a,b)=>b[1]-a[1]).slice(0,6)
+          .map(([k])=>{const[r,g,b]=k.split(",").map(Number);return{r,g,b};});
+        cb(colors.length?colors:null);
+      };
+      img.onerror=()=>cb(null);
+      img.src=imgUrl;
+    }
+
+    function rgbToHsl(r,g,b){
+      r/=255;g/=255;b/=255;
+      const max=Math.max(r,g,b),min=Math.min(r,g,b);
+      let h,s,l=(max+min)/2;
+      if(max===min){h=s=0;}else{
+        const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);
+        switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;default:h=((r-g)/d+4)/6;}
+      }
+      return[Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+    }
+
+    function buildAdaptiveFoil(colors,angle){
+      if(!colors||!colors.length) return null;
+      const stops=colors.map((c,i)=>{
+        const[h,s,l]=rgbToHsl(c.r,c.g,c.b);
+        const pct=Math.round(8+(i/(colors.length-1||1))*84);
+        return `hsla(${h},${Math.min(100,s+30)}%,${Math.min(85,Math.max(55,l+10))}%,${(0.32-0.05*(i/(colors.length-1||1))).toFixed(2)}) ${pct}%`;
+      });
+      return `linear-gradient(${angle}deg,rgba(0,0,0,0) 0%,${stops.join(",")},rgba(0,0,0,0) 100%)`;
+    }
+
+    function colorsToSparkPal(colors){
+      if(!colors||!colors.length) return [[45,95,74],[200,90,74],[300,85,74],[55,90,76],[355,95,74]];
+      return colors.map(c=>{const[h,s,l]=rgbToHsl(c.r,c.g,c.b);return[h,Math.min(100,s+30),Math.min(88,Math.max(60,l+15))];});
+    }
+
     const STAR_PAL = {
       w:[[200,50,90],[215,40,88],[205,45,92],[195,35,86],[210,55,90]],
       b:[[200,90,74],[185,88,76],[210,92,72],[195,85,78],[205,88,70]],
       v:[[300,85,74],[280,88,72],[315,82,76],[290,90,70],[305,80,74]],
-      g:[[45,95,74], [55,90,76],[35,92,70], [50,88,72], [40,94,68]],
-      m:[[355,95,74],[10,90,76],[345,88,70],[5,92,72],  [350,85,68]],
+      g:[[45,95,74],[55,90,76],[35,92,70],[50,88,72],[40,94,68]],
+      m:[[355,95,74],[10,90,76],[345,88,70],[5,92,72],[350,85,68]],
     };
+
+    // Palettes adaptatives par slab (index 0-4) + zoom
+    const slabAdaptivePal  = [null,null,null,null,null];
+    const slabAdaptiveColors = [null,null,null,null,null];
+    let zoomAdaptivePal = null;
+    let zoomAdaptiveColors = null;
 
     function getSlabTier(sl){ return sl?.dataset?.mint==="1"?"m":(sl?.dataset?.tier||"w"); }
 
@@ -2024,19 +2083,20 @@
       }));
     }
 
-    function drawSparkles(ctx, cv, arr, mx, my, t, tier){
+    function drawSparkles(ctx,cv,arr,mx,my,t,tier,pal,scale){
       t+=0.036;
       if(!ctx||!cv) return t;
       ctx.clearRect(0,0,cv.width,cv.height);
-      const pal=STAR_PAL[tier]||STAR_PAL.g;
+      const p=pal||STAR_PAL[tier]||STAR_PAL.g;
+      const sc=scale||1;
       arr.forEach(s=>{
         const pulse=0.5+0.5*Math.sin(t*s.speed+s.phase);
         const dx=s.x-mx,dy=s.y-my;
         const prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/0.40);
         const alpha=pulse*(0.08+prox*0.80);
         if(alpha<0.03) return;
-        const px=s.x*cv.width,py=s.y*cv.height,r=s.r*(1+prox*1.6);
-        const [h,sat,lit]=pal[s.ci];
+        const px=s.x*cv.width,py=s.y*cv.height,r=s.r*sc*(1+prox*1.6);
+        const[h,sat,lit]=p[s.ci%p.length];
         ctx.globalAlpha=alpha;
         ctx.fillStyle=`hsl(${h},${sat}%,${lit}%)`;
         if(s.big&&r>1.6){
@@ -2065,7 +2125,7 @@
         const glareEl  = document.getElementById(`cardGlare${i}`);
         const sparkCv  = document.getElementById(`cardSparkle${i}`);
 
-        bindTilt(slab, card, foilEl, glareEl, sparkCv);
+        bindTilt(slab, card, foilEl, glareEl, sparkCv, i);
         card?.addEventListener("click", () => openZoomFromSlab(i));
       }
 
@@ -2079,7 +2139,7 @@
       }
     }
 
-    function bindTilt(slab, card, foilEl, glareEl, sparkCv){
+    function bindTilt(slab, card, foilEl, glareEl, sparkCv, slabIndex){
       const ctx = sparkCv ? sparkCv.getContext("2d") : null;
       const sparks = makeSparkles(100);
       let dragging=false, active=false, raf=null, t=0, mx=0.5, my=0.5;
@@ -2092,13 +2152,18 @@
 
       function loopSparks(){
         if(!active){raf=null;return;}
-        t=drawSparkles(ctx,sparkCv,sparks,mx,my,t,getSlabTier(slab));
+        const pal = slabAdaptivePal[slabIndex] || null;
+        t=drawSparkles(ctx,sparkCv,sparks,mx,my,t,getSlabTier(slab),pal,1);
         raf=requestAnimationFrame(loopSparks);
       }
 
       function applyFoil(px, py){
         if(!foilEl) return;
-        foilEl.style.setProperty("--foil-angle",`${115+(px-0.5)*60}deg`);
+        const angle=115+(px-0.5)*60;
+        const colors=slabAdaptiveColors[slabIndex];
+        const grad=colors?buildAdaptiveFoil(colors,angle):null;
+        if(grad) foilEl.style.background=grad;
+        foilEl.style.setProperty("--foil-angle",`${angle}deg`);
         foilEl.style.setProperty("--shine-x",`${px*100}%`);
         foilEl.style.setProperty("--shine-y",`${py*100}%`);
         foilEl.style.opacity="1";
@@ -2132,7 +2197,6 @@
       slab.addEventListener("mousemove", (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
       slab.addEventListener("mouseenter", ()=>{
         if(openingInProgress||slab.classList.contains("winner")) return;
-        // Lire le rect quand la slab est droite
         slab.style.transform="rotateX(0deg) rotateY(0deg)";
         slabRect = slab.getBoundingClientRect();
         syncCanvas();
@@ -2329,6 +2393,11 @@
       card.style.backgroundImage = `url("${_imgUrl}")`;
       card.dataset.high = imgHigh || "";
       card.style.opacity = "1";
+      // Extraction couleurs adaptatives
+      slabAdaptiveColors[index]=null; slabAdaptivePal[index]=null;
+      extractDominantColors(_imgUrl,(colors)=>{
+        if(colors){slabAdaptiveColors[index]=colors;slabAdaptivePal[index]=colorsToSparkPal(colors);}
+      });
       // Détection carte horizontale
       const _tmp = new Image();
       _tmp.onload = () => {
@@ -2524,6 +2593,13 @@
       const high = card?.dataset?.high;
       zoomCard.style.backgroundImage = high ? `url("${high}")` : bg;
       zoomCard.classList.toggle("is-horizontal", card?.classList.contains("is-horizontal") || false);
+      // Couleurs adaptatives zoom = copie depuis la slab source
+      const srcIndex = parseInt(index);
+      zoomAdaptiveColors = slabAdaptiveColors[srcIndex] || null;
+      zoomAdaptivePal    = slabAdaptivePal[srcIndex]    || null;
+      // Re-extraction sur la high-res si dispo
+      const rawUrl = high || (bg.replace(/^url\(["']?/,"").replace(/["']?\)$/,""));
+      if(rawUrl) extractDominantColors(rawUrl,(colors)=>{ if(colors){zoomAdaptiveColors=colors;zoomAdaptivePal=colorsToSparkPal(colors);} });
       zoomTitle.textContent = title?.textContent || "";
       zoomSubtitle.textContent = subtitle?.textContent || "";
       zoomGrade.textContent = gradeEl?.textContent || "";
@@ -2544,7 +2620,7 @@
 
     function loopZoomSparks(){
       if(!zoomSparkActive){zoomSparkRAF=null;return;}
-      zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT,getSlabTier(zoomSlab));
+      zoomSparkT=drawSparkles(zoomSparkCtx,zoomSparkCv,zoomSparks,zoomSparkMx,zoomSparkMy,zoomSparkT,getSlabTier(zoomSlab),zoomAdaptivePal,2);
       zoomSparkRAF=requestAnimationFrame(loopZoomSparks);
     }
 
@@ -2562,7 +2638,10 @@
         const cpx=clamp((clientX-cr.left)/cr.width,0,1);
         const cpy=clamp((clientY-cr.top)/cr.height,0,1);
         zoomSparkMx=cpx; zoomSparkMy=cpy;
-        zoomCardFoilEl.style.setProperty("--foil-angle",`${115+(cpx-0.5)*60}deg`);
+        const angle=115+(cpx-0.5)*60;
+        const grad=zoomAdaptiveColors?buildAdaptiveFoil(zoomAdaptiveColors,angle):null;
+        if(grad) zoomCardFoilEl.style.background=grad;
+        zoomCardFoilEl.style.setProperty("--foil-angle",`${angle}deg`);
         zoomCardFoilEl.style.setProperty("--shine-x",`${cpx*100}%`);
         zoomCardFoilEl.style.setProperty("--shine-y",`${cpy*100}%`);
         zoomCardFoilEl.style.opacity="1";
