@@ -550,7 +550,7 @@
     machine.classList.remove('win','jackpot');
     machine.classList.add('spinning');
     hideMsg();
-    sfxRollStart();
+    setTimeout(() => sfxRollStart(), 120);
 
     // Appel API serveur
     let serverData = null;
