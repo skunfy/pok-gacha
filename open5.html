@@ -952,6 +952,7 @@
   cursor:default;
   width:min(420px, 92vw);
   height:min(600px, 92vh);
+  transform-style: flat;
 }
 
 .slab.zoomSlab .cardImg{
@@ -976,6 +977,7 @@
     width:min(360px, 94vw);
     height:min(540px, 88vh);
     border-radius:20px;
+    transform-style: flat;
   }
 
   .slab.zoomSlab .label{
@@ -2546,7 +2548,7 @@
       const r=zoomSlab.getBoundingClientRect();
       const px=clamp((clientX-r.left)/r.width,0,1);
       const py=clamp((clientY-r.top)/r.height,0,1);
-      zoomSlab.style.transform=`rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
+      zoomSlab.style.transform=`rotateX(${(0.5-py)*20}deg) rotateY(${(px-0.5)*20}deg)`;
       const tier=getSlabTier(zoomSlab);
       const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(180,200,255,.12)";
       const sx=(px-0.5)*-30,sy=(py-0.5)*-20;
