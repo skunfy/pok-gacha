@@ -300,11 +300,11 @@
     /* ── Foil irisé sur la carte ── */
     .cardFoil, .cardGlare {
       position:absolute; inset:0;
-      border-radius:22px;
+      border-radius:16px;
       pointer-events:none;
       opacity:0;
       transition: opacity .15s ease;
-      z-index:4;
+      z-index:2;
     }
     .cardFoil {
       mix-blend-mode: color-dodge;
@@ -320,7 +320,7 @@
       );
     }
     .cardFoil::after {
-      content:""; position:absolute; inset:0; border-radius:22px;
+      content:""; position:absolute; inset:0; border-radius:16px;
       background: radial-gradient(
         ellipse at var(--shine-x,50%) var(--shine-y,50%),
         rgba(255,255,255,.22) 0%, rgba(0,0,0,0) 55%
@@ -336,12 +336,12 @@
     }
     .cardSparkle {
       position:absolute; inset:0;
-      border-radius:22px;
+      border-radius:16px;
       pointer-events:none;
       opacity:0;
       transition: opacity .15s ease;
       mix-blend-mode: screen;
-      z-index:5;
+      z-index:3;
     }
 
     /* Couleurs foil par tier */
@@ -952,7 +952,6 @@
   cursor:default;
   width:min(420px, 92vw);
   height:min(600px, 92vh);
-  transform-style: flat;
 }
 
 .slab.zoomSlab .cardImg{
@@ -977,7 +976,6 @@
     width:min(360px, 94vw);
     height:min(540px, 88vh);
     border-radius:20px;
-    transform-style: flat;
   }
 
   .slab.zoomSlab .label{
@@ -1732,11 +1730,11 @@
         </div>
       </div>
 
-      <div class="cardImg" id="zoomCard"></div>
-
-      <canvas class="cardSparkle" id="zoomCardSparkle"></canvas>
-      <div class="cardFoil" id="zoomCardFoil"></div>
-      <div class="cardGlare" id="zoomCardGlare"></div>
+      <div class="cardImg" id="zoomCard">
+        <canvas class="cardSparkle" id="zoomCardSparkle"></canvas>
+        <div class="cardFoil" id="zoomCardFoil"></div>
+        <div class="cardGlare" id="zoomCardGlare"></div>
+      </div>
       <div class="cardInnerFrame zoomInnerFrame"></div>
       <div class="edge"></div>
       <div class="flash"></div>
@@ -1985,11 +1983,11 @@
             </div>
           </div>
 
-          <div class="cardImg" id="card${index}"></div>
-
-          <canvas class="cardSparkle" id="cardSparkle${index}"></canvas>
-          <div class="cardFoil" id="cardFoil${index}"></div>
-          <div class="cardGlare" id="cardGlare${index}"></div>
+          <div class="cardImg" id="card${index}">
+            <canvas class="cardSparkle" id="cardSparkle${index}"></canvas>
+            <div class="cardFoil" id="cardFoil${index}"></div>
+            <div class="cardGlare" id="cardGlare${index}"></div>
+          </div>
 
           <div class="cardPlaceholder" id="cardPh${index}">
             <img src="${ph}" alt="">
@@ -2087,8 +2085,8 @@
       let dragging=false, active=false, raf=null, t=0, mx=0.5, my=0.5;
 
       function syncCanvas(){
-        if(!sparkCv) return;
-        const r=slab.getBoundingClientRect();
+        if(!sparkCv||!card) return;
+        const r=card.getBoundingClientRect();
         if(r.width>0){sparkCv.width=Math.round(r.width);sparkCv.height=Math.round(r.height);}
       }
 
@@ -2125,8 +2123,14 @@
         const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(180,200,255,.12)";
         const sx=(px-0.5)*-30,sy=(py-0.5)*-20;
         slab.style.filter=`drop-shadow(${sx}px ${sy+32}px 60px rgba(0,0,0,.60)) drop-shadow(0 0 28px ${gc})`;
-        mx=px; my=py;
-        applyFoil(px, py);
+        // coords relatives à la cardImg
+        if(card){
+          const cr=card.getBoundingClientRect();
+          const cpx=clamp((clientX-cr.left)/cr.width,0,1);
+          const cpy=clamp((clientY-cr.top)/cr.height,0,1);
+          mx=cpx; my=cpy;
+          applyFoil(cpx, cpy);
+        }
       }
 
       slab.addEventListener("mousemove", (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
@@ -2553,20 +2557,23 @@
       const gc=tier==="g"?"rgba(255,200,0,.28)":tier==="v"?"rgba(190,100,255,.28)":tier==="b"?"rgba(80,160,255,.28)":tier==="m"?"rgba(255,60,60,.28)":"rgba(180,200,255,.12)";
       const sx=(px-0.5)*-30,sy=(py-0.5)*-20;
       zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+32}px 60px rgba(0,0,0,.60)) drop-shadow(0 0 28px ${gc})`;
-      zoomSparkMx=px; zoomSparkMy=py;
-      if(zoomCardFoilEl){
-        zoomCardFoilEl.style.setProperty("--foil-angle",`${115+(px-0.5)*60}deg`);
-        zoomCardFoilEl.style.setProperty("--shine-x",`${px*100}%`);
-        zoomCardFoilEl.style.setProperty("--shine-y",`${py*100}%`);
+      if(zoomCard&&zoomCardFoilEl){
+        const cr=zoomCard.getBoundingClientRect();
+        const cpx=clamp((clientX-cr.left)/cr.width,0,1);
+        const cpy=clamp((clientY-cr.top)/cr.height,0,1);
+        zoomSparkMx=cpx; zoomSparkMy=cpy;
+        zoomCardFoilEl.style.setProperty("--foil-angle",`${115+(cpx-0.5)*60}deg`);
+        zoomCardFoilEl.style.setProperty("--shine-x",`${cpx*100}%`);
+        zoomCardFoilEl.style.setProperty("--shine-y",`${cpy*100}%`);
         zoomCardFoilEl.style.opacity="1";
-        if(zoomCardGlareEl){zoomCardGlareEl.style.setProperty("--glare-x",`${px*100}%`);zoomCardGlareEl.style.setProperty("--glare-y",`${py*100}%`);zoomCardGlareEl.style.opacity="1";}
+        if(zoomCardGlareEl){zoomCardGlareEl.style.setProperty("--glare-x",`${cpx*100}%`);zoomCardGlareEl.style.setProperty("--glare-y",`${cpy*100}%`);zoomCardGlareEl.style.opacity="1";}
         if(zoomSparkCv) zoomSparkCv.style.opacity="1";
       }
     }
 
     zoomSlab?.addEventListener("mousemove", (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX,e.clientY); });
     zoomSlab?.addEventListener("mouseenter", ()=>{
-      if(zoomSparkCv){const r=zoomSlab.getBoundingClientRect();if(r.width>0){zoomSparkCv.width=Math.round(r.width);zoomSparkCv.height=Math.round(r.height);}}
+      if(zoomSparkCv&&zoomCard){const r=zoomCard.getBoundingClientRect();if(r.width>0){zoomSparkCv.width=Math.round(r.width);zoomSparkCv.height=Math.round(r.height);}}
       zoomSparkActive=true; if(!zoomSparkRAF) loopZoomSparks();
     });
     zoomSlab?.addEventListener("mouseleave", ()=>{
