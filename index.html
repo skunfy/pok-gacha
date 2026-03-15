@@ -2250,6 +2250,9 @@
     if(slab){
       slab.dataset.tier = tier;
       slab.dataset.mint = p.mint ? "1" : "0";
+      // Régénérer les sparks selon le nouveau tier
+      const newTier = p.mint ? "m" : tier;
+      sparks = makeSparkles(100, newTier);
       slab.classList.add("reveal");
       setTimeout(() => slab.classList.remove("reveal"), 450);
     }
@@ -2505,65 +2508,169 @@ function bindCarouselDragOnce(){
   }
 
   // Palettes courantes (utilisées tant que l'image n'est pas analysée)
-  const STAR_PAL = {
-    w:[[200,50,90],[215,40,88],[205,45,92],[195,35,86],[210,55,90]],
-    b:[[200,90,74],[185,88,76],[210,92,72],[195,85,78],[205,88,70]],
-    v:[[300,85,74],[280,88,72],[315,82,76],[290,90,70],[305,80,74]],
-    g:[[45,95,74],[55,90,76],[35,92,70],[50,88,72],[40,94,68]],
-    m:[[355,95,74],[10,90,76],[345,88,70],[5,92,72],[350,85,68]],
-  };
-
-  // Palettes adaptatives courantes
-  let currentCardPal = null;   // slab principale
-  let currentZoomPal = null;   // zoom
+  // ══ STYLES PAR TIER ══
+  let currentCardPal = null;
+  let currentZoomPal = null;
   let currentCardColors = null;
   let currentZoomColors = null;
 
   function getSlabTier(sl){ return sl?.dataset?.mint==="1" ? "m" : (sl?.dataset?.tier||"w"); }
 
-  function makeSparkles(n){
-    return Array.from({length:n}, ()=>({
-      x:Math.random(), y:Math.random(),
-      r:0.4+Math.random()*2.1,
-      phase:Math.random()*Math.PI*2,
-      speed:0.28+Math.random()*0.95,
-      big:Math.random()>0.70,
-      ci:Math.floor(Math.random()*5),
-    }));
+  // ── Helpers dessin ──
+  function _star4(ctx,px,py,r,rot){
+    ctx.save();ctx.translate(px,py);ctx.rotate(rot);
+    for(let i=0;i<4;i++){ctx.beginPath();ctx.ellipse(0,0,r*.18,r*2.6,(Math.PI/4)*i,0,Math.PI*2);ctx.fill();}
+    ctx.beginPath();ctx.arc(0,0,r*.34,0,Math.PI*2);ctx.fill();
+    ctx.restore();
   }
 
-  function drawSparkles(ctx, cv, arr, mx, my, t, tier, pal, scale){
+  // ── Anneaux pour G7-G9 ──
+  function _makeRings(existing, minDist){
+    const SIZE_TIERS=[{rMin:8,rMax:14,nDots:10},{rMin:18,rMax:28,nDots:16},{rMin:32,rMax:48,nDots:24}];
+    let best=null,bestMin=0;
+    for(let a=0;a<80;a++){
+      const cx=.12+Math.random()*.76,cy=.12+Math.random()*.76;
+      let minD=999;
+      existing.forEach(e=>{if(!e.dying&&!e.dead){const d=Math.sqrt((cx-e.cx)**2+(cy-e.cy)**2);if(d<minD)minD=d;}});
+      if(minD>bestMin){bestMin=minD;best={cx,cy};}
+      if(minD>minDist)break;
+    }
+    if(!best)best={cx:.1+Math.random()*.8,cy:.1+Math.random()*.8};
+    const tier=SIZE_TIERS[Math.floor(Math.random()*3)];
+    const r=tier.rMin+Math.random()*(tier.rMax-tier.rMin);
+    const nDots=tier.nDots+Math.round(Math.random()*4);
+    return {cx:best.cx,cy:best.cy,r,hue:295+Math.random()*50,phase:Math.random()*Math.PI*2,
+      speed:.12+Math.random()*.28,life:0,fadeIn:true,fadeOut:false,dead:false,dying:false,
+      stayDuration:150+Math.random()*220,stayCount:0,
+      dots:Array.from({length:nDots},(_,i)=>({angle:(Math.PI*2/nDots)*i+(Math.random()-.5)*.18,
+        rJitter:.88+Math.random()*.24,size:.18+Math.random()*.40,
+        pPhase:Math.random()*Math.PI*2,pSpeed:.16+Math.random()*.55}))};
+  }
+
+  function makeSparkles(n, tier){
+    if(tier==='v'){
+      // anneaux G7-G9
+      const rings=[];
+      for(let i=0;i<5;i++) rings.push(_makeRings(rings,.25));
+      return {type:'rings', rings};
+    }
+    return {type:'dots', dots:Array.from({length:n},()=>({
+      x:Math.random(),y:Math.random(),
+      r:tier==='w'?0.15+Math.random()*.65 : tier==='m'?0.4+Math.random()*2.2 : 0.15+Math.random()*.65,
+      phase:Math.random()*Math.PI*2,
+      speed:0.16+Math.random()*.52,
+      big:tier==='m'?Math.random()>.55:false,
+      hue:tier==='m'?355+Math.random()*15:0,
+      drift:tier==='g'?0.0008+Math.random()*.002:0,
+      wobble:tier==='g'?(Math.random()-.5)*.002:0,
+    }))};
+  }
+
+  function drawSparkles(ctx, cv, sparks, mx, my, t, tier, pal, scale){
     t += 0.036;
     if(!ctx||!cv) return t;
     ctx.clearRect(0,0,cv.width,cv.height);
-    const p = pal || STAR_PAL[tier] || STAR_PAL.g;
-    const sc = scale || 1;
-    arr.forEach(s=>{
-      const pulse=0.5+0.5*Math.sin(t*s.speed+s.phase);
-      const dx=s.x-mx, dy=s.y-my;
-      const prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/0.40);
-      const alpha=pulse*(0.08+prox*0.80);
-      if(alpha<0.03) return;
-      const px=s.x*cv.width, py=s.y*cv.height;
-      const r=s.r*sc*(1+prox*1.6);
-      const [h,sat,lit]=p[s.ci % p.length];
-      ctx.globalAlpha=alpha;
-      ctx.fillStyle=`hsl(${h},${sat}%,${lit}%)`;
-      if(s.big&&r>1.6){
-        ctx.save(); ctx.translate(px,py); ctx.rotate(t*0.18+s.phase);
-        for(let i=0;i<4;i++){
-          ctx.beginPath();
-          ctx.ellipse(0,0,r*0.17,r*2.5,(Math.PI/4)*i,0,Math.PI*2);
-          ctx.fill();
+    const sc = scale||1;
+    const W=cv.width, H=cv.height;
+
+    if(sparks?.type==='rings'){
+      // G7-G9 — anneaux de points
+      const rings=sparks.rings;
+      rings.forEach((ring,i)=>{
+        if(ring.dead)return;
+        if(ring.fadeIn){ring.life=Math.min(1,ring.life+.022);if(ring.life>=1)ring.fadeIn=false;}
+        else if(ring.fadeOut){ring.life=Math.max(0,ring.life-.018);if(ring.life<=0){ring.dead=true;ring.dying=false;return;}}
+        else{ring.stayCount++;if(ring.stayCount>ring.stayDuration){ring.fadeOut=true;ring.dying=true;}}
+        const ringPulse=.5+.5*Math.sin(t*ring.speed+ring.phase);
+        const dx=ring.cx-mx,dy=ring.cy-my,prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/.55);
+        ring.dots.forEach(d=>{
+          const dotPulse=.5+.5*Math.sin(t*d.pSpeed+d.pPhase);
+          const alpha=ring.life*(.15+prox*.45+ringPulse*.20)*dotPulse*sc;
+          if(alpha<.02)return;
+          const px=ring.cx*W+Math.cos(d.angle)*ring.r*d.rJitter;
+          const py=ring.cy*H+Math.sin(d.angle)*ring.r*d.rJitter;
+          const r=d.size*(1+prox*.7+dotPulse*.3)*sc;
+          const hue=ring.hue+(d.angle/(Math.PI*2))*20;
+          ctx.globalAlpha=Math.min(alpha,1);
+          ctx.fillStyle=`hsl(${hue},${74+prox*16}%,${78+dotPulse*14}%)`;
+          ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
+        });
+      });
+      // remplacer les morts
+      const alive=rings.filter(r=>!r.dead);
+      rings.forEach((ring,i)=>{if(ring.dead){const nr=_makeRings(alive,.25);rings[i]=nr;alive.push(nr);}});
+
+    } else {
+      // dots — G1-G4, G5-G6, G10, MINT
+      sparks.dots.forEach(s=>{
+        if(s.drift){s.y=(s.y+s.drift)%1;s.x=(s.x+Math.sin(t*s.speed+s.phase)*s.wobble+1)%1;}
+        const pulse=.5+.5*Math.sin(t*s.speed+s.phase);
+        const dx=s.x-mx,dy=s.y-my,prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/.44);
+
+        if(tier==='w'){
+          // G1-G4 : micro-points blanc→bleu clair
+          const alpha=pulse*(.02+prox*.52);if(alpha<.018)return;
+          const r=s.r*(1+prox*.55)*sc;
+          const hue=195+s.y*25;const sat=Math.round(s.y*55);const lit=Math.round(95-s.y*18);
+          ctx.globalAlpha=Math.min(alpha,1);
+          ctx.fillStyle=`hsl(${hue},${sat}%,${lit}%)`;
+          ctx.beginPath();ctx.arc(s.x*W,s.y*H,r,0,Math.PI*2);ctx.fill();
+
+        } else if(tier==='b'){
+          // G5-G6 : micro-points bleu→vert
+          const alpha=pulse*(.02+prox*.52);if(alpha<.018)return;
+          const r=s.r*(1+prox*.55)*sc;
+          const hue=Math.round(195-s.y*45);const sat=Math.round(40+s.y*50);const lit=Math.round(92-s.y*22);
+          ctx.globalAlpha=Math.min(alpha,1);
+          ctx.fillStyle=`hsl(${hue},${sat}%,${lit}%)`;
+          ctx.beginPath();ctx.arc(s.x*W,s.y*H,r,0,Math.PI*2);ctx.fill();
+
+        } else if(tier==='g'){
+          // G10 : neige dorée qui tombe
+          const alpha=pulse*(.02+prox*.52);if(alpha<.018)return;
+          const r=s.r*(1+prox*.55)*sc;
+          const hue=48+s.y*8;const sat=Math.round(s.y*88);const lit=Math.round(96-s.y*28);
+          ctx.globalAlpha=Math.min(alpha,1);
+          ctx.fillStyle=`hsl(${hue},${sat}%,${lit}%)`;
+          ctx.beginPath();ctx.arc(s.x*W,s.y*H,r,0,Math.PI*2);ctx.fill();
+
+        } else if(tier==='m'){
+          // MINT : étoiles rouges 4 branches
+          const alpha=pulse*(.06+prox*.72);if(alpha<.03)return;
+          const r=s.r*(1+prox*1.5)*sc;
+          ctx.globalAlpha=Math.min(alpha,1);
+          ctx.fillStyle=`hsl(${s.hue},${80+prox*15}%,${72+pulse*18}%)`;
+          if(s.big&&r>1.5) _star4(ctx,s.x*W,s.y*H,r,t*.2+s.phase);
+          else{ctx.beginPath();ctx.arc(s.x*W,s.y*H,r*.5,0,Math.PI*2);ctx.fill();}
         }
-        ctx.beginPath(); ctx.arc(0,0,r*0.32,0,Math.PI*2); ctx.fill();
-        ctx.restore();
-      } else {
-        ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
-      }
-    });
+      });
+    }
+
     ctx.globalAlpha=1;
     return t;
+  }
+
+  function _buildTierFoil(tier, px, py, colors){
+    const h=Math.round(px*360);
+    const h2=Math.round((1-py)*360);
+    const ox=px*100,oy=py*100,ox2=(1-px)*100,oy2=(1-py)*100;
+
+    if(tier==='w'){
+      // G1-G4 argent froid — double radial
+      return `radial-gradient(ellipse 80% 60% at ${ox}% ${oy}%,hsla(200,55%,92%,.52) 0%,hsla(208,60%,88%,.32) 35%,transparent 65%),radial-gradient(ellipse 60% 80% at ${ox2}% ${oy2}%,hsla(215,65%,86%,.30) 0%,hsla(205,50%,90%,.18) 40%,transparent 65%)`;
+    } else if(tier==='b'){
+      // G5-G6 reflets doux bleu/vert
+      return `radial-gradient(ellipse 70% 50% at ${ox}% ${oy}%,hsla(172,70%,62%,.38) 0%,hsla(180,65%,55%,.18) 45%,transparent 65%),radial-gradient(ellipse 55% 65% at ${ox2}% ${oy2}%,hsla(210,75%,65%,.32) 0%,hsla(200,68%,58%,.15) 40%,transparent 62%),radial-gradient(ellipse 40% 40% at ${px*50+25}% ${py*50+25}%,hsla(190,80%,70%,.20) 0%,transparent 55%)`;
+    } else if(tier==='v'){
+      // G7-G9 rose/violet étalé
+      return `radial-gradient(ellipse 130% 100% at ${ox}% ${oy}%,hsla(315,70%,65%,.38) 0%,hsla(295,62%,58%,.20) 45%,transparent 70%),radial-gradient(ellipse 120% 110% at ${ox2}% ${oy2}%,hsla(278,68%,62%,.32) 0%,hsla(300,60%,56%,.16) 42%,transparent 68%),radial-gradient(ellipse 100% 90% at ${px*50+25}% ${(1-py)*50+25}%,hsla(305,65%,60%,.22) 0%,transparent 60%)`;
+    } else if(tier==='g'||tier==='m'){
+      // G10 + MINT — hologramme shift rainbow (mix-blend-mode:screen)
+      return `radial-gradient(ellipse 140% 110% at ${ox}% ${oy}%,hsla(${h},90%,72%,.55) 0%,hsla(${(h+90)%360},85%,65%,.32) 35%,transparent 60%),radial-gradient(ellipse 130% 120% at ${ox2}% ${oy2}%,hsla(${h2},88%,70%,.50) 0%,hsla(${(h2+120)%360},82%,62%,.28) 38%,transparent 62%)`;
+    }
+    // fallback adaptatif
+    if(colors) return buildAdaptiveFoil(colors, 115+(px-.5)*60);
+    return null;
   }
 
   // ── Instances slab principale ──
@@ -2571,7 +2678,7 @@ function bindCarouselDragOnce(){
   const cardGlareEl  = document.getElementById("cardGlare");
   const cardSparkCv  = document.getElementById("cardSparkle");
   const cardSparkCtx = cardSparkCv ? cardSparkCv.getContext("2d") : null;
-  const sparks       = makeSparkles(100);
+  let sparks = makeSparkles(100, "w");
   let sparkActive=false, sparkRAF=null, sparkT=0, sparkMx=0.5, sparkMy=0.5;
 
   // ── Instances zoom ──
@@ -2579,7 +2686,7 @@ function bindCarouselDragOnce(){
   const zoomCardGlareEl = document.getElementById("zoomCardGlare");
   const zoomSparkCv     = document.getElementById("zoomCardSparkle");
   const zoomSparkCtx    = zoomSparkCv ? zoomSparkCv.getContext("2d") : null;
-  const zoomSparks      = makeSparkles(100);
+  let zoomSparks = makeSparkles(100, "w");
   let zoomSparkActive=false, zoomSparkRAF=null, zoomSparkT=0, zoomSparkMx=0.5, zoomSparkMy=0.5;
 
   function syncCanvasSize(cv, el){
@@ -2599,14 +2706,13 @@ function bindCarouselDragOnce(){
     zoomSparkRAF=requestAnimationFrame(loopZoomSparks);
   }
 
-  function applyCardFoil(foil, glare, cv, px, py, colors){
+  function applyCardFoil(foil, glare, cv, px, py, colors, tier){
     if(!foil) return;
-    const angle = 115+(px-0.5)*60;
-    const grad = colors ? buildAdaptiveFoil(colors, angle) : null;
+    const grad = _buildTierFoil(tier||"w", px, py, colors);
     if(grad) foil.style.background = grad;
-    foil.style.setProperty("--foil-angle", `${angle}deg`);
-    foil.style.setProperty("--shine-x",    `${px*100}%`);
-    foil.style.setProperty("--shine-y",    `${py*100}%`);
+    // G10 et MINT utilisent screen, les autres color-dodge
+    const blendMode = (tier==='g'||tier==='m') ? 'screen' : 'color-dodge';
+    foil.style.mixBlendMode = blendMode;
     foil.style.opacity="1";
     if(glare){ glare.style.setProperty("--glare-x",`${px*100}%`); glare.style.setProperty("--glare-y",`${py*100}%`); glare.style.opacity="1"; }
     if(cv) cv.style.opacity="1";
@@ -2639,7 +2745,7 @@ function bindCarouselDragOnce(){
     slab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,card);
     sparkMx=cpx; sparkMy=cpy;
-    applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy,currentCardColors);
+    applyCardFoil(cardFoilEl,cardGlareEl,cardSparkCv,cpx,cpy,currentCardColors,getSlabTier(slab));
   }
 
   slab?.addEventListener("mousemove",  (e)=>{ if(!dragging) setTilt(e.clientX,e.clientY); });
@@ -2669,7 +2775,7 @@ function bindCarouselDragOnce(){
     zoomSlab.style.filter=`drop-shadow(${sx}px ${sy+35}px 65px rgba(0,0,0,.60)) drop-shadow(0 0 30px ${gc})`;
     const [cpx,cpy]=cardRelPos(clientX,clientY,zoomCard);
     zoomSparkMx=cpx; zoomSparkMy=cpy;
-    applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy,currentZoomColors);
+    applyCardFoil(zoomCardFoilEl,zoomCardGlareEl,zoomSparkCv,cpx,cpy,currentZoomColors,getSlabTier(zoomSlab));
   }
 
   zoomSlab?.addEventListener("mousemove",  (e)=>{ if(!zoomDragging) setZoomTilt(e.clientX,e.clientY); });
@@ -2706,6 +2812,7 @@ function bindCarouselDragOnce(){
     if(zoomSlab){
       zoomSlab.dataset.tier = slab?.dataset?.tier || "";
       zoomSlab.dataset.mint = slab?.dataset?.mint || "0";
+      zoomSparks = makeSparkles(100, getSlabTier(zoomSlab));
     }
     if(zoomMintTag) zoomMintTag.style.display = (mintTag?.style?.display === "none") ? "none" : "inline-flex";
 
@@ -2895,6 +3002,7 @@ function bindCarouselDragOnce(){
         if(slab){
           slab.dataset.tier = tier;
           slab.dataset.mint = pull.mint ? "1" : "0";
+          sparks = makeSparkles(100, pull.mint ? "m" : tier);
           slab.classList.add("reveal");
           setTimeout(() => slab.classList.remove("reveal"), 450);
         }
