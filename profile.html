@@ -353,6 +353,11 @@ button{cursor:pointer}
   mix-blend-mode:color-dodge;
   background:linear-gradient(var(--foil-angle,125deg),rgba(0,0,0,0) 0%,rgba(120,180,255,.30) 16%,rgba(140,255,180,.34) 30%,rgba(255,220,100,.42) 50%,rgba(255,140,180,.32) 68%,rgba(180,120,255,.28) 84%,rgba(0,0,0,0) 100%);
 }
+.cardFoil::after{
+  content:""; position:absolute; inset:0; border-radius:14px;
+  background:radial-gradient(ellipse at var(--shine-x,50%) var(--shine-y,50%),rgba(255,255,255,.20) 0%,rgba(0,0,0,0) 55%);
+  mix-blend-mode:overlay;
+}
 .cardGlare{ mix-blend-mode:soft-light; background:radial-gradient(ellipse at var(--glare-x,50%) var(--glare-y,50%),rgba(255,255,255,.5) 0%,rgba(0,0,0,0) 62%); }
 .cardSparkle{ position:absolute; inset:0; border-radius:14px; pointer-events:none; opacity:0; mix-blend-mode:screen; z-index:3; }
 .edge{ position:absolute; inset:0; border-radius:22px; box-shadow:inset 0 0 0 2px rgba(255,255,255,.05); transform:translateZ(12px); pointer-events:none; }
@@ -372,6 +377,17 @@ button{cursor:pointer}
   60%{ opacity:1; transform:translateY(-4px) scale(1.02); filter:blur(0); }
   100%{ transform:translateY(0) scale(1); }
 }
+
+.colPager{
+  display:flex; align-items:center; justify-content:center; gap:12px;
+}
+.colPager button{
+  padding:5px 12px; border-radius:8px; font-size:12px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  color:#fff; cursor:pointer; transition:background .15s;
+}
+.colPager button:hover:not(:disabled){ background:rgba(255,255,255,.14); }
+.colPager button:disabled{ opacity:.3; cursor:not-allowed; }
 
 .favRemoveBtn{
   position:absolute; top:6px; right:6px; z-index:5;
@@ -588,7 +604,17 @@ button{cursor:pointer}
         </select>
       </div>
     </div>
+    <div class="colPager" id="colPager" style="display:none;margin-bottom:8px;">
+      <button id="colPrevBtn">◀</button>
+      <span id="colPageInfo" style="font-size:13px;opacity:.7;">Page 1 / 1</span>
+      <button id="colNextBtn">▶</button>
+    </div>
     <div class="grid" id="colGrid" style="margin-top:12px"></div>
+    <div class="colPager" id="colPagerBot" style="display:none;margin-top:8px;">
+      <button id="colPrevBtnB">◀</button>
+      <span id="colPageInfoB" style="font-size:13px;opacity:.7;">Page 1 / 1</span>
+      <button id="colNextBtnB">▶</button>
+    </div>
   </div>
 </div>
 
@@ -786,8 +812,18 @@ function _drawZS(){
 }
 
 function _applyFoil(px,py){
-  if(!zoomFoil)return;
+  if(!zoomFoil||!zoomSlab)return;
   const a=115+(px-.5)*60;
+  const tier=zoomSlab.dataset.mint==="1"?"m":(zoomSlab.dataset.tier||"w");
+  const TIER_FOIL={
+    w:["rgba(180,210,255,.32)","rgba(210,235,255,.34)","rgba(240,248,255,.42)","rgba(200,220,255,.30)","rgba(175,205,255,.26)"],
+    b:["rgba(60,200,255,.38)","rgba(40,230,255,.40)","rgba(80,200,255,.48)","rgba(30,160,255,.36)","rgba(50,110,255,.32)"],
+    v:["rgba(255,180,245,.34)","rgba(230,140,255,.38)","rgba(200,110,255,.48)","rgba(245,120,255,.36)","rgba(150,70,255,.32)"],
+    g:["rgba(255,245,130,.36)","rgba(255,218,50,.40)","rgba(255,190,30,.52)","rgba(255,225,70,.38)","rgba(235,160,20,.32)"],
+    m:["rgba(255,150,170,.36)","rgba(255,70,90,.42)","rgba(255,40,60,.52)","rgba(255,90,50,.38)","rgba(255,50,130,.32)"]
+  };
+  const s=TIER_FOIL[tier]||TIER_FOIL.w;
+  zoomFoil.style.background=`linear-gradient(${a}deg,rgba(0,0,0,0) 0%,${s[0]} 16%,${s[1]} 30%,${s[2]} 50%,${s[3]} 68%,${s[4]} 84%,rgba(0,0,0,0) 100%)`;
   zoomFoil.style.setProperty("--foil-angle",`${a}deg`);
   zoomFoil.style.setProperty("--shine-x",`${px*100}%`);
   zoomFoil.style.setProperty("--shine-y",`${py*100}%`);
@@ -900,9 +936,30 @@ function renderFavs(items){
   });
 }
 
+const COL_PAGE_SIZE = 100;
+let colPage = 0;
+let _lastItems = [];
+let _lastCanEdit = false;
+
+function updateColPager(total){
+  const pages = Math.max(1, Math.ceil(total / COL_PAGE_SIZE));
+  const show = total > COL_PAGE_SIZE;
+  document.getElementById("colPager").style.display = show ? "" : "none";
+  document.getElementById("colPagerBot").style.display = show ? "" : "none";
+  const txt = `Page ${colPage+1} / ${pages}`;
+  document.getElementById("colPageInfo").textContent = txt;
+  document.getElementById("colPageInfoB").textContent = txt;
+  document.getElementById("colPrevBtn").disabled = document.getElementById("colPrevBtnB").disabled = colPage === 0;
+  document.getElementById("colNextBtn").disabled = document.getElementById("colNextBtnB").disabled = colPage >= pages-1;
+}
+
 function renderCollection(items, canEditFavs){
+  _lastItems = items; _lastCanEdit = canEditFavs;
+  const start = colPage * COL_PAGE_SIZE;
+  const pageItems = items.slice(start, start + COL_PAGE_SIZE);
+  updateColPager(items.length);
   colGrid.innerHTML = "";
-  items.forEach(x=>{
+  pageItems.forEach(x=>{
     const el = document.createElement("div");
     el.className = "cardBox";
     const isOn = favorites.has(x.idKey);
@@ -1182,8 +1239,24 @@ copyCode.onclick = async () => {
   }
 };
 
-search.addEventListener("input", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
-gameFilter.addEventListener("change", ()=>{ renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
+search.addEventListener("input", ()=>{ colPage=0; renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
+gameFilter.addEventListener("change", ()=>{ colPage=0; renderCollection(filteredItems(), !getFriendCodeFromUrl()); });
+document.getElementById("sortGrade")?.addEventListener("change", ()=>{
+  colPage = 0;
+  renderCollection(filteredItems(), !getFriendCodeFromUrl());
+});
+// Pagination collection
+["colPrevBtn","colPrevBtnB"].forEach(id => document.getElementById(id)?.addEventListener("click", ()=>{
+  colPage = Math.max(0, colPage-1);
+  renderCollection(_lastItems, _lastCanEdit);
+  document.getElementById("colPager").scrollIntoView({behavior:"smooth",block:"nearest"});
+}));
+["colNextBtn","colNextBtnB"].forEach(id => document.getElementById(id)?.addEventListener("click", ()=>{
+  const pages = Math.max(1, Math.ceil(_lastItems.length / COL_PAGE_SIZE));
+  colPage = Math.min(pages-1, colPage+1);
+  renderCollection(_lastItems, _lastCanEdit);
+  document.getElementById("colPager").scrollIntoView({behavior:"smooth",block:"nearest"});
+}));
 
 load().catch(()=>{
   localStorage.removeItem(TOKEN_KEY);
