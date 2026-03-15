@@ -944,7 +944,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
       <button id="sellSelectedBtn" disabled>VENDRE SÉLECTION (0)</button>
       <button id="clearSelBtn" disabled>VIDER</button>
-      <button id="selectDupBtn">🎴 DOUBLONS (0)</button>
+      <button id="selectDupBtn">DOUBLONS (0)</button>
 
       <button onclick="location.href='/market.html'">MARKET</button>
       <button onclick="location.href='/friends.html'">FRIENDS</button>
@@ -1182,12 +1182,35 @@ function sellPriceLabel(grade, mint){
   return 1;
 }
 
+const SEL_CAP = 50;
+
 function refreshSelUI(){
   let totalQty = 0;
   for (const q of selected.values()) totalQty += (Number(q) || 0);
+
+  // Cap à 50 : recalculer en coupant les quantités si nécessaire
+  if(totalQty > SEL_CAP){
+    let remaining = SEL_CAP;
+    for(const [key, q] of selected.entries()){
+      const capped = Math.min(Number(q) || 1, remaining);
+      if(capped <= 0){ selected.delete(key); }
+      else { selected.set(key, capped); }
+      remaining -= capped;
+      if(remaining <= 0) break;
+    }
+    // Supprimer les entrées en trop
+    let rem2 = SEL_CAP;
+    for(const [key, q] of selected.entries()){
+      rem2 -= Number(q) || 0;
+      if(rem2 < 0) selected.delete(key);
+    }
+    totalQty = SEL_CAP;
+  }
+
   sellSelectedBtn.disabled = totalQty === 0;
   clearSelBtn.disabled = totalQty === 0;
-  sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty})`;
+  const capWarn = totalQty >= SEL_CAP ? ` ⚠️ max` : '';
+  sellSelectedBtn.textContent = `VENDRE SÉLECTION (${totalQty}${capWarn})`;
 }
 
 function rarityRank(item){
@@ -1361,7 +1384,7 @@ selectDupBtn.addEventListener("click", () => {
     return (selected.get(x.idKey) || 0) < surplus;
   }).length;
   if(remaining > 0){
-    selectDupBtn.textContent = `🎴 DOUBLONS — encore ${remaining} (cliquer à nouveau)`;
+    selectDupBtn.textContent = `DOUBLONS — encore ${remaining} →`;
   }
 });
 
@@ -1504,7 +1527,7 @@ function render(items){
 
   // Mettre à jour le compteur doublons
   const dupCount = items.filter(x => (x.count || 0) > 1).length;
-  selectDupBtn.textContent = `🎴 DOUBLONS (${dupCount})`;
+  selectDupBtn.textContent = `DOUBLONS (${dupCount})`;
   selectDupBtn.disabled = dupCount === 0;
 
   grid.innerHTML="";
@@ -1577,6 +1600,13 @@ function render(items){
 
     box.onchange = () => {
       if (box.checked){
+        // Vérifier le cap avant d'ajouter
+        let currentTotal = 0;
+        for(const q of selected.values()) currentTotal += (Number(q) || 0);
+        if(currentTotal >= SEL_CAP){
+          box.checked = false;
+          return;
+        }
         const q = clampQty();
         selected.set(x.idKey, q);
       } else {
