@@ -1860,6 +1860,10 @@
         <button class="gameBtn" type="button" onclick="setGameAndClose('senpaigodesshaven')" aria-label="Senpai Goddess Haven">
           <img src="senpai.png" alt="Senpai Goddess Haven">
         </button>
+
+        <button class="gameBtn" type="button" onclick="setGameAndClose('magic')" aria-label="Magic: The Gathering">
+          <img src="magic.png" alt="Magic: The Gathering">
+        </button>
       </div>
 
       <div class="gameHint">Tu peux rechanger à tout moment avec “TCG” en haut.</div>
@@ -1900,6 +1904,7 @@
     if (g === "dragonball") return "dragonball";
     if (g === "unionarena") return "unionarena";
     if (g === "senpaigodesshaven") return "senpaigodesshaven";
+    if (g === "magic") return "magic";
     return "pokemon";
   }
 
@@ -1909,6 +1914,7 @@
     if (g === "dragonball") return "DRAGON BALL";
     if (g === "unionarena") return "UNION ARENA";
     if (g === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
+    if (g === "magic") return "MAGIC: THE GATHERING";
     return "POKÉMON";
   }
 
@@ -2040,6 +2046,7 @@
     if(g === "dragonball") return "dragonball.png";
     if(g === "unionarena") return "unionarena.png";
     if(g === "senpaigodesshaven") return "senpai.png";
+    if(g === "magic") return "magic.png";
     return "International_Pokémon_logo.png";
   }
 
@@ -2073,6 +2080,7 @@
     (g === "dragonball") ? "dragonball" :
     (g === "unionarena") ? "unionarena" :
     (g === "senpaigodesshaven") ? "senpaigodesshaven" :
+    (g === "magic") ? "magic" :
     "pokemon";
 
   localStorage.setItem("gacha_game_v1", v);

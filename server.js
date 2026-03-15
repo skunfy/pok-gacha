@@ -223,6 +223,83 @@ function drawOfflineSenpaiCard() {
 }
 
 // =========================
+// OFFLINE MAGIC
+// =========================
+const OFFLINE_MAGIC_DIR        = path.join(__dirname, "data", "magic");
+const OFFLINE_MAGIC_CARDS_PATH = path.join(OFFLINE_MAGIC_DIR, "cards.json");
+const OFFLINE_MAGIC_SETS_PATH  = path.join(OFFLINE_MAGIC_DIR, "sets.json");
+
+let offlineMagicCards = [];
+let offlineMagicSets  = [];
+const offlineMagicCardsBySet = new Map();
+
+// URL publique R2 pour les images Magic
+const MAGIC_R2_BASE = "https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev/magic";
+
+function rewriteMagicImageUrl(url) {
+  if (!url) return url;
+  // Si l'image est déjà sur R2 ou externe, on la laisse telle quelle
+  if (url.startsWith("https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev")) return url;
+  // Si c'est un chemin local généré par le script (ex: /data/magic/images/fin__1.jpg)
+  const match = url.match(/\/data\/magic\/images\/(.+)$/);
+  if (match) return `${MAGIC_R2_BASE}/${match[1]}`;
+  return url;
+}
+
+function loadOfflineMagic() {
+  try {
+    offlineMagicCards = [];
+    offlineMagicSets  = [];
+    offlineMagicCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_MAGIC_CARDS_PATH)) {
+      const raw    = fs.readFileSync(OFFLINE_MAGIC_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineMagicCards = parsed;
+    } else {
+      console.log("📦 No offline Magic cards.json found at", OFFLINE_MAGIC_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_MAGIC_SETS_PATH)) {
+      const raw    = fs.readFileSync(OFFLINE_MAGIC_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineMagicSets = parsed;
+    } else {
+      console.log("📦 No offline Magic sets.json found at", OFFLINE_MAGIC_SETS_PATH);
+    }
+
+    for (const c of offlineMagicCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineMagicCardsBySet.has(setId)) {
+        offlineMagicCardsBySet.set(setId, []);
+      }
+      offlineMagicCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Magic sets: ${offlineMagicSets.length}`);
+    console.log(`📦 Offline Magic cards: ${offlineMagicCards.length}`);
+  } catch (e) {
+    console.log("Offline Magic load error:", e.message);
+  }
+}
+loadOfflineMagic();
+
+function drawOfflineMagicCard() {
+  if (!offlineMagicCards?.length) {
+    throw new Error("Offline Magic pool empty");
+  }
+  const valid = offlineMagicCards.filter(c => c?.image || c?.imageHigh);
+  if (!valid.length) throw new Error("Magic: no valid images");
+  const c = valid[Math.floor(Math.random() * valid.length)];
+  return {
+    ...c,
+    image:     rewriteMagicImageUrl(c.imageHigh || c.image),
+    imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image),
+  };
+}
+
+// =========================
 // OFFLINE POKEMON CATALOG
 // =========================
 const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
@@ -580,6 +657,7 @@ function getGame(req){
   if (g === "dragonball") return "dragonball";
   if (g === "unionarena") return "unionarena";
   if (g === "senpaigodesshaven") return "senpaigodesshaven";
+  if (g === "magic") return "magic";
   return "pokemon";
 }
 
@@ -1242,6 +1320,19 @@ if (game === "unionarena") {
     imageHigh: img
   };
 }
+// MAGIC //
+if (game === "magic") {
+  const c = drawOfflineMagicCard();
+  return {
+    cardId:   c.cardId   || null,
+    setId:    c.setId    || null,
+    localId:  c.localId  || null,
+    name:     c.name     || "Unknown",
+    set:      c.setName  || "Magic",
+    image:    c.image    || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
 // SENPAI GODDESS HAVEN //
 if (game === "senpaigodesshaven") {
   const c = drawOfflineSenpaiCard();
@@ -1796,6 +1887,18 @@ app.get("/api/sets", auth, async (req, res) => {
     return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
   }
 
+    // ===== MAGIC =====
+    if (game === "magic") {
+      const cards = (offlineMagicCardsBySet.get(setId) || []).map(c => ({
+        cardId:   c.cardId  || "",
+        localId:  String(c.localId || ""),
+        name:     c.name    || "",
+        image:    rewriteMagicImageUrl(c.imageHigh || c.image) || null,
+        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image) || null,
+      }));
+      return res.json({ setId, cards });
+    }
+
     // ===== LORCANA =====
     if (game === "lorcana") {
       const list = await getLorcanaSets();
@@ -1886,6 +1989,15 @@ app.get("/api/sets", auth, async (req, res) => {
         a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
       );
       return res.json({ sets });
+    }
+
+    if (game === "magic") {
+      return res.json({
+        sets: offlineMagicSets.map(s => ({
+          id:   s.id,
+          name: s.name,
+        }))
+      });
     }
 
     return res.json({ sets: [] });
@@ -2011,6 +2123,18 @@ app.get("/api/sets", auth, async (req, res) => {
         }))
       });
     }
+    // ===== MAGIC =====
+    if (game === "magic") {
+      const cards = (offlineMagicCardsBySet.get(setId) || []).map(c => ({
+        cardId:   c.cardId  || "",
+        localId:  String(c.localId || ""),
+        name:     c.name    || "",
+        image:    rewriteMagicImageUrl(c.imageHigh || c.image) || null,
+        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image) || null,
+      }));
+      return res.json({ setId, cards });
+    }
+
     // ===== LORCANA =====
     if (game === "lorcana") {
       const cards = await getLorcanaCardsForSet(setId);
@@ -2445,6 +2569,7 @@ app.post("/api/market/list", auth, async (req, res) => {
     gameFromKey === "dragonball" ? "dragonball" :
     gameFromKey === "unionarena" ? "unionarena" :
     gameFromKey === "senpaigodesshaven" ? "senpaigodesshaven" :
+    gameFromKey === "magic" ? "magic" :
     "pokemon";
 
   const client = await pool.connect();
@@ -3142,13 +3267,14 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const u = uQ.rows[0];
   if (!u) return res.status(404).json({ error: "Profil introuvable" });
 
-  const [pQ, oQ, lQ, dQ, uAQ, sGQ] = await Promise.all([
+  const [pQ, oQ, lQ, dQ, uAQ, sGQ, mQ] = await Promise.all([
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='dragonball'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='unionarena'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='senpaigodesshaven'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='magic'`, [u.id]),
   ]);
 
   const pokemon = pQ.rows[0]?.total || 0;
@@ -3157,6 +3283,7 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const dragonball = dQ.rows[0]?.total || 0;
   const unionarena = uAQ.rows[0]?.total || 0;
   const senpaigodesshaven = sGQ.rows[0]?.total || 0;
+  const magic = mQ.rows[0]?.total || 0;
 
   const xp = Number(u?.xp || 0);
 
@@ -3175,7 +3302,8 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     dragonball,
     unionarena,
     senpaigodesshaven,
-    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven
+    magic,
+    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven + magic
   }
   });
 });

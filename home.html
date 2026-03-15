@@ -105,6 +105,7 @@
     .dragonball{background: linear-gradient(135deg, #ff7a00, #ff3d00);}
     .unionarena { background: linear-gradient(135deg, #8b5cf6, #4338ca); }
     .senpaigodesshaven { background: linear-gradient(135deg, #ff6fa8, #c2185b); }
+    .magic { background: linear-gradient(135deg, #b5865a, #6b3a1f); }
 
     .gameLogo {
       width: 160px;
@@ -199,6 +200,12 @@
         <img src="senpai.png" alt="Logo Senpai Goddess Haven" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Senpai Goddess Haven, collectionne et trade.</p>
       </button>
+
+      <button class="card magic" data-game="magic" type="button" aria-label="Choisir Magic: The Gathering">
+        <span class="badge">Sélectionné</span>
+        <img src="magic.png" alt="Logo Magic: The Gathering" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes Magic: The Gathering, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -214,6 +221,7 @@
       if (g === "dragonball") return "dragonball";
       if (g === "unionarena") return "unionarena";
       if (g === "senpaigodesshaven") return "senpaigodesshaven";
+      if (g === "magic") return "magic";
       return "pokemon";
     }
 

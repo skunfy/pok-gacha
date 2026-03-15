@@ -135,8 +135,9 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   gap:18px;
 }
 
-/* ===== Binder 4x4 / 3x3 Senpai ===== */
-.binderGrid.senpai{
+/* ===== Binder 4x4 / 3x3 Senpai + Magic ===== */
+.binderGrid.senpai,
+.binderGrid.magic{
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .binderWrap{
@@ -911,6 +912,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="dragonball">Dragon Ball</option>
         <option value="unionarena">Union Arena</option>
         <option value="senpaigodesshaven">Senpai Goddess Haven</option>
+        <option value="magic">Magic: The Gathering</option>
       </select>
 
       <select id="viewSel" title="Affichage">
@@ -1043,7 +1045,8 @@ function currentGame(){
     g === "lorcana" ||
     g === "dragonball" ||
     g === "unionarena" ||
-    g === "senpaigodesshaven"
+    g === "senpaigodesshaven" ||
+    g === "magic"
   ) return g;
   return "pokemon";
 }
@@ -1129,7 +1132,7 @@ let setsAll = [];
 let binderCards = [];
 let binderPage = 0;
 function getBinderPageSize() {
-  return currentGame() === "senpaigodesshaven" ? 9 : 16;
+  return (currentGame() === "senpaigodesshaven" || currentGame() === "magic") ? 9 : 16;
 }
 
 function currentView(){
@@ -1543,6 +1546,7 @@ function render(items){
       g === "dragonball" ? "🟧 Dragon Ball" :
       g === "unionarena" ? "🟪 Union Arena" :
       g === "senpaigodesshaven" ? "🩷 Senpai Goddess Haven" :
+      g === "magic" ? "🔮 Magic" :
       "🟨 Pokémon";
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 
@@ -1770,6 +1774,7 @@ function renderBinder(){
   setBinderControlsVisible();
   binderGrid.innerHTML = "";
   binderGrid.classList.toggle("senpai", currentGame() === "senpaigodesshaven");
+  binderGrid.classList.toggle("magic", currentGame() === "magic");
 
   if (!isBinder) return;
 
