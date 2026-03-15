@@ -294,68 +294,95 @@ button{cursor:pointer}
 .statCard .v{margin-top:4px; font-size:18px; font-weight:1000}
 
 /* ✅ MODAL ZOOM */
+/* ── MODAL ── */
 .modal{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.72);
-  display:none;
-  place-items:center;
-  z-index:99999;
-  padding:24px;
+  position:fixed; inset:0; background:rgba(0,0,0,.75);
+  display:none; place-items:center; z-index:99999; padding:24px;
+  perspective:600px;
 }
 .modal.open{display:grid}
-.zoomCard{
-  width:min(520px, 92vw);
-  border-radius:18px;
-  background:rgba(15,17,26,.96);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 22px 70px rgba(0,0,0,.55);
-  padding:14px;
-  backdrop-filter: blur(10px);
+.slabScene{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+.zoomHint{ opacity:.6; font-size:12px; text-align:center; color:#fff; margin-top:0; }
+
+/* ── SLAB ── */
+.slab{
+  width:min(300px,75vw); height:min(440px,75vh);
+  border-radius:22px; position:relative; transform-style:preserve-3d;
+  user-select:none; cursor:default;
+  filter:drop-shadow(0 26px 80px rgba(0,0,0,.55));
+  transition:transform .18s ease, filter .25s ease;
 }
-.zoomHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  margin-bottom:10px;
+.shell{
+  position:absolute; inset:0; border-radius:22px;
+  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.025));
+  backdrop-filter:blur(6px);
+  box-shadow:0 30px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.16); transform:translateZ(10px);
 }
-.zoomTitle{ font-weight:1000; letter-spacing:.3px; }
-.zoomSub{ opacity:.75; font-size:12px; margin-top:2px; }
-.zoomBadges{display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+.label{
+  position:absolute; left:50%; top:16px;
+  transform:translateX(-50%) translateZ(20px);
+  width:calc(100% - 28px); border-radius:12px;
+  background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.18);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 10px; height:44px; backdrop-filter:blur(10px); gap:8px; z-index:3;
+}
+.left{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.left .t{ font-weight:900; font-size:10px; letter-spacing:.4px; }
+.left .s{ opacity:.75; font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+.gradeWrap{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.grade{ font-weight:1000; font-size:18px; }
 .mintBadge{
-  padding:5px 9px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:1000;
-  letter-spacing:.6px;
-  background: rgba(255,80,80,.12);
-  border: 1px solid rgba(255,80,80,.55);
-  color: rgba(255,80,80,.95);
+  padding:4px 7px; border-radius:999px; font-size:10px; font-weight:1000; letter-spacing:.5px;
+  background:rgba(255,80,80,.12); border:1px solid rgba(255,80,80,.55); color:rgba(255,80,80,.95);
+  user-select:none; pointer-events:none; line-height:1;
 }
-.gradeBadge{
-  padding:5px 9px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:1000;
-  letter-spacing:.6px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.18);
+.cardImg{
+  position:absolute; left:50%; top:58%;
+  width:calc(100% - 36px); height:auto; aspect-ratio:63/88;
+  transform:translate(-50%,-50%) translateZ(18px);
+  border-radius:14px; overflow:hidden; background:center/cover no-repeat;
+  box-shadow:0 14px 36px rgba(0,0,0,.45); z-index:2;
 }
-.zoomImg{
-  width:100%;
-  aspect-ratio: 63 / 88;
-  max-height: min(64vh, 560px);
-  border-radius:14px;
-  background:center/contain no-repeat;
-  background-color: rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.10);
+.cardImg.is-horizontal{ aspect-ratio:88/63; transform:translate(-50%,-50%) translateZ(18px) rotate(90deg); }
+.cardFoil,.cardGlare{
+  position:absolute; inset:0; border-radius:14px;
+  pointer-events:none; opacity:0; transition:opacity .15s; z-index:2;
 }
-.zoomHint{
-  margin-top:10px;
-  opacity:.7;
-  font-size:12px;
-  text-align:center;
+.cardFoil{
+  mix-blend-mode:color-dodge;
+  background:linear-gradient(var(--foil-angle,125deg),rgba(0,0,0,0) 0%,rgba(120,180,255,.30) 16%,rgba(140,255,180,.34) 30%,rgba(255,220,100,.42) 50%,rgba(255,140,180,.32) 68%,rgba(180,120,255,.28) 84%,rgba(0,0,0,0) 100%);
 }
+.cardGlare{ mix-blend-mode:soft-light; background:radial-gradient(ellipse at var(--glare-x,50%) var(--glare-y,50%),rgba(255,255,255,.5) 0%,rgba(0,0,0,0) 62%); }
+.cardSparkle{ position:absolute; inset:0; border-radius:14px; pointer-events:none; opacity:0; mix-blend-mode:screen; z-index:3; }
+.edge{ position:absolute; inset:0; border-radius:22px; box-shadow:inset 0 0 0 2px rgba(255,255,255,.05); transform:translateZ(12px); pointer-events:none; }
+.flash{ position:absolute; inset:-20%; opacity:0; transform:translateZ(40px); pointer-events:none; background:radial-gradient(circle at 50%,rgba(255,255,255,.9),rgba(255,255,255,0) 60%); }
+
+.slab[data-tier="b"] .shell{ box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(120,170,255,.30),0 0 75px rgba(120,170,255,.22); }
+.slab[data-tier="v"] .shell{ box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(190,120,255,.32),0 0 90px rgba(190,120,255,.25); }
+.slab[data-tier="g"] .shell{ box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,210,110,.34),0 0 120px rgba(255,210,110,.28); }
+.slab[data-mint="1"] .shell{ box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,80,80,.40),0 0 130px rgba(255,80,80,.25); }
+.slab[data-tier="b"] .cardFoil{ --f1:rgba(60,200,255,.38);--f2:rgba(40,230,255,.40);--f3:rgba(80,200,255,.48);--f4:rgba(30,160,255,.36);--f5:rgba(50,110,255,.32); }
+.slab[data-tier="v"] .cardFoil{ --f1:rgba(255,180,245,.34);--f2:rgba(230,140,255,.38);--f3:rgba(200,110,255,.48);--f4:rgba(245,120,255,.36);--f5:rgba(150,70,255,.32); }
+.slab[data-tier="g"] .cardFoil{ --f1:rgba(255,245,130,.36);--f2:rgba(255,218,50,.40);--f3:rgba(255,190,30,.52);--f4:rgba(255,225,70,.38);--f5:rgba(235,160,20,.32); }
+.slab[data-mint="1"] .cardFoil{ --f1:rgba(255,150,170,.36);--f2:rgba(255,70,90,.42);--f3:rgba(255,40,60,.52);--f4:rgba(255,90,50,.38);--f5:rgba(255,50,130,.32); }
+.slab.pop{ animation:slabPop .42s cubic-bezier(.2,.9,.2,1); }
+@keyframes slabPop{
+  0%{ opacity:0; transform:translateY(20px) scale(.88); filter:blur(4px); }
+  60%{ opacity:1; transform:translateY(-4px) scale(1.02); filter:blur(0); }
+  100%{ transform:translateY(0) scale(1); }
+}
+
+.favRemoveBtn{
+  position:absolute; top:6px; right:6px; z-index:5;
+  width:22px; height:22px; border-radius:50%;
+  background:rgba(255,60,60,.75); border:1px solid rgba(255,80,80,.5);
+  color:#fff; font-size:11px; font-weight:900; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  line-height:1; padding:0;
+  transition:background .15s, transform .12s;
+}
+.favRemoveBtn:hover{ background:rgba(255,40,40,.95); transform:scale(1.12); }
 
 /* =========================================================
    ✅ APERÇU PUBLIC (remplacé par un bouton)
@@ -553,27 +580,41 @@ button{cursor:pointer}
           <option value="senpaigodesshaven">Senpai Goddess Haven</option>
         </select>
         <input id="search" placeholder="Rechercher...">
+        <select id="sortGrade" title="Tri">
+          <option value="recent">Récentes</option>
+          <option value="grade_desc">Meilleur grade</option>
+          <option value="grade_asc">Moins bon grade</option>
+          <option value="name">Nom A-Z</option>
+        </select>
       </div>
     </div>
     <div class="grid" id="colGrid" style="margin-top:12px"></div>
   </div>
 </div>
 
-<!-- ✅ ZOOM -->
+<!-- ✅ ZOOM SLAB -->
 <div class="modal" id="zoomModal" aria-hidden="true">
-  <div class="zoomCard" role="dialog" aria-modal="true">
-    <div class="zoomHead">
-      <div style="min-width:0">
-        <div class="zoomTitle" id="zoomTitle">...</div>
-        <div class="zoomSub" id="zoomSub">...</div>
+  <div class="slabScene">
+    <div class="slab" id="zoomSlab" data-tier="" data-mint="0">
+      <div class="shell"></div>
+      <div class="label">
+        <div class="left">
+          <div class="t" id="zoomTitle">CARD</div>
+          <div class="s" id="zoomSub">...</div>
+        </div>
+        <div class="gradeWrap">
+          <div class="mintBadge" id="zoomMint" style="display:none;">MINT</div>
+          <div class="grade" id="zoomGrade">?</div>
+        </div>
       </div>
-      <div class="zoomBadges">
-        <span class="gameTag" id="zoomGameTag">POKÉMON</span>
-        <span class="gradeBadge" id="zoomGrade">Grade ?</span>
-        <span class="mintBadge" id="zoomMint" style="display:none;">MINT</span>
+      <div class="cardImg" id="zoomImg">
+        <canvas class="cardSparkle" id="zoomSparkle"></canvas>
+        <div class="cardFoil" id="zoomFoil"></div>
+        <div class="cardGlare" id="zoomGlare"></div>
       </div>
+      <div class="edge"></div>
+      <div class="flash"></div>
     </div>
-    <div class="zoomImg" id="zoomImg"></div>
     <div class="zoomHint">Clique en dehors pour fermer • ESC</div>
   </div>
 </div>
@@ -632,12 +673,6 @@ const statSenpai = document.getElementById("statSenpai");
 const statTotal = document.getElementById("statTotal");
 
 const zoomModal = document.getElementById("zoomModal");
-const zoomTitle = document.getElementById("zoomTitle");
-const zoomSub = document.getElementById("zoomSub");
-const zoomGameTag = document.getElementById("zoomGameTag");
-const zoomGrade = document.getElementById("zoomGrade");
-const zoomMint = document.getElementById("zoomMint");
-const zoomImg = document.getElementById("zoomImg");
 
 /* ✅ profil public (bouton) DOM */
 const publicAvatarMini = document.getElementById("publicAvatarMini");
@@ -709,27 +744,122 @@ function updateStats(items){
   statTotal.textContent = String(p + o + l + d + u + s);
 }
 
-/* ✅ zoom */
+/* ✅ zoom slab holo */
+const zoomSlab    = document.getElementById("zoomSlab");
+const zoomFoil    = document.getElementById("zoomFoil");
+const zoomGlareEl = document.getElementById("zoomGlare");
+const zoomSparkle = document.getElementById("zoomSparkle");
+const zoomSparkCtx = zoomSparkle ? zoomSparkle.getContext("2d") : null;
+
+function clampN(n,a,b){ return Math.max(a,Math.min(b,n)); }
+function tierFromGrade(g){ const n=Number(g||0); if(n>=10)return"g"; if(n>=7)return"v"; if(n>=5)return"b"; return"w"; }
+
+const _zSparks = Array.from({length:80},()=>({x:Math.random(),y:Math.random(),r:.4+Math.random()*1.8,phase:Math.random()*Math.PI*2,speed:.28+Math.random()*.9,big:Math.random()>.7,ci:Math.floor(Math.random()*2)}));
+const _ZPAL = {w:[[200,50,90],[215,40,88]],b:[[200,90,74],[185,88,76]],v:[[300,85,74],[280,88,72]],g:[[45,95,74],[55,90,76]],m:[[355,95,74],[10,90,76]]};
+let _zt=0,_zmx=.5,_zmy=.5,_zActive=false,_zRAF=null;
+
+function _drawZS(){
+  if(!_zActive){_zRAF=null;return;}
+  _zt+=.036;
+  if(!zoomSparkCtx||!zoomSparkle){_zRAF=requestAnimationFrame(_drawZS);return;}
+  const tier=zoomSlab?.dataset?.mint==="1"?"m":(zoomSlab?.dataset?.tier||"w");
+  const pal=_ZPAL[tier]||_ZPAL.g;
+  zoomSparkCtx.clearRect(0,0,zoomSparkle.width,zoomSparkle.height);
+  _zSparks.forEach(s=>{
+    const pulse=.5+.5*Math.sin(_zt*s.speed+s.phase);
+    const dx=s.x-_zmx,dy=s.y-_zmy;
+    const prox=Math.max(0,1-Math.sqrt(dx*dx+dy*dy)/.4);
+    const alpha=pulse*(.06+prox*.75);
+    if(alpha<.03)return;
+    const px=s.x*zoomSparkle.width,py=s.y*zoomSparkle.height,r=s.r*(1+prox*1.5);
+    const[h,sat,lit]=pal[s.ci%pal.length];
+    zoomSparkCtx.globalAlpha=alpha;
+    zoomSparkCtx.fillStyle=`hsl(${h},${sat}%,${lit}%)`;
+    if(s.big&&r>1.5){
+      zoomSparkCtx.save();zoomSparkCtx.translate(px,py);zoomSparkCtx.rotate(_zt*.18+s.phase);
+      for(let i=0;i<4;i++){zoomSparkCtx.beginPath();zoomSparkCtx.ellipse(0,0,r*.16,r*2.4,(Math.PI/4)*i,0,Math.PI*2);zoomSparkCtx.fill();}
+      zoomSparkCtx.restore();
+    }else{zoomSparkCtx.beginPath();zoomSparkCtx.arc(px,py,r,0,Math.PI*2);zoomSparkCtx.fill();}
+  });
+  zoomSparkCtx.globalAlpha=1;
+  _zRAF=requestAnimationFrame(_drawZS);
+}
+
+function _applyFoil(px,py){
+  if(!zoomFoil)return;
+  const a=115+(px-.5)*60;
+  zoomFoil.style.setProperty("--foil-angle",`${a}deg`);
+  zoomFoil.style.setProperty("--shine-x",`${px*100}%`);
+  zoomFoil.style.setProperty("--shine-y",`${py*100}%`);
+  zoomFoil.style.opacity="1";
+  if(zoomGlareEl){zoomGlareEl.style.setProperty("--glare-x",`${px*100}%`);zoomGlareEl.style.setProperty("--glare-y",`${py*100}%`);zoomGlareEl.style.opacity="1";}
+  if(zoomSparkle)zoomSparkle.style.opacity="1";
+}
+function _resetFoil(){
+  if(zoomFoil)zoomFoil.style.opacity="0";
+  if(zoomGlareEl)zoomGlareEl.style.opacity="0";
+  if(zoomSparkle){zoomSparkle.style.opacity="0";zoomSparkCtx?.clearRect(0,0,zoomSparkle.width,zoomSparkle.height);}
+}
+
+zoomSlab?.addEventListener("mousemove",e=>{
+  const r=zoomSlab.getBoundingClientRect();
+  const px=clampN((e.clientX-r.left)/r.width,0,1);
+  const py=clampN((e.clientY-r.top)/r.height,0,1);
+  zoomSlab.style.transform=`rotateX(${(.5-py)*22}deg) rotateY(${(px-.5)*22}deg)`;
+  const zi=document.getElementById("zoomImg");
+  if(zi){const cr=zi.getBoundingClientRect();_zmx=clampN((e.clientX-cr.left)/cr.width,0,1);_zmy=clampN((e.clientY-cr.top)/cr.height,0,1);}
+  _applyFoil(px,py);
+});
+zoomSlab?.addEventListener("mouseenter",()=>{
+  const zi=document.getElementById("zoomImg");
+  if(zoomSparkle&&zi){const r=zi.getBoundingClientRect();if(r.width>0){zoomSparkle.width=Math.round(r.width);zoomSparkle.height=Math.round(r.height);}}
+  _zActive=true;if(!_zRAF)_drawZS();
+});
+zoomSlab?.addEventListener("mouseleave",()=>{
+  _zActive=false;
+  zoomSlab.style.transform="rotateX(0) rotateY(0)";
+  _resetFoil();
+});
+
 function openZoomCard(x){
-  zoomTitle.textContent = x.name || "";
-  zoomSub.textContent = `${x.set || ""}`.trim();
-  zoomGameTag.textContent = gameLabel(x.game || "pokemon");
-  zoomGrade.textContent = `Grade ${x.grade ?? "?"}`;
-  zoomMint.style.display = x.mint ? "inline-flex" : "none";
+  const tier = tierFromGrade(x.grade);
+  const zoomTitle2 = document.getElementById("zoomTitle");
+  const zoomSub2   = document.getElementById("zoomSub");
+  const zoomGrade2 = document.getElementById("zoomGrade");
+  const zoomMint2  = document.getElementById("zoomMint");
+  const zoomImg2   = document.getElementById("zoomImg");
 
-  const img = (x.imageHigh || x.imagehigh || x.imageHi || x.image || "").trim();
-  zoomImg.style.backgroundImage = img ? `url("${img.replace(/"/g, '\\"')}")` : "none";
-
+  if(zoomTitle2) zoomTitle2.textContent = `${gameLabel(x.game||"pokemon")} • GRADE ${x.grade??"-"}`;
+  if(zoomSub2)   zoomSub2.textContent   = `${x.name||""} • ${x.set||""}`;
+  if(zoomGrade2) zoomGrade2.textContent = String(x.grade??"-");
+  if(zoomMint2)  zoomMint2.style.display = x.mint ? "inline-flex" : "none";
+  if(zoomSlab){
+    zoomSlab.dataset.tier = tier;
+    zoomSlab.dataset.mint = x.mint ? "1" : "0";
+    zoomSlab.classList.remove("pop");
+    void zoomSlab.offsetWidth;
+    zoomSlab.classList.add("pop");
+  }
+  const img = (x.imageHigh||x.imagehigh||x.image||"").trim();
+  if(zoomImg2){
+    zoomImg2.style.backgroundImage = img ? `url("${img.replace(/"/g,'\"')}")` : "none";
+    if(img){const t=new Image();t.onload=()=>zoomImg2.classList.toggle("is-horizontal",t.naturalWidth>t.naturalHeight);t.src=img;}
+    else zoomImg2.classList.remove("is-horizontal");
+  }
+  _resetFoil();
   zoomModal.classList.add("open");
   zoomModal.setAttribute("aria-hidden","false");
 }
 function closeZoom(){
+  _zActive=false; _resetFoil();
   zoomModal.classList.remove("open");
   zoomModal.setAttribute("aria-hidden","true");
-  zoomImg.style.backgroundImage = "none";
+  const zi=document.getElementById("zoomImg");
+  if(zi){zi.style.backgroundImage="none";zi.classList.remove("is-horizontal");}
+  if(zoomSlab) zoomSlab.style.transform="";
 }
-zoomModal.addEventListener("click", (e)=>{ if(e.target === zoomModal) closeZoom(); });
-window.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && zoomModal.classList.contains("open")) closeZoom(); });
+zoomModal.addEventListener("click",(e)=>{ if(e.target===zoomModal) closeZoom(); });
+window.addEventListener("keydown",(e)=>{ if(e.key==="Escape"&&zoomModal.classList.contains("open")) closeZoom(); });
 
 function renderFavs(items){
   favGrid.innerHTML = "";
@@ -741,7 +871,9 @@ function renderFavs(items){
   favs.forEach(x=>{
     const el = document.createElement("div");
     el.className = "cardBox";
+    el.style.position = "relative";
     el.innerHTML = `
+      <button class="favRemoveBtn" title="Retirer des favoris">✕</button>
       <div class="cImg" style="background-image:url('${x.image}')"></div>
       <div class="row">
         <div class="gameTag">${escapeHtml(gameLabel(x.game))}</div>
@@ -751,6 +883,19 @@ function renderFavs(items){
       <div class="small">Grade ${escapeHtml(x.grade)}${x.mint?" • MINT":""}</div>
     `;
     el.querySelector(".cImg").addEventListener("click", ()=> openZoomCard(x));
+    el.querySelector(".favRemoveBtn").onclick = async (e) => {
+      e.stopPropagation();
+      try{
+        const r = await api("/api/favorites/toggle", {
+          method:"POST",
+          body: JSON.stringify({ idKey: x.idKey })
+        });
+        if(!r.isFav) favorites.delete(x.idKey);
+        else favorites.add(x.idKey);
+        renderFavs(allItems);
+        renderCollection(filteredItems(), true);
+      }catch(err){ alert("❌ " + err.message); }
+    };
     favGrid.appendChild(el);
   });
 }
@@ -804,14 +949,19 @@ function renderCollection(items, canEditFavs){
 function filteredItems(){
   const q = (search.value||"").toLowerCase().trim();
   const gf = gameFilter.value || "all";
-  let items = allItems;
+  const sort = document.getElementById("sortGrade")?.value || "recent";
+  let items = [...allItems];
   if(gf !== "all") items = items.filter(x => (x.game || "pokemon") === gf);
-  if(!q) return items;
-  return items.filter(x =>
+  if(q) items = items.filter(x =>
     (x.name||"").toLowerCase().includes(q) ||
     (x.set||"").toLowerCase().includes(q) ||
     String(x.grade||"").includes(q)
   );
+  if(sort === "grade_desc") items.sort((a,b)=>(Number(b.grade||0)-Number(a.grade||0)));
+  else if(sort === "grade_asc") items.sort((a,b)=>(Number(a.grade||0)-Number(b.grade||0)));
+  else if(sort === "name") items.sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  else items.sort((a,b)=>(Number(b.lastAt||b.lastat||0)-Number(a.lastAt||a.lastat||0)));
+  return items;
 }
 
 function getFriendCodeFromUrl(){
