@@ -1907,7 +1907,7 @@
     if (g === "lorcana")  return "lorcana";
     if (g === "dragonball") return "dragonball";
     if (g === "unionarena") return "unionarena";
-    if (g === "senpaigodesshaven") return "senpaigodesshave";
+    if (g === "senpaigodesshaven") return "senpaigodesshaven";
     if (g === "magic") return "magic";
     return "pokemon";
   }
@@ -2827,20 +2827,21 @@ function bindCarouselDragOnce(){
   }
 
   async function loadMe(){
-    const me = await api("/api/me");
-    if(subTop) subTop.textContent = `Connecté • ${me.name} • ${gameLabel(currentGame())}`;
-    updateTopUI(me);
+  const me = await api("/api/me");
 
-    setMiniAvatar(me.avatar);
-    if(miniLvl) miniLvl.textContent = String(me.level || 1);
-    applyMiniProfileTheme(me.level || 1);
+  if(subTop) subTop.textContent = ""; // on enlève le texte
 
-    if(profileName) profileName.textContent = me.name || "Mon compte";
-    if(profileSub)  profileSub.textContent  = "Niv. " + String(me.level || 1) + " • " + gameLabel(currentGame());
+  updateTopUI(me);
 
-    return me;
-  }
+  setMiniAvatar(me.avatar);
+  if(miniLvl) miniLvl.textContent = String(me.level || 1);
+  applyMiniProfileTheme(me.level || 1);
 
+  if(profileName) profileName.textContent = me.name || "Mon compte";
+  if(profileSub)  profileSub.textContent  = "Niv. " + String(me.level || 1);
+
+  return me;
+}
   async function loadPulls(){
     if(log) log.innerHTML = "";
     const data = await api("/api/pulls");
