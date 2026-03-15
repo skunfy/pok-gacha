@@ -1,0 +1,58 @@
+[
+  {
+    "id": "magic-tmnt",
+    "name": "Teenage Mutant Ninja Turtles",
+    "game": "magic",
+    "codes": [
+      "tmt",
+      "tmc",
+      "pza",
+      "ttmt",
+      "ttmc",
+      "atmt"
+    ],
+    "total": 513
+  },
+  {
+    "id": "magic-avatar",
+    "name": "Avatar — Le Dernier Maître de l'Air",
+    "game": "magic",
+    "codes": [
+      "tla",
+      "tle",
+      "ttla",
+      "ptla",
+      "atla"
+    ],
+    "total": 867
+  },
+  {
+    "id": "magic-spiderman",
+    "name": "Marvel's Spider-Man",
+    "game": "magic",
+    "codes": [
+      "spm",
+      "mar",
+      "spe",
+      "tspm",
+      "pspm",
+      "aspm"
+    ],
+    "total": 494
+  },
+  {
+    "id": "magic-finalfantasy",
+    "name": "Final Fantasy",
+    "game": "magic",
+    "codes": [
+      "fin",
+      "fic",
+      "fca",
+      "tfin",
+      "tfic",
+      "pfin",
+      "afin"
+    ],
+    "total": 1341
+  }
+]
