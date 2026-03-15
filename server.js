@@ -236,13 +236,17 @@ const offlineMagicCardsBySet = new Map();
 // URL publique R2 pour les images Magic
 const MAGIC_R2_BASE = "https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev/magic";
 
-function rewriteMagicImageUrl(url) {
+function rewriteMagicImageUrl(url, cardId) {
   if (!url) return url;
-  // Si l'image est déjà sur R2 ou externe, on la laisse telle quelle
+  // Déjà sur R2
   if (url.startsWith("https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev")) return url;
-  // Si c'est un chemin local généré par le script (ex: /data/magic/images/fin__1.jpg)
-  const match = url.match(/\/data\/magic\/images\/(.+)$/);
-  if (match) return `${MAGIC_R2_BASE}/${match[1]}`;
+  // Chemin local généré par le script (ex: /data/magic/images/fin__1.jpg)
+  const localMatch = url.match(/\/data\/magic\/images\/(.+)$/);
+  if (localMatch) return `${MAGIC_R2_BASE}/${localMatch[1]}`;
+  // URL Scryfall → convertir vers R2 via cardId
+  if (cardId && (url.includes("scryfall.io") || url.includes("cards.scryfall"))) {
+    return `${MAGIC_R2_BASE}/${cardId}-high.jpg`;
+  }
   return url;
 }
 
@@ -294,8 +298,8 @@ function drawOfflineMagicCard() {
   const c = valid[Math.floor(Math.random() * valid.length)];
   return {
     ...c,
-    image:     rewriteMagicImageUrl(c.imageHigh || c.image),
-    imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image),
+    image:     rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
+    imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
   };
 }
 
@@ -1889,12 +1893,14 @@ app.get("/api/sets", auth, async (req, res) => {
 
     // ===== MAGIC =====
     if (game === "magic") {
-      return res.json({
-        sets: offlineMagicSets.map(s => ({
-          id:   s.id,
-          name: s.name,
-        }))
-      });
+      const cards = (offlineMagicCardsBySet.get(setId) || []).map(c => ({
+        cardId:   c.cardId  || "",
+        localId:  String(c.localId || ""),
+        name:     c.name    || "",
+        image:    rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
+        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
+      }));
+      return res.json({ setId, cards });
     }
 
     // ===== LORCANA =====
@@ -2127,8 +2133,8 @@ app.get("/api/sets", auth, async (req, res) => {
         cardId:   c.cardId  || "",
         localId:  String(c.localId || ""),
         name:     c.name    || "",
-        image:    rewriteMagicImageUrl(c.imageHigh || c.image) || null,
-        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image) || null,
+        image:    rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
+        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
       }));
       return res.json({ setId, cards });
     }
