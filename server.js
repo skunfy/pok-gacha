@@ -2011,14 +2011,6 @@ app.get("/api/sets", auth, async (req, res) => {
       return res.json({ sets });
     }
 
-    if (game === "magic") {
-      return res.json({
-        sets: offlineMagicSets.map(s => ({
-          id:   s.id,
-          name: s.name,
-        }))
-      });
-    }
 
     return res.json({ sets: [] });
   } catch (e) {
