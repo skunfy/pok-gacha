@@ -1893,15 +1893,31 @@ app.get("/api/sets", auth, async (req, res) => {
 
     // ===== MAGIC =====
     if (game === "magic") {
-      const cards = (offlineMagicCardsBySet.get(setId) || []).map(c => ({
-        cardId:   c.cardId  || "",
-        localId:  String(c.localId || ""),
-        name:     c.name    || "",
-        image:    rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
-        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
-      }));
-      return res.json({ setId, cards });
+
+  const bySet = new Map();
+
+  for (const c of offlineMagicCards) {
+
+    const setId = String(c.setId || "").trim();
+    const setName = String(c.setName || setId).trim();
+
+    if (!setId) continue;
+
+    if (!bySet.has(setId)) {
+      bySet.set(setId, {
+        id: setId,
+        name: setName
+      });
     }
+  }
+
+  return res.json({
+    sets: Array.from(bySet.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true })
+    )
+  });
+
+}
 
     // ===== LORCANA =====
     if (game === "lorcana") {
@@ -2129,15 +2145,20 @@ app.get("/api/sets", auth, async (req, res) => {
     }
     // ===== MAGIC =====
     if (game === "magic") {
-      const cards = (offlineMagicCardsBySet.get(setId) || []).map(c => ({
-        cardId:   c.cardId  || "",
-        localId:  String(c.localId || ""),
-        name:     c.name    || "",
-        image:    rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
-        imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId) || null,
-      }));
-      return res.json({ setId, cards });
-    }
+
+  const cards = offlineMagicCards
+    .filter(c => c.setId === setId)
+    .map(c => ({
+      cardId: c.cardId,
+      localId: c.localId,
+      name: c.name,
+      image: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
+      imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId)
+    }));
+
+  return res.json({ setId, cards });
+
+}
 
     // ===== LORCANA =====
     if (game === "lorcana") {
