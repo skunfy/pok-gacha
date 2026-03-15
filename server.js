@@ -1484,6 +1484,13 @@ app.post("/api/open", auth, async (req, res) => {
 
     const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
 
+    // Vérifier si la carte est déjà dans la collection
+    const existsQ = await client.query(
+      `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+      [req.user.id, idKey]
+    );
+    const isNew = existsQ.rows.length === 0;
+
     await client.query(
       `UPDATE users SET xp = xp + $1 WHERE id=$2`,
       [xpAdd, req.user.id]
@@ -1559,6 +1566,7 @@ app.post("/api/open", auth, async (req, res) => {
         imageHigh: c.imageHigh || c.image,
         grade,
         mint: Boolean(mint),
+        isNew,
       },
     });
   } catch (e) {
@@ -1620,6 +1628,12 @@ app.post("/api/open_multi", auth, async (req, res) => {
       xpTotal += xpAdd;
 
       const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
+
+      const existsQ2 = await client.query(
+        `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
+      const isNew = existsQ2.rows.length === 0;
 
       await client.query(
         `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
@@ -1686,6 +1700,7 @@ app.post("/api/open_multi", auth, async (req, res) => {
         imageHigh: c.imageHigh || c.image,
         grade,
         mint: Boolean(mint),
+        isNew,
         xpAdd
       });
     }

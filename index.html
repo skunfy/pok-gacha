@@ -478,6 +478,50 @@
     line-height:1;
   }
 
+  .newBadge{
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:1000;
+    letter-spacing:.8px;
+    user-select:none;
+    pointer-events:none;
+    line-height:1;
+    background: rgba(0,0,0,.25);
+    border: 1.5px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+    color: #fff;
+    animation: newBounce .55s cubic-bezier(.2,.9,.3,1) both, newRainbow 1.4s linear infinite;
+  }
+  .newBadge::before{
+    content:'';
+    position:absolute; inset:-1.5px;
+    border-radius:999px;
+    background: linear-gradient(90deg,#ff6ec7,#ffe96e,#6effa0,#6ec6ff,#c46eff,#ff6ec7);
+    background-size: 200% 100%;
+    animation: newRainbowBorder 1.4s linear infinite;
+    z-index:-1;
+  }
+  @keyframes newBounce{
+    0%  { opacity:0; transform:scale(.4) translateY(-8px); }
+    60% { transform:scale(1.18) translateY(2px); }
+    80% { transform:scale(.94) translateY(-1px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  @keyframes newRainbow{
+    0%  { color:#ff6ec7; text-shadow:0 0 10px #ff6ec7; }
+    20% { color:#ffe96e; text-shadow:0 0 10px #ffe96e; }
+    40% { color:#6effa0; text-shadow:0 0 10px #6effa0; }
+    60% { color:#6ec6ff; text-shadow:0 0 10px #6ec6ff; }
+    80% { color:#c46eff; text-shadow:0 0 10px #c46eff; }
+    100%{ color:#ff6ec7; text-shadow:0 0 10px #ff6ec7; }
+  }
+  @keyframes newRainbowBorder{
+    0%  { background-position: 0% 50%; }
+    100%{ background-position: 200% 50%; }
+  }
+
   .cardImg{
     position:absolute; left:50%; top:56%;
     width:228px;height:310px;
@@ -1688,6 +1732,7 @@
 
           <div class="gradeWrap">
             <div class="mintBadge" id="mintTag" style="display:none;">MINT</div>
+            <div class="newBadge" id="newTag" style="display:none;">NEW</div>
             <div class="grade" id="grade">?</div>
           </div>
         </div>
@@ -2255,6 +2300,8 @@
     }
 
     if(mintTag) mintTag.style.display = p.mint ? "inline-flex" : "none";
+    const newTag = document.getElementById("newTag");
+    if(newTag) newTag.style.display = p.isNew ? "inline-flex" : "none";
   }
 
   function addHistoryItem(p, target){
@@ -2834,6 +2881,8 @@ function bindCarouselDragOnce(){
       slab.dataset.mint = "0";
     }
     if(mintTag) mintTag.style.display = "none";
+    const newTagR = document.getElementById("newTag");
+    if(newTagR) newTagR.style.display = "none";
 
     try{
       const data = await api("/api/open", { method:"POST" });

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
@@ -1638,6 +1638,48 @@
     border-radius:12px;
   }
 }
+  .newBadge{
+    padding:5px 9px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:1000;
+    letter-spacing:.8px;
+    user-select:none;
+    pointer-events:none;
+    line-height:1;
+    background: rgba(0,0,0,.25);
+    border: 1.5px solid transparent;
+    position: relative;
+    color: #fff;
+    animation: newBounce .55s cubic-bezier(.2,.9,.3,1) both, newRainbow 1.4s linear infinite;
+  }
+  .newBadge::before{
+    content:'';
+    position:absolute; inset:-1.5px;
+    border-radius:999px;
+    background: linear-gradient(90deg,#ff6ec7,#ffe96e,#6effa0,#6ec6ff,#c46eff,#ff6ec7);
+    background-size: 200% 100%;
+    animation: newRainbowBorder 1.4s linear infinite;
+    z-index:-1;
+  }
+  @keyframes newBounce{
+    0%  { opacity:0; transform:scale(.4) translateY(-8px); }
+    60% { transform:scale(1.18) translateY(2px); }
+    80% { transform:scale(.94) translateY(-1px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  @keyframes newRainbow{
+    0%  { color:#ff6ec7; text-shadow:0 0 10px #ff6ec7; }
+    20% { color:#ffe96e; text-shadow:0 0 10px #ffe96e; }
+    40% { color:#6effa0; text-shadow:0 0 10px #6effa0; }
+    60% { color:#6ec6ff; text-shadow:0 0 10px #6ec6ff; }
+    80% { color:#c46eff; text-shadow:0 0 10px #c46eff; }
+    100%{ color:#ff6ec7; text-shadow:0 0 10px #ff6ec7; }
+  }
+  @keyframes newRainbowBorder{
+    0%  { background-position: 0% 50%; }
+    100%{ background-position: 200% 50%; }
+  }
   </style>
 </head>
 <body>
@@ -1979,6 +2021,7 @@
 
             <div class="gradeWrap">
               <div class="mintBadge" id="mintTag${index}" style="display:none;">MINT</div>
+              <div class="newBadge" id="newTag${index}" style="display:none;">NEW</div>
               <div class="grade" id="grade${index}">?</div>
             </div>
           </div>
@@ -2264,6 +2307,8 @@
         if(subtitle) subtitle.textContent = "Invocation...";
         if(gradeEl) gradeEl.textContent = "?";
         if(mintTag) mintTag.style.display = "none";
+        const newTagC = document.getElementById(`newTag${i}`);
+        if(newTagC) newTagC.style.display = "none";
 
         if(slab){
           slab.dataset.tier = "";
@@ -2416,6 +2461,8 @@
       slab.dataset.mint = pull.mint ? "1" : "0";
 
       if(mintTag) mintTag.style.display = pull.mint ? "inline-flex" : "none";
+      const newTag = document.getElementById(`newTag${index}`);
+      if(newTag){ newTag.style.display = pull.isNew ? "inline-flex" : "none"; void newTag.offsetWidth; }
 
       slab.classList.remove("multiPop", "revealBurst");
       void slab.offsetWidth;
