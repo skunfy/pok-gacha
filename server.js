@@ -1290,62 +1290,60 @@ if (game === "lorcana") {
   throw new Error("Lorcana: impossible de trouver une carte avec image");
 }
 
-  //DBZ//
-
+  // ----- DBZ -----
   if (game === "dragonball") {
-  const c = drawOfflineDragonballCard();
-  console.log("📦 source=OFFLINE_DRAGONBALL");
-  return c;
-}
-// UNION ARENA //
-if (game === "unionarena") {
-  const c = drawOfflineUnionArenaCard();
-
-  const img =
-    isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
-    isValidUnionArenaImage(c.image) ? c.image :
-    null;
-
-  if (!img) {
-    throw new Error("Union Arena: image invalide");
+    const c = drawOfflineDragonballCard();
+    console.log("📦 source=OFFLINE_DRAGONBALL");
+    return c;
   }
 
-  return {
-    cardId: c.cardId || null,
-    setId: c.setId || null,
-    localId: c.localId || null,
-    name: c.name || "",
-    set: c.set || c.setName || c.series || "Union Arena",
-    image: img,
-    imageHigh: img
-  };
-}
-// MAGIC //
-if (game === "magic") {
-  const c = drawOfflineMagicCard();
-  return {
-    cardId:   c.cardId   || null,
-    setId:    c.setId    || null,
-    localId:  c.localId  || null,
-    name:     c.name     || "Unknown",
-    set:      c.setName  || "Magic",
-    image:    c.image    || null,
-    imageHigh: c.imageHigh || c.image || null
-  };
-}
-// SENPAI GODDESS HAVEN //
-if (game === "senpaigodesshaven") {
-  const c = drawOfflineSenpaiCard();
-  return {
-    cardId: c.cardId || null,
-    setId: c.setId || null,
-    localId: c.localId || null,
-    name: c.name || "",
-    set: c.setName || "Senpai Goddess Haven",
-    image: c.image || null,
-    imageHigh: c.imageHigh || c.image || null
-  };
-}
+  // ----- UNION ARENA -----
+  if (game === "unionarena") {
+    const c = drawOfflineUnionArenaCard();
+    const img =
+      isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
+      isValidUnionArenaImage(c.image) ? c.image :
+      null;
+    if (!img) throw new Error("Union Arena: image invalide");
+    return {
+      cardId:   c.cardId   || null,
+      setId:    c.setId    || null,
+      localId:  c.localId  || null,
+      name:     c.name     || "",
+      set:      c.set || c.setName || c.series || "Union Arena",
+      image:    img,
+      imageHigh: img
+    };
+  }
+
+  // ----- MAGIC -----
+  if (game === "magic") {
+    const c = drawOfflineMagicCard();
+    return {
+      cardId:   c.cardId   || null,
+      setId:    c.setId    || null,
+      localId:  c.localId  || null,
+      name:     c.name     || "Unknown",
+      set:      c.setName  || "Magic",
+      image:    c.image    || null,
+      imageHigh: c.imageHigh || c.image || null
+    };
+  }
+
+  // ----- SENPAI GODDESS HAVEN -----
+  if (game === "senpaigodesshaven") {
+    const c = drawOfflineSenpaiCard();
+    return {
+      cardId:   c.cardId   || null,
+      setId:    c.setId    || null,
+      localId:  c.localId  || null,
+      name:     c.name     || "",
+      set:      c.setName  || "Senpai Goddess Haven",
+      image:    c.image    || null,
+      imageHigh: c.imageHigh || c.image || null
+    };
+  }
+
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
