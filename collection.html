@@ -106,6 +106,19 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 
 /* ===== Grid container ===== */
+.gridPager{
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  padding:10px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,.7);
+}
+.gridPager button{
+  padding:6px 14px; border-radius:8px; font-size:13px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  color:#fff; cursor:pointer; transition:background .15s;
+}
+.gridPager button:hover:not(:disabled){ background:rgba(255,255,255,.14); }
+.gridPager button:disabled{ opacity:.3; cursor:not-allowed; }
+#gridPageInfo, #gridPageInfoB{ min-width:90px; text-align:center; }
+
 .gridWrap{
   border-radius:20px;
   background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.025));
@@ -575,6 +588,19 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 }
 
 /* ===== Scrollbar dark ===== */
+.gridPager{
+  display:flex; align-items:center; justify-content:center; gap:14px;
+  padding:10px 0; font-size:14px; font-weight:600; color:rgba(255,255,255,.7);
+}
+.gridPager button{
+  padding:6px 14px; border-radius:8px; font-size:13px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12);
+  color:#fff; cursor:pointer; transition:background .15s;
+}
+.gridPager button:hover:not(:disabled){ background:rgba(255,255,255,.14); }
+.gridPager button:disabled{ opacity:.3; cursor:not-allowed; }
+#gridPageInfo, #gridPageInfoB{ min-width:90px; text-align:center; }
+
 .gridWrap{
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.18) rgba(255,255,255,.06);
@@ -918,6 +944,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
 
       <button id="sellSelectedBtn" disabled>VENDRE SÉLECTION (0)</button>
       <button id="clearSelBtn" disabled>VIDER</button>
+      <button id="selectDupBtn">🎴 DOUBLONS (0)</button>
 
       <button onclick="location.href='/market.html'">MARKET</button>
       <button onclick="location.href='/friends.html'">FRIENDS</button>
@@ -939,7 +966,17 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   </div>
 
   <div class="gridWrap">
+    <div class="gridPager" id="gridPager" style="display:none;">
+      <button id="gridPrevBtn">◀</button>
+      <span id="gridPageInfo">Page 1 / 1</span>
+      <button id="gridNextBtn">▶</button>
+    </div>
     <div class="grid" id="grid"></div>
+    <div class="gridPager" id="gridPagerBottom" style="display:none;">
+      <button id="gridPrevBtnB">◀</button>
+      <span id="gridPageInfoB">Page 1 / 1</span>
+      <button id="gridNextBtnB">▶</button>
+    </div>
 
     <div class="binderWrap" id="binderWrap">
       <div class="binderPager" id="binderPager" style="display:none;">
@@ -1048,6 +1085,23 @@ const binderPager = document.getElementById("binderPager");
 const pageInfo = document.getElementById("pageInfo");
 const prevPageBtn = document.getElementById("prevPageBtn");
 const nextPageBtn = document.getElementById("nextPageBtn");
+
+// Pagination grille
+const GRID_PAGE_SIZE = 100;
+let gridPage = 0;
+let filteredItems = [];
+const gridPager       = document.getElementById("gridPager");
+const gridPagerBottom = document.getElementById("gridPagerBottom");
+const gridPageInfo    = document.getElementById("gridPageInfo");
+const gridPageInfoB   = document.getElementById("gridPageInfoB");
+const gridPrevBtn     = document.getElementById("gridPrevBtn");
+const gridNextBtn     = document.getElementById("gridNextBtn");
+const gridPrevBtnB    = document.getElementById("gridPrevBtnB");
+const gridNextBtnB    = document.getElementById("gridNextBtnB");
+
+// Bouton doublons
+const selectDupBtn = document.getElementById("selectDupBtn");
+const DUP_BATCH = 50;
 
 const sellSelectedBtn = document.getElementById("sellSelectedBtn");
 const clearSelBtn = document.getElementById("clearSelBtn");
@@ -1256,6 +1310,61 @@ function renderSetList(list){
   }
 }
 
+// ── Pagination grille
+function goGridPage(p){
+  const pages = Math.max(1, Math.ceil(filteredItems.length / GRID_PAGE_SIZE));
+  gridPage = Math.max(0, Math.min(p, pages - 1));
+  render(filteredItems);
+  gridPager.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+gridPrevBtn.addEventListener("click",  () => goGridPage(gridPage - 1));
+gridNextBtn.addEventListener("click",  () => goGridPage(gridPage + 1));
+gridPrevBtnB.addEventListener("click", () => goGridPage(gridPage - 1));
+gridNextBtnB.addEventListener("click", () => goGridPage(gridPage + 1));
+
+// ── Sélection doublons par lot de 50
+selectDupBtn.addEventListener("click", () => {
+  // Cartes avec doublons pas encore sélectionnées ou partiellement
+  const dups = filteredItems.filter(x => {
+    const surplus = (x.count || 0) - 1;
+    if(surplus <= 0) return false;
+    const alreadySel = selected.get(x.idKey) || 0;
+    return alreadySel < surplus;
+  });
+
+  if(dups.length === 0){
+    // Tout est déjà sélectionné → vider
+    filteredItems.forEach(x => {
+      if((x.count || 0) > 1) selected.delete(x.idKey);
+    });
+    refreshSelUI();
+    applyFilters();
+    return;
+  }
+
+  // Prendre les 50 prochains
+  let added = 0;
+  for(const x of dups){
+    if(added >= DUP_BATCH) break;
+    const surplus = (x.count || 0) - 1;
+    selected.set(x.idKey, surplus);
+    added++;
+  }
+
+  refreshSelUI();
+  applyFilters();
+
+  // Feedback sur le bouton
+  const remaining = filteredItems.filter(x => {
+    const surplus = (x.count || 0) - 1;
+    if(surplus <= 0) return false;
+    return (selected.get(x.idKey) || 0) < surplus;
+  }).length;
+  if(remaining > 0){
+    selectDupBtn.textContent = `🎴 DOUBLONS — encore ${remaining} (cliquer à nouveau)`;
+  }
+});
+
 clearSelBtn.addEventListener("click", () => {
   selected.clear();
   applyFilters();
@@ -1310,6 +1419,7 @@ async function loadCollection(){
 }
 
 function applyFilters(){
+  gridPage = 0; // reset page sur chaque filtre
   const q = searchInput.value.toLowerCase().trim();
   let items = [...allItems];
 
@@ -1375,9 +1485,30 @@ function openZoom(x){
   modal.setAttribute("aria-hidden","false");
 }
 
+function updateGridPager(total){
+  const pages = Math.max(1, Math.ceil(total / GRID_PAGE_SIZE));
+  const show = total > GRID_PAGE_SIZE;
+  gridPager.style.display = gridPagerBottom.style.display = show ? "" : "none";
+  const txt = `Page ${gridPage + 1} / ${pages}`;
+  gridPageInfo.textContent = gridPageInfoB.textContent = txt;
+  gridPrevBtn.disabled = gridPrevBtnB.disabled = gridPage === 0;
+  gridNextBtn.disabled = gridNextBtnB.disabled = gridPage >= pages - 1;
+}
+
 function render(items){
+  filteredItems = items;
+  const total = items.length;
+  const start = gridPage * GRID_PAGE_SIZE;
+  const pageItems = items.slice(start, start + GRID_PAGE_SIZE);
+  updateGridPager(total);
+
+  // Mettre à jour le compteur doublons
+  const dupCount = items.filter(x => (x.count || 0) > 1).length;
+  selectDupBtn.textContent = `🎴 DOUBLONS (${dupCount})`;
+  selectDupBtn.disabled = dupCount === 0;
+
   grid.innerHTML="";
-  items.forEach(x=>{
+  pageItems.forEach(x=>{
     const el=document.createElement("div");
     el.className="cardBox";
 
