@@ -52,22 +52,27 @@
 
   /* ===== Topbar ===== */
   .topbar{
-    width:100%;
-    max-width:100%;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:12px 18px;
-    border-radius:18px;
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  width:100%;
+  max-width:1200px;          /* centre la barre */
+  margin:0 auto;             /* centre horizontalement */
 
-    /* safe-area iOS notch */
-    padding-top: calc(12px + env(safe-area-inset-top));
-  }
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  padding:12px 18px;
+  border-radius:18px;
+
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(10px);
+
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+
+  /* safe-area iOS notch */
+  padding-top: calc(12px + env(safe-area-inset-top));
+}
 
   /* ===== MINI PROFILE (avatar + lvl) — FIX ===== */
   .miniProfileLink{
@@ -196,14 +201,12 @@
   .brand small{opacity:.75; font-size:12px}
 
   .rightTop{
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    gap:10px;
-    flex:1;
-    min-width:0;
-    flex-wrap:nowrap;
-  }
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex:0 0 auto;   /* ← ne prend plus toute la largeur */
+}
 
   .stats{
     display:flex;
@@ -1627,46 +1630,82 @@
 
 <body>
   <div class="wrap">
-    <div class="topbar">
-      <a class="cornerLogo" href="/" aria-label="Accueil">
-        <img src="poke.png" alt="Logo" />
-      </a>
 
-      <div class="brandRow">
-        <div class="brand">
-          <small id="subTop">Connecté</small>
-        </div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+
+      <!-- LEFT : LOGO -->
+      <div class="topLeft">
+        <a class="cornerLogo" href="/" aria-label="Accueil">
+          <img src="poke.png" alt="Logo" />
+        </a>
       </div>
 
-      <div class="rightTop">
-        <div class="stats">
-          <div class="stat">
-            <img class="moneyIcon" src="dollax.png" alt="Dollax">
-            <b id="money">0</b>
-          </div>
+      <!-- CENTER : NAVIGATION -->
+      <nav class="topNav">
+
+        <a class="topLink" href="#" id="changeGame">TCG</a>
+
+        <a class="topLink topLink--slot" href="/slot.html">
+          🎰 SLOT
+        </a>
+
+        <a class="topLink" href="/collection.html">
+          COLLECTION
+        </a>
+
+        <a class="topLink" href="/market.html">
+          MARKET
+        </a>
+
+        <a class="topLink" href="/leaderboard.html">
+          LEADERBOARD
+        </a>
+
+        <a class="topLink" href="/friends.html">
+          FRIENDS
+        </a>
+
+        <a class="discordIconLink"
+           href="https://discord.gg/yfFU3g4Wa7"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Rejoindre notre Discord">
+
+           <img src="discord-logo.png" alt="Discord">
+
+        </a>
+
+      </nav>
+
+      <!-- RIGHT : COINS + PROFILE -->
+      <div class="topRight">
+
+        <div class="stat">
+          <img class="moneyIcon" src="dollax.png" alt="Dollax">
+          <b id="money">0</b>
         </div>
 
-        <!-- ✅ bouton pour changer de jeu (ouvre le picker) -->
-        <a class="topLink" href="#" id="changeGame">TCG</a>
-        <a class="topLink topLink--slot" href="/slot.html">🎰 SLOT</a>
-
-        <a class="topLink" href="/collection.html">COLLECTION</a>
-        <a class="topLink" href="/market.html">MARKET</a>
-        <a class="topLink" href="/leaderboard.html">LEADERBOARD</a>
-        <a class="topLink" href="/friends.html">FRIENDS</a>
-        <a class="discordIconLink" href="https://discord.gg/yfFU3g4Wa7" target="_blank" rel="noopener noreferrer" aria-label="Rejoindre notre Discord">
-           <img src="discord-logo.png" alt="Discord">
-        </a>
-        
-
-        <!-- ✅ PROFILE DROPDOWN (avatar = bouton) -->
+        <!-- PROFILE -->
         <div class="profileWrap" id="profileWrap">
-          <button class="miniProfileLink" id="profileBtn" type="button" aria-label="Menu profil" aria-expanded="false">
-            <span class="miniAvatar" id="miniAvatar" role="img" aria-label="Avatar"></span>
+
+          <button class="miniProfileLink"
+                  id="profileBtn"
+                  type="button"
+                  aria-label="Menu profil"
+                  aria-expanded="false">
+
+            <span class="miniAvatar"
+                  id="miniAvatar"
+                  role="img"
+                  aria-label="Avatar"></span>
+
             <span class="lvlBubble" id="miniLvl">1</span>
+
           </button>
 
           <div class="profileMenu" id="profileMenu" role="menu" aria-label="Menu profil">
+
             <div class="profileHeader">
               <b id="profileName">Mon compte</b>
               <small id="profileSub">Connecté</small>
@@ -1696,28 +1735,45 @@
               <div class="notifList" id="notifList"></div>
 
               <div class="notifFooter">
-                <span id="notifEmpty" style="display:none;opacity:.7;font-size:12px;">Aucune notification</span>
+                <span id="notifEmpty"
+                      style="display:none;opacity:.7;font-size:12px;">
+                      Aucune notification
+                </span>
               </div>
             </div>
 
             <div class="profileSep"></div>
 
-            <button class="profileItem danger" id="logout" type="button" role="menuitem">
+            <button class="profileItem danger"
+                    id="logout"
+                    type="button"
+                    role="menuitem">
+
               <span class="itemLeft">
                 <img class="menuIcon" src="loggout.png" alt="" aria-hidden="true">
                 <span>Déconnexion</span>
               </span>
+
             </button>
 
-            <button class="profileItem" id="toggleSfx" type="button" role="menuitem" aria-pressed="false">
+            <button class="profileItem"
+                    id="toggleSfx"
+                    type="button"
+                    role="menuitem"
+                    aria-pressed="false">
+
               <span class="itemLeft">
                 <img class="menuIcon" src="sound.png" alt="" aria-hidden="true">
                 <span>Sons</span>
               </span>
+
               <span class="profilePill" id="toggleSfxPill">ON</span>
+
             </button>
+
           </div>
         </div>
+
       </div>
     </div>
 
