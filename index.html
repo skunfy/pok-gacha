@@ -296,7 +296,7 @@
   button:disabled{opacity:.5;cursor:not-allowed; transform:none}
 
   .hint{opacity:.72;font-size:13px;text-align:center}
-  .scene{perspective:600px; perspective-origin:50% 50%;}
+  .scene{perspective:600px; perspective-origin:50% 50%; position:relative;}
 
   /* ===== Slab ===== */
   .slab{
@@ -479,7 +479,11 @@
   }
 
   .newBadge{
-    padding:5px 9px;
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    z-index: 20;
+    padding:5px 10px;
     border-radius:999px;
     font-size:11px;
     font-weight:1000;
@@ -487,10 +491,9 @@
     user-select:none;
     pointer-events:none;
     line-height:1;
-    background: rgba(0,0,0,.25);
+    background: rgba(0,0,0,.55);
     border: 1.5px solid transparent;
-    background-clip: padding-box;
-    position: relative;
+    position: absolute;
     color: #fff;
     animation: newBounce .55s cubic-bezier(.2,.9,.3,1) both, newRainbow 1.4s linear infinite;
   }
@@ -1719,6 +1722,7 @@
     </div>
 
     <div class="scene">
+      <div class="newBadge" id="newTag" style="display:none;">NEW</div>
       <div class="slab" id="slab" data-tier="" data-mint="0">
         <div class="shine" id="shine"></div>
         <div class="glare" id="glare"></div>
@@ -1732,7 +1736,6 @@
 
           <div class="gradeWrap">
             <div class="mintBadge" id="mintTag" style="display:none;">MINT</div>
-            <div class="newBadge" id="newTag" style="display:none;">NEW</div>
             <div class="grade" id="grade">?</div>
           </div>
         </div>
@@ -2895,7 +2898,6 @@ function bindCarouselDragOnce(){
         imageHigh: c.imageHigh || c.image,
         grade: c.grade,
         mint: !!c.mint,
-        isNew: !!c.isNew,
         foilColors: c.foilColors || null,
         at: Date.now()
       };
