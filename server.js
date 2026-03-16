@@ -2237,24 +2237,39 @@ app.get("/api/pulls", auth, async (req, res) => {
   const game = getGame(req);
 
   const rows = await pool.query(
-  `SELECT game, name, setName, image, imageHigh, grade, mint, at
-   FROM pulls
-   WHERE user_id=$1 AND game=$2
-   ORDER BY at DESC
-   LIMIT 80`,
-  [req.user.id, game]
-);
+    `SELECT game, cardId, name, setName, image, imageHigh, grade, mint, at
+     FROM pulls
+     WHERE user_id=$1 AND game=$2
+     ORDER BY at DESC
+     LIMIT 80`,
+    [req.user.id, game]
+  );
 
   res.json({
-    pulls: rows.rows.map((r) => ({
-      name: r.name,
-      set: r.setname || r.setName,
-      image: r.image,
-      imageHigh: r.imagehigh || r.imageHigh || null,
-      grade: r.grade,
-      mint: Boolean(r.mint),
-      at: Number(r.at),
-    })),
+    pulls: rows.rows.map((r) => {
+      const itemGame = r.game || game;
+      const cardId = r.cardid || r.cardId || null;
+
+      const image =
+        itemGame === "magic"
+          ? rewriteMagicImageUrl(r.image, cardId)
+          : r.image;
+
+      const imageHigh =
+        itemGame === "magic"
+          ? rewriteMagicImageUrl(r.imagehigh || r.imageHigh || r.image, cardId)
+          : (r.imagehigh || r.imageHigh || null);
+
+      return {
+        name: r.name,
+        set: r.setname || r.setName,
+        image,
+        imageHigh,
+        grade: r.grade,
+        mint: Boolean(r.mint),
+        at: Number(r.at),
+      };
+    }),
   });
 });
 
