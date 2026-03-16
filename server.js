@@ -238,15 +238,21 @@ const MAGIC_R2_BASE = "https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev/magic
 
 function rewriteMagicImageUrl(url, cardId) {
   if (!url) return url;
-  // Déjà sur R2
-  if (url.startsWith("https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev")) return url;
-  // Chemin local généré par le script (ex: /data/magic/images/fin__1.jpg)
-  const localMatch = url.match(/\/data\/magic\/images\/(.+)$/);
-  if (localMatch) return `${MAGIC_R2_BASE}/${localMatch[1]}`;
-  // URL Scryfall → convertir vers R2 via cardId
-  if (cardId && (url.includes("scryfall.io") || url.includes("cards.scryfall"))) {
-    return `${MAGIC_R2_BASE}/${cardId}-high.jpg`;
+
+  if (url.startsWith("https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev")) {
+    return url;
   }
+
+  const localMatch = url.match(/\/data\/magic\/images\/(.+)$/);
+  if (localMatch) {
+    return `${MAGIC_R2_BASE}/${localMatch[1]}`;
+  }
+
+  // garder Scryfall tel quel
+  if (cardId && (url.includes("scryfall.io") || url.includes("cards.scryfall"))) {
+    return url;
+  }
+
   return url;
 }
 
