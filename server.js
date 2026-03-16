@@ -1864,21 +1864,39 @@ app.get("/api/collection", auth, async (req, res) => {
 
   res.json({
     money: me.rows[0]?.money || 0,
-    items: items.rows.map((x) => ({
-      idKey: x.idkey || x.idKey,
-      game: x.game || game, 
-      name: x.name,
-      set: x.setname || x.setName,
-      cardId: x.cardid || x.cardId || null,
-      setId: x.setid || x.setId || null,
-      localId: x.localid || x.localId || null,
-      image: x.image,
-      imageHigh: x.imagehigh || x.imageHigh || null,
-      grade: x.grade,
-      mint: Boolean(x.mint),
-      count: x.count,
-      lastAt: Number(x.lastat || x.lastAt),
-    })),
+    items: items.rows.map((x) => {
+  const itemGame = x.game || game;
+  const cardId = x.cardid || x.cardId || null;
+
+  const rawImage = x.image;
+  const rawImageHigh = x.imagehigh || x.imageHigh || null;
+
+  const image =
+    itemGame === "magic"
+      ? rewriteMagicImageUrl(rawImage, cardId)
+      : rawImage;
+
+  const imageHigh =
+    itemGame === "magic"
+      ? rewriteMagicImageUrl(rawImageHigh || rawImage, cardId)
+      : (rawImageHigh || null);
+
+  return {
+    idKey: x.idkey || x.idKey,
+    game: itemGame,
+    name: x.name,
+    set: x.setname || x.setName,
+    cardId,
+    setId: x.setid || x.setId || null,
+    localId: x.localid || x.localId || null,
+    image,
+    imageHigh,
+    grade: x.grade,
+    mint: Boolean(x.mint),
+    count: x.count,
+    lastAt: Number(x.lastat || x.lastAt),
+  };
+})
   });
 });
 
