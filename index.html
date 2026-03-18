@@ -1941,6 +1941,10 @@
         <button class="gameBtn" type="button" onclick="setGameAndClose('magic')" aria-label="Magic: The Gathering">
           <img src="magic.png" alt="Magic: The Gathering">
         </button>
+
+        <button class="gameBtn" type="button" onclick="setGameAndClose('weissschwarz')" aria-label="Weiss Schwarz">
+          <img src="Weis.png" alt="Weiss Schwarz">
+        </button>
       </div>
 
       <div class="gameHint">Tu peux rechanger à tout moment avec “TCG” en haut.</div>
@@ -1982,6 +1986,7 @@
     if (g === "unionarena") return "unionarena";
     if (g === "senpaigodesshaven") return "senpaigodesshaven";
     if (g === "magic") return "magic";
+    if (g === "weissschwarz") return "weissschwarz";
     return "pokemon";
   }
 
@@ -1992,6 +1997,7 @@
     if (g === "unionarena") return "UNION ARENA";
     if (g === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
     if (g === "magic") return "MAGIC";
+    if (g === "weissschwarz") return "WEISS SCHWARZ";
     return "POKÉMON";
   }
 
@@ -2124,6 +2130,7 @@
     if(g === "unionarena") return "unionarena.png";
     if(g === "senpaigodesshaven") return "senpai.png";
     if(g === "magic") return "magic.png";
+    if(g === "weissschwarz") return "Weis.png";
     return "International_Pokémon_logo.png";
   }
 
@@ -2158,6 +2165,7 @@
     (g === "unionarena") ? "unionarena" :
     (g === "senpaigodesshaven") ? "senpaigodesshaven" :
     (g === "magic") ? "magic" :
+    (g === "weissschwarz") ? "weissschwarz" :
     "pokemon";
 
   localStorage.setItem("gacha_game_v1", v);
