@@ -223,6 +223,72 @@ function drawOfflineSenpaiCard() {
 }
 
 // =========================
+// OFFLINE WEISS SCHWARZ
+// =========================
+const OFFLINE_WEISSSCHWARZ_DIR = path.join(__dirname, "data", "weissschwarz");
+const OFFLINE_WEISSSCHWARZ_CARDS_PATH = path.join(OFFLINE_WEISSSCHWARZ_DIR, "cards.json");
+const OFFLINE_WEISSSCHWARZ_SETS_PATH = path.join(OFFLINE_WEISSSCHWARZ_DIR, "sets.json");
+
+let offlineWeissSchwarzCards = [];
+let offlineWeissSchwarzSets = [];
+const offlineWeissSchwarzCardsBySet = new Map();
+
+function loadOfflineWeissSchwarz() {
+  try {
+    offlineWeissSchwarzCards = [];
+    offlineWeissSchwarzSets = [];
+    offlineWeissSchwarzCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_WEISSSCHWARZ_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_WEISSSCHWARZ_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineWeissSchwarzCards = parsed;
+    } else {
+      console.log("📦 No offline Weiss Schwarz cards.json found at", OFFLINE_WEISSSCHWARZ_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_WEISSSCHWARZ_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_WEISSSCHWARZ_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineWeissSchwarzSets = parsed;
+    } else {
+      console.log("📦 No offline Weiss Schwarz sets.json found at", OFFLINE_WEISSSCHWARZ_SETS_PATH);
+    }
+
+    for (const c of offlineWeissSchwarzCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineWeissSchwarzCardsBySet.has(setId)) {
+        offlineWeissSchwarzCardsBySet.set(setId, []);
+      }
+      offlineWeissSchwarzCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Weiss Schwarz sets: ${offlineWeissSchwarzSets.length}`);
+    console.log(`📦 Offline Weiss Schwarz cards: ${offlineWeissSchwarzCards.length}`);
+  } catch (e) {
+    console.log("Offline Weiss Schwarz load error:", e.message);
+  }
+}
+loadOfflineWeissSchwarz();
+
+const WEISSSCHWARZ_R2_BASE = "https://pub-817aabdb96334b768d7f4520c7ac5481.r2.dev";
+
+function drawOfflineWeissSchwarzCard() {
+  if (!offlineWeissSchwarzCards?.length) {
+    throw new Error("Offline Weiss Schwarz pool empty");
+  }
+  const valid = offlineWeissSchwarzCards.filter(c => c?.image);
+  if (!valid.length) throw new Error("Weiss Schwarz: no valid images");
+  const c = valid[Math.floor(Math.random() * valid.length)];
+  return {
+    ...c,
+    image: `${WEISSSCHWARZ_R2_BASE}/${c.image}`,
+    imageHigh: `${WEISSSCHWARZ_R2_BASE}/${c.imageHigh || c.image}`,
+  };
+}
+
+// =========================
 // OFFLINE MAGIC
 // =========================
 const OFFLINE_MAGIC_DIR        = path.join(__dirname, "data", "magic");
@@ -671,6 +737,7 @@ function getGame(req){
   if (g === "dragonball") return "dragonball";
   if (g === "unionarena") return "unionarena";
   if (g === "senpaigodesshaven") return "senpaigodesshaven";
+  if (g === "weissschwarz") return "weissschwarz";
   if (g === "magic") return "magic";
   return "pokemon";
 }
@@ -1360,6 +1427,19 @@ if (game === "senpaigodesshaven") {
     imageHigh: c.imageHigh || c.image || null
   };
 }
+// WEISS SCHWARZ //
+if (game === "weissschwarz") {
+  const c = drawOfflineWeissSchwarzCard();
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.setName || "Weiss Schwarz",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
     const c = drawOfflinePokemonCard();
@@ -2039,6 +2119,24 @@ app.get("/api/sets", auth, async (req, res) => {
       return res.json({ sets });
     }
 
+    if (game === "weissschwarz") {
+      const bySet = new Map();
+      for (const c of offlineWeissSchwarzCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.setName || setId).trim() || setId
+          });
+        }
+      }
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+      return res.json({ sets });
+    }
+
 
     return res.json({ sets: [] });
   } catch (e) {
@@ -2160,6 +2258,20 @@ app.get("/api/sets", auth, async (req, res) => {
           name: c.name || "",
           image: c.image || null,
           imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
+    // WEISS SCHWARZ //
+    if (game === "weissschwarz") {
+      const cards = offlineWeissSchwarzCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image ? `${WEISSSCHWARZ_R2_BASE}/${c.image}` : null,
+          imageHigh: c.imageHigh ? `${WEISSSCHWARZ_R2_BASE}/${c.imageHigh}` : (c.image ? `${WEISSSCHWARZ_R2_BASE}/${c.image}` : null)
         }))
       });
     }
@@ -2629,6 +2741,7 @@ app.post("/api/market/list", auth, async (req, res) => {
     gameFromKey === "dragonball" ? "dragonball" :
     gameFromKey === "unionarena" ? "unionarena" :
     gameFromKey === "senpaigodesshaven" ? "senpaigodesshaven" :
+    gameFromKey === "weissschwarz" ? "weissschwarz" :
     gameFromKey === "magic" ? "magic" :
     "pokemon";
 
@@ -3327,7 +3440,7 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const u = uQ.rows[0];
   if (!u) return res.status(404).json({ error: "Profil introuvable" });
 
-  const [pQ, oQ, lQ, dQ, uAQ, sGQ, mQ] = await Promise.all([
+  const [pQ, oQ, lQ, dQ, uAQ, sGQ, mQ, wSQ] = await Promise.all([
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
@@ -3335,6 +3448,7 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='unionarena'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='senpaigodesshaven'`, [u.id]),
     pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='magic'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='weissschwarz'`, [u.id]),
   ]);
 
   const pokemon = pQ.rows[0]?.total || 0;
@@ -3344,6 +3458,7 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   const unionarena = uAQ.rows[0]?.total || 0;
   const senpaigodesshaven = sGQ.rows[0]?.total || 0;
   const magic = mQ.rows[0]?.total || 0;
+  const weissschwarz = wSQ.rows[0]?.total || 0;
 
   const xp = Number(u?.xp || 0);
 
@@ -3363,7 +3478,8 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
     unionarena,
     senpaigodesshaven,
     magic,
-    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven + magic
+    weissschwarz,
+    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven + magic + weissschwarz
   }
   });
 });
