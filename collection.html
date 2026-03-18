@@ -913,6 +913,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="unionarena">Union Arena</option>
         <option value="senpaigodesshaven">Senpai Goddess Haven</option>
         <option value="magic">Magic: The Gathering</option>
+        <option value="weissschwarz">Weiss Schwarz</option>
       </select>
 
       <select id="viewSel" title="Affichage">
@@ -1046,7 +1047,8 @@ function currentGame(){
     g === "dragonball" ||
     g === "unionarena" ||
     g === "senpaigodesshaven" ||
-    g === "magic"
+    g === "magic" ||
+    g === "weissschwarz"
   ) return g;
   return "pokemon";
 }
@@ -1132,7 +1134,7 @@ let setsAll = [];
 let binderCards = [];
 let binderPage = 0;
 function getBinderPageSize() {
-  return (currentGame() === "senpaigodesshaven" || currentGame() === "magic") ? 9 : 16;
+  return (currentGame() === "senpaigodesshaven" || currentGame() === "magic" || currentGame() === "weissschwarz") ? 9 : 16;
 }
 
 function currentView(){
@@ -1547,6 +1549,7 @@ function render(items){
       g === "unionarena" ? "🟪 Union Arena" :
       g === "senpaigodesshaven" ? "🩷 Senpai Goddess Haven" :
       g === "magic" ? "🔮 Magic" :
+      g === "weissschwarz" ? "⚔️ Weiss Schwarz" :
       "🟨 Pokémon";
     const unit = sellPriceLabel(x.grade || 0, !!x.mint);
 
@@ -1775,6 +1778,7 @@ function renderBinder(){
   binderGrid.innerHTML = "";
   binderGrid.classList.toggle("senpai", currentGame() === "senpaigodesshaven");
   binderGrid.classList.toggle("magic", currentGame() === "magic");
+  binderGrid.classList.toggle("magic", currentGame() === "weissschwarz");
 
   if (!isBinder) return;
 
