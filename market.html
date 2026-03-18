@@ -599,6 +599,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
         <option value="unionarena">Union Arena</option>
         <option value="senpaigodesshaven">Senpai Goddess Haven</option>
         <option value="magic">MAGIC: THE GATHERING</option>
+        <option value="weissschwarz">Weiss Schwarz</option>
       </select>
 
       <div class="pill">
@@ -782,6 +783,7 @@ function currentGame(){
   if (g === "unionarena") return "unionarena";
   if (g === "senpaigodesshaven") return "senpaigodesshaven";
   if (g === "magic") return "magic";
+  if (g === "weissschwarz") return "weissschwarz";
   return "pokemon";
 }
 
@@ -821,6 +823,7 @@ function gameTag(g){
   if (g === "unionarena") return "🟪 Union Arena";
   if (g === "senpaigodesshaven") return "🩷 Senpai Goddess Haven";
   if (g === "magic") return "🔮 Magic";
+  if (g === "weissschwarz") return "⚔️ Weiss Schwarz";
   return "🟨 Pokémon";
 }
 function fmtCardLine(x){
