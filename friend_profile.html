@@ -373,6 +373,10 @@ button:active{ transform: translateY(0px) scale(.99); }
         <div class="v" id="statMagic">0</div>
       </div>
       <div class="statCard">
+        <div class="k">TOTAL WEISS SCHWARZ</div>
+        <div class="v" id="statWeiss">0</div>
+      </div>
+      <div class="statCard">
         <div class="k">TOTAL CARTES</div>
         <div class="v" id="statTotal">0</div>
       </div>
@@ -434,6 +438,7 @@ function gameLabel(g){
   if (gg === "unionarena") return "UNION ARENA";
   if (gg === "senpaigodesshaven") return "SENPAI GODDESS HAVEN";
   if (gg === "magic") return "MAGIC: THE GATHERING";
+  if (gg === "weissschwarz") return "WEISS SCHWARZ";
   return "POKÉMON";
 }
 
@@ -475,13 +480,14 @@ function setAvatarGlowByLevel(level){
 }
 
 /* ✅ STATS */
-function setStats(pokemon, onepiece, lorcana, dragonball, unionarena, senpai, magic=0){
+function setStats(pokemon, onepiece, lorcana, dragonball, unionarena, senpai, magic=0, weiss=0){
   const p = Number(pokemon||0)||0;
   const o = Number(onepiece||0)||0;
   const l = Number(lorcana||0)||0;
   const d = Number(dragonball||0)||0;
   const u = Number(unionarena||0)||0;
   const s = Number(senpai||0)||0;
+  const w = Number(weiss||0)||0;
 
   document.getElementById("statPokemon").textContent = String(p);
   document.getElementById("statOnepiece").textContent = String(o);
@@ -490,7 +496,8 @@ function setStats(pokemon, onepiece, lorcana, dragonball, unionarena, senpai, ma
   document.getElementById("statUnionarena").textContent = String(u);
   document.getElementById("statSenpai").textContent = String(s);
   const smEl = document.getElementById("statMagic"); if(smEl) smEl.textContent = String(magic);
-  document.getElementById("statTotal").textContent = String(p + o + l + d + u + s + magic);
+  const swEl = document.getElementById("statWeiss"); if(swEl) swEl.textContent = String(w);
+  document.getElementById("statTotal").textContent = String(p + o + l + d + u + s + magic + w);
 }
 
 /* ✅ ZOOM */
@@ -587,12 +594,12 @@ async function load(){
 
   // stats : route publique les a, route amis non
   if (data.stats){
-    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana, data.stats.dragonball, data.stats.unionarena, data.stats.senpaigodesshaven, data.stats.magic||0);
+    setStats(data.stats.pokemon, data.stats.onepiece, data.stats.lorcana, data.stats.dragonball, data.stats.unionarena, data.stats.senpaigodesshaven, data.stats.magic||0, data.stats.weissschwarz||0);
   } else {
     try {
       const publicData = await api("/api/profile_public/" + encodeURIComponent(friendCode));
       if (publicData.stats) {
-        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana, publicData.stats.dragonball, publicData.stats.unionarena, publicData.stats.senpaigodesshaven, publicData.stats.magic||0);
+        setStats(publicData.stats.pokemon, publicData.stats.onepiece, publicData.stats.lorcana, publicData.stats.dragonball, publicData.stats.unionarena, publicData.stats.senpaigodesshaven, publicData.stats.magic||0, publicData.stats.weissschwarz||0);
       } else {
         setStats(0,0,0,0,0,0);
       }
