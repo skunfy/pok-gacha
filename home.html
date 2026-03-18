@@ -106,6 +106,7 @@
     .unionarena { background: linear-gradient(135deg, #8b5cf6, #4338ca); }
     .senpaigodesshaven { background: linear-gradient(135deg, #ff6fa8, #c2185b); }
     .magic { background: linear-gradient(135deg, #b5865a, #6b3a1f); }
+    .weissschwarz { background: linear-gradient(135deg, #2a2a2a, #555555); }
 
     .gameLogo {
       width: 160px;
@@ -206,6 +207,12 @@
         <img src="magic.png" alt="Logo Magic: The Gathering" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Magic: The Gathering, collectionne et trade.</p>
       </button>
+
+      <button class="card weissschwarz" data-game="weissschwarz" type="button" aria-label="Choisir Weiss Schwarz">
+        <span class="badge">Sélectionné</span>
+        <img src="Weis.png" alt="Logo Weiss Schwarz" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes Weiss Schwarz, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -222,6 +229,7 @@
       if (g === "unionarena") return "unionarena";
       if (g === "senpaigodesshaven") return "senpaigodesshaven";
       if (g === "magic") return "magic";
+      if (g === "weissschwarz") return "weissschwarz";
       return "pokemon";
     }
 
