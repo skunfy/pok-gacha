@@ -1267,6 +1267,12 @@ function setGridMode(on){
 
   sortSelect.style.display = on ? "" : "none";
   searchInput.placeholder = on ? "Rechercher..." : "Rechercher (dans ta collection)...";
+
+  // ✅ Cacher les pagers de grille quand on passe en mode classeur
+  if (!on){
+    gridPager.style.display = "none";
+    gridPagerBottom.style.display = "none";
+  }
 }
 
 function setBinderControlsVisible(){
