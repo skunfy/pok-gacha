@@ -361,7 +361,9 @@ function currentGame(){
     g === "lorcana" ||
     g === "dragonball" ||
     g === "unionarena" ||
-    g === "senpaigodesshaven"
+    g === "senpaigodesshaven" ||
+    g === "magic" ||
+    g === "weissschwarz"
   ) return g;
   return "pokemon";
 }
@@ -373,6 +375,8 @@ function setGame(g){
     v === "dragonball" ? "dragonball" :
     v === "unionarena" ? "unionarena" :
     v === "senpaigodesshaven" ? "senpaigodesshaven" :
+    v === "magic" ? "magic" :
+    v === "weissschwarz" ? "weissschwarz" :
     "pokemon";
 
   localStorage.setItem(GAME_KEY, safe);
@@ -411,6 +415,8 @@ if(!friendCode){
     <option value="dragonball">Dragon Ball</option>
     <option value="unionarena">Union Arena</option>
     <option value="senpaigodesshaven">Senpai Goddess Haven</option>
+    <option value="magic">Magic: The Gathering</option>
+    <option value="weissschwarz">Weiss Schwarz</option>
   `;
   sel.value = currentGame();
 
