@@ -2769,7 +2769,9 @@ function bindCarouselDragOnce(){
 
   function setTilt(clientX, clientY) {
     if(!slab) return;
-    const r=slab.getBoundingClientRect();
+    // Use the scene (parent, no transform) to avoid getBoundingClientRect
+    // being distorted by preserve-3d children (cardImg at translateZ(60px))
+    const r=(slab.parentElement||slab).getBoundingClientRect();
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     slab.style.transform=`scale(1.03) rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
