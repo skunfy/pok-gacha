@@ -1128,8 +1128,8 @@
   @keyframes cameraZoom{ 0%{ transform: scale(1); } 40%{ transform: scale(1.04); } 100%{ transform: scale(1); } }
 
   /* ===== Impact Pulse ===== */
-  .slab.impact{ animation: impactPulse .55s cubic-bezier(.2,.9,.2,1); }
-  @keyframes impactPulse{ 0%{ transform: scale(.96); } 40%{ transform: scale(1.06); } 100%{ transform: scale(1); } }
+  .slab.impact{ animation: impactPulse .55s cubic-bezier(.2,.9,.2,1); animation-fill-mode: none; }
+  @keyframes impactPulse{ 0%{ transform: scale(.96); } 40%{ transform: scale(1.06); } 100%{ transform: scale(1.03); } }
 
   /* ===== Card disappear before new pull ===== */
   .slab.disappear .cardImg{ animation: cardDisappear .35s ease forwards; }
@@ -2769,9 +2769,7 @@ function bindCarouselDragOnce(){
 
   function setTilt(clientX, clientY) {
     if(!slab) return;
-    // Use the scene (parent, no transform) to avoid getBoundingClientRect
-    // being distorted by preserve-3d children (cardImg at translateZ(60px))
-    const r=(slab.parentElement||slab).getBoundingClientRect();
+    const r=slab.getBoundingClientRect();
     const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
     const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
     slab.style.transform=`scale(1.03) rotateX(${(0.5-py)*30}deg) rotateY(${(px-0.5)*30}deg)`;
