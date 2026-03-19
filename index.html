@@ -2739,11 +2739,23 @@ function bindCarouselDragOnce(){
     zoomSparkRAF=requestAnimationFrame(loopZoomSparks);
   }
 
+  // Cache pour éviter de reconstruire le gradient foil à chaque mousemove
+  const _foilAngleCache = new WeakMap();
+
   function applyCardFoil(foil, glare, cv, px, py, colors){
     if(!foil) return;
     const angle = 115+(px-0.5)*60;
-    const grad = colors ? buildAdaptiveFoil(colors, angle) : null;
-    if(grad) foil.style.background = grad;
+
+    // Ne reconstruire le background que si l'angle a changé de plus de 2deg
+    if(colors){
+      const prevAngle = _foilAngleCache.get(foil) ?? 9999;
+      if(Math.abs(prevAngle - angle) > 2){
+        const grad = buildAdaptiveFoil(colors, angle);
+        if(grad) foil.style.background = grad;
+        _foilAngleCache.set(foil, angle);
+      }
+    }
+
     foil.style.setProperty("--foil-angle", `${angle}deg`);
     foil.style.setProperty("--shine-x",    `${px*100}%`);
     foil.style.setProperty("--shine-y",    `${py*100}%`);
