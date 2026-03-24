@@ -714,9 +714,9 @@ function randFriendCode() {
 }
 
 function sellPriceFor(grade, mint){
-  if (mint) return 20;
+  if (mint) return 10;
   const g = Number(grade) || 0;
-  if (g >= 10) return 10;
+  if (g >= 10) return 4;
   if (g >= 7) return 3;
   if (g >= 5) return 2;
   return 1;
