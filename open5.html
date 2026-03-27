@@ -2595,8 +2595,8 @@
       }
 
       // 🎣 TROLL — uniquement pour Demo
-      if(window.__meName === "Demo"){
-        await sleep(600); // petit délai pour qu'il voie les cartes une fraction de seconde
+      if(["Demo", "Pet-De-Fouf", "Encore un autre"].includes(window.__meName)){
+        await sleep(200); // petit délai pour qu'il voie les cartes une fraction de seconde
 
         const trollOverlay = document.createElement("div");
         trollOverlay.id = "trollOverlay";
