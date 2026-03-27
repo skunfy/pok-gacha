@@ -2592,6 +2592,33 @@
       if(idx >= 0){
         applyWinnerHighlight(idx);
       }
+
+      // 🎣 TROLL — uniquement pour le joueur 406342
+      const meId = window.__me?.id;
+      if(String(meId) === "13"){
+        await sleep(600); // petit délai pour qu'il voie les cartes une fraction de seconde
+
+        const trollOverlay = document.createElement("div");
+        trollOverlay.id = "trollOverlay";
+        trollOverlay.style.cssText = `
+          position:fixed; inset:0; z-index:999999;
+          background:#000;
+          display:flex; align-items:center; justify-content:center;
+          animation:trollFadeIn .35s ease;
+        `;
+
+        const style = document.createElement("style");
+        style.textContent = `@keyframes trollFadeIn{ from{opacity:0} to{opacity:1} }`;
+        document.head.appendChild(style);
+
+        const iframe = document.createElement("iframe");
+        iframe.src = "https://www.youtube.com/embed/7U0soIx6C7o?autoplay=1&controls=0&loop=1&playlist=7U0soIx6C7o&rel=0&modestbranding=1";
+        iframe.allow = "autoplay; fullscreen";
+        iframe.style.cssText = "width:100vw; height:100vh; border:none; display:block;";
+
+        trollOverlay.appendChild(iframe);
+        document.body.appendChild(trollOverlay);
+      }
     }
 
     async function openMulti(){
