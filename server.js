@@ -1752,7 +1752,15 @@ function dmgForCard(grade, mint) {
 }
 
 const BOSS_NAMES = ["Démon Obscur","Hydra des Abysses","Titan de Cendres","Dragon Néant","Ombre Éternelle"];
+const BOSS_IMAGES = {
+  "Démon Obscur":      "https://cdn.pixabay.com/photo/2017/01/31/13/05/demon-2022467_640.png",
+  "Hydra des Abysses": "https://cdn.pixabay.com/photo/2016/04/01/09/12/hydra-1299455_640.png",
+  "Titan de Cendres":  "https://cdn.pixabay.com/photo/2016/04/01/09/28/giant-1299637_640.png",
+  "Dragon Néant":      "https://cdn.pixabay.com/photo/2013/07/13/11/31/dragon-158548_640.png",
+  "Ombre Éternelle":   "https://cdn.pixabay.com/photo/2016/04/01/09/28/dark-1299638_640.png",
+};
 function randomBossName(){ return BOSS_NAMES[Math.floor(Math.random()*BOSS_NAMES.length)]; }
+function bossImageUrl(name){ return BOSS_IMAGES[name] || ""; }
 
 async function getMyMembership(userId) {
   const r = await pool.query(`SELECT cm.*, c.id as cid FROM clan_members cm JOIN clans c ON c.id=cm.clan_id WHERE cm.user_id=$1`, [userId]);
@@ -1797,36 +1805,95 @@ async function clanHookOpen(userId, grade, mint) {
     await progressMission(m.clan_id, userId, 'open_cards');
     if (mint) await progressMission(m.clan_id, userId, 'get_mint');
     if (grade >= 10) await progressMission(m.clan_id, userId, 'get_grade10');
-    // Attaque boss automatique à chaque ouverture
-    const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
-    if (bQ.rows.length) {
+    await _applyBossDamage(m, grade, mint);
+  } catch(e) { console.error("clanHookOpen error:", e.message); }
+}
+
+// Traite plusieurs cartes d'un coup de façon atomique (open x5)
+async function clanHookOpenMulti(userId, cards) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+
+    // Missions : on traite séquentiellement
+    for (const card of cards) {
+      await progressMission(m.clan_id, userId, 'open_cards');
+      if (card.mint) await progressMission(m.clan_id, userId, 'get_mint');
+      if (card.grade >= 10) await progressMission(m.clan_id, userId, 'get_grade10');
+    }
+
+    // Boss : calcul total dégâts puis 1 seule mise à jour atomique
+    const totalDmg = cards.reduce((sum, c) => sum + dmgForCard(c.grade, Boolean(c.mint)), 0);
+    if (totalDmg <= 0) return;
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const bQ = await client.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1 FOR UPDATE`, [m.clan_id]);
+      if (!bQ.rows.length) { await client.query("ROLLBACK"); return; }
+
       const boss = bQ.rows[0];
-      const dmg = dmgForCard(grade, mint);
-      const newHp = Math.max(0, boss.hp_current - dmg);
-      await pool.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
-      await pool.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, userId, dmg, Date.now()]);
-      await pool.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [dmg, userId]);
+      const newHp = Math.max(0, boss.hp_current - totalDmg);
+      await client.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
+      await client.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, userId, totalDmg, Date.now()]);
+      await client.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [totalDmg, userId]);
+
       if (newHp <= 0) {
-        await pool.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
-        const totalDmgQ = await pool.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
-        const totalDmg = Number(totalDmgQ.rows[0].total) || 1;
-        const contributors = await pool.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id`, [boss.id]);
+        await client.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
+        const totalQ = await client.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+        const total = Number(totalQ.rows[0].total) || 1;
+        const contributors = await client.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id`, [boss.id]);
         for (const c of contributors.rows) {
-          const share = Math.floor((Number(c.dmg) / totalDmg) * boss.reward);
+          const share = Math.floor((Number(c.dmg) / total) * boss.reward);
           if (share > 0) {
-            await pool.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
-            await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Boss vaincu !','Tu reçois '+$2+' dollax pour ta contribution !',NULL,0,$3)`,
+            await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
+            await client.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Boss vaincu !','Tu reçois '+$2+' dollax pour ta contribution !',NULL,0,$3)`,
               [c.user_id, share, Date.now()]);
           }
         }
-        await pool.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
-        await checkClanLevelUp(m.clan_id).catch(() => {});
+        await client.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
         const nextHp = Math.floor(boss.hp_max * 1.2);
-        await pool.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
+        await client.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
           [m.clan_id, randomBossName(), nextHp, nextHp, Math.floor(boss.reward * 1.1), Date.now()]);
       }
+      await client.query("COMMIT");
+      if (newHp <= 0) await checkClanLevelUp(m.clan_id).catch(() => {});
+    } catch(e) {
+      await client.query("ROLLBACK");
+      console.error("clanHookOpenMulti boss error:", e.message);
+    } finally { client.release(); }
+  } catch(e) { console.error("clanHookOpenMulti error:", e.message); }
+}
+
+// Helper interne pour boss damage (open x1)
+async function _applyBossDamage(m, grade, mint) {
+  const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  if (!bQ.rows.length) return;
+  const boss = bQ.rows[0];
+  const dmg = dmgForCard(grade, mint);
+  const newHp = Math.max(0, boss.hp_current - dmg);
+  await pool.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
+  await pool.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, userId, dmg, Date.now()]);
+  await pool.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [dmg, userId]);
+  if (newHp <= 0) {
+    await pool.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
+    const totalDmgQ = await pool.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+    const totalDmg = Number(totalDmgQ.rows[0].total) || 1;
+    const contributors = await pool.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id`, [boss.id]);
+    for (const c of contributors.rows) {
+      const share = Math.floor((Number(c.dmg) / totalDmg) * boss.reward);
+      if (share > 0) {
+        await pool.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
+        await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Boss vaincu !','Tu reçois '+$2+' dollax pour ta contribution !',NULL,0,$3)`,
+          [c.user_id, share, Date.now()]);
+      }
     }
-  } catch(e) { console.error("clanHookOpen error:", e.message); }
+    await pool.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
+    await checkClanLevelUp(m.clan_id).catch(() => {});
+    const nextHp = Math.floor(boss.hp_max * 1.2);
+    await pool.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
+      [m.clan_id, randomBossName(), nextHp, nextHp, Math.floor(boss.reward * 1.1), Date.now()]);
+  }
 }
 
 async function clanHookSell(userId, qty) {
@@ -2214,10 +2281,8 @@ app.post("/api/open_multi", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    // Clan hooks pour chaque carte ouverte
-    for (const pull of pulls) {
-      clanHookOpen(req.user.id, pull.grade, Boolean(pull.mint)).catch(() => {});
-    }
+    // Clan hook groupé pour toutes les cartes (atomique, évite les race conditions)
+    clanHookOpenMulti(req.user.id, pulls).catch(() => {});
 
     return res.json({
       ok: true,
@@ -4084,6 +4149,7 @@ app.get("/api/clan/boss", auth, async (req, res) => {
   if (!bQ.rows.length) return res.json({ boss: null });
 
   const boss = bQ.rows[0];
+  const bossImg = bossImageUrl(boss.name);
   const dmgQ = await pool.query(`
     SELECT u.name, SUM(d.damage) as total
     FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
@@ -4092,7 +4158,7 @@ app.get("/api/clan/boss", auth, async (req, res) => {
 
   const myDmg = await pool.query(`SELECT COALESCE(SUM(damage),0) as total FROM clan_boss_damage WHERE boss_id=$1 AND user_id=$2`, [boss.id, req.user.id]);
 
-  res.json({ boss, leaderboard: dmgQ.rows, myDamage: Number(myDmg.rows[0].total) });
+  res.json({ boss: { ...boss, image: bossImg }, leaderboard: dmgQ.rows, myDamage: Number(myDmg.rows[0].total) });
 });
 
 // POST /api/clan/boss/attack — attaque boss via carte

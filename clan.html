@@ -644,14 +644,19 @@ function renderBossTab(boss, clan) {
 
   return `
     <div class="boss-card">
-      <div class="boss-name">👹 ${esc(boss.name)}</div>
-      <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · Récompense: <b style="color:var(--gold)">${fmtNum(boss.reward)} dollax</b></div>
-      <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
-      <div style="font-size:12px;opacity:.6;margin-bottom:14px">${pct}% PV restants</div>
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
+        ${boss.image ? `<img src="${esc(boss.image)}" alt="${esc(boss.name)}" style="width:100px;height:100px;object-fit:cover;border-radius:14px;border:2px solid rgba(255,80,80,.3);flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+        <div style="flex:1;min-width:200px">
+          <div class="boss-name">👹 ${esc(boss.name)}</div>
+          <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · Récompense: <b style="color:var(--gold)">${fmtNum(boss.reward)} dollax</b></div>
+          <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
+          <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% PV restants</div>
+        </div>
+      </div>
 
       <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.6;opacity:.85">
         ⚡ Chaque carte que tu ouvres inflige automatiquement des dégâts au boss !<br>
-        🎯 <b>Common</b>: 10 dmg · <b>Rare (G5+)</b>: 40 dmg · <b>G7+</b>: 80 dmg · <b>G10</b>: 200 dmg · <b>MINT</b>: ×3
+        🎯 <b>Common</b>: 5 dmg · <b>Rare (G5+)</b>: 20 dmg · <b>G7+</b>: 40 dmg · <b>G10</b>: 100 dmg · <b>MINT</b>: ×2
       </div>
 
       <div class="dmg-leaderboard">
