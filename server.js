@@ -654,6 +654,80 @@ async function initDb() {
   // Initialiser lastTicketPay pour les comptes qui ont des tickets mais pas de timer
   await pool.query(`UPDATE users SET lastTicketPay = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000 WHERE lastTicketPay = 0;`);
 
+  // =========================
+  // CLANS
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clans (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      tag TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      logo TEXT DEFAULT '',
+      banner_color TEXT DEFAULT '#7f5cff',
+      leader_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      xp BIGINT NOT NULL DEFAULT 0,
+      bank BIGINT NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_members (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      role TEXT NOT NULL DEFAULT 'member',
+      damage_total BIGINT NOT NULL DEFAULT 0,
+      joined_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_chat (
+      id SERIAL PRIMARY KEY,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      username TEXT NOT NULL,
+      avatar TEXT DEFAULT '',
+      message TEXT NOT NULL,
+      createdAt BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clan_chat_clan ON clan_chat(clan_id, createdAt DESC)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_boss (
+      id SERIAL PRIMARY KEY,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      name TEXT NOT NULL DEFAULT 'Démon Obscur',
+      hp_max INTEGER NOT NULL DEFAULT 50000,
+      hp_current INTEGER NOT NULL DEFAULT 50000,
+      reward BIGINT NOT NULL DEFAULT 5000,
+      defeated INTEGER NOT NULL DEFAULT 0,
+      started_at BIGINT NOT NULL DEFAULT 0,
+      defeated_at BIGINT DEFAULT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_boss_damage (
+      id SERIAL PRIMARY KEY,
+      boss_id INTEGER NOT NULL REFERENCES clan_boss(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      damage INTEGER NOT NULL DEFAULT 0,
+      at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_missions (
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mission_key TEXT NOT NULL,
+      progress INTEGER NOT NULL DEFAULT 0,
+      goal INTEGER NOT NULL DEFAULT 1,
+      completed INTEGER NOT NULL DEFAULT 0,
+      date_key TEXT NOT NULL,
+      PRIMARY KEY(clan_id, user_id, mission_key, date_key)
+    )
+  `);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -714,9 +788,9 @@ function randFriendCode() {
 }
 
 function sellPriceFor(grade, mint){
-  if (mint) return 10;
+  if (mint) return 20;
   const g = Number(grade) || 0;
-  if (g >= 10) return 4;
+  if (g >= 10) return 10;
   if (g >= 7) return 3;
   if (g >= 5) return 2;
   return 1;
@@ -1534,6 +1608,128 @@ const COST_ONE = 5;
 const COST_FIVE = COST_ONE * 5;
 
 // =========================
+// CLANS — HELPERS
+// =========================
+
+const CLAN_MISSIONS_DEF = [
+  { key: "open_cards",   label: "Ouvrir des cartes",         goal: 5,  xpClan: 50,  bankReward: 100 },
+  { key: "sell_cards",   label: "Vendre des cartes",         goal: 10, xpClan: 40,  bankReward: 80  },
+  { key: "buy_market",   label: "Acheter au marché",         goal: 3,  xpClan: 30,  bankReward: 60  },
+  { key: "get_mint",     label: "Obtenir une carte MINT",    goal: 1,  xpClan: 100, bankReward: 200 },
+  { key: "get_grade10",  label: "Obtenir un grade 10",       goal: 1,  xpClan: 80,  bankReward: 150 },
+  { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 10,  bankReward: 20  },
+  { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 20,  bankReward: 50  },
+];
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+function dmgForCard(grade, mint) {
+  let base = 10;
+  if (grade >= 10) base = 200;
+  else if (grade >= 7) base = 80;
+  else if (grade >= 5) base = 40;
+  else base = 10;
+  return mint ? base * 3 : base;
+}
+
+const BOSS_NAMES = ["Démon Obscur","Hydra des Abysses","Titan de Cendres","Dragon Néant","Ombre Éternelle"];
+function randomBossName(){ return BOSS_NAMES[Math.floor(Math.random()*BOSS_NAMES.length)]; }
+
+async function getMyMembership(userId) {
+  const r = await pool.query(`SELECT cm.*, c.id as cid FROM clan_members cm JOIN clans c ON c.id=cm.clan_id WHERE cm.user_id=$1`, [userId]);
+  return r.rows[0] || null;
+}
+
+async function progressMission(clanId, userId, missionKey, amount=1) {
+  const dk = todayKey();
+  const def = CLAN_MISSIONS_DEF.find(m => m.key === missionKey);
+  if (!def) return;
+
+  await pool.query(`
+    INSERT INTO clan_missions(clan_id,user_id,mission_key,progress,goal,completed,date_key)
+    VALUES($1,$2,$3,0,$4,0,$5)
+    ON CONFLICT(clan_id,user_id,mission_key,date_key) DO NOTHING
+  `, [clanId, userId, missionKey, def.goal, dk]);
+
+  const upd = await pool.query(`
+    UPDATE clan_missions
+    SET progress = LEAST(progress + $1, goal)
+    WHERE clan_id=$2 AND user_id=$3 AND mission_key=$4 AND date_key=$5 AND completed=0
+    RETURNING progress, goal
+  `, [amount, clanId, userId, missionKey, dk]);
+
+  if (!upd.rows.length) return;
+  const { progress, goal } = upd.rows[0];
+
+  if (progress >= goal) {
+    await pool.query(`UPDATE clan_missions SET completed=1 WHERE clan_id=$1 AND user_id=$2 AND mission_key=$3 AND date_key=$4`, [clanId, userId, missionKey, dk]);
+    await pool.query(`UPDATE clans SET xp=xp+$1, bank=bank+$2 WHERE id=$3`, [def.xpClan, def.bankReward, clanId]);
+    await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Mission clan complétée !','Mission "'+$2+'" accomplie ! +'+$3+' XP clan, +'+$4+' dollax banque.',NULL,0,$5)`,
+      [userId, def.label, def.xpClan, def.bankReward, Date.now()]);
+  }
+}
+
+
+async function clanHookOpen(userId, grade, mint) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    await progressMission(m.clan_id, userId, 'open_cards');
+    if (mint) await progressMission(m.clan_id, userId, 'get_mint');
+    if (grade >= 10) await progressMission(m.clan_id, userId, 'get_grade10');
+    // Attaque boss automatique à chaque ouverture
+    const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+    if (bQ.rows.length) {
+      const boss = bQ.rows[0];
+      const dmg = dmgForCard(grade, mint);
+      const newHp = Math.max(0, boss.hp_current - dmg);
+      await pool.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
+      await pool.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, userId, dmg, Date.now()]);
+      await pool.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [dmg, userId]);
+      if (newHp <= 0) {
+        await pool.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
+        const totalDmgQ = await pool.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+        const totalDmg = Number(totalDmgQ.rows[0].total) || 1;
+        const contributors = await pool.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id`, [boss.id]);
+        for (const c of contributors.rows) {
+          const share = Math.floor((Number(c.dmg) / totalDmg) * boss.reward);
+          if (share > 0) {
+            await pool.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
+            await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Boss vaincu !','Tu reçois '+$2+' dollax pour ta contribution !',NULL,0,$3)`,
+              [c.user_id, share, Date.now()]);
+          }
+        }
+        await pool.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
+        const nextHp = Math.floor(boss.hp_max * 1.2);
+        await pool.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
+          [m.clan_id, randomBossName(), nextHp, nextHp, Math.floor(boss.reward * 1.1), Date.now()]);
+      }
+    }
+  } catch(e) { console.error("clanHookOpen error:", e.message); }
+}
+
+async function clanHookSell(userId, qty) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    for (let i = 0; i < qty; i++) await progressMission(m.clan_id, userId, 'sell_cards');
+  } catch(e) {}
+}
+
+async function clanHookBuy(userId) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    await progressMission(m.clan_id, userId, 'buy_market');
+  } catch(e) {}
+}
+
+
+
+// =========================
 // ROUTES
 // =========================
 app.post("/api/login", async (req, res) => {
@@ -1736,32 +1932,10 @@ app.post("/api/open", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
+    // Clan hooks (fire and forget)
+    clanHookOpen(req.user.id, grade, Boolean(mint)).catch(() => {});
+
     return res.json({
-      money: moneyAfterPay,
-      xpAdd,
-      card: {
-        idKey,
-        game,
-        name: c.name,
-        set: c.set,
-        cardId: c.cardId || null,
-        setId: c.setId || null,
-        localId: c.localId || null,
-        image: c.image,
-        imageHigh: c.imageHigh || c.image,
-        grade,
-        mint: Boolean(mint),
-        isNew,
-      },
-    });
-  } catch (e) {
-    try { await client.query("ROLLBACK"); } catch {}
-    console.error("❌ /api/open failed:", e);
-    return res.status(500).json({ error: "Open failed" });
-  } finally {
-    client.release();
-  }
-});
 
 
 app.post("/api/open_multi", auth, async (req, res) => {
@@ -2547,6 +2721,10 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
+    // Clan hook vente
+    const totalQty = clean.reduce((s, it) => s + it.qty, 0);
+    clanHookSell(req.user.id, totalQty).catch(() => {});
+
     const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
     res.json({
       ok: true,
@@ -2924,6 +3102,9 @@ app.post("/api/market/buy", auth, async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    // Clan hook achat
+    clanHookBuy(req.user.id).catch(() => {});
 
     // notif vendeur (hors transaction)
     await notify(
@@ -3483,6 +3664,360 @@ app.get("/api/profile_public/:friendCode", async (req, res) => {
   }
   });
 });
+
+// =========================
+// CLANS — ROUTES
+// =========================
+
+// GET /api/clan/list — liste des clans
+app.get("/api/clan/list", auth, async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT c.id, c.name, c.tag, c.description, c.logo, c.banner_color, c.xp, c.bank,
+           u.name as leader_name,
+           (SELECT COUNT(*) FROM clan_members WHERE clan_id=c.id) as members
+    FROM clans c JOIN users u ON u.id=c.leader_id
+    ORDER BY c.xp DESC
+    LIMIT 50
+  `);
+  res.json({ clans: rows });
+});
+
+// GET /api/clan/me — mon clan
+app.get("/api/clan/me", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.json({ clan: null });
+
+  const cQ = await pool.query(`
+    SELECT c.*, u.name as leader_name
+    FROM clans c JOIN users u ON u.id=c.leader_id
+    WHERE c.id=$1
+  `, [m.clan_id]);
+
+  const membersQ = await pool.query(`
+    SELECT cm.role, cm.damage_total, cm.joined_at, u.name, u.avatar, u.xp
+    FROM clan_members cm JOIN users u ON u.id=cm.user_id
+    WHERE cm.clan_id=$1
+    ORDER BY cm.damage_total DESC
+  `, [m.clan_id]);
+
+  const bossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+
+  res.json({
+    clan: cQ.rows[0],
+    myRole: m.role,
+    members: membersQ.rows,
+    boss: bossQ.rows[0] || null
+  });
+});
+
+// POST /api/clan/create
+app.post("/api/clan/create", auth, async (req, res) => {
+  const existing = await getMyMembership(req.user.id);
+  if (existing) return res.status(400).json({ error: "Tu es déjà dans un clan" });
+
+  const name = String(req.body?.name || "").trim().slice(0, 30);
+  const tag  = String(req.body?.tag  || "").trim().toUpperCase().slice(0, 5);
+  const desc = String(req.body?.description || "").trim().slice(0, 200);
+  const color = String(req.body?.banner_color || "#7f5cff").trim();
+
+  if (!name || !tag) return res.status(400).json({ error: "Nom et tag requis" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const cQ = await client.query(`
+      INSERT INTO clans(name,tag,description,banner_color,leader_id,xp,bank,createdAt)
+      VALUES($1,$2,$3,$4,$5,0,0,$6) RETURNING *
+    `, [name, tag, desc, color, req.user.id, Date.now()]);
+    const clan = cQ.rows[0];
+    await client.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'leader',$3)`, [req.user.id, clan.id, Date.now()]);
+    // Spawn premier boss
+    await client.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,50000,50000,5000,$3)`,
+      [clan.id, randomBossName(), Date.now()]);
+    await client.query("COMMIT");
+    res.json({ ok: true, clan });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    if (e.code === '23505') return res.status(400).json({ error: "Ce nom de clan est déjà pris" });
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
+});
+
+// POST /api/clan/join
+app.post("/api/clan/join", auth, async (req, res) => {
+  const existing = await getMyMembership(req.user.id);
+  if (existing) return res.status(400).json({ error: "Tu es déjà dans un clan" });
+
+  const clanId = Number(req.body?.clanId) | 0;
+  if (!clanId) return res.status(400).json({ error: "clanId manquant" });
+
+  const cQ = await pool.query(`SELECT id FROM clans WHERE id=$1`, [clanId]);
+  if (!cQ.rows.length) return res.status(404).json({ error: "Clan introuvable" });
+
+  const count = await pool.query(`SELECT COUNT(*) FROM clan_members WHERE clan_id=$1`, [clanId]);
+  if (Number(count.rows[0].count) >= 30) return res.status(400).json({ error: "Clan complet (max 30)" });
+
+  await pool.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'member',$3)`, [req.user.id, clanId, Date.now()]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/leave
+app.post("/api/clan/leave", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(400).json({ error: "Tu n'es dans aucun clan" });
+  if (m.role === 'leader') return res.status(400).json({ error: "Le meneur doit d'abord transférer la direction" });
+  await pool.query(`DELETE FROM clan_members WHERE user_id=$1`, [req.user.id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/kick — meneur/officier seulement
+app.post("/api/clan/kick", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || !['leader','officer'].includes(m.role)) return res.status(403).json({ error: "Non autorisé" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  if (!targetId || targetId === req.user.id) return res.status(400).json({ error: "Cible invalide" });
+
+  const tQ = await pool.query(`SELECT role FROM clan_members WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+  if (!tQ.rows.length) return res.status(404).json({ error: "Membre introuvable" });
+  if (tQ.rows[0].role === 'leader') return res.status(403).json({ error: "Impossible d'exclure le meneur" });
+
+  await pool.query(`DELETE FROM clan_members WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/promote
+app.post("/api/clan/promote", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const newRole  = String(req.body?.role || "officer");
+  if (!['officer','member'].includes(newRole)) return res.status(400).json({ error: "Rôle invalide" });
+
+  await pool.query(`UPDATE clan_members SET role=$1 WHERE user_id=$2 AND clan_id=$3`, [newRole, targetId, m.clan_id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/transfer — transférer la direction
+app.post("/api/clan/transfer", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`UPDATE clan_members SET role='leader' WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+    await client.query(`UPDATE clan_members SET role='officer' WHERE user_id=$1`, [req.user.id]);
+    await client.query(`UPDATE clans SET leader_id=$1 WHERE id=$2`, [targetId, m.clan_id]);
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur" });
+  } finally { client.release(); }
+});
+
+// POST /api/clan/bank/distribute — distribuer des dollax
+app.post("/api/clan/bank/distribute", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const amount   = Math.max(1, Number(req.body?.amount) | 0);
+
+  const cQ = await pool.query(`SELECT bank FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+  // need transaction
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const bankQ = await client.query(`SELECT bank FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+    if (Number(bankQ.rows[0].bank) < amount) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Banque insuffisante" }); }
+    await client.query(`UPDATE clans SET bank=bank-$1 WHERE id=$2`, [amount, m.clan_id]);
+    await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [amount, targetId]);
+    await client.query("COMMIT");
+    await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Don du meneur','Tu as reçu '+$2+' dollax de la banque du clan !',NULL,0,$3)`,
+      [targetId, amount, Date.now()]);
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur" });
+  } finally { client.release(); }
+});
+
+// GET /api/clan/chat
+app.get("/api/clan/chat", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const { rows } = await pool.query(`
+    SELECT id, user_id, username, avatar, message, createdAt
+    FROM clan_chat WHERE clan_id=$1
+    ORDER BY createdAt DESC LIMIT 50
+  `, [m.clan_id]);
+
+  res.json({ messages: rows.reverse() });
+});
+
+// POST /api/clan/chat
+app.post("/api/clan/chat", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const message = String(req.body?.message || "").trim().slice(0, 300);
+  if (!message) return res.status(400).json({ error: "Message vide" });
+
+  const uQ = await pool.query(`SELECT name, avatar FROM users WHERE id=$1`, [req.user.id]);
+  const u = uQ.rows[0];
+
+  await pool.query(`INSERT INTO clan_chat(clan_id,user_id,username,avatar,message,createdAt) VALUES($1,$2,$3,$4,$5,$6)`,
+    [m.clan_id, req.user.id, u.name, u.avatar || '', message, Date.now()]);
+
+  // Nettoyer les vieux messages (garder 100 max)
+  await pool.query(`DELETE FROM clan_chat WHERE clan_id=$1 AND id NOT IN (SELECT id FROM clan_chat WHERE clan_id=$1 ORDER BY createdAt DESC LIMIT 100)`, [m.clan_id]);
+
+  // Mission chat
+  await progressMission(m.clan_id, req.user.id, 'send_message');
+
+  res.json({ ok: true });
+});
+
+// GET /api/clan/missions
+app.get("/api/clan/missions", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const dk = todayKey();
+  // Initialiser les missions du jour si pas encore fait
+  for (const def of CLAN_MISSIONS_DEF) {
+    await pool.query(`
+      INSERT INTO clan_missions(clan_id,user_id,mission_key,progress,goal,completed,date_key)
+      VALUES($1,$2,$3,0,$4,0,$5)
+      ON CONFLICT(clan_id,user_id,mission_key,date_key) DO NOTHING
+    `, [m.clan_id, req.user.id, def.key, def.goal, dk]);
+  }
+
+  // Mission login_daily — auto-compléter à la connexion
+  await progressMission(m.clan_id, req.user.id, 'login_daily');
+
+  const { rows } = await pool.query(`
+    SELECT mission_key, progress, goal, completed
+    FROM clan_missions WHERE clan_id=$1 AND user_id=$2 AND date_key=$3
+  `, [m.clan_id, req.user.id, dk]);
+
+  const missions = CLAN_MISSIONS_DEF.map(def => {
+    const row = rows.find(r => r.mission_key === def.key);
+    return { ...def, progress: row?.progress || 0, completed: row?.completed || 0 };
+  });
+
+  res.json({ missions, dateKey: dk });
+});
+
+// GET /api/clan/boss
+app.get("/api/clan/boss", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  if (!bQ.rows.length) return res.json({ boss: null });
+
+  const boss = bQ.rows[0];
+  const dmgQ = await pool.query(`
+    SELECT u.name, SUM(d.damage) as total
+    FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+    WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10
+  `, [boss.id]);
+
+  const myDmg = await pool.query(`SELECT COALESCE(SUM(damage),0) as total FROM clan_boss_damage WHERE boss_id=$1 AND user_id=$2`, [boss.id, req.user.id]);
+
+  res.json({ boss, leaderboard: dmgQ.rows, myDamage: Number(myDmg.rows[0].total) });
+});
+
+// POST /api/clan/boss/attack — attaque boss via carte
+app.post("/api/clan/boss/attack", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const grade = Number(req.body?.grade) | 0;
+  const mint  = Boolean(req.body?.mint);
+  const dmg   = dmgForCard(grade, mint);
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const bQ = await client.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1 FOR UPDATE`, [m.clan_id]);
+    if (!bQ.rows.length) { await client.query("ROLLBACK"); return res.json({ ok: true, damage: 0, boss: null }); }
+
+    const boss = bQ.rows[0];
+    const newHp = Math.max(0, boss.hp_current - dmg);
+
+    await client.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
+    await client.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, req.user.id, dmg, Date.now()]);
+    await client.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [dmg, req.user.id]);
+
+    let defeated = false;
+    let rewards = [];
+    if (newHp <= 0) {
+      await client.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
+
+      // Distribuer les récompenses
+      const totalDmgQ = await client.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+      const totalDmg = Number(totalDmgQ.rows[0].total) || 1;
+      const contributors = await client.query(`
+        SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id
+      `, [boss.id]);
+
+      for (const c of contributors.rows) {
+        const share = Math.floor((Number(c.dmg) / totalDmg) * boss.reward);
+        if (share > 0) {
+          await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
+          rewards.push({ userId: c.user_id, amount: share });
+          await client.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Boss vaincu !','Tu reçois '+$2+' dollax pour ta contribution au raid !',NULL,0,$3)`,
+            [c.user_id, share, Date.now()]);
+        }
+      }
+
+      // XP clan
+      await client.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
+
+      // Spawn nouveau boss plus fort
+      const nextHp = Math.floor(boss.hp_max * 1.2);
+      await client.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
+        [m.clan_id, randomBossName(), nextHp, nextHp, Math.floor(boss.reward * 1.1), Date.now()]);
+
+      defeated = true;
+    }
+
+    await client.query("COMMIT");
+
+    // Missions
+    await progressMission(m.clan_id, req.user.id, 'open_cards');
+
+    const newBossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+    res.json({ ok: true, damage: dmg, defeated, rewards, newHp, boss: newBossQ.rows[0] || null });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    console.error("Boss attack error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
+});
+
+// GET /api/clan/leaderboard
+app.get("/api/clan/leaderboard", auth, async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT c.id, c.name, c.tag, c.xp, c.banner_color,
+           (SELECT COUNT(*) FROM clan_members WHERE clan_id=c.id) as members,
+           u.name as leader_name
+    FROM clans c JOIN users u ON u.id=c.leader_id
+    ORDER BY c.xp DESC LIMIT 20
+  `);
+  res.json({ clans: rows });
+});
+
+// Hook: progresser missions quand on ouvre des cartes
+// Appelé depuis /api/open et /api/open_multi
+
 // =========================
 // START
 // =========================

@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Clan — Gachax</title>
+<style>
+:root{
+  --bg1:#05060d;--bg2:#090b18;
+  --accent:#7f5cff;--accent2:#f053c5;
+  --gold:#ffd84d;--red:#ff4444;--green:#33ff99;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#fff;overflow-x:hidden}
+body{
+  background:
+    radial-gradient(900px 520px at 20% 10%,rgba(80,130,255,.22),transparent 60%),
+    radial-gradient(900px 600px at 85% 30%,rgba(255,80,220,.18),transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+
+/* TOPBAR */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 18px;
+  background:rgba(5,6,13,.85);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(14px);
+}
+.topbar a{color:#fff;text-decoration:none;font-weight:800;font-size:13px;opacity:.8}
+.topbar a:hover{opacity:1}
+.topNav{display:flex;gap:14px;align-items:center}
+.topLink{
+  padding:8px 10px;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+  color:#fff;font-size:12px;font-weight:900;text-decoration:none;
+  transition:background .12s;white-space:nowrap;
+}
+.topLink:hover{background:rgba(255,255,255,.14)}
+.cornerLogo{width:70px;flex:0 0 auto}
+.cornerLogo img{width:100%;height:auto;display:block}
+
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:20px}
+
+/* CARDS */
+.card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;padding:20px;
+}
+.card-title{font-size:15px;font-weight:900;letter-spacing:.05em;margin:0 0 16px;opacity:.9}
+
+/* BUTTONS */
+.btn{
+  padding:10px 18px;border-radius:12px;border:none;cursor:pointer;
+  font-weight:800;font-size:13px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  transition:opacity .15s,transform .12s;
+}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn-danger{background:linear-gradient(135deg,#ff4444,#ff6b6b)}
+.btn-ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
+.btn-gold{background:linear-gradient(135deg,#ffd84d,#ff8800)}
+
+/* INPUTS */
+input,textarea,select{
+  width:100%;padding:10px 14px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:14px;font-weight:600;
+  outline:none;
+}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.tab{
+  padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:800;font-size:13px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+  transition:all .15s;
+}
+.tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.tab:hover:not(.active){background:rgba(255,255,255,.12)}
+
+/* CLAN BANNER */
+.clan-banner{
+  border-radius:18px;padding:24px;
+  background:linear-gradient(135deg,var(--bannerColor,#7f5cff)44,rgba(0,0,0,.4));
+  border:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+}
+.clan-tag{
+  font-size:28px;font-weight:900;letter-spacing:.1em;
+  background:rgba(0,0,0,.35);border-radius:10px;padding:8px 16px;
+}
+.clan-info{flex:1;min-width:200px}
+.clan-name{font-size:22px;font-weight:900;margin:0 0 4px}
+.clan-desc{opacity:.75;font-size:14px;margin:0 0 10px}
+.clan-stats{display:flex;gap:14px;flex-wrap:wrap}
+.cstat{font-size:13px;opacity:.85}
+.cstat b{color:var(--gold)}
+
+/* BOSS */
+.boss-card{
+  background:linear-gradient(135deg,rgba(255,50,50,.12),rgba(200,0,0,.06));
+  border:1px solid rgba(255,80,80,.25);
+  border-radius:18px;padding:20px;
+}
+.boss-name{font-size:18px;font-weight:900;color:#ff6060;margin:0 0 12px}
+.hp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:14px;overflow:hidden;margin:8px 0}
+.hp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff4444,#ff8800);transition:width .5s ease}
+.hp-text{font-size:13px;opacity:.8;margin-bottom:8px}
+.dmg-leaderboard{margin-top:14px}
+.dmg-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.dmg-row:last-child{border:none}
+.dmg-me{color:var(--gold);font-weight:800}
+
+/* MEMBERS */
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.member-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;
+}
+.member-avatar{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-weight:900;font-size:15px;flex-shrink:0;
+  background-size:cover;background-position:center;
+}
+.member-name{font-weight:800;font-size:13px}
+.member-role{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.05em}
+.member-dmg{font-size:11px;color:var(--gold);margin-top:2px}
+.role-leader{color:#ffd84d}
+.role-officer{color:#a0c4ff}
+
+/* MISSIONS */
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mission-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:14px;
+}
+.mission-label{font-size:13px;font-weight:800;margin-bottom:8px}
+.mission-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin:6px 0}
+.mission-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.mission-bar.done{background:linear-gradient(90deg,#33ff99,#00c88c)}
+.mission-prog{font-size:12px;opacity:.7}
+.mission-reward{font-size:11px;color:var(--gold);margin-top:4px}
+.mission-check{font-size:18px;float:right;margin-top:-2px}
+
+/* CHAT */
+.chat-messages{
+  height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+  padding:12px;background:rgba(0,0,0,.25);border-radius:12px;margin-bottom:12px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;
+}
+.chat-msg{display:flex;gap:8px;align-items:flex-start}
+.chat-avatar{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-weight:900;font-size:12px;
+  background-size:cover;background-position:center;
+}
+.chat-body{min-width:0}
+.chat-author{font-size:12px;font-weight:800;opacity:.85}
+.chat-text{font-size:13px;word-break:break-word;margin-top:2px;opacity:.9}
+.chat-time{font-size:10px;opacity:.45;margin-top:2px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1}
+
+/* BANK */
+.bank-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.bank-row input{flex:1;min-width:120px}
+.bank-select{flex:1;min-width:120px}
+
+/* CLAN LIST */
+.clan-list{display:grid;gap:12px}
+.clan-list-item{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px;
+}
+.clan-list-tag{
+  font-size:16px;font-weight:900;letter-spacing:.08em;
+  background:rgba(255,255,255,.08);border-radius:8px;
+  padding:6px 10px;flex-shrink:0;min-width:55px;text-align:center;
+}
+.clan-list-info{flex:1;min-width:0}
+.clan-list-name{font-weight:800;font-size:14px}
+.clan-list-sub{font-size:12px;opacity:.6;margin-top:2px}
+.clan-list-xp{font-size:12px;color:var(--gold);margin-top:2px}
+
+/* CREATE FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:12px}
+.alert-error{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#ff8888}
+.alert-success{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:#33ff99}
+
+/* LEADERBOARD */
+.lb-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:6px;
+}
+.lb-rank{font-size:16px;font-weight:900;min-width:28px;text-align:center}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{flex:1;font-weight:800;font-size:14px}
+.lb-xp{color:var(--gold);font-size:13px;font-weight:800}
+
+/* LOADING */
+.loading{opacity:.5;text-align:center;padding:40px;font-size:14px}
+
+/* COLOR PICKER */
+.color-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.color-opt{
+  width:28px;height:28px;border-radius:999px;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s;
+}
+.color-opt.selected{border-color:#fff}
+
+/* MOBILE */
+@media(max-width:768px){
+  .clan-banner{flex-direction:column;align-items:flex-start}
+  .members-grid{grid-template-columns:1fr 1fr}
+  .missions-grid{grid-template-columns:1fr}
+}
+
+/* DEFEATED BOSS */
+.boss-defeated{
+  text-align:center;padding:30px;
+  color:var(--green);font-weight:900;font-size:18px;
+}
+.no-clan-wrap{text-align:center;padding:60px 20px}
+.no-clan-wrap h2{margin:0 0 10px;font-size:22px}
+.no-clan-wrap p{opacity:.7;margin:0 0 24px}
+
+.section-hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="cornerLogo" href="/"><img src="poke.png" alt="Logo"/></a>
+  <nav class="topNav">
+    <a class="topLink" href="/">GACHA</a>
+    <a class="topLink" href="/collection.html">COLLECTION</a>
+    <a class="topLink" href="/market.html">MARKET</a>
+    <a class="topLink" href="/leaderboard.html">LEADERBOARD</a>
+    <a class="topLink" href="/friends.html">FRIENDS</a>
+    <a class="topLink" style="background:linear-gradient(135deg,rgba(127,92,255,.4),rgba(240,83,197,.4));border-color:rgba(127,92,255,.5)" href="/clan.html">CLAN</a>
+  </nav>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="font-size:12px;opacity:.6" id="topUsername"></span>
+    <a class="topLink" href="/profile.html">PROFIL</a>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap">
+  <div class="loading" id="loadingMsg">Chargement...</div>
+</div>
+
+<script>
+const TOKEN_KEY = "gacha_token_v1";
+const token = localStorage.getItem(TOKEN_KEY);
+if (!token) location.href = "/login.html";
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { ...(opts.headers||{}), "Authorization": "Bearer "+token, "Content-Type":"application/json" }
+  });
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(data.error || "Erreur");
+  return data;
+}
+
+function esc(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;") }
+function fmtNum(n){ return Number(n||0).toLocaleString("fr-FR") }
+function timeAgo(ts){
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return "à l'instant";
+  if(s<3600) return Math.floor(s/60)+"min";
+  if(s<86400) return Math.floor(s/3600)+"h";
+  return Math.floor(s/86400)+"j";
+}
+
+const COLORS = ["#7f5cff","#f053c5","#ff4444","#ff8800","#ffd84d","#33ff99","#33cfff","#a855f7","#ec4899"];
+
+let myData = null;
+let clanData = null;
+let chatPolling = null;
+let myUserId = null;
+
+async function init() {
+  try {
+    myData = await api("/api/me");
+    myUserId = myData.id;
+    document.getElementById("topUsername").textContent = myData.name || "";
+  } catch(e) { location.href="/login.html"; return; }
+
+  try {
+    const data = await api("/api/clan/me");
+    clanData = data;
+    if (data.clan) {
+      renderMyClan(data);
+    } else {
+      renderNoClan();
+    }
+  } catch(e) {
+    renderNoClan();
+  }
+}
+
+// ===========================
+// NO CLAN VIEW
+// ===========================
+function renderNoClan() {
+  const wrap = document.getElementById("mainWrap");
+  wrap.innerHTML = `
+    <div class="no-clan-wrap">
+      <div style="font-size:48px;margin-bottom:12px">⚔️</div>
+      <h2>Tu n'es dans aucun clan</h2>
+      <p>Rejoins un clan existant ou crée le tien pour participer aux raids, missions et bien plus !</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" onclick="showSection('browse')">Parcourir les clans</button>
+        <button class="btn btn-ghost" onclick="showSection('create')">Créer un clan</button>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <div id="section-browse" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🔍 Clans disponibles</div>
+        <div id="clanList" class="clan-list"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div id="section-create" class="section-hidden">
+      <div class="card">
+        <div class="card-title">✨ Créer un clan</div>
+        <div id="createAlert"></div>
+        <div class="form-grid">
+          <div>
+            <label>Nom du clan *</label>
+            <input id="cName" maxlength="30" placeholder="Mon Super Clan"/>
+          </div>
+          <div>
+            <label>Tag (2-5 lettres) *</label>
+            <input id="cTag" maxlength="5" placeholder="MSC" style="text-transform:uppercase"/>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label>Description</label>
+          <textarea id="cDesc" maxlength="200" placeholder="Présente ton clan..."></textarea>
+        </div>
+        <div style="margin-top:12px">
+          <label>Couleur du clan</label>
+          <div class="color-options" id="colorPicker"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn" onclick="createClan()">Créer le clan</button>
+          <button class="btn btn-ghost" onclick="showSection(null)">Annuler</button>
+        </div>
+      </div>
+    </div>
+  `;
+  initColorPicker();
+  loadClanList();
+}
+
+let selectedColor = COLORS[0];
+function initColorPicker() {
+  const el = document.getElementById("colorPicker");
+  if (!el) return;
+  el.innerHTML = COLORS.map(c =>
+    `<div class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`
+  ).join("");
+}
+function selectColor(c, el) {
+  selectedColor = c;
+  document.querySelectorAll(".color-opt").forEach(e => e.classList.remove("selected"));
+  el.classList.add("selected");
+}
+
+function showSection(name) {
+  ["browse","create"].forEach(s => {
+    const el = document.getElementById("section-"+s);
+    if (el) el.classList.toggle("section-hidden", s !== name);
+  });
+}
+
+async function loadClanList() {
+  const el = document.getElementById("clanList");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/list");
+    if (!data.clans.length) { el.innerHTML = '<div class="loading">Aucun clan pour l\'instant.</div>'; return; }
+    el.innerHTML = data.clans.map(c => `
+      <div class="clan-list-item">
+        <div class="clan-list-tag" style="color:${esc(c.banner_color)}">[${esc(c.tag)}]</div>
+        <div class="clan-list-info">
+          <div class="clan-list-name">${esc(c.name)}</div>
+          <div class="clan-list-sub">Chef: ${esc(c.leader_name)} · ${c.members} membre${c.members>1?'s':''}</div>
+          <div class="clan-list-xp">⚡ ${fmtNum(c.xp)} XP</div>
+        </div>
+        <button class="btn btn-sm" onclick="joinClan(${c.id})">Rejoindre</button>
+      </div>
+    `).join("");
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur de chargement</div>'; }
+}
+
+async function joinClan(id) {
+  try {
+    await api("/api/clan/join", { method:"POST", body: JSON.stringify({ clanId: id }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function createClan() {
+  const name = document.getElementById("cName").value.trim();
+  const tag  = document.getElementById("cTag").value.trim().toUpperCase();
+  const desc = document.getElementById("cDesc").value.trim();
+  const alertEl = document.getElementById("createAlert");
+
+  if (!name || !tag) { alertEl.innerHTML = '<div class="alert alert-error">Nom et tag requis.</div>'; return; }
+
+  try {
+    await api("/api/clan/create", { method:"POST", body: JSON.stringify({ name, tag, description: desc, banner_color: selectedColor }) });
+    location.reload();
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ===========================
+// MY CLAN VIEW
+// ===========================
+function renderMyClan(data) {
+  const { clan, myRole, members, boss } = data;
+  const isLeader = myRole === 'leader';
+  const isOfficer = myRole === 'officer' || isLeader;
+
+  const wrap = document.getElementById("mainWrap");
+  wrap.innerHTML = `
+    <!-- BANNER -->
+    <div class="clan-banner" style="--bannerColor:${esc(clan.banner_color)}">
+      <div class="clan-tag" style="color:${esc(clan.banner_color)}">[${esc(clan.tag)}]</div>
+      <div class="clan-info">
+        <div class="clan-name">${esc(clan.name)}</div>
+        <div class="clan-desc">${esc(clan.description||"Aucune description")}</div>
+        <div class="clan-stats">
+          <span class="cstat">⚡ <b>${fmtNum(clan.xp)}</b> XP</span>
+          <span class="cstat">🏦 <b>${fmtNum(clan.bank)}</b> dollax</span>
+          <span class="cstat">👥 <b>${members.length}</b> membres</span>
+          <span class="cstat">👑 Chef: <b>${esc(clan.leader_name)}</b></span>
+        </div>
+      </div>
+      ${!isLeader ? `<button class="btn btn-danger btn-sm" onclick="leaveClan()">Quitter</button>` : ''}
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('boss',this)">⚔️ Boss Raid</div>
+      <div class="tab" onclick="switchTab('missions',this)">📋 Missions</div>
+      <div class="tab" onclick="switchTab('members',this)">👥 Membres</div>
+      <div class="tab" onclick="switchTab('chat',this)">💬 Chat</div>
+      <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
+      ${isLeader ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>` : ''}
+    </div>
+
+    <!-- BOSS TAB -->
+    <div id="tab-boss">
+      ${renderBossTab(boss, clan)}
+    </div>
+
+    <!-- MISSIONS TAB -->
+    <div id="tab-missions" class="section-hidden">
+      <div class="card">
+        <div class="card-title">📋 Missions quotidiennes</div>
+        <div id="missionsContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- MEMBERS TAB -->
+    <div id="tab-members" class="section-hidden">
+      <div class="card">
+        <div class="card-title">👥 Membres (${members.length}/30)</div>
+        <div class="members-grid">
+          ${members.map(m => renderMemberCard(m, isOfficer, isLeader, clan.leader_name)).join("")}
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div id="tab-chat" class="section-hidden">
+      <div class="card">
+        <div class="card-title">💬 Chat du clan</div>
+        <div class="chat-messages" id="chatMessages"><div class="loading">Chargement...</div></div>
+        <div class="chat-input-row">
+          <input id="chatInput" placeholder="Envoie un message..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-sm" onclick="sendChat()">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🏆 Classement des clans</div>
+        <div id="lbContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- MANAGE TAB -->
+    ${isLeader ? `
+    <div id="tab-manage" class="section-hidden">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🏦 Banque du clan — <span style="color:var(--gold)">${fmtNum(clan.bank)} dollax</span></div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 12px">Distribue des dollax aux membres depuis la banque du clan.</p>
+        <div class="bank-row">
+          <div style="flex:1;min-width:150px">
+            <label>Membre</label>
+            <select class="bank-select" id="bankTarget">
+              ${members.filter(m=>m.name!==clan.leader_name).map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label>Montant</label>
+            <input type="number" id="bankAmount" min="1" placeholder="500"/>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="distributeBank()">Distribuer</button>
+        </div>
+        <div id="bankAlert" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ Paramètres du clan</div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 14px">Transfère la direction ou gère les membres depuis l'onglet Membres.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-danger btn-sm" onclick="disbandConfirm()">Dissoudre le clan</button>
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+
+  // Store members for later use
+  window._clanMembers = members;
+  window._clanData = data;
+
+  loadMissions();
+}
+
+function renderBossTab(boss, clan) {
+  if (!boss) {
+    return `<div class="card"><div class="boss-defeated">✅ Aucun boss actif — prochain boss en cours d'invocation...</div></div>`;
+  }
+  const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
+  const barColor = pct > 50 ? 'linear-gradient(90deg,#ff4444,#ff8800)' : pct > 20 ? 'linear-gradient(90deg,#ff8800,#ffd84d)' : 'linear-gradient(90deg,#33ff99,#00c88c)';
+
+  return `
+    <div class="boss-card">
+      <div class="boss-name">👹 ${esc(boss.name)}</div>
+      <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · Récompense: <b style="color:var(--gold)">${fmtNum(boss.reward)} dollax</b></div>
+      <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
+      <div style="font-size:12px;opacity:.6;margin-bottom:14px">${pct}% PV restants</div>
+
+      <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.6;opacity:.85">
+        ⚡ Chaque carte que tu ouvres inflige automatiquement des dégâts au boss !<br>
+        🎯 <b>Common</b>: 10 dmg · <b>Rare (G5+)</b>: 40 dmg · <b>G7+</b>: 80 dmg · <b>G10</b>: 200 dmg · <b>MINT</b>: ×3
+      </div>
+
+      <div class="dmg-leaderboard">
+        <div style="font-size:13px;font-weight:800;opacity:.8;margin-bottom:8px">🏹 Top dégâts</div>
+        <div id="bossLeaderboard"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMemberCard(m, isOfficer, isLeader, leaderName) {
+  const isMe = m.name === (myData?.name);
+  const avatarStyle = m.avatar ? `background-image:url('${esc(m.avatar)}')` : '';
+  const initials = (m.name||"?").slice(0,2).toUpperCase();
+
+  let actions = '';
+  if (isLeader && m.name !== leaderName) {
+    actions = `
+      <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">
+        ${m.role==='member'?`<button class="btn btn-sm" style="font-size:10px;padding:4px 8px" onclick="promoteUser('${esc(m.name)}','officer')">→ Officier</button>`:''}
+        ${m.role==='officer'?`<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 8px" onclick="promoteUser('${esc(m.name)}','member')">→ Membre</button>`:''}
+        <button class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 8px" onclick="kickUser('${esc(m.name)}')">Exclure</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="member-card" ${isMe?'style="border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.08)"':''}>
+      <div class="member-avatar" style="${avatarStyle}">${avatarStyle?'':initials}</div>
+      <div style="min-width:0;flex:1">
+        <div class="member-name">${esc(m.name)} ${isMe?'<span style="font-size:10px;color:var(--accent)">(toi)</span>':''}</div>
+        <div class="member-role ${m.role==='leader'?'role-leader':m.role==='officer'?'role-officer':''}">${m.role==='leader'?'👑 Meneur':m.role==='officer'?'⭐ Officier':'Membre'}</div>
+        <div class="member-dmg">⚔️ ${fmtNum(m.damage_total)} dmg total</div>
+        ${actions}
+      </div>
+    </div>
+  `;
+}
+
+// ===========================
+// TABS
+// ===========================
+let currentTab = 'boss';
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  ['boss','missions','members','chat','leaderboard','manage'].forEach(t => {
+    const tabEl = document.getElementById('tab-'+t);
+    if (tabEl) tabEl.classList.toggle('section-hidden', t !== name);
+  });
+
+  currentTab = name;
+
+  if (name === 'chat') {
+    loadChat();
+    startChatPolling();
+  } else {
+    stopChatPolling();
+  }
+  if (name === 'leaderboard') loadLeaderboard();
+  if (name === 'boss') loadBossData();
+}
+
+// ===========================
+// BOSS
+// ===========================
+async function loadBossData() {
+  const el = document.getElementById("bossLeaderboard");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/boss");
+    if (!data.boss) return;
+    el.innerHTML = data.leaderboard.map((r,i) =>
+      `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
+        <span>#${i+1} ${esc(r.name)}</span>
+        <span>⚔️ ${fmtNum(r.total)}</span>
+      </div>`
+    ).join("") || '<div class="loading">Aucun dégât encore</div>';
+
+    // Update HP bar
+    const bar = document.getElementById("bossHpBar");
+    if (bar) {
+      const pct = Math.max(0, Math.round((data.boss.hp_current / data.boss.hp_max)*100));
+      bar.style.width = pct+"%";
+    }
+  } catch(e) {}
+}
+
+// ===========================
+// MISSIONS
+// ===========================
+async function loadMissions() {
+  const el = document.getElementById("missionsContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/missions");
+    el.innerHTML = `<div class="missions-grid">` +
+      data.missions.map(m => {
+        const pct = m.goal > 0 ? Math.min(100, Math.round((m.progress/m.goal)*100)) : 0;
+        return `
+          <div class="mission-card" ${m.completed?'style="border-color:rgba(51,255,153,.3);background:rgba(51,255,153,.05)"':''}>
+            <div class="mission-label">
+              ${esc(m.label)}
+              ${m.completed?'<span class="mission-check">✅</span>':''}
+            </div>
+            <div class="mission-bar-wrap">
+              <div class="mission-bar ${m.completed?'done':''}" style="width:${pct}%"></div>
+            </div>
+            <div class="mission-prog">${m.progress}/${m.goal}</div>
+            <div class="mission-reward">🏅 +${m.xpClan} XP clan · +${m.bankReward} dollax banque</div>
+          </div>
+        `;
+      }).join("") + `</div>`;
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur</div>'; }
+}
+
+// ===========================
+// CHAT
+// ===========================
+async function loadChat() {
+  const el = document.getElementById("chatMessages");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/chat");
+    const wasAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+    el.innerHTML = data.messages.map(m => {
+      const avatarStyle = m.avatar ? `style="background-image:url('${esc(m.avatar)}')"` : '';
+      const initials = (m.username||"?").slice(0,2).toUpperCase();
+      return `
+        <div class="chat-msg">
+          <div class="chat-avatar" ${avatarStyle}>${m.avatar?'':initials}</div>
+          <div class="chat-body">
+            <div class="chat-author">${esc(m.username)} <span class="chat-time">${timeAgo(m.createdat||m.createdAt)}</span></div>
+            <div class="chat-text">${esc(m.message)}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    if (wasAtBottom || data.messages.length < 5) el.scrollTop = el.scrollHeight;
+  } catch(e) {}
+}
+
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  try {
+    await api("/api/clan/chat", { method:"POST", body: JSON.stringify({ message: msg }) });
+    await loadChat();
+  } catch(e) { alert(e.message); }
+}
+
+function startChatPolling() {
+  stopChatPolling();
+  chatPolling = setInterval(() => { if (currentTab==='chat') loadChat(); }, 5000);
+}
+function stopChatPolling() {
+  if (chatPolling) { clearInterval(chatPolling); chatPolling=null; }
+}
+
+// ===========================
+// LEADERBOARD
+// ===========================
+async function loadLeaderboard() {
+  const el = document.getElementById("lbContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/leaderboard");
+    const rankClass = (i) => i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    el.innerHTML = data.clans.map((c,i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass(i)}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+        <div style="flex:1">
+          <span style="color:${esc(c.banner_color)};font-weight:900">[${esc(c.tag)}]</span>
+          <span class="lb-name"> ${esc(c.name)}</span>
+        </div>
+        <div style="font-size:12px;opacity:.6;margin-right:12px">${c.members} mbr</div>
+        <div class="lb-xp">⚡ ${fmtNum(c.xp)}</div>
+      </div>
+    `).join("");
+  } catch(e) { el.innerHTML='<div class="loading">Erreur</div>'; }
+}
+
+// ===========================
+// MANAGE ACTIONS
+// ===========================
+async function distributeBank() {
+  const target = document.getElementById("bankTarget")?.value;
+  const amount = Number(document.getElementById("bankAmount")?.value)||0;
+  const alertEl = document.getElementById("bankAlert");
+  if (!target || amount < 1) { alertEl.innerHTML='<div class="alert alert-error">Sélectionne un membre et un montant.</div>'; return; }
+
+  const members = window._clanMembers || [];
+  const member = members.find(m => m.name === target);
+  if (!member) { alertEl.innerHTML='<div class="alert alert-error">Membre introuvable.</div>'; return; }
+
+  try {
+    await api("/api/clan/bank/distribute", { method:"POST", body: JSON.stringify({ userId: member.user_id || member.id, amount }) });
+    alertEl.innerHTML=`<div class="alert alert-success">✅ ${fmtNum(amount)} dollax envoyés à ${esc(target)} !</div>`;
+    setTimeout(()=>location.reload(), 1500);
+  } catch(e) { alertEl.innerHTML=`<div class="alert alert-error">${esc(e.message)}</div>`; }
+}
+
+async function leaveClan() {
+  if (!confirm("Quitter le clan ?")) return;
+  try {
+    await api("/api/clan/leave", { method:"POST" });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function kickUser(name) {
+  if (!confirm(`Exclure ${name} ?`)) return;
+  const m = (window._clanMembers||[]).find(m=>m.name===name);
+  if (!m) return;
+  try {
+    await api("/api/clan/kick", { method:"POST", body: JSON.stringify({ userId: m.user_id||m.id }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function promoteUser(name, role) {
+  const m = (window._clanMembers||[]).find(m=>m.name===name);
+  if (!m) return;
+  try {
+    await api("/api/clan/promote", { method:"POST", body: JSON.stringify({ userId: m.user_id||m.id, role }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+function disbandConfirm() {
+  alert("La dissolution de clan n'est pas encore disponible. Transfère d'abord la direction à un autre membre.");
+}
+
+// ===========================
+// INIT
+// ===========================
+init().finally(() => {
+  document.getElementById("loadingMsg")?.remove();
+});
+
+// Load boss data on start if clan exists
+setTimeout(() => {
+  if (document.getElementById("bossLeaderboard")) loadBossData();
+}, 500);
+</script>
+</body>
+</html>
