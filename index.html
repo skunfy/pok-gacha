@@ -1646,6 +1646,17 @@
 </head>
 
 <body>
+<!-- RAID BANNER -->
+<div id="raidBanner" style="display:none;position:sticky;top:0;z-index:999;background:linear-gradient(90deg,#1a0a0a,#2d0d0d,#1a0a0a);border-bottom:1px solid rgba(255,80,80,.3);overflow:hidden;height:36px;">
+  <div id="raidBannerTrack" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:raidScroll 20s linear infinite;width:max-content;padding:0 40px;gap:40px;font-size:13px;font-weight:600;">
+  </div>
+</div>
+<style>
+@keyframes raidScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+</style>
   <div class="wrap">
 
     <!-- TOPBAR -->
@@ -3347,6 +3358,55 @@ Magic: The Gathering © Wizards of the Coast.Weiß Schwarz © Bushiroad.
   </div>
 </footer>
 
+<script>
+// ===== RAID BANNER =====
+(function() {
+  const TOKEN_KEY = "gacha_token_v1";
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return;
 
+  function fmtNum(n) { return Number(n).toLocaleString('fr-FR'); }
+
+  async function loadRaidBanner() {
+    try {
+      const r = await fetch("/api/clan/raid/banner", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await r.json();
+      const banner = document.getElementById("raidBanner");
+      const track  = document.getElementById("raidBannerTrack");
+      if (!banner || !track) return;
+
+      if (!data.active) { banner.style.display = 'none'; return; }
+
+      // Construire le texte défilant (dupliqué pour boucle seamless)
+      const topText = data.top3.length > 0
+        ? data.top3.map((p, i) => `<span style="color:#ffd84d">🏅 #${i+1} ${p.name}</span> <span style="color:#ff6b6b">⚔️ ${fmtNum(p.total)} dmg</span>`).join('<span style="opacity:.4;margin:0 20px">·</span>')
+        : '<span style="opacity:.6">Aucun dégât encore — ouvre des cartes !</span>';
+
+      const content = `
+        <span style="color:#ff4444;font-weight:900;letter-spacing:.05em">⚔️ RAID EN COURS</span>
+        <span style="opacity:.4">·</span>
+        <span style="color:rgba(255,255,255,.8)">👹 ${data.bossName}</span>
+        <span style="opacity:.4">·</span>
+        <span style="color:rgba(255,255,255,.5);font-size:12px">❤️ ${data.hpPct}% PV restants</span>
+        <span style="opacity:.4">·</span>
+        ${topText}
+        <span style="opacity:.4;margin:0 30px">⚔️⚔️⚔️</span>
+      `;
+
+      // Dupliquer pour scroll infini seamless
+      track.innerHTML = content + content;
+      banner.style.display = 'block';
+
+      // Ajuster vitesse selon longueur
+      track.style.animationDuration = Math.max(15, track.scrollWidth / 80) + 's';
+    } catch(e) {}
+  }
+
+  loadRaidBanner();
+  setInterval(loadRaidBanner, 30000);
+})();
+</script>
 
 </html>

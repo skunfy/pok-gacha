@@ -4308,6 +4308,38 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
 
 
 
+// GET /api/clan/raid/banner — bannière raid pour index et open5
+app.get("/api/clan/raid/banner", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.json({ active: false });
+
+    const now = Date.now();
+    const bQ = await pool.query(
+      `SELECT id, name, boss_key, hp_current, hp_max FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`,
+      [m.clan_id]
+    );
+    if (!bQ.rows.length) return res.json({ active: false });
+
+    const boss = bQ.rows[0];
+    const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+
+    const topQ = await pool.query(
+      `SELECT u.name, SUM(d.damage) as total
+       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+       WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 3`,
+      [boss.id]
+    );
+
+    res.json({
+      active: true,
+      bossName: def.name,
+      hpPct: Math.round((boss.hp_current / boss.hp_max) * 100),
+      top3: topQ.rows.map(r => ({ name: r.name, total: Number(r.total) })),
+    });
+  } catch(e) { res.json({ active: false }); }
+});
+
 // GET /api/clan/leaderboard
 app.get("/api/clan/leaderboard", auth, async (req, res) => {
   const { rows } = await pool.query(`

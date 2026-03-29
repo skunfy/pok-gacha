@@ -1683,6 +1683,17 @@
   </style>
 </head>
 <body>
+<!-- RAID BANNER -->
+<div id="raidBanner" style="display:none;position:sticky;top:0;z-index:999;background:linear-gradient(90deg,#1a0a0a,#2d0d0d,#1a0a0a);border-bottom:1px solid rgba(255,80,80,.3);overflow:hidden;height:36px;">
+  <div id="raidBannerTrack" style="display:flex;align-items:center;height:100%;white-space:nowrap;animation:raidScroll 20s linear infinite;width:max-content;padding:0 40px;gap:40px;font-size:13px;font-weight:600;">
+  </div>
+</div>
+<style>
+@keyframes raidScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+</style>
   <div class="topHud">
     <div class="topHudInner">
       <div class="playerBox">
@@ -2594,9 +2605,16 @@
         applyWinnerHighlight(idx);
       }
 
+<<<<<<< HEAD
       // 🎣 TROLL — uniquement pour Demo
       if(["BrutalDread", "", ""].includes(window.__meName)){
         await sleep(200); // petit délai pour qu'il voie les cartes une fraction de seconde
+=======
+      // 🎣 TROLL — uniquement pour le joueur 406342
+      const meId = window.__me?.id;
+      if(String(meId) === "13"){
+        await sleep(600); // petit délai pour qu'il voie les cartes une fraction de seconde
+>>>>>>> 00412a9 (troll)
 
         const trollOverlay = document.createElement("div");
         trollOverlay.id = "trollOverlay";
@@ -2612,6 +2630,7 @@
         document.head.appendChild(style);
 
         const iframe = document.createElement("iframe");
+<<<<<<< HEAD
         const trollVideos = [
           "7U0soIx6C7o",
           "jy9sHTFp7D8",
@@ -2621,6 +2640,9 @@
         ];
         const randomVideo = trollVideos[Math.floor(Math.random() * trollVideos.length)];
         iframe.src = `https://www.youtube.com/embed/${randomVideo}?autoplay=1&controls=0&loop=1&playlist=${randomVideo}&rel=0&modestbranding=1`;
+=======
+        iframe.src = "https://www.youtube.com/embed/7U0soIx6C7o?autoplay=1&controls=0&loop=1&playlist=7U0soIx6C7o&rel=0&modestbranding=1";
+>>>>>>> 00412a9 (troll)
         iframe.allow = "autoplay; fullscreen";
         iframe.style.cssText = "width:100vw; height:100vh; border:none; display:block;";
 
@@ -2784,4 +2806,54 @@
     })();
   </script>
 </body>
+
+<script>
+// ===== RAID BANNER =====
+(function() {
+  const TOKEN_KEY = "gacha_token_v1";
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return;
+
+  function fmtNum(n) { return Number(n).toLocaleString('fr-FR'); }
+
+  async function loadRaidBanner() {
+    try {
+      const r = await fetch("/api/clan/raid/banner", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      const data = await r.json();
+      const banner = document.getElementById("raidBanner");
+      const track  = document.getElementById("raidBannerTrack");
+      if (!banner || !track) return;
+
+      if (!data.active) { banner.style.display = 'none'; return; }
+
+      const topText = data.top3.length > 0
+        ? data.top3.map((p, i) => `<span style="color:#ffd84d">🏅 #${i+1} ${p.name}</span> <span style="color:#ff6b6b">⚔️ ${fmtNum(p.total)} dmg</span>`).join('<span style="opacity:.4;margin:0 20px">·</span>')
+        : '<span style="opacity:.6">Aucun dégât encore — ouvre des cartes !</span>';
+
+      const content = `
+        <span style="color:#ff4444;font-weight:900;letter-spacing:.05em">⚔️ RAID EN COURS</span>
+        <span style="opacity:.4">·</span>
+        <span style="color:rgba(255,255,255,.8)">👹 ${data.bossName}</span>
+        <span style="opacity:.4">·</span>
+        <span style="color:rgba(255,255,255,.5);font-size:12px">❤️ ${data.hpPct}% PV restants</span>
+        <span style="opacity:.4">·</span>
+        ${topText}
+        <span style="opacity:.4;margin:0 30px">⚔️⚔️⚔️</span>
+      `;
+
+      track.innerHTML = content + content;
+      banner.style.display = 'block';
+      track.style.animationDuration = Math.max(15, track.scrollWidth / 80) + 's';
+    } catch(e) {}
+  }
+
+  loadRaidBanner();
+  // Refresh après chaque ouverture de cartes (event custom)
+  document.addEventListener('cardsOpened', loadRaidBanner);
+  setInterval(loadRaidBanner, 30000);
+})();
+</script>
+
 </html>
