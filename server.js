@@ -1936,6 +1936,31 @@ app.post("/api/open", auth, async (req, res) => {
     clanHookOpen(req.user.id, grade, Boolean(mint)).catch(() => {});
 
     return res.json({
+      money: moneyAfterPay,
+      xpAdd,
+      card: {
+        idKey,
+        game,
+        name: c.name,
+        set: c.set,
+        cardId: c.cardId || null,
+        setId: c.setId || null,
+        localId: c.localId || null,
+        image: c.image,
+        imageHigh: c.imageHigh || c.image,
+        grade,
+        mint: Boolean(mint),
+        isNew,
+      },
+    });
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch {}
+    console.error("❌ /api/open failed:", e);
+    return res.status(500).json({ error: "Open failed" });
+  } finally {
+    client.release();
+  }
+});
 
 
 app.post("/api/open_multi", auth, async (req, res) => {
