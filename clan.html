@@ -692,6 +692,7 @@ function renderMyClan(data) {
 
 function renderBossTab(boss, clan) {
   if (!boss) {
+    // Pas de raid actif → afficher sélection de boss
     return `
       <div class="card">
         <div class="card-title">⚔️ Lancer un Raid</div>
@@ -706,28 +707,25 @@ function renderBossTab(boss, clan) {
 
   const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
   const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
-  // Fallback image selon boss_key ou nom
-  const imgSrc = boss.image || (boss.boss_key === 'myntalis' ? '/Boss2.gif' : '/Boss1.gif');
 
   return `
     <div class="boss-card">
-      <!-- Nom + HP -->
-      <div style="margin-bottom:12px">
-        <div class="boss-name">👹 ${esc(boss.name)}</div>
-        <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
-        <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
-        <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
-        <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
-        <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
-      </div>
-
-      <!-- GIF du boss centré -->
-      <div style="text-align:center;margin-bottom:16px">
-        <div class="boss-img-wrap" id="bossImgWrap" style="display:inline-block">
-          <img src="${esc(imgSrc)}" id="bossImg" alt="${esc(boss.name)}"
-            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);"
-            onerror="this.style.display='none'">
+      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
+        <div class="boss-img-wrap" id="bossImgWrap" style="text-align:center;margin:14px 0">
+          ${boss.image || boss.boss_key ? `<img src="${esc(boss.image || (boss.boss_key==='myntalis'?'/Boss2.gif':'/Boss1.gif'))}" id="bossImg" alt="${esc(boss.name)}"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:multiply;"
+            onerror="this.style.display='none'">` : `<img src="/Boss1.gif" id="bossImg" alt="${esc(boss.name)}"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:multiply;"
+            onerror="this.style.display='none'">`}
           <div class="attack-flash" id="attackFlash"></div>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div class="boss-name">👹 ${esc(boss.name)}</div>
+          <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
+          <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
+          <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
+          <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
+          <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
         </div>
       </div>
 
@@ -740,7 +738,7 @@ function renderBossTab(boss, clan) {
         <div style="flex:1;font-size:12px;opacity:.6">
           Ouvre des cartes pour accumuler des dégâts,<br>puis frappe le boss !
         </div>
-        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:130px">
+        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:120px">
           ⚔️ ATTAQUER !
         </button>
       </div>
@@ -937,11 +935,32 @@ async function attackBoss() {
     // Animation d'attaque
     playAttackAnimation(data.damage);
 
-    // Mettre à jour HP
+    // ✅ Mise à jour immédiate des HP dans l'UI
     if (data.boss) {
       const pct = Math.max(0, Math.round((data.newHp / data.boss.hp_max) * 100));
       const hpBar = document.getElementById("bossHpBar");
-      if (hpBar) hpBar.style.width = pct + '%';
+      const hpText = document.querySelector(".hp-text");
+      if (hpBar) {
+        hpBar.style.width = pct + '%';
+        const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
+        hpBar.style.background = barColor;
+      }
+      if (hpText) hpText.innerHTML = `${fmtNum(data.newHp)} / ${fmtNum(data.boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(data.boss.reward)} dollax</span>`;
+      const pctText = document.querySelector('.boss-card [style*="opacity:.6"]');
+      if (pctText) pctText.textContent = pct + '% restants';
+    }
+
+    // ✅ Mise à jour immédiate du leaderboard
+    if (data.leaderboard) {
+      const lbEl = document.getElementById("bossLeaderboard");
+      if (lbEl) {
+        lbEl.innerHTML = data.leaderboard.map((r,i) =>
+          `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
+            <span>#${i+1} ${esc(r.name)}</span>
+            <span>⚔️ ${fmtNum(r.total)}</span>
+          </div>`
+        ).join('') || '<div style="opacity:.5;font-size:13px">Aucun dégât encore</div>';
+      }
     }
 
     if (data.defeated) {
@@ -950,8 +969,7 @@ async function attackBoss() {
         setTimeout(() => location.reload(), 2000);
       }, 800);
     } else {
-      // Recharger les données après animation
-      setTimeout(() => loadBossData(), 900);
+      if (btn) { btn.disabled = false; btn.textContent = '⚔️ Ouvre des cartes...'; }
     }
   } catch(e) {
     alert(e.message);
