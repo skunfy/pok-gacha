@@ -1751,6 +1751,7 @@ const CLAN_MISSIONS_DEF = [
   { key: "get_grade10",  label: "Obtenir un grade 10",       goal: 1,  xpClan: 80,  bankReward: 150 },
   { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 10,  bankReward: 20  },
   { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 20,  bankReward: 50  },
+  { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 500, bankReward: 1000 },
 ];
 
 function todayKey() {
@@ -4253,7 +4254,14 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    if (defeated) await checkClanLevelUp(m.clan_id).catch(() => {});
+    if (defeated) {
+      await checkClanLevelUp(m.clan_id).catch(() => {});
+      // Mission "vaincre le boss" pour tous les contributeurs
+      const contribs = await pool.query(`SELECT DISTINCT user_id FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+      for (const c of contribs.rows) {
+        await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
+      }
+    }
 
     // Stock restant après attaque
     const newBossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
