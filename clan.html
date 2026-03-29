@@ -664,7 +664,7 @@ function renderMyClan(data) {
           <div style="flex:1;min-width:150px">
             <label>Membre</label>
             <select class="bank-select" id="bankTarget">
-              ${members.filter(m=>m.name!==clan.leader_name).map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("")}
+              ${members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("")}
             </select>
           </div>
           <div style="flex:1;min-width:120px">
