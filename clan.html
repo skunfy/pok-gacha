@@ -713,9 +713,9 @@ function renderBossTab(boss, clan) {
       <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
         <div class="boss-img-wrap" id="bossImgWrap" style="text-align:center;margin:14px 0">
           ${boss.image || boss.boss_key ? `<img src="${esc(boss.image || (boss.boss_key==='myntalis'?'/Boss2.gif':'/Boss1.gif'))}" id="bossImg" alt="${esc(boss.name)}"
-            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:multiply;"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
             onerror="this.style.display='none'">` : `<img src="/Boss1.gif" id="bossImg" alt="${esc(boss.name)}"
-            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:multiply;"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
             onerror="this.style.display='none'">`}
           <div class="attack-flash" id="attackFlash"></div>
         </div>
