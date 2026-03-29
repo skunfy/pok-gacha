@@ -4114,15 +4114,26 @@ app.get("/api/clan/boss", auth, async (req, res) => {
   const m = await getMyMembership(req.user.id);
   if (!m) return res.status(403).json({ error: "Non membre" });
 
-  // Vérifier expiration du raid
   const now = Date.now();
+  // Expirer seulement les boss avec expires_at défini
   await pool.query(`UPDATE clan_boss SET failed=1 WHERE clan_id=$1 AND defeated=0 AND failed=0 AND expires_at IS NOT NULL AND expires_at < $2`, [m.clan_id, now]);
 
   const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
   if (!bQ.rows.length) return res.json({ boss: null, availableBosses: Object.values(RAID_BOSSES) });
 
   const boss = bQ.rows[0];
+  // Fallback image : utilise boss_key si dispo, sinon Boss1.gif par défaut
   const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+  const bossImage = def.image;
+  const bossName = boss.name || def.name;
+
+  // Si ancien boss sans expires_at → on met quand même un timer fictif de 4h depuis started_at
+  let expiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+  if (!expiresAt && boss.started_at) {
+    expiresAt = Number(boss.started_at) + 4 * 60 * 60 * 1000;
+    // Sauvegarder pour cohérence
+    await pool.query(`UPDATE clan_boss SET expires_at=$1 WHERE id=$2`, [expiresAt, boss.id]);
+  }
 
   const dmgQ = await pool.query(`
     SELECT u.name, SUM(d.damage) as total
@@ -4132,16 +4143,15 @@ app.get("/api/clan/boss", auth, async (req, res) => {
 
   const myDmg = await pool.query(`SELECT COALESCE(SUM(damage),0) as total FROM clan_boss_damage WHERE boss_id=$1 AND user_id=$2`, [boss.id, req.user.id]);
 
-  // Stock de dégâts du joueur
   const stockQ = await pool.query(`SELECT stock FROM clan_raid_stock WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]);
   const myStock = Number(stockQ.rows[0]?.stock || 0);
 
   res.json({
-    boss: { ...boss, image: def.image, name: def.name },
+    boss: { ...boss, image: bossImage, name: bossName, expires_at: expiresAt },
     leaderboard: dmgQ.rows,
     myDamage: Number(myDmg.rows[0].total),
     myStock,
-    timeLeft: boss.expires_at ? Math.max(0, boss.expires_at - now) : null,
+    timeLeft: expiresAt ? Math.max(0, expiresAt - now) : null,
   });
 });
 
