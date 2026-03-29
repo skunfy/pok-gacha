@@ -1677,7 +1677,7 @@ const TALENT_DEFS = {
     icon: "🪙",
     maxLevel: 10,
     // coût en points par niveau (1,2,3,4,5,6,7,8,9,10)
-    costs: [1,1,2,2,3,3,4,4,5,5],
+    costs: [1,2,3,4,5,6,7,8,9,10],
     // bonus par niveau: base=10, +2 par niveau → max = 30
     bonusPerLevel: 2,
     baseValue: 10,
@@ -1688,7 +1688,7 @@ const TALENT_DEFS = {
     description: "Réduit le temps entre chaque ticket",
     icon: "🎫",
     maxLevel: 10,
-    costs: [1,1,2,2,3,3,4,4,5,5],
+    costs: [1,2,3,4,5,6,7,8,9,10],
     // base=3600000ms (1h), réduit de 8min par niveau → min=40min
     reductionPerLevel: 8 * 60 * 1000,
     baseValue: 60 * 60 * 1000,
