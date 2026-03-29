@@ -619,7 +619,7 @@ function renderMyClan(data) {
     <!-- MEMBERS TAB -->
     <div id="tab-members" class="section-hidden">
       <div class="card">
-        <div class="card-title">👥 Membres (${members.length}/30)</div>
+        <div class="card-title">👥 Membres (${members.length}/4)</div>
         <div class="members-grid">
           ${members.map(m => renderMemberCard(m, isOfficer, isLeader, clan.leader_name)).join("")}
         </div>

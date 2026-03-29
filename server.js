@@ -3990,7 +3990,7 @@ app.post("/api/clan/join", auth, async (req, res) => {
   if (!cQ.rows.length) return res.status(404).json({ error: "Clan introuvable" });
 
   const count = await pool.query(`SELECT COUNT(*) FROM clan_members WHERE clan_id=$1`, [clanId]);
-  if (Number(count.rows[0].count) >= 6) return res.status(400).json({ error: "Clan complet (max 6)" });
+  if (Number(count.rows[0].count) >= 4) return res.status(400).json({ error: "Clan complet (max 4)" });
 
   await pool.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'member',$3)`, [req.user.id, clanId, Date.now()]);
   res.json({ ok: true });
