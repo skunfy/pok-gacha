@@ -563,9 +563,12 @@ function previewLogo(url) {
 // MY CLAN VIEW
 // ===========================
 function renderMyClan(data) {
-  const { clan, myRole, members, boss } = data;
+  const { clan, myRole, members, boss, availableBosses } = data;
   const isLeader = myRole === 'leader';
   const isOfficer = myRole === 'officer' || isLeader;
+
+  // Stocker les données du boss pour usage immédiat
+  window._initialBossData = { boss, availableBosses };
 
   const wrap = document.getElementById("mainWrap");
   wrap.innerHTML = `
@@ -801,7 +804,7 @@ function switchTab(name, el) {
 
   if (name === 'chat') { loadChat(); startChatPolling(); } else { stopChatPolling(); }
   if (name === 'leaderboard') loadLeaderboard();
-  if (name === 'boss') { loadBossData(); startBossPolling(); } else { stopBossPolling(); }
+  if (name === 'boss') { _bossFirstLoad = true; loadBossData(); startBossPolling(); } else { stopBossPolling(); }
   if (name === 'talents') loadTalents();
 }
 
@@ -811,10 +814,24 @@ function switchTab(name, el) {
 let _raidTimer = null;
 let _raidExpiresAt = null;
 let _raidBossId = null;
+let _bossFirstLoad = true;
 
 async function loadBossData() {
   try {
-    const data = await api("/api/clan/boss");
+    let data;
+
+    // Premier chargement : utiliser les données déjà dans la réponse /api/clan/me
+    if (_bossFirstLoad && window._initialBossData) {
+      _bossFirstLoad = false;
+      data = window._initialBossData;
+      // Compléter avec myStock/leaderboard si manquants → appel API léger
+      if (data.boss && (data.boss.myStock === undefined || !data.boss.leaderboard)) {
+        const fresh = await api("/api/clan/boss");
+        data = fresh;
+      }
+    } else {
+      data = await api("/api/clan/boss");
+    }
 
     // Pas de raid actif → afficher sélection
     if (!data.boss) {
@@ -848,13 +865,14 @@ async function loadBossData() {
     _raidExpiresAt = boss.expires_at ? Number(boss.expires_at) : null;
 
     // Stock
+    const myStock = boss.myStock ?? data.myStock ?? 0;
     const stockEl = document.getElementById("stockVal");
-    if (stockEl) stockEl.textContent = fmtNum(data.myStock || 0);
+    if (stockEl) stockEl.textContent = fmtNum(myStock);
 
     const attackBtn = document.getElementById("attackBtn");
     if (attackBtn) {
-      attackBtn.disabled = (data.myStock || 0) <= 0;
-      attackBtn.textContent = (data.myStock || 0) > 0 ? `⚔️ ATTAQUER ! (${fmtNum(data.myStock)} dmg)` : '⚔️ Ouvre des cartes...';
+      attackBtn.disabled = myStock <= 0;
+      attackBtn.textContent = myStock > 0 ? `⚔️ ATTAQUER ! (${fmtNum(myStock)} dmg)` : '⚔️ Ouvre des cartes...';
     }
 
     // HP bar
@@ -863,9 +881,10 @@ async function loadBossData() {
     if (hpBar) hpBar.style.width = pct + '%';
 
     // Leaderboard
+    const leaderboard = boss.leaderboard ?? data.leaderboard ?? [];
     const lbEl = document.getElementById("bossLeaderboard");
-    if (lbEl && data.leaderboard) {
-      lbEl.innerHTML = data.leaderboard.map((r,i) =>
+    if (lbEl && leaderboard.length >= 0) {
+      lbEl.innerHTML = leaderboard.map((r,i) =>
         `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
           <span>#${i+1} ${esc(r.name)}</span>
           <span>⚔️ ${fmtNum(r.total)}</span>

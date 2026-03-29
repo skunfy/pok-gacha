@@ -3865,31 +3865,62 @@ app.get("/api/clan/list", auth, async (req, res) => {
   res.json({ clans: rows });
 });
 
-// GET /api/clan/me — mon clan
+// GET /api/clan/me — mon clan (tout en parallèle)
 app.get("/api/clan/me", auth, async (req, res) => {
   const m = await getMyMembership(req.user.id);
   if (!m) return res.json({ clan: null });
 
-  const cQ = await pool.query(`
-    SELECT c.*, u.name as leader_name
-    FROM clans c JOIN users u ON u.id=c.leader_id
-    WHERE c.id=$1
-  `, [m.clan_id]);
+  const now = Date.now();
 
-  const membersQ = await pool.query(`
-    SELECT cm.role, cm.damage_total, cm.joined_at, u.name, u.avatar, u.xp
-    FROM clan_members cm JOIN users u ON u.id=cm.user_id
-    WHERE cm.clan_id=$1
-    ORDER BY cm.damage_total DESC
-  `, [m.clan_id]);
+  // Tout en parallèle
+  const [cQ, membersQ, bossQ] = await Promise.all([
+    pool.query(`SELECT c.*, u.name as leader_name FROM clans c JOIN users u ON u.id=c.leader_id WHERE c.id=$1`, [m.clan_id]),
+    pool.query(`SELECT cm.role, cm.damage_total, cm.joined_at, cm.user_id, u.name, u.avatar, u.xp FROM clan_members cm JOIN users u ON u.id=cm.user_id WHERE cm.clan_id=$1 ORDER BY cm.damage_total DESC`, [m.clan_id]),
+    pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]),
+  ]);
 
-  const bossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  const boss = bossQ.rows[0] || null;
+  let bossData = null;
+
+  if (boss) {
+    // Fixer expires_at si manquant (anciens boss)
+    let expiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+    if (!expiresAt && boss.started_at) {
+      expiresAt = Number(boss.started_at) + 4 * 60 * 60 * 1000;
+      await pool.query(`UPDATE clan_boss SET expires_at=$1 WHERE id=$2`, [expiresAt, boss.id]);
+    }
+
+    // Vérifier expiration
+    if (expiresAt && now > expiresAt) {
+      await pool.query(`UPDATE clan_boss SET failed=1 WHERE id=$1`, [boss.id]);
+      bossData = null;
+    } else {
+      const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+
+      // Leaderboard + stock en parallèle
+      const [dmgQ, stockQ] = await Promise.all([
+        pool.query(`SELECT u.name, SUM(d.damage) as total FROM clan_boss_damage d JOIN users u ON u.id=d.user_id WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10`, [boss.id]),
+        pool.query(`SELECT stock FROM clan_raid_stock WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]),
+      ]);
+
+      bossData = {
+        ...boss,
+        image: def.image,
+        name: def.name,
+        expires_at: expiresAt,
+        leaderboard: dmgQ.rows,
+        myStock: Number(stockQ.rows[0]?.stock || 0),
+        timeLeft: expiresAt ? Math.max(0, expiresAt - now) : null,
+      };
+    }
+  }
 
   res.json({
     clan: cQ.rows[0],
     myRole: m.role,
     members: membersQ.rows,
-    boss: bossQ.rows[0] || null
+    boss: bossData,
+    availableBosses: !bossData ? Object.values(RAID_BOSSES) : null,
   });
 });
 
