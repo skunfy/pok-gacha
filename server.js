@@ -1733,8 +1733,10 @@ async function checkClanLevelUp(clanId) {
     // Notifier tous les membres
     const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1`, [clanId]);
     for (const m of members.rows) {
-      await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Clan Level Up !','Votre clan est passé niveau '+$2+' ! +'+$3+' point(s) de talent à distribuer.',NULL,0,$4)`,
-        [m.user_id, newLevel, pointsGained, Date.now()]);
+      await pool.query(
+        `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Clan Level Up !',$2,NULL,0,$3)`,
+        [m.user_id, `Votre clan est passé niveau ${newLevel} ! +${pointsGained} point(s) de talent à distribuer.`, Date.now()]
+      );
     }
   }
 }
@@ -1818,8 +1820,10 @@ async function progressMission(clanId, userId, missionKey, amount=1) {
     await pool.query(`UPDATE clan_missions SET completed=1 WHERE clan_id=$1 AND user_id=$2 AND mission_key=$3 AND date_key=$4`, [clanId, userId, missionKey, dk]);
     await pool.query(`UPDATE clans SET xp=xp+$1, bank=bank+$2 WHERE id=$3`, [def.xpClan, def.bankReward, clanId]);
     await checkClanLevelUp(clanId).catch(() => {});
-    await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Mission clan complétée !','Mission "'+$2+'" accomplie ! +'+$3+' XP clan, +'+$4+' dollax banque.',NULL,0,$5)`,
-      [userId, def.label, def.xpClan, def.bankReward, Date.now()]);
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Mission clan complétée !',$2,NULL,0,$3)`,
+      [userId, `Mission "${def.label}" accomplie ! +${def.xpClan} XP clan, +${def.bankReward} dollax banque.`, Date.now()]
+    );
   }
 }
 
@@ -4064,8 +4068,10 @@ app.post("/api/clan/bank/distribute", auth, async (req, res) => {
     await client.query(`UPDATE clans SET bank=bank-$1 WHERE id=$2`, [amount, m.clan_id]);
     await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [amount, targetId]);
     await client.query("COMMIT");
-    await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Don du meneur','Tu as reçu '+$2+' dollax de la banque du clan !',NULL,0,$3)`,
-      [targetId, amount, Date.now()]);
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Don du meneur',$2,NULL,0,$3)`,
+      [targetId, `Tu as reçu ${amount} dollax de la banque du clan !`, Date.now()]
+    );
     res.json({ ok: true });
   } catch(e) {
     await client.query("ROLLBACK");
@@ -4275,8 +4281,10 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
         const share = Math.floor((Number(c.dmg) / total) * boss.reward);
         if (share > 0) {
           await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
-          await client.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','🏆 Boss vaincu !','${def.name} a été vaincu ! Tu reçois '+$2+' dollax.',NULL,0,$3)`,
-            [c.user_id, share, Date.now()]);
+          await client.query(
+            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','🏆 Boss vaincu !',$2,NULL,0,$3)`,
+            [c.user_id, `${def.name} a été vaincu ! Tu reçois ${share} dollax.`, Date.now()]
+          );
         }
       }
       await client.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
