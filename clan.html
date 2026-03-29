@@ -96,6 +96,12 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
   border:1px solid rgba(255,255,255,.15);
   display:flex;align-items:center;gap:20px;flex-wrap:wrap;
 }
+.clan-logo{
+  width:80px;height:80px;border-radius:16px;
+  background-size:cover;background-position:center;
+  border:2px solid rgba(255,255,255,.2);
+  flex-shrink:0;
+}
 .clan-tag{
   font-size:28px;font-weight:900;letter-spacing:.1em;
   background:rgba(0,0,0,.35);border-radius:10px;padding:8px 16px;
@@ -243,6 +249,43 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .no-clan-wrap{text-align:center;padding:60px 20px}
 .no-clan-wrap h2{margin:0 0 10px;font-size:22px}
 .no-clan-wrap p{opacity:.7;margin:0 0 24px}
+
+/* TALENTS */
+.talent-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding:14px 18px;
+  background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.25);
+  border-radius:12px;flex-wrap:wrap;gap:10px;
+}
+.talent-points-badge{
+  font-size:20px;font-weight:900;color:var(--gold);
+}
+.clan-xp-bar-wrap{flex:1;min-width:200px}
+.clan-xp-bar-label{font-size:12px;opacity:.7;margin-bottom:4px}
+.clan-xp-bar{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden}
+.clan-xp-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+
+.talents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.talent-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;padding:16px;
+}
+.talent-card.maxed{border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.talent-icon{font-size:28px;margin-bottom:8px}
+.talent-name{font-size:15px;font-weight:900;margin-bottom:4px}
+.talent-desc{font-size:12px;opacity:.65;margin-bottom:12px}
+.talent-levels{display:flex;gap:4px;margin-bottom:10px}
+.talent-dot{
+  width:18px;height:18px;border-radius:999px;
+  border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);
+  transition:background .2s;
+}
+.talent-dot.filled{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.talent-dot.maxed{background:linear-gradient(135deg,#ffd84d,#ff8800);border-color:transparent}
+.talent-current{font-size:12px;color:var(--green);margin-bottom:4px}
+.talent-next{font-size:12px;opacity:.6;margin-bottom:10px}
+.talent-cost{font-size:12px;color:var(--gold);margin-bottom:8px}
 
 .section-hidden{display:none}
 </style>
@@ -473,12 +516,16 @@ function renderMyClan(data) {
   wrap.innerHTML = `
     <!-- BANNER -->
     <div class="clan-banner" style="--bannerColor:${esc(clan.banner_color)}">
-      <div class="clan-tag" style="color:${esc(clan.banner_color)}">[${esc(clan.tag)}]</div>
+      ${clan.logo
+        ? `<div class="clan-logo" style="background-image:url('${esc(clan.logo)}')"></div>`
+        : `<div class="clan-tag" style="color:${esc(clan.banner_color)}">[${esc(clan.tag)}]</div>`
+      }
       <div class="clan-info">
-        <div class="clan-name">${esc(clan.name)}</div>
+        <div class="clan-name">${esc(clan.name)} <span style="font-size:14px;opacity:.6;font-weight:600">[${esc(clan.tag)}]</span></div>
         <div class="clan-desc">${esc(clan.description||"Aucune description")}</div>
         <div class="clan-stats">
           <span class="cstat">⚡ <b>${fmtNum(clan.xp)}</b> XP</span>
+          <span class="cstat">🏅 <b>Niv. ${clan.level||1}</b></span>
           <span class="cstat">🏦 <b>${fmtNum(clan.bank)}</b> dollax</span>
           <span class="cstat">👥 <b>${members.length}</b> membres</span>
           <span class="cstat">👑 Chef: <b>${esc(clan.leader_name)}</b></span>
@@ -493,6 +540,7 @@ function renderMyClan(data) {
       <div class="tab" onclick="switchTab('missions',this)">📋 Missions</div>
       <div class="tab" onclick="switchTab('members',this)">👥 Membres</div>
       <div class="tab" onclick="switchTab('chat',this)">💬 Chat</div>
+      <div class="tab" onclick="switchTab('talents',this)">🌳 Talents</div>
       <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
       ${isLeader ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>` : ''}
     </div>
@@ -529,6 +577,14 @@ function renderMyClan(data) {
           <input id="chatInput" placeholder="Envoie un message..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()"/>
           <button class="btn btn-sm" onclick="sendChat()">Envoyer</button>
         </div>
+      </div>
+    </div>
+
+    <!-- TALENTS TAB -->
+    <div id="tab-talents" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🌳 Arbre de Talents</div>
+        <div id="talentsContent"><div class="loading">Chargement...</div></div>
       </div>
     </div>
 
@@ -643,21 +699,17 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 
-  ['boss','missions','members','chat','leaderboard','manage'].forEach(t => {
+  ['boss','missions','members','chat','talents','leaderboard','manage'].forEach(t => {
     const tabEl = document.getElementById('tab-'+t);
     if (tabEl) tabEl.classList.toggle('section-hidden', t !== name);
   });
 
   currentTab = name;
 
-  if (name === 'chat') {
-    loadChat();
-    startChatPolling();
-  } else {
-    stopChatPolling();
-  }
+  if (name === 'chat') { loadChat(); startChatPolling(); } else { stopChatPolling(); }
   if (name === 'leaderboard') loadLeaderboard();
   if (name === 'boss') loadBossData();
+  if (name === 'talents') loadTalents();
 }
 
 // ===========================
@@ -773,12 +825,85 @@ async function loadLeaderboard() {
         <div style="flex:1">
           <span style="color:${esc(c.banner_color)};font-weight:900">[${esc(c.tag)}]</span>
           <span class="lb-name"> ${esc(c.name)}</span>
+          <span style="font-size:11px;opacity:.5;margin-left:6px">Niv.${c.level||1}</span>
         </div>
         <div style="font-size:12px;opacity:.6;margin-right:12px">${c.members} mbr</div>
         <div class="lb-xp">⚡ ${fmtNum(c.xp)}</div>
       </div>
     `).join("");
   } catch(e) { el.innerHTML='<div class="loading">Erreur</div>'; }
+}
+
+// ===========================
+// TALENTS
+// ===========================
+let _talentData = null;
+
+async function loadTalents() {
+  const el = document.getElementById("talentsContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/talents");
+    _talentData = data;
+    const canUpgrade = ['leader','officer'].includes(data.myRole);
+    const xpPct = data.nextLevelXp > 0 ? Math.min(100, Math.round((data.xpIntoLevel / data.nextLevelXp) * 100)) : 100;
+
+    el.innerHTML = `
+      <div class="talent-header">
+        <div>
+          <div style="font-size:13px;opacity:.7;margin-bottom:2px">Niveau du clan</div>
+          <div style="font-size:22px;font-weight:900">🏰 Niveau ${data.clanLevel}</div>
+        </div>
+        <div class="clan-xp-bar-wrap">
+          <div class="clan-xp-bar-label">${fmtNum(data.xpIntoLevel)} / ${fmtNum(data.nextLevelXp)} XP → Niveau ${data.clanLevel+1}</div>
+          <div class="clan-xp-bar"><div class="clan-xp-bar-fill" style="width:${xpPct}%"></div></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;opacity:.7">Points disponibles</div>
+          <div class="talent-points-badge">✨ ${data.talentPoints} pt${data.talentPoints>1?'s':''}</div>
+        </div>
+      </div>
+
+      ${data.talentPoints === 0 && data.clanLevel === 1 ? `
+        <div style="text-align:center;padding:20px;opacity:.6;font-size:13px">
+          Complète des missions et vaincs des boss pour gagner de l'XP et monter de niveau !<br>
+          Chaque level up donne <b>1 point de talent</b> à distribuer.
+        </div>` : ''}
+
+      <div class="talents-grid">
+        ${data.talents.map(t => {
+          const dots = Array.from({length: t.maxLevel}, (_,i) =>
+            `<div class="talent-dot ${i < t.currentLevel ? (t.maxReached ? 'maxed' : 'filled') : ''}"></div>`
+          ).join('');
+          return `
+            <div class="talent-card ${t.maxReached ? 'maxed' : ''}">
+              <div class="talent-icon">${t.icon}</div>
+              <div class="talent-name">${esc(t.label)}</div>
+              <div class="talent-desc">${esc(t.description)}</div>
+              <div class="talent-levels">${dots}</div>
+              <div class="talent-current">✅ Actuel : ${esc(t.currentBonus)}</div>
+              ${t.nextBonus ? `<div class="talent-next">➡️ Niveau suivant : ${esc(t.nextBonus)}</div>` : ''}
+              ${t.maxReached
+                ? `<div style="font-size:12px;color:var(--gold);font-weight:800">🏆 Maximum atteint !</div>`
+                : canUpgrade && data.talentPoints >= (t.costNext||99)
+                  ? `<div class="talent-cost">Coût : ${t.costNext} point${t.costNext>1?'s':''}</div>
+                     <button class="btn btn-sm" onclick="upgradeTalent('${t.key}')">Améliorer ✨</button>`
+                  : `<div class="talent-cost" style="opacity:.5">Coût : ${t.costNext||'?'} point${(t.costNext||1)>1?'s':''}</div>
+                     <button class="btn btn-sm btn-ghost" disabled>${!canUpgrade ? 'Meneur/Officier seulement' : 'Pas assez de points'}</button>`
+              }
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur de chargement</div>'; }
+}
+
+async function upgradeTalent(key) {
+  try {
+    await api("/api/clan/talents/upgrade", { method:"POST", body: JSON.stringify({ key }) });
+    await loadTalents();
+  } catch(e) { alert(e.message); }
 }
 
 // ===========================

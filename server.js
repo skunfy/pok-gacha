@@ -729,6 +729,16 @@ async function initDb() {
   `);
 
   await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1;`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS talent_points INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_talents (
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      talent_key TEXT NOT NULL,
+      level INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(clan_id, talent_key)
+    )
+  `);
 
   console.log("✅ Postgres DB ready");
 }
@@ -964,7 +974,14 @@ async function applyPayForUser(userId) {
   const ticks = Math.floor(delta / PAY_EVERY_MS);
 
   if (ticks > 0) {
-    const add = ticks * PAY_AMOUNT;
+    // Bonus dollax clan
+    let payAmount = PAY_AMOUNT;
+    try {
+      const bonus = await getClanBonusForUser(userId);
+      if (bonus) payAmount += bonus.dollaxBonus;
+    } catch(e) {}
+
+    const add = ticks * payAmount;
     const newLast = last + ticks * PAY_EVERY_MS;
     await pool.query(
       `UPDATE users SET money = money + $1, lastPay=$2 WHERE id=$3`,
@@ -981,23 +998,27 @@ async function applyTicketsForUser(userId) {
 
   const now     = Date.now();
   const tickets = Number(u.tickets || 0);
-  if (tickets >= TICKET_CAP) return; // déjà au max
+  if (tickets >= TICKET_CAP) return;
 
   const last = Number(u.lastticketpay ?? u.lastTicketPay ?? 0);
-
-  // Si lastTicketPay n'a jamais été initialisé, on l'initialise à now
-  // sans donner de tickets (le compteur démarre maintenant)
   if (last === 0) {
     await pool.query(`UPDATE users SET lastTicketPay=$1 WHERE id=$2`, [now, userId]);
     return;
   }
 
+  // Bonus ticket clan (réduction du cooldown)
+  let ticketEvery = TICKET_EVERY_MS;
+  try {
+    const bonus = await getClanBonusForUser(userId);
+    if (bonus) ticketEvery = Math.max(40 * 60 * 1000, TICKET_EVERY_MS - bonus.ticketReduction);
+  } catch(e) {}
+
   const delta = Math.max(0, now - last);
-  const ticks = Math.floor(delta / TICKET_EVERY_MS);
+  const ticks = Math.floor(delta / ticketEvery);
 
   if (ticks > 0) {
     const add     = Math.min(ticks * TICKET_AMOUNT, TICKET_CAP - tickets);
-    const newLast = last + ticks * TICKET_EVERY_MS;
+    const newLast = last + ticks * ticketEvery;
     await pool.query(
       `UPDATE users SET tickets = LEAST(tickets + $1, $2), lastTicketPay=$3 WHERE id=$4`,
       [add, TICKET_CAP, newLast, userId]
@@ -1610,6 +1631,99 @@ const COST_ONE = 5;
 const COST_FIVE = COST_ONE * 5;
 
 // =========================
+// CLAN LEVEL & TALENTS
+// =========================
+
+// XP requis pour chaque niveau de clan
+function xpForClanLevel(level) {
+  // niveau 1→2: 500 XP, 2→3: 1200 XP, progression exponentielle
+  return Math.floor(500 * Math.pow(1.6, level - 1));
+}
+
+function clanLevelForXp(xp) {
+  let lvl = 1;
+  let total = 0;
+  while (true) {
+    const needed = xpForClanLevel(lvl);
+    if (total + needed > xp) break;
+    total += needed;
+    lvl++;
+    if (lvl >= 50) break;
+  }
+  return lvl;
+}
+
+// Définition des talents
+const TALENT_DEFS = {
+  dollax_bonus: {
+    label: "Revenu Dollax",
+    description: "Augmente les dollax gagnés toutes les 15min",
+    icon: "🪙",
+    maxLevel: 10,
+    // coût en points par niveau (1,2,3,4,5,6,7,8,9,10)
+    costs: [1,1,2,2,3,3,4,4,5,5],
+    // bonus par niveau: base=10, +2 par niveau → max = 30
+    bonusPerLevel: 2,
+    baseValue: 10,
+    unit: "dollax/15min",
+  },
+  ticket_speed: {
+    label: "Regen Tickets",
+    description: "Réduit le temps entre chaque ticket",
+    icon: "🎫",
+    maxLevel: 10,
+    costs: [1,1,2,2,3,3,4,4,5,5],
+    // base=3600000ms (1h), réduit de 8min par niveau → min=40min
+    reductionPerLevel: 8 * 60 * 1000,
+    baseValue: 60 * 60 * 1000,
+    unit: "cooldown",
+  },
+};
+
+async function getClanTalents(clanId) {
+  const { rows } = await pool.query(`SELECT talent_key, level FROM clan_talents WHERE clan_id=$1`, [clanId]);
+  const result = {};
+  for (const key of Object.keys(TALENT_DEFS)) {
+    result[key] = rows.find(r => r.talent_key === key)?.level || 0;
+  }
+  return result;
+}
+
+async function getClanBonusForUser(userId) {
+  // Retourne les bonus actifs si le joueur est dans un clan
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return null;
+    const talents = await getClanTalents(m.clan_id);
+    const dollaxBonus = talents.dollax_bonus * TALENT_DEFS.dollax_bonus.bonusPerLevel;
+    const ticketReduction = talents.ticket_speed * TALENT_DEFS.ticket_speed.reductionPerLevel;
+    return { dollaxBonus, ticketReduction, clanId: m.clan_id };
+  } catch(e) { return null; }
+}
+
+// Vérifier et appliquer le level up du clan après gain XP
+async function checkClanLevelUp(clanId) {
+  const cQ = await pool.query(`SELECT xp, level, talent_points FROM clans WHERE id=$1`, [clanId]);
+  const clan = cQ.rows[0];
+  if (!clan) return;
+
+  const newLevel = clanLevelForXp(Number(clan.xp));
+  const oldLevel = Number(clan.level);
+
+  if (newLevel > oldLevel) {
+    const pointsGained = newLevel - oldLevel;
+    await pool.query(`UPDATE clans SET level=$1, talent_points=talent_points+$2 WHERE id=$3`,
+      [newLevel, pointsGained, clanId]);
+    // Notifier tous les membres
+    const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1`, [clanId]);
+    for (const m of members.rows) {
+      await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Clan Level Up !','Votre clan est passé niveau '+$2+' ! +'+$3+' point(s) de talent à distribuer.',NULL,0,$4)`,
+        [m.user_id, newLevel, pointsGained, Date.now()]);
+    }
+  }
+}
+
+// =========================
 // CLANS — HELPERS
 // =========================
 
@@ -1629,12 +1743,12 @@ function todayKey() {
 }
 
 function dmgForCard(grade, mint) {
-  let base = 10;
-  if (grade >= 10) base = 200;
-  else if (grade >= 7) base = 80;
-  else if (grade >= 5) base = 40;
-  else base = 10;
-  return mint ? base * 3 : base;
+  let base = 5;
+  if (grade >= 10) base = 100;
+  else if (grade >= 7) base = 40;
+  else if (grade >= 5) base = 20;
+  else base = 5;
+  return mint ? base * 2 : base;
 }
 
 const BOSS_NAMES = ["Démon Obscur","Hydra des Abysses","Titan de Cendres","Dragon Néant","Ombre Éternelle"];
@@ -1669,6 +1783,7 @@ async function progressMission(clanId, userId, missionKey, amount=1) {
   if (progress >= goal) {
     await pool.query(`UPDATE clan_missions SET completed=1 WHERE clan_id=$1 AND user_id=$2 AND mission_key=$3 AND date_key=$4`, [clanId, userId, missionKey, dk]);
     await pool.query(`UPDATE clans SET xp=xp+$1, bank=bank+$2 WHERE id=$3`, [def.xpClan, def.bankReward, clanId]);
+    await checkClanLevelUp(clanId).catch(() => {});
     await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Mission clan complétée !','Mission "'+$2+'" accomplie ! +'+$3+' XP clan, +'+$4+' dollax banque.',NULL,0,$5)`,
       [userId, def.label, def.xpClan, def.bankReward, Date.now()]);
   }
@@ -1705,6 +1820,7 @@ async function clanHookOpen(userId, grade, mint) {
           }
         }
         await pool.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
+        await checkClanLevelUp(m.clan_id).catch(() => {});
         const nextHp = Math.floor(boss.hp_max * 1.2);
         await pool.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,$3,$4,$5,$6)`,
           [m.clan_id, randomBossName(), nextHp, nextHp, Math.floor(boss.reward * 1.1), Date.now()]);
@@ -2097,6 +2213,11 @@ app.post("/api/open_multi", auth, async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // Clan hooks pour chaque carte ouverte
+    for (const pull of pulls) {
+      clanHookOpen(req.user.id, pull.grade, Boolean(pull.mint)).catch(() => {});
+    }
 
     return res.json({
       ok: true,
@@ -4046,13 +4167,97 @@ app.post("/api/clan/boss/attack", auth, async (req, res) => {
 // GET /api/clan/leaderboard
 app.get("/api/clan/leaderboard", auth, async (req, res) => {
   const { rows } = await pool.query(`
-    SELECT c.id, c.name, c.tag, c.xp, c.banner_color,
+    SELECT c.id, c.name, c.tag, c.xp, c.level, c.banner_color,
            (SELECT COUNT(*) FROM clan_members WHERE clan_id=c.id) as members,
            u.name as leader_name
     FROM clans c JOIN users u ON u.id=c.leader_id
     ORDER BY c.xp DESC LIMIT 20
   `);
   res.json({ clans: rows });
+});
+
+// GET /api/clan/talents — talents du clan + infos niveau
+app.get("/api/clan/talents", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const cQ = await pool.query(`SELECT xp, level, talent_points FROM clans WHERE id=$1`, [m.clan_id]);
+  const clan = cQ.rows[0];
+
+  const talents = await getClanTalents(m.clan_id);
+
+  const currentLevel = Number(clan.level);
+  const nextLevelXp = xpForClanLevel(currentLevel);
+  let xpIntoLevel = Number(clan.xp);
+  for (let i = 1; i < currentLevel; i++) xpIntoLevel -= xpForClanLevel(i);
+
+  const talentDefs = Object.entries(TALENT_DEFS).map(([key, def]) => ({
+    key,
+    ...def,
+    currentLevel: talents[key] || 0,
+    costNext: def.costs[talents[key] || 0] || null,
+    maxReached: (talents[key] || 0) >= def.maxLevel,
+    currentBonus: key === 'dollax_bonus'
+      ? `+${(talents[key] || 0) * def.bonusPerLevel} dollax/15min`
+      : `Cooldown: ${Math.round((def.baseValue - (talents[key] || 0) * def.reductionPerLevel) / 60000)}min`,
+    nextBonus: (talents[key] || 0) < def.maxLevel ? (
+      key === 'dollax_bonus'
+        ? `+${((talents[key] || 0) + 1) * def.bonusPerLevel} dollax/15min`
+        : `Cooldown: ${Math.round((def.baseValue - ((talents[key] || 0) + 1) * def.reductionPerLevel) / 60000)}min`
+    ) : null,
+  }));
+
+  res.json({
+    clanLevel: currentLevel,
+    talentPoints: Number(clan.talent_points),
+    xpIntoLevel: Math.max(0, xpIntoLevel),
+    nextLevelXp,
+    talents: talentDefs,
+    myRole: m.role,
+  });
+});
+
+// POST /api/clan/talents/upgrade — dépenser un point de talent (meneur/officier)
+app.post("/api/clan/talents/upgrade", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || !['leader','officer'].includes(m.role)) return res.status(403).json({ error: "Meneur ou officier seulement" });
+
+  const key = String(req.body?.key || "");
+  const def = TALENT_DEFS[key];
+  if (!def) return res.status(400).json({ error: "Talent invalide" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const cQ = await client.query(`SELECT talent_points FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+    const points = Number(cQ.rows[0].talent_points);
+
+    const tQ = await client.query(`SELECT level FROM clan_talents WHERE clan_id=$1 AND talent_key=$2`, [m.clan_id, key]);
+    const currentTalentLevel = tQ.rows[0]?.level || 0;
+
+    if (currentTalentLevel >= def.maxLevel) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Niveau maximum atteint" });
+    }
+
+    const cost = def.costs[currentTalentLevel];
+    if (points < cost) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: `Pas assez de points (${cost} requis)` });
+    }
+
+    await client.query(`UPDATE clans SET talent_points=talent_points-$1 WHERE id=$2`, [cost, m.clan_id]);
+    await client.query(`
+      INSERT INTO clan_talents(clan_id, talent_key, level) VALUES($1,$2,1)
+      ON CONFLICT(clan_id, talent_key) DO UPDATE SET level=clan_talents.level+1
+    `, [m.clan_id, key]);
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
 });
 
 // Hook: progresser missions quand on ouvre des cartes
