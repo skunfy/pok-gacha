@@ -683,6 +683,25 @@ function renderMyClan(data) {
           <button class="btn btn-danger btn-sm" onclick="disbandConfirm()">Dissoudre le clan</button>
         </div>
       </div>
+
+      <div class="card" style="border-color:rgba(255,60,60,.35);background:rgba(255,30,30,.06)">
+        <div class="card-title" style="color:#ff4444">⚠️ Zone de danger</div>
+        <p style="font-size:13px;opacity:.8;margin:0 0 14px">
+          La dissolution est <b>irréversible</b>. Tous les membres seront exclus, la banque, l'XP, les talents et l'historique seront perdus définitivement.
+        </p>
+        <div id="dissolveConfirmBox" style="display:none;margin-bottom:12px;padding:12px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);border-radius:10px;">
+          <p style="font-size:13px;margin:0 0 10px;color:#ff8080">Tape <b>DISSOUDRE</b> pour confirmer :</p>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="dissolveInput" placeholder="DISSOUDRE" style="flex:1;min-width:140px;border-color:rgba(255,60,60,.4)"/>
+            <button class="btn btn-danger btn-sm" onclick="dissolveClan()">Confirmer la dissolution</button>
+            <button class="btn btn-sm" onclick="document.getElementById('dissolveConfirmBox').style.display='none'">Annuler</button>
+          </div>
+          <div id="dissolveAlert" style="margin-top:8px"></div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('dissolveConfirmBox').style.display='block'">
+          💀 Dissoudre le clan
+        </button>
+      </div>
     </div>` : ''}
   `;
 
@@ -1268,7 +1287,26 @@ async function promoteUser(name, role) {
 }
 
 function disbandConfirm() {
-  alert("La dissolution de clan n'est pas encore disponible. Transfère d'abord la direction à un autre membre.");
+  document.getElementById('dissolveConfirmBox').style.display = 'block';
+  document.getElementById('dissolveInput').focus();
+}
+
+async function dissolveClan() {
+  const input = document.getElementById("dissolveInput")?.value.trim();
+  const alertEl = document.getElementById("dissolveAlert");
+
+  if (input !== "DISSOUDRE") {
+    alertEl.innerHTML = '<div class="alert alert-error">Tape exactement DISSOUDRE pour confirmer.</div>';
+    return;
+  }
+
+  try {
+    await api("/api/clan/dissolve", { method: "POST", body: JSON.stringify({ confirm: "DISSOUDRE" }) });
+    alertEl.innerHTML = '<div class="alert alert-success">Clan dissous. Redirection...</div>';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
 }
 
 // ===========================

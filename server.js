@@ -4439,6 +4439,24 @@ app.post("/api/clan/talents/upgrade", auth, async (req, res) => {
 // Hook: progresser missions quand on ouvre des cartes
 // Appelé depuis /api/open et /api/open_multi
 
+// POST /api/clan/dissolve — dissoudre le clan (meneur seulement)
+app.post("/api/clan/dissolve", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const confirm = String(req.body?.confirm || "");
+  if (confirm !== "DISSOUDRE") return res.status(400).json({ error: "Confirmation invalide" });
+
+  try {
+    // Cascade supprime tout grâce aux ON DELETE CASCADE
+    await pool.query(`DELETE FROM clans WHERE id=$1`, [m.clan_id]);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error("Dissolve clan error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // =========================
 // START
 // =========================
