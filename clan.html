@@ -250,7 +250,62 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .no-clan-wrap h2{margin:0 0 10px;font-size:22px}
 .no-clan-wrap p{opacity:.7;margin:0 0 24px}
 
-/* TALENTS */
+/* RAID */
+.raid-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
+@media(max-width:600px){.raid-select-grid{grid-template-columns:1fr}}
+.boss-choice{
+  border:2px solid rgba(255,255,255,.12);border-radius:16px;
+  padding:16px;cursor:pointer;text-align:center;
+  background:rgba(255,255,255,.04);
+  transition:border-color .2s,background .2s,transform .15s;
+}
+.boss-choice:hover{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08);transform:translateY(-2px)}
+.boss-choice img{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:10px}
+.boss-choice .boss-choice-name{font-size:16px;font-weight:900;margin-bottom:4px}
+.boss-choice .boss-choice-stats{font-size:12px;opacity:.7;line-height:1.6}
+
+.stock-bar{
+  background:rgba(255,255,255,.06);border:1px solid rgba(127,92,255,.3);
+  border-radius:12px;padding:14px 16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.stock-val{font-size:22px;font-weight:900;color:var(--accent)}
+.stock-label{font-size:13px;opacity:.7}
+
+/* Animation attaque */
+@keyframes attackShake {
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px) rotate(-2deg)}
+  30%{transform:translateX(8px) rotate(2deg)}
+  45%{transform:translateX(-6px)}
+  60%{transform:translateX(6px)}
+  75%{transform:translateX(-3px)}
+}
+@keyframes attackFlash {
+  0%{opacity:0;transform:scale(.5)}
+  20%{opacity:1;transform:scale(1.2)}
+  100%{opacity:0;transform:scale(2)}
+}
+@keyframes dmgPop {
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}
+  30%{opacity:1;transform:translate(-50%,-120%) scale(1.2)}
+  100%{opacity:0;transform:translate(-50%,-200%) scale(.8)}
+}
+.boss-img-wrap{position:relative;display:inline-block}
+.attack-flash{
+  position:absolute;inset:0;border-radius:14px;
+  background:radial-gradient(circle,rgba(255,80,80,.9),transparent 70%);
+  pointer-events:none;opacity:0;
+}
+.dmg-popup{
+  position:absolute;left:50%;top:50%;
+  font-size:28px;font-weight:900;color:#ff4444;
+  text-shadow:0 0 20px rgba(255,68,68,.8);
+  pointer-events:none;white-space:nowrap;
+  animation:dmgPop .9s ease forwards;
+}
+.timer-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:6px;overflow:hidden;margin:6px 0}
+.timer-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#33ff99,#ffd84d,#ff4444);transition:width 1s linear}
 .talent-header{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:20px;padding:14px 18px;
@@ -637,30 +692,59 @@ function renderMyClan(data) {
 
 function renderBossTab(boss, clan) {
   if (!boss) {
-    return `<div class="card"><div class="boss-defeated">✅ Aucun boss actif — prochain boss en cours d'invocation...</div></div>`;
+    // Pas de raid actif → afficher sélection de boss
+    return `
+      <div class="card">
+        <div class="card-title">⚔️ Lancer un Raid</div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 16px">Choisis un boss à affronter. 1 raid par jour. Durée : 4h.</p>
+        <div class="raid-select-grid" id="bossChoices">
+          <div class="loading">Chargement des boss...</div>
+        </div>
+        <div id="raidAlert"></div>
+      </div>
+    `;
   }
+
   const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
-  const barColor = pct > 50 ? 'linear-gradient(90deg,#ff4444,#ff8800)' : pct > 20 ? 'linear-gradient(90deg,#ff8800,#ffd84d)' : 'linear-gradient(90deg,#33ff99,#00c88c)';
+  const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
 
   return `
     <div class="boss-card">
-      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
-        ${boss.image ? `<img src="${esc(boss.image)}" alt="${esc(boss.name)}" style="width:100px;height:100px;object-fit:cover;border-radius:14px;border:2px solid rgba(255,80,80,.3);flex-shrink:0;" onerror="this.style.display='none'">` : ''}
-        <div style="flex:1;min-width:200px">
+      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
+        <div class="boss-img-wrap" id="bossImgWrap">
+          ${boss.image ? `<img src="${esc(boss.image)}" id="bossImg" alt="${esc(boss.name)}" style="width:120px;height:120px;object-fit:contain;border-radius:14px;border:2px solid rgba(255,80,80,.4);" onerror="this.style.display='none'">` : ''}
+          <div class="attack-flash" id="attackFlash"></div>
+        </div>
+        <div style="flex:1;min-width:180px">
           <div class="boss-name">👹 ${esc(boss.name)}</div>
-          <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · Récompense: <b style="color:var(--gold)">${fmtNum(boss.reward)} dollax</b></div>
+          <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
           <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
-          <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% PV restants</div>
+          <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
+          <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
+          <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
         </div>
       </div>
 
-      <div style="background:rgba(0,0,0,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;line-height:1.6;opacity:.85">
-        ⚡ Chaque carte que tu ouvres inflige automatiquement des dégâts au boss !<br>
-        🎯 <b>Common</b>: 5 dmg · <b>Rare (G5+)</b>: 20 dmg · <b>G7+</b>: 40 dmg · <b>G10</b>: 100 dmg · <b>MINT</b>: ×2
+      <!-- Stock de dégâts -->
+      <div class="stock-bar">
+        <div>
+          <div class="stock-label">⚔️ Dégâts stockés</div>
+          <div class="stock-val" id="stockVal">0</div>
+        </div>
+        <div style="flex:1;font-size:12px;opacity:.6">
+          Ouvre des cartes pour accumuler des dégâts,<br>puis frappe le boss !
+        </div>
+        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:120px">
+          ⚔️ ATTAQUER !
+        </button>
+      </div>
+
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;font-size:12px;opacity:.75;margin-bottom:14px;line-height:1.7">
+        🎯 Common: 5 · G5+: 20 · G7+: 40 · G10: 100 · MINT: ×2
       </div>
 
       <div class="dmg-leaderboard">
-        <div style="font-size:13px;font-weight:800;opacity:.8;margin-bottom:8px">🏹 Top dégâts</div>
+        <div style="font-size:13px;font-weight:800;opacity:.8;margin-bottom:8px">🏹 Top dégâts du raid</div>
         <div id="bossLeaderboard"><div class="loading">Chargement...</div></div>
       </div>
     </div>
@@ -713,33 +797,206 @@ function switchTab(name, el) {
 
   if (name === 'chat') { loadChat(); startChatPolling(); } else { stopChatPolling(); }
   if (name === 'leaderboard') loadLeaderboard();
-  if (name === 'boss') loadBossData();
+  if (name === 'boss') { loadBossData(); startBossPolling(); } else { stopBossPolling(); }
   if (name === 'talents') loadTalents();
 }
 
 // ===========================
 // BOSS
 // ===========================
+let _raidTimer = null;
+let _raidExpiresAt = null;
+let _raidBossId = null;
+
 async function loadBossData() {
-  const el = document.getElementById("bossLeaderboard");
-  if (!el) return;
   try {
     const data = await api("/api/clan/boss");
-    if (!data.boss) return;
-    el.innerHTML = data.leaderboard.map((r,i) =>
-      `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
-        <span>#${i+1} ${esc(r.name)}</span>
-        <span>⚔️ ${fmtNum(r.total)}</span>
-      </div>`
-    ).join("") || '<div class="loading">Aucun dégât encore</div>';
 
-    // Update HP bar
-    const bar = document.getElementById("bossHpBar");
-    if (bar) {
-      const pct = Math.max(0, Math.round((data.boss.hp_current / data.boss.hp_max)*100));
-      bar.style.width = pct+"%";
+    // Pas de raid actif → afficher sélection
+    if (!data.boss) {
+      const choicesEl = document.getElementById("bossChoices");
+      if (!choicesEl) return;
+
+      const canStart = ['leader','officer'].includes(window._clanData?.myRole);
+      const bosses = data.availableBosses || [];
+
+      choicesEl.innerHTML = bosses.map(b => `
+        <div class="boss-choice" onclick="${canStart ? `startRaid('${b.key}')` : 'void(0)'}">
+          <img src="${esc(b.image)}" alt="${esc(b.name)}" onerror="this.style.display='none'">
+          <div class="boss-choice-name">👹 ${esc(b.name)}</div>
+          <div class="boss-choice-stats">
+            ❤️ ${fmtNum(b.hp_max)} PV<br>
+            🏆 ${fmtNum(b.reward)} dollax<br>
+            ⏱️ 4h pour le vaincre
+          </div>
+          ${canStart
+            ? `<button class="btn btn-danger btn-sm" style="margin-top:10px;width:100%" onclick="event.stopPropagation();startRaid('${b.key}')">Lancer ce raid</button>`
+            : `<div style="font-size:11px;opacity:.5;margin-top:8px">Meneur/Officier seulement</div>`
+          }
+        </div>
+      `).join('');
+      return;
     }
+
+    // Raid actif → mettre à jour l'UI
+    const boss = data.boss;
+    _raidBossId = boss.id;
+    _raidExpiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+
+    // Stock
+    const stockEl = document.getElementById("stockVal");
+    if (stockEl) stockEl.textContent = fmtNum(data.myStock || 0);
+
+    const attackBtn = document.getElementById("attackBtn");
+    if (attackBtn) {
+      attackBtn.disabled = (data.myStock || 0) <= 0;
+      attackBtn.textContent = (data.myStock || 0) > 0 ? `⚔️ ATTAQUER ! (${fmtNum(data.myStock)} dmg)` : '⚔️ Ouvre des cartes...';
+    }
+
+    // HP bar
+    const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
+    const hpBar = document.getElementById("bossHpBar");
+    if (hpBar) hpBar.style.width = pct + '%';
+
+    // Leaderboard
+    const lbEl = document.getElementById("bossLeaderboard");
+    if (lbEl && data.leaderboard) {
+      lbEl.innerHTML = data.leaderboard.map((r,i) =>
+        `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
+          <span>#${i+1} ${esc(r.name)}</span>
+          <span>⚔️ ${fmtNum(r.total)}</span>
+        </div>`
+      ).join('') || '<div style="opacity:.5;font-size:13px">Aucun dégât encore</div>';
+    }
+
+    // Timer
+    startRaidTimer();
   } catch(e) {}
+}
+
+function startRaidTimer() {
+  if (_raidTimer) clearInterval(_raidTimer);
+  if (!_raidExpiresAt) return;
+
+  function updateTimer() {
+    const left = Math.max(0, _raidExpiresAt - Date.now());
+    const h = Math.floor(left / 3600000);
+    const m = Math.floor((left % 3600000) / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    const txt = left > 0
+      ? `⏱️ ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s restantes`
+      : '⏰ Temps écoulé !';
+
+    const timerEl = document.getElementById("timerDisplay");
+    if (timerEl) timerEl.textContent = txt;
+
+    // Barre timer
+    const bossQ = window._lastBossData;
+    if (bossQ?.started_at && _raidExpiresAt) {
+      const total = _raidExpiresAt - bossQ.started_at;
+      const elapsed = Date.now() - bossQ.started_at;
+      const pct = Math.max(0, 100 - Math.round((elapsed / total) * 100));
+      const bar = document.getElementById("timerBar");
+      if (bar) bar.style.width = pct + '%';
+    }
+
+    if (left <= 0) {
+      clearInterval(_raidTimer);
+      loadBossData(); // Recharger pour afficher état expiré
+    }
+  }
+  updateTimer();
+  _raidTimer = setInterval(updateTimer, 1000);
+}
+
+async function startRaid(bossKey) {
+  const alertEl = document.getElementById("raidAlert");
+  try {
+    await api("/api/clan/raid/start", { method:"POST", body: JSON.stringify({ bossKey }) });
+    // Recharger la page du clan pour afficher le raid
+    location.reload();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error" style="margin-top:12px">${esc(e.message)}</div>`;
+    else alert(e.message);
+  }
+}
+
+async function attackBoss() {
+  const btn = document.getElementById("attackBtn");
+  if (btn) btn.disabled = true;
+
+  try {
+    const data = await api("/api/clan/raid/attack", { method:"POST" });
+
+    // Animation d'attaque
+    playAttackAnimation(data.damage);
+
+    // Mettre à jour HP
+    if (data.boss) {
+      const pct = Math.max(0, Math.round((data.newHp / data.boss.hp_max) * 100));
+      const hpBar = document.getElementById("bossHpBar");
+      if (hpBar) hpBar.style.width = pct + '%';
+    }
+
+    if (data.defeated) {
+      setTimeout(() => {
+        showAlert('🏆 Boss vaincu ! Récompenses distribuées !', 'success');
+        setTimeout(() => location.reload(), 2000);
+      }, 800);
+    } else {
+      // Recharger les données après animation
+      setTimeout(() => loadBossData(), 900);
+    }
+  } catch(e) {
+    alert(e.message);
+    if (btn) btn.disabled = false;
+  }
+}
+
+function playAttackAnimation(dmg) {
+  // Shake le boss
+  const img = document.getElementById("bossImg");
+  const wrap = document.getElementById("bossImgWrap");
+  const flash = document.getElementById("attackFlash");
+
+  if (wrap) {
+    wrap.style.animation = 'none';
+    void wrap.offsetWidth;
+    wrap.style.animation = 'attackShake .5s ease';
+    setTimeout(() => { wrap.style.animation = ''; }, 500);
+  }
+
+  if (flash) {
+    flash.style.animation = 'none';
+    void flash.offsetWidth;
+    flash.style.opacity = '1';
+    flash.style.animation = 'attackFlash .6s ease forwards';
+    setTimeout(() => { flash.style.opacity = '0'; }, 600);
+  }
+
+  // Popup dégâts
+  if (wrap) {
+    const popup = document.createElement('div');
+    popup.className = 'dmg-popup';
+    popup.textContent = `-${fmtNum(dmg)}`;
+    wrap.appendChild(popup);
+    setTimeout(() => popup.remove(), 900);
+  }
+
+  // Vider le stock dans l'UI
+  const stockEl = document.getElementById("stockVal");
+  if (stockEl) stockEl.textContent = '0';
+  const attackBtn = document.getElementById("attackBtn");
+  if (attackBtn) attackBtn.textContent = '⚔️ Ouvre des cartes...';
+}
+
+function showAlert(msg, type='success') {
+  const div = document.createElement('div');
+  div.className = `alert alert-${type}`;
+  div.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;min-width:300px;text-align:center';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 3000);
 }
 
 // ===========================
@@ -805,6 +1062,15 @@ async function sendChat() {
     await api("/api/clan/chat", { method:"POST", body: JSON.stringify({ message: msg }) });
     await loadChat();
   } catch(e) { alert(e.message); }
+}
+
+let _bossPolling = null;
+function startBossPolling() {
+  stopBossPolling();
+  _bossPolling = setInterval(() => { if (currentTab === 'boss') loadBossData(); }, 15000);
+}
+function stopBossPolling() {
+  if (_bossPolling) { clearInterval(_bossPolling); _bossPolling = null; }
 }
 
 function startChatPolling() {
@@ -971,7 +1237,10 @@ init().finally(() => {
 
 // Load boss data on start if clan exists
 setTimeout(() => {
-  if (document.getElementById("bossLeaderboard")) loadBossData();
+  if (document.getElementById("bossLeaderboard") || document.getElementById("bossChoices") || document.getElementById("raidAlert")) {
+    loadBossData();
+    startBossPolling();
+  }
 }, 500);
 </script>
 </body>
