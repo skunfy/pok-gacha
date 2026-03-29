@@ -1744,14 +1744,14 @@ async function checkClanLevelUp(clanId) {
 // =========================
 
 const CLAN_MISSIONS_DEF = [
-  { key: "open_cards",   label: "Ouvrir des cartes",         goal: 5,  xpClan: 50,  bankReward: 100 },
-  { key: "sell_cards",   label: "Vendre des cartes",         goal: 10, xpClan: 40,  bankReward: 80  },
-  { key: "buy_market",   label: "Acheter au marché",         goal: 3,  xpClan: 30,  bankReward: 60  },
-  { key: "get_mint",     label: "Obtenir une carte MINT",    goal: 1,  xpClan: 100, bankReward: 200 },
-  { key: "get_grade10",  label: "Obtenir un grade 10",       goal: 1,  xpClan: 80,  bankReward: 150 },
-  { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 10,  bankReward: 20  },
-  { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 20,  bankReward: 50  },
-  { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 500, bankReward: 1000 },
+  { key: "open_cards",   label: "Ouvrir des cartes",         goal: 50, xpClan: 50,  bankReward: 50  },
+  { key: "sell_cards",   label: "Vendre des cartes",         goal: 10, xpClan: 40,  bankReward: 40  },
+  { key: "buy_market",   label: "Acheter au marché",         goal: 3,  xpClan: 30,  bankReward: 30  },
+  { key: "get_mint",     label: "Obtenir une carte MINT",    goal: 1,  xpClan: 100, bankReward: 100 },
+  { key: "get_grade10",  label: "Obtenir un grade 10",       goal: 1,  xpClan: 80,  bankReward: 75  },
+  { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 10,  bankReward: 10  },
+  { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 20,  bankReward: 25  },
+  { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 500, bankReward: 500 },
 ];
 
 function todayKey() {
