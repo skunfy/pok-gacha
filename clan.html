@@ -251,18 +251,27 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .no-clan-wrap p{opacity:.7;margin:0 0 24px}
 
 /* RAID */
-.raid-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
-@media(max-width:600px){.raid-select-grid{grid-template-columns:1fr}}
+.raid-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:8px}
+@media(max-width:800px){.raid-select-grid{grid-template-columns:1fr}}
 .boss-choice{
   border:2px solid rgba(255,255,255,.12);border-radius:16px;
-  padding:16px;cursor:pointer;text-align:center;
+  padding:16px;text-align:center;
   background:rgba(255,255,255,.04);
   transition:border-color .2s,background .2s,transform .15s;
 }
-.boss-choice:hover{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08);transform:translateY(-2px)}
+.boss-choice.available:hover{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08);transform:translateY(-2px)}
+.boss-choice.locked{opacity:.5;cursor:not-allowed}
 .boss-choice img{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:10px}
 .boss-choice .boss-choice-name{font-size:16px;font-weight:900;margin-bottom:4px}
 .boss-choice .boss-choice-stats{font-size:12px;opacity:.7;line-height:1.6}
+.diff-btns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+.diff-btn{flex:1;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid;transition:all .15s}
+.diff-btn.easy{border-color:rgba(100,255,150,.4);background:rgba(100,255,150,.08);color:#64ff96}
+.diff-btn.easy:hover{background:rgba(100,255,150,.18)}
+.diff-btn.hard{border-color:rgba(255,80,80,.4);background:rgba(255,80,80,.08);color:#ff5050}
+.diff-btn.hard:hover{background:rgba(255,80,80,.18)}
+.diff-btn:disabled{opacity:.4;cursor:not-allowed}
+.cooldown-badge{margin-top:8px;font-size:11px;color:#ffd84d;opacity:.8}
 
 .stock-bar{
   background:rgba(255,255,255,.06);border:1px solid rgba(127,92,255,.3);
@@ -782,11 +791,10 @@ function renderMyClan(data) {
 
 function renderBossTab(boss, clan) {
   if (!boss) {
-    // Pas de raid actif → afficher sélection de boss
     return `
       <div class="card">
         <div class="card-title">⚔️ Lancer un Raid</div>
-        <p style="font-size:13px;opacity:.7;margin:0 0 16px">Choisis un boss à affronter. 1 raid par jour. Durée : 4h.</p>
+        <p style="font-size:13px;opacity:.7;margin:0 0 16px">Choisis un boss et une difficulté. Cooldowns : Arakas 1j · Myntalis 3j · Xenos 7j.</p>
         <div class="raid-select-grid" id="bossChoices">
           <div class="loading">Chargement des boss...</div>
         </div>
@@ -797,29 +805,33 @@ function renderBossTab(boss, clan) {
 
   const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
   const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
+  const bossKey = boss.boss_key || 'arakas_easy';
+  const imgSrc = bossKey.startsWith('xenos') ? '/Boss3.gif' : bossKey.startsWith('myntalis') ? '/Boss2.gif' : '/Boss1.gif';
+  const diffLabel = bossKey.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
 
   return `
     <div class="boss-card">
-      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px">
-        <div class="boss-img-wrap" id="bossImgWrap" style="text-align:center;margin:14px 0">
-          ${boss.image || boss.boss_key ? `<img src="${esc(boss.image || (boss.boss_key==='myntalis'?'/Boss2.gif':'/Boss1.gif'))}" id="bossImg" alt="${esc(boss.name)}"
-            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
-            onerror="this.style.display='none'">` : `<img src="/Boss1.gif" id="bossImg" alt="${esc(boss.name)}"
-            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
-            onerror="this.style.display='none'">`}
-          <div class="attack-flash" id="attackFlash"></div>
-        </div>
-        <div style="flex:1;min-width:180px">
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
           <div class="boss-name">👹 ${esc(boss.name)}</div>
-          <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
-          <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
-          <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
-          <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
-          <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+          <span style="font-size:12px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800">${diffLabel}</span>
+        </div>
+        <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
+        <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
+        <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+      </div>
+
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="boss-img-wrap" id="bossImgWrap" style="display:inline-block">
+          <img src="${imgSrc}" id="bossImg" alt="${esc(boss.name)}"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
+            onerror="this.style.display='none'">
+          <div class="attack-flash" id="attackFlash"></div>
         </div>
       </div>
 
-      <!-- Stock de dégâts -->
       <div class="stock-bar">
         <div>
           <div class="stock-label">⚔️ Dégâts stockés</div>
@@ -828,7 +840,7 @@ function renderBossTab(boss, clan) {
         <div style="flex:1;font-size:12px;opacity:.6">
           Ouvre des cartes pour accumuler des dégâts,<br>puis frappe le boss !
         </div>
-        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:120px">
+        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:130px">
           ⚔️ ATTAQUER !
         </button>
       </div>
@@ -930,22 +942,52 @@ async function loadBossData() {
 
       const canStart = ['leader','officer'].includes(window._clanData?.myRole);
       const bosses = data.availableBosses || [];
+      const cooldowns = data.cooldowns || {};
 
-      choicesEl.innerHTML = bosses.map(b => `
-        <div class="boss-choice" onclick="${canStart ? `startRaid('${b.key}')` : 'void(0)'}">
-          <img src="${esc(b.image)}" alt="${esc(b.name)}" onerror="this.style.display='none'">
-          <div class="boss-choice-name">👹 ${esc(b.name)}</div>
-          <div class="boss-choice-stats">
-            ❤️ ${fmtNum(b.hp_max)} PV<br>
-            🏆 ${fmtNum(b.reward)} dollax<br>
-            ⏱️ 4h pour le vaincre
+      // Grouper par boss (arakas, myntalis, xenos)
+      const groups = {};
+      for (const b of bosses) {
+        if (!groups[b.bossKey]) groups[b.bossKey] = { easy: null, hard: null };
+        groups[b.bossKey][b.difficulty] = b;
+      }
+
+      const cooldownLabel = { arakas: '1 jour', myntalis: '3 jours', xenos: '7 jours' };
+      const bossOrder = ['arakas', 'myntalis', 'xenos'];
+
+      choicesEl.innerHTML = bossOrder.map(bk => {
+        const easy = groups[bk]?.easy;
+        const hard = groups[bk]?.hard;
+        if (!easy) return '';
+        const cd = cooldowns[bk] || { available: true, daysLeft: 0 };
+        const locked = !cd.available;
+
+        return `
+          <div class="boss-choice ${locked ? 'locked' : 'available'}">
+            <img src="${esc(easy.image)}" alt="${esc(easy.name)}" style="mix-blend-mode:screen" onerror="this.style.display='none'">
+            <div class="boss-choice-name">👹 ${esc(easy.name)}</div>
+            <div class="boss-choice-stats">
+              ❤️ ${fmtNum(easy.hp_max)} PV<br>
+              🕒 Cooldown : ${cooldownLabel[bk]||'?'}
+            </div>
+            ${locked
+              ? `<div class="cooldown-badge">⏳ Disponible dans ${cd.daysLeft} jour${cd.daysLeft>1?'s':''}</div>`
+              : canStart ? `
+                <div style="margin-top:8px;font-size:11px;opacity:.6;margin-bottom:6px">Choisir la difficulté :</div>
+                <div class="diff-btns">
+                  <button class="diff-btn easy" onclick="startRaid('${easy.key}')">
+                    🟢 Facile<br>
+                    <span style="font-size:10px;opacity:.8">${fmtNum(easy.reward)}💰 · ${easy.duration>=4*3600000?'4h':'1h'}</span>
+                  </button>
+                  ${hard ? `<button class="diff-btn hard" onclick="startRaid('${hard.key}')">
+                    🔴 Hardcore<br>
+                    <span style="font-size:10px;opacity:.8">${fmtNum(hard.reward)}💰 · ${hard.duration>=4*3600000?'4h':'1h'}</span>
+                  </button>` : ''}
+                </div>`
+              : `<div style="font-size:11px;opacity:.5;margin-top:8px">Meneur/Officier seulement</div>`
+            }
           </div>
-          ${canStart
-            ? `<button class="btn btn-danger btn-sm" style="margin-top:10px;width:100%" onclick="event.stopPropagation();startRaid('${b.key}')">Lancer ce raid</button>`
-            : `<div style="font-size:11px;opacity:.5;margin-top:8px">Meneur/Officier seulement</div>`
-          }
-        </div>
-      `).join('');
+        `;
+      }).join('');
       return;
     }
 

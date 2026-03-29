@@ -744,7 +744,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS boss_key TEXT DEFAULT 'arakas'`);
   await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS expires_at BIGINT DEFAULT NULL`);
   await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS failed INTEGER NOT NULL DEFAULT 0`);
-  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_date TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_arakas TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_myntalis TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_xenos TEXT DEFAULT NULL`);
   // Stock de dégâts par membre (persist en DB)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS clan_raid_stock (
@@ -1788,25 +1790,88 @@ function dmgForCard(grade, mint) {
   return mint ? base * 2 : base;
 }
 
-// Définition fixe des boss disponibles
+// Définition fixe des boss disponibles (3 boss × 2 difficultés)
 const RAID_BOSSES = {
-  arakas: {
-    key: 'arakas',
-    name: 'Arakas',
+  arakas_easy: {
+    key: 'arakas_easy', bossKey: 'arakas',
+    name: 'Arakas', difficulty: 'easy', diffLabel: '🟢 Facile',
     image: '/Boss1.gif',
     hp_max: 100000,
-    reward: 5000,
-    duration: 4 * 60 * 60 * 1000, // 4h
+    reward: 5000, xpReward: 1000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 1,
   },
-  myntalis: {
-    key: 'myntalis',
-    name: 'Myntalis',
+  arakas_hard: {
+    key: 'arakas_hard', bossKey: 'arakas',
+    name: 'Arakas', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss1.gif',
+    hp_max: 100000,
+    reward: 10000, xpReward: 2000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 1,
+  },
+  myntalis_easy: {
+    key: 'myntalis_easy', bossKey: 'myntalis',
+    name: 'Myntalis', difficulty: 'easy', diffLabel: '🟢 Facile',
     image: '/Boss2.gif',
     hp_max: 500000,
-    reward: 20000,
-    duration: 4 * 60 * 60 * 1000, // 4h
+    reward: 20000, xpReward: 2000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 3,
+  },
+  myntalis_hard: {
+    key: 'myntalis_hard', bossKey: 'myntalis',
+    name: 'Myntalis', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss2.gif',
+    hp_max: 500000,
+    reward: 50000, xpReward: 4000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 3,
+  },
+  xenos_easy: {
+    key: 'xenos_easy', bossKey: 'xenos',
+    name: 'Xenos', difficulty: 'easy', diffLabel: '🟢 Facile',
+    image: '/Boss3.gif',
+    hp_max: 2000000,
+    reward: 50000, xpReward: 5000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 7,
+  },
+  xenos_hard: {
+    key: 'xenos_hard', bossKey: 'xenos',
+    name: 'Xenos', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss3.gif',
+    hp_max: 2000000,
+    reward: 100000, xpReward: 10000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 7,
   },
 };
+
+// Retourne la date UTC courante
+function todayUTC() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+// Vérifie si le cooldown d'un boss est écoulé
+async function checkBossCooldown(clanId, bossKey, cooldownDays) {
+  const col = `last_raid_${bossKey}`;
+  const cQ = await pool.query(`SELECT ${col} FROM clans WHERE id=$1`, [clanId]);
+  const lastDate = cQ.rows[0]?.[col];
+  if (!lastDate) return true; // jamais fait
+
+  const last = new Date(lastDate + 'T00:00:00Z');
+  const now = new Date();
+  const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+  return diffDays >= cooldownDays;
+}
+
+// Marque un boss comme lancé aujourd'hui
+async function markBossCooldown(clanId, bossKey) {
+  const col = `last_raid_${bossKey}`;
+  await pool.query(`UPDATE clans SET ${col}=$1 WHERE id=$2`, [todayUTC(), clanId]);
+}
 
 async function getMyMembership(userId) {
   const r = await pool.query(`SELECT cm.*, c.id as cid FROM clan_members cm JOIN clans c ON c.id=cm.clan_id WHERE cm.user_id=$1`, [userId]);
@@ -4179,7 +4244,23 @@ app.get("/api/clan/boss", auth, async (req, res) => {
   await pool.query(`UPDATE clan_boss SET failed=1 WHERE clan_id=$1 AND defeated=0 AND failed=0 AND expires_at IS NOT NULL AND expires_at < $2`, [m.clan_id, now]);
 
   const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
-  if (!bQ.rows.length) return res.json({ boss: null, availableBosses: Object.values(RAID_BOSSES) });
+  if (!bQ.rows.length) {
+    // Calculer les cooldowns par boss
+    const clanQ = await pool.query(`SELECT last_raid_arakas, last_raid_myntalis, last_raid_xenos FROM clans WHERE id=$1`, [m.clan_id]);
+    const clan = clanQ.rows[0] || {};
+    const bossGroups = ['arakas','myntalis','xenos'];
+    const cooldowns = {};
+    for (const bk of bossGroups) {
+      const lastCol = clan[`last_raid_${bk}`];
+      if (!lastCol) { cooldowns[bk] = { available: true, daysLeft: 0 }; continue; }
+      const last = new Date(lastCol + 'T00:00:00Z');
+      const diffDays = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
+      const def = Object.values(RAID_BOSSES).find(d => d.bossKey === bk && d.difficulty === 'easy');
+      const cooldown = def?.cooldownDays || 1;
+      cooldowns[bk] = { available: diffDays >= cooldown, daysLeft: Math.max(0, cooldown - diffDays) };
+    }
+    return res.json({ boss: null, availableBosses: Object.values(RAID_BOSSES), cooldowns });
+  }
 
   const boss = bQ.rows[0];
   // Fallback image : utilise boss_key si dispo, sinon Boss1.gif par défaut
@@ -4228,27 +4309,30 @@ app.post("/api/clan/raid/start", auth, async (req, res) => {
   const active = await pool.query(`SELECT id FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0`, [m.clan_id]);
   if (active.rows.length) return res.status(400).json({ error: "Un raid est déjà en cours !" });
 
-  // Vérif: 1 raid par jour (UTC)
-  const today = new Date().toISOString().slice(0, 10);
-  const cQ = await pool.query(`SELECT last_raid_date FROM clans WHERE id=$1`, [m.clan_id]);
-  if (cQ.rows[0]?.last_raid_date === today) return res.status(400).json({ error: "Un raid a déjà été lancé aujourd'hui. Revenez demain !" });
+  // Vérif cooldown par boss (arakas=1j, myntalis=3j, xenos=7j)
+  const canStart = await checkBossCooldown(m.clan_id, def.bossKey, def.cooldownDays);
+  if (!canStart) {
+    const cooldownMsg = def.cooldownDays === 1 ? 'demain' : def.cooldownDays === 3 ? 'dans 3 jours' : 'dans 7 jours';
+    return res.status(400).json({ error: `Ce boss est en cooldown. Revenez ${cooldownMsg} !` });
+  }
 
   const now = Date.now();
   const expiresAt = now + def.duration;
+  const durationLabel = def.duration >= 4 * 3600000 ? '4h' : '1h';
 
   const newBoss = await pool.query(`
     INSERT INTO clan_boss(clan_id, name, boss_key, hp_max, hp_current, reward, started_at, expires_at)
     VALUES($1,$2,$3,$4,$4,$5,$6,$7) RETURNING *
   `, [m.clan_id, def.name, def.key, def.hp_max, def.reward, now, expiresAt]);
 
-  await pool.query(`UPDATE clans SET last_raid_date=$1 WHERE id=$2`, [today, m.clan_id]);
+  await markBossCooldown(m.clan_id, def.bossKey);
 
   // Notifier les membres
   const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1 AND user_id!=$2`, [m.clan_id, req.user.id]);
   for (const mbr of members.rows) {
     await pool.query(
       `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Raid lancé !',$2,NULL,0,$3)`,
-      [mbr.user_id, `Un raid contre ${def.name} vient de commencer ! 4h pour le vaincre.`, now]
+      [mbr.user_id, `Raid ${def.diffLabel} contre ${def.name} lancé ! ${durationLabel} pour le vaincre.`, now]
     );
   }
 
@@ -4317,7 +4401,7 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
           );
         }
       }
-      await client.query(`UPDATE clans SET xp=xp+1000 WHERE id=$1`, [m.clan_id]);
+      await client.query(`UPDATE clans SET xp=xp+$1 WHERE id=$2`, [def.xpReward || 1000, m.clan_id]);
       defeated = true;
     }
 
