@@ -728,6 +728,8 @@ async function initDb() {
     )
   `);
 
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -3740,23 +3742,36 @@ app.post("/api/clan/create", auth, async (req, res) => {
   const existing = await getMyMembership(req.user.id);
   if (existing) return res.status(400).json({ error: "Tu es déjà dans un clan" });
 
-  const name = String(req.body?.name || "").trim().slice(0, 30);
-  const tag  = String(req.body?.tag  || "").trim().toUpperCase().slice(0, 5);
-  const desc = String(req.body?.description || "").trim().slice(0, 200);
+  const name  = String(req.body?.name || "").trim().slice(0, 30);
+  const tag   = String(req.body?.tag  || "").trim().toUpperCase().slice(0, 5);
+  const desc  = String(req.body?.description || "").trim().slice(0, 200);
   const color = String(req.body?.banner_color || "#7f5cff").trim();
+  const logo  = String(req.body?.logo || "").trim().slice(0, 500);
 
   if (!name || !tag) return res.status(400).json({ error: "Nom et tag requis" });
+
+  const CLAN_COST = 1000;
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    // Vérifier et déduire les 1000 dollax
+    const moneyQ = await client.query(
+      `UPDATE users SET money = money - $1 WHERE id=$2 AND money >= $1 RETURNING money`,
+      [CLAN_COST, req.user.id]
+    );
+    if (!moneyQ.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de dollax (1 000 requis)" });
+    }
+
     const cQ = await client.query(`
-      INSERT INTO clans(name,tag,description,banner_color,leader_id,xp,bank,createdAt)
-      VALUES($1,$2,$3,$4,$5,0,0,$6) RETURNING *
-    `, [name, tag, desc, color, req.user.id, Date.now()]);
+      INSERT INTO clans(name,tag,description,logo,banner_color,leader_id,xp,bank,createdAt)
+      VALUES($1,$2,$3,$4,$5,$6,0,0,$7) RETURNING *
+    `, [name, tag, desc, logo, color, req.user.id, Date.now()]);
     const clan = cQ.rows[0];
     await client.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'leader',$3)`, [req.user.id, clan.id, Date.now()]);
-    // Spawn premier boss
     await client.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,50000,50000,5000,$3)`,
       [clan.id, randomBossName(), Date.now()]);
     await client.query("COMMIT");

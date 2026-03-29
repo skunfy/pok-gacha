@@ -366,8 +366,18 @@ function renderNoClan() {
           <textarea id="cDesc" maxlength="200" placeholder="Présente ton clan..."></textarea>
         </div>
         <div style="margin-top:12px">
+          <label>Image du clan (URL)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input id="cLogo" placeholder="https://..." oninput="previewLogo(this.value)"/>
+            <div id="logoPreview" style="width:48px;height:48px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);flex-shrink:0;background-size:cover;background-position:center;"></div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
           <label>Couleur du clan</label>
           <div class="color-options" id="colorPicker"></div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:rgba(255,216,77,.08);border:1px solid rgba(255,216,77,.25);border-radius:10px;font-size:13px;">
+          💰 Créer un clan coûte <b style="color:var(--gold)">1 000 dollax</b>
         </div>
         <div style="margin-top:16px;display:flex;gap:10px">
           <button class="btn" onclick="createClan()">Créer le clan</button>
@@ -429,19 +439,26 @@ async function joinClan(id) {
 }
 
 async function createClan() {
-  const name = document.getElementById("cName").value.trim();
-  const tag  = document.getElementById("cTag").value.trim().toUpperCase();
-  const desc = document.getElementById("cDesc").value.trim();
+  const name  = document.getElementById("cName").value.trim();
+  const tag   = document.getElementById("cTag").value.trim().toUpperCase();
+  const desc  = document.getElementById("cDesc").value.trim();
+  const logo  = document.getElementById("cLogo").value.trim();
   const alertEl = document.getElementById("createAlert");
 
   if (!name || !tag) { alertEl.innerHTML = '<div class="alert alert-error">Nom et tag requis.</div>'; return; }
 
   try {
-    await api("/api/clan/create", { method:"POST", body: JSON.stringify({ name, tag, description: desc, banner_color: selectedColor }) });
+    await api("/api/clan/create", { method:"POST", body: JSON.stringify({ name, tag, description: desc, logo, banner_color: selectedColor }) });
     location.reload();
   } catch(e) {
     alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
   }
+}
+
+function previewLogo(url) {
+  const el = document.getElementById("logoPreview");
+  if (!el) return;
+  el.style.backgroundImage = url ? `url('${url}')` : '';
 }
 
 // ===========================
