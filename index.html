@@ -1854,7 +1854,7 @@
 
     <div class="hint">
       <img class="moneyIcon" src="dollax.png" alt="Dollax">
-      +10 dollax toutes les 15 min (serveur) • OPEN coûte 5 • Clique la carte pour zoom
+      <span id="payRateHint">+10 dollax toutes les 15 min (serveur)</span> • OPEN coûte 5 • Clique la carte pour zoom
     </div>
 
     <!-- ✅ NEW: Carousel Derniers pulls + bouton Historique -->
@@ -2353,6 +2353,8 @@
     if (moneyEl) moneyEl.textContent = String(me.money);
     if (btnOpen) btnOpen.disabled = (me.money < COST_ONE);
     if (btnOpen5) btnOpen5.disabled = (me.money < 25);
+    const payRateHint = document.getElementById("payRateHint");
+    if (payRateHint && me.payRate) payRateHint.textContent = `+${me.payRate} dollax toutes les 15 min (serveur)`;
   }
 
   function tierFromGrade(grade){

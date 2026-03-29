@@ -1965,6 +1965,9 @@ app.get("/api/me", auth, async (req, res) => {
 
   const s = statsQ.rows[0] || {};
 
+  const clanBonus = await getClanBonusForUser(req.user.id).catch(() => null);
+  const payRate = PAY_AMOUNT + (clanBonus?.dollaxBonus || 0);
+
   res.json({
     name: u?.name,
     money: u?.money || 0,
@@ -1980,6 +1983,7 @@ app.get("/api/me", auth, async (req, res) => {
     avatar: u?.avatar || "",
     tickets: Number(u?.tickets || 0),
     dollax:  Number(u?.money  || 0),
+    payRate,
   });
 });
 app.post("/api/open", auth, async (req, res) => {
@@ -4224,8 +4228,10 @@ app.post("/api/clan/raid/start", auth, async (req, res) => {
   // Notifier les membres
   const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1 AND user_id!=$2`, [m.clan_id, req.user.id]);
   for (const mbr of members.rows) {
-    await pool.query(`INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Raid lancé !','Un raid contre ${def.name} vient de commencer ! 4h pour le vaincre.',NULL,0,$2)`,
-      [mbr.user_id, now]);
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Raid lancé !',$2,NULL,0,$3)`,
+      [mbr.user_id, `Un raid contre ${def.name} vient de commencer ! 4h pour le vaincre.`, now]
+    );
   }
 
   res.json({ ok: true, boss: newBoss.rows[0] });
