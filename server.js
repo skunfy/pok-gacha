@@ -756,6 +756,24 @@ async function initDb() {
     )
   `);
 
+  // Tables pour le système de cartes de raid
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_raid_cards (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      card_key TEXT NOT NULL,
+      obtained_at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_raid_deck (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      slot INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 5),
+      card_key TEXT NOT NULL,
+      PRIMARY KEY(user_id, slot)
+    )
+  `);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -4263,13 +4281,19 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
     const stock = Number(stockQ.rows[0]?.stock || 0);
     if (stock <= 0) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Pas de dégâts stockés !" }); }
 
+    // Appliquer les bonus du deck
+    const hpPct = Math.round((boss.hp_current / boss.hp_max) * 100);
+    const deckBonus = await calcDeckBonus(req.user.id, hpPct, m.clan_id).catch(() => ({ dmg_bonus:0, crit:0, first_attack:0 }));
+    const isFirstAttack = stock === Number(stockQ.rows[0]?.stock || 0); // toujours vrai ici = première frappe
+    const { dmg: finalDmg, crit: isCrit } = applyDeckToStock(stock, deckBonus, true);
+
     // Vider le stock
     await client.query(`UPDATE clan_raid_stock SET stock=0 WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]);
 
-    const newHp = Math.max(0, boss.hp_current - stock);
+    const newHp = Math.max(0, boss.hp_current - finalDmg);
     await client.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
-    await client.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, req.user.id, stock, Date.now()]);
-    await client.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [stock, req.user.id]);
+    await client.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, req.user.id, finalDmg, Date.now()]);
+    await client.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [finalDmg, req.user.id]);
 
     let defeated = false;
     const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
@@ -4301,18 +4325,18 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
 
     if (defeated) {
       await checkClanLevelUp(m.clan_id).catch(() => {});
-      // Mission "vaincre le boss" pour tous les contributeurs
       const contribs = await pool.query(`SELECT DISTINCT user_id FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
       for (const c of contribs.rows) {
         await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
+        // Drop de cartes pour chaque contributeur
+        await dropRaidCards(c.user_id).catch(() => {});
       }
     }
 
-    // Stock restant après attaque
     const newBossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
     const dmgQ = await pool.query(`SELECT u.name, SUM(d.damage) as total FROM clan_boss_damage d JOIN users u ON u.id=d.user_id WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10`, [boss.id]);
 
-    res.json({ ok: true, damage: stock, defeated, newHp, boss: newBossQ.rows[0] || null, leaderboard: dmgQ.rows });
+    res.json({ ok: true, damage: finalDmg, rawStock: stock, isCrit, defeated, newHp, boss: newBossQ.rows[0] || null, leaderboard: dmgQ.rows });
   } catch(e) {
     await client.query("ROLLBACK");
     console.error("Raid attack error:", e);
@@ -4448,6 +4472,255 @@ app.post("/api/clan/talents/upgrade", auth, async (req, res) => {
     await client.query("ROLLBACK");
     res.status(500).json({ error: "Erreur serveur" });
   } finally { client.release(); }
+});
+
+// =========================
+// CARTES DE RAID
+// =========================
+
+const DECK_R2 = "https://pub-027debf53a354fc0ba5821eb8ebb73c9.r2.dev";
+
+const RAID_CARDS = {
+  // ⚔️ SLAYER
+  slayer_1:  { key:'slayer_1',  name:'Lame Brute',          type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_1.png`,  dmg_bonus:5,  crit:0,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_2:  { key:'slayer_2',  name:'Rage Primaire',        type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_2.png`,  dmg_bonus:4,  crit:3,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_3:  { key:'slayer_3',  name:'Frappe Lourde',        type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_3.png`,  dmg_bonus:7,  crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_4:  { key:'slayer_4',  name:'Instinct Guerrier',    type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_4.png`,  dmg_bonus:3,  crit:0,  first_attack:4,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_5:  { key:'slayer_5',  name:'Exécuteur',            type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_5.png`,  dmg_bonus:10, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_6:  { key:'slayer_6',  name:'Brise-Armure',         type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_6.png`,  dmg_bonus:8,  crit:0,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:'slayer_dmg_3' },
+  slayer_7:  { key:'slayer_7',  name:'Sang-Froid',           type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_7.png`,  dmg_bonus:6,  crit:6,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_8:  { key:'slayer_8',  name:'Cyclone de Lames',     type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_8.png`,  dmg_bonus:0,  crit:0,  first_attack:12, hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_9:  { key:'slayer_9',  name:'Déchireur',            type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_9.png`,  dmg_bonus:15, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_10: { key:'slayer_10', name:'Fureur Sauvage',       type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_10.png`, dmg_bonus:10, crit:8,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_11: { key:'slayer_11', name:'Lame du Néant',        type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_11.png`, dmg_bonus:6,  crit:0,  first_attack:15, hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_12: { key:'slayer_12', name:'Dévastateur Éternel',  type:'slayer',  rarity:'legendary', image:`${DECK_R2}/slayer_12.png`, dmg_bonus:18, crit:24, first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+
+  // 🛡️ SOUTIEN
+  soutien_1:  { key:'soutien_1',  name:'Bouclier Fragile',      type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_1.png`,  dmg_bonus:0,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'ally_dmg_2' },
+  soutien_2:  { key:'soutien_2',  name:'Cri de Guerre',          type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_2.png`,  dmg_bonus:1.5, crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_3:  { key:'soutien_3',  name:'Présence Apaisante',     type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_3.png`,  dmg_bonus:0,   crit:1.5, first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_crit' },
+  soutien_4:  { key:'soutien_4',  name:'Aura Protectrice',       type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_4.png`,  dmg_bonus:0,   crit:0,   first_attack:2.5, hp_threshold:null, hp_above:false, team_synergy:'clan_first_attack' },
+  soutien_5:  { key:'soutien_5',  name:'Stratège',               type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_5.png`,  dmg_bonus:3,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_6:  { key:'soutien_6',  name:'Amplificateur',          type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_6.png`,  dmg_bonus:0,   crit:2.5, first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_crit_2soutien' },
+  soutien_7:  { key:'soutien_7',  name:'Bannière de Gloire',     type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_7.png`,  dmg_bonus:4,   crit:0,   first_attack:0,   hp_threshold:50,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+  soutien_8:  { key:'soutien_8',  name:'Écho de Puissance',      type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_8.png`,  dmg_bonus:2.5, crit:0,   first_attack:2.5, hp_threshold:null, hp_above:false, team_synergy:'clan_dmg_and_first' },
+  soutien_9:  { key:'soutien_9',  name:'Grand Stratège',         type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_9.png`,  dmg_bonus:5,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_10: { key:'soutien_10', name:'Aura de Domination',     type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_10.png`, dmg_bonus:2.5, crit:3.5, first_attack:0,   hp_threshold:30,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+  soutien_11: { key:'soutien_11', name:'Lien Sacré',             type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_11.png`, dmg_bonus:4,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg_slayer_assassin' },
+  soutien_12: { key:'soutien_12', name:"Gardien de l'Alliance",  type:'soutien', rarity:'legendary', image:`${DECK_R2}/soutien_12.png`, dmg_bonus:6,   crit:2.5, first_attack:0,   hp_threshold:20,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+
+  // 🗡️ ASSASSIN
+  assassin_1:  { key:'assassin_1',  name:'Frappe Éclair',        type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_1.png`,  dmg_bonus:0,  crit:0,  first_attack:8,  hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_2:  { key:'assassin_2',  name:'Ombre Furtive',        type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_2.png`,  dmg_bonus:4,  crit:0,  first_attack:4,  hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_3:  { key:'assassin_3',  name:'Lame Empoisonnée',     type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_3.png`,  dmg_bonus:4,  crit:3,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_4:  { key:'assassin_4',  name:'Instinct Chasseur',    type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_4.png`,  dmg_bonus:6,  crit:0,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_5:  { key:'assassin_5',  name:'Frappe Mortelle',      type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_5.png`,  dmg_bonus:0,  crit:6,  first_attack:10, hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_6:  { key:'assassin_6',  name:'Danse des Lames',      type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_6.png`,  dmg_bonus:8,  crit:0,  first_attack:8,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_7:  { key:'assassin_7',  name:'Ombre Tranchante',     type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_7.png`,  dmg_bonus:0,  crit:12, first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:'crit_if_soutien' },
+  assassin_8:  { key:'assassin_8',  name:'Venin Corrosif',       type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_8.png`,  dmg_bonus:10, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_9:  { key:'assassin_9',  name:'Exécution Parfaite',   type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_9.png`,  dmg_bonus:0,  crit:8,  first_attack:15, hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_10: { key:'assassin_10', name:'Lame Fantôme',         type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_10.png`, dmg_bonus:12, crit:6,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_11: { key:'assassin_11', name:'Rupture',              type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_11.png`, dmg_bonus:10, crit:0,  first_attack:10, hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_12: { key:'assassin_12', name:'Ombre de la Mort',     type:'assassin', rarity:'legendary', image:`${DECK_R2}/assassin_12.png`, dmg_bonus:15, crit:12, first_attack:20, hp_threshold:50,   hp_above:false, team_synergy:null },
+};
+
+// Calcul des bonus du deck d'un joueur + synergies clan
+async function calcDeckBonus(userId, bossHpPct, clanId) {
+  const deckQ = await pool.query(
+    `SELECT card_key FROM player_raid_deck WHERE user_id=$1 ORDER BY slot`,
+    [userId]
+  );
+  const cards = deckQ.rows.map(r => RAID_CARDS[r.card_key]).filter(Boolean);
+
+  // Récupérer les decks des autres membres du clan
+  const allDecksQ = await pool.query(`
+    SELECT prd.card_key FROM player_raid_deck prd
+    JOIN clan_members cm ON cm.user_id = prd.user_id
+    WHERE cm.clan_id=$1 AND prd.user_id!=$2
+  `, [clanId, userId]);
+  const allyClanCards = allDecksQ.rows.map(r => RAID_CARDS[r.card_key]).filter(Boolean);
+  const allClanCards = [...cards, ...allyClanCards];
+
+  // Déterminer les types présents dans le clan
+  const clanTypes = new Set(allClanCards.map(c => c.type));
+  const soutienCount = allClanCards.filter(c => c.type === 'soutien').length;
+  const hasSoutienInClan = clanTypes.has('soutien');
+
+  let dmg_bonus = 0, crit = 0, first_attack = 0;
+
+  for (const card of cards) {
+    // Vérif condition HP
+    let conditionMet = true;
+    if (card.hp_threshold !== null) {
+      if (card.hp_above && bossHpPct <= card.hp_threshold) conditionMet = false;
+      if (!card.hp_above && bossHpPct >= card.hp_threshold) conditionMet = false;
+    }
+    if (!conditionMet) continue;
+
+    dmg_bonus += card.dmg_bonus || 0;
+    crit += card.crit || 0;
+    first_attack += card.first_attack || 0;
+  }
+
+  // Bonus des cartes Soutien des alliés (effets clan)
+  for (const card of allyClanCards) {
+    if (card.type !== 'soutien') continue;
+
+    let conditionMet = true;
+    if (card.hp_threshold !== null) {
+      if (card.hp_above && bossHpPct <= card.hp_threshold) conditionMet = false;
+      if (!card.hp_above && bossHpPct >= card.hp_threshold) conditionMet = false;
+    }
+    if (!conditionMet) continue;
+
+    switch(card.team_synergy) {
+      case 'clan_dmg':        dmg_bonus += card.dmg_bonus; break;
+      case 'clan_crit':       crit += card.crit; break;
+      case 'clan_first_attack': first_attack += card.first_attack; break;
+      case 'clan_dmg_low_hp': dmg_bonus += card.dmg_bonus; break;
+      case 'clan_dmg_and_first': dmg_bonus += card.dmg_bonus; first_attack += card.first_attack; break;
+      case 'ally_dmg_2':      dmg_bonus += 2; break;
+      case 'clan_dmg_slayer_assassin':
+        if (clanTypes.has('slayer') && clanTypes.has('assassin')) dmg_bonus += card.dmg_bonus;
+        break;
+      case 'clan_crit_2soutien':
+        crit += card.crit;
+        if (soutienCount >= 2) crit += 1.5;
+        break;
+    }
+  }
+
+  // Synergies propres à la carte du joueur
+  for (const card of cards) {
+    switch(card.team_synergy) {
+      case 'slayer_dmg_3':
+        const slayerCount = allClanCards.filter(c => c.type === 'slayer').length;
+        dmg_bonus += 3 * Math.max(0, slayerCount - 1);
+        break;
+      case 'crit_if_soutien':
+        if (hasSoutienInClan) crit += 5;
+        break;
+      case 'clan_dmg_slayer_assassin':
+        if (clanTypes.has('slayer') && clanTypes.has('assassin')) dmg_bonus += card.dmg_bonus;
+        break;
+    }
+  }
+
+  return {
+    dmg_bonus: Math.round(dmg_bonus * 10) / 10,
+    crit: Math.round(crit * 10) / 10,
+    first_attack: Math.round(first_attack * 10) / 10,
+    cards,
+  };
+}
+
+// Appliquer les bonus au stock de dégâts
+function applyDeckToStock(stock, bonus, isFirstAttack) {
+  let dmg = stock;
+  let multiplier = 1 + (bonus.dmg_bonus / 100);
+  if (isFirstAttack) multiplier += (bonus.first_attack / 100);
+
+  dmg = Math.floor(dmg * multiplier);
+
+  // Crit
+  if (bonus.crit > 0 && Math.random() * 100 < bonus.crit) {
+    dmg = Math.floor(dmg * 2);
+    return { dmg, crit: true };
+  }
+  return { dmg, crit: false };
+}
+
+// Drop cartes après boss vaincu
+async function dropRaidCards(userId) {
+  const drops = [];
+  const allKeys = Object.keys(RAID_CARDS);
+
+  // 1 commune garantie
+  const commons = allKeys.filter(k => RAID_CARDS[k].rarity === 'common');
+  drops.push(commons[Math.floor(Math.random() * commons.length)]);
+
+  // 50% rare
+  if (Math.random() < 0.50) {
+    const rares = allKeys.filter(k => RAID_CARDS[k].rarity === 'rare');
+    drops.push(rares[Math.floor(Math.random() * rares.length)]);
+  }
+  // 20% épique
+  if (Math.random() < 0.20) {
+    const epics = allKeys.filter(k => RAID_CARDS[k].rarity === 'epic');
+    drops.push(epics[Math.floor(Math.random() * epics.length)]);
+  }
+  // 5% légendaire
+  if (Math.random() < 0.05) {
+    const legs = allKeys.filter(k => RAID_CARDS[k].rarity === 'legendary');
+    drops.push(legs[Math.floor(Math.random() * legs.length)]);
+  }
+
+  const now = Date.now();
+  for (const key of drops) {
+    await pool.query(`INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`, [userId, key, now]);
+  }
+  return drops.map(k => RAID_CARDS[k]);
+}
+
+// GET /api/raid/cards — inventaire + deck du joueur
+app.get("/api/raid/cards", auth, async (req, res) => {
+  const [cardsQ, deckQ] = await Promise.all([
+    pool.query(`SELECT id, card_key, obtained_at FROM player_raid_cards WHERE user_id=$1 ORDER BY obtained_at DESC`, [req.user.id]),
+    pool.query(`SELECT slot, card_key FROM player_raid_deck WHERE user_id=$1 ORDER BY slot`, [req.user.id]),
+  ]);
+
+  const cards = cardsQ.rows.map(r => ({ id: r.id, ...RAID_CARDS[r.card_key], obtained_at: r.obtained_at })).filter(r => r.key);
+  const deck = Array(5).fill(null);
+  deckQ.rows.forEach(r => { deck[r.slot - 1] = { slot: r.slot, ...RAID_CARDS[r.card_key] }; });
+
+  res.json({ cards, deck, catalogue: Object.values(RAID_CARDS) });
+});
+
+// POST /api/raid/deck — mettre une carte dans le deck
+app.post("/api/raid/deck", auth, async (req, res) => {
+  const slot = Number(req.body?.slot);
+  const cardKey = String(req.body?.card_key || "");
+
+  if (slot < 1 || slot > 5) return res.status(400).json({ error: "Slot invalide (1-5)" });
+
+  // Vérifier que le joueur possède la carte
+  if (cardKey) {
+    const owns = await pool.query(`SELECT id FROM player_raid_cards WHERE user_id=$1 AND card_key=$2 LIMIT 1`, [req.user.id, cardKey]);
+    if (!owns.rows.length) return res.status(400).json({ error: "Tu ne possèdes pas cette carte" });
+
+    const card = RAID_CARDS[cardKey];
+    if (!card) return res.status(400).json({ error: "Carte invalide" });
+
+    // Max 1 légendaire par deck
+    if (card.rarity === 'legendary') {
+      const deckQ = await pool.query(`SELECT card_key FROM player_raid_deck WHERE user_id=$1`, [req.user.id]);
+      const hasLeg = deckQ.rows.some(r => r.card_key !== cardKey && RAID_CARDS[r.card_key]?.rarity === 'legendary');
+      if (hasLeg) return res.status(400).json({ error: "1 légendaire max par deck !" });
+    }
+
+    await pool.query(`
+      INSERT INTO player_raid_deck(user_id, slot, card_key) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, slot) DO UPDATE SET card_key=$3
+    `, [req.user.id, slot, cardKey]);
+  } else {
+    // Vider le slot
+    await pool.query(`DELETE FROM player_raid_deck WHERE user_id=$1 AND slot=$2`, [req.user.id, slot]);
+  }
+
+  res.json({ ok: true });
+});
+
+// GET /api/raid/bonus — bonus actifs du deck pour le raid en cours
+app.get("/api/raid/bonus", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.json({ bonus: null, noClan: true });
+
+  const bQ = await pool.query(`SELECT hp_current, hp_max FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  const boss = bQ.rows[0];
+  const hpPct = boss ? Math.round((boss.hp_current / boss.hp_max) * 100) : 100;
+
+  const bonus = await calcDeckBonus(req.user.id, hpPct, m.clan_id);
+  res.json({ bonus, hpPct });
 });
 
 // Hook: progresser missions quand on ouvre des cartes
