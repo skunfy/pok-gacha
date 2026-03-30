@@ -363,13 +363,13 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .raid-card:hover{transform:translateY(-3px);border-color:rgba(127,92,255,.5)}
 .raid-card.in-deck{border-color:rgba(127,92,255,.8);box-shadow:0 0 12px rgba(127,92,255,.3)}
 .raid-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
-.raid-card .rc-name{font-size:10px;font-weight:800;padding:4px 6px;text-align:center;line-height:1.2}
-.raid-card .rc-rarity{position:absolute;top:4px;right:4px;font-size:10px;padding:2px 5px;border-radius:999px;font-weight:800}
+.raid-card .rc-name{font-size:11px;font-weight:800;padding:5px 6px;text-align:center;line-height:1.3}
+.raid-card .rc-rarity{position:absolute;top:5px;right:5px;font-size:11px;padding:2px 6px;border-radius:999px;font-weight:800}
 .rc-rarity.common{background:rgba(180,180,180,.3);color:#ccc}
 .rc-rarity.rare{background:rgba(77,166,255,.3);color:#4da6ff}
 .rc-rarity.epic{background:rgba(192,132,255,.3);color:#c084ff}
 .rc-rarity.legendary{background:rgba(255,216,77,.3);color:#ffd84d}
-.raid-card .rc-type{position:absolute;top:4px;left:4px;font-size:11px}
+.raid-card .rc-type{position:absolute;top:5px;left:5px;font-size:13px}
 
 .deck-slot{
   width:100px;height:145px;border-radius:12px;
@@ -396,6 +396,35 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
   position:fixed;z-index:9999;background:#1a1a2e;border:1px solid rgba(127,92,255,.4);
   border-radius:12px;padding:10px 14px;font-size:12px;max-width:220px;pointer-events:none;
   box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+
+/* Zoom modal carte de raid */
+.raid-card-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.raid-card-modal-inner{
+  background:#12132a;border:1px solid rgba(127,92,255,.3);
+  border-radius:20px;padding:20px;max-width:340px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  display:flex;gap:16px;align-items:flex-start;
+}
+.raid-card-modal-img{
+  width:140px;flex-shrink:0;border-radius:12px;overflow:hidden;border:2px solid rgba(127,92,255,.3);
+}
+.raid-card-modal-img img{width:100%;display:block;}
+.raid-card-modal-info{flex:1;min-width:0;}
+.raid-card-modal-name{font-size:16px;font-weight:900;margin-bottom:4px;}
+.raid-card-modal-type{font-size:12px;opacity:.7;margin-bottom:10px;}
+.raid-card-modal-stat{font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.raid-card-modal-close{
+  position:absolute;top:12px;right:16px;font-size:20px;cursor:pointer;
+  opacity:.6;transition:opacity .15s;
+}
+.raid-card-modal-close:hover{opacity:1;}
+@media(max-width:500px){
+  .raid-card-modal-inner{flex-direction:column;align-items:center;}
+  .raid-card-modal-img{width:120px;}
 }
 </style>
 </head>
@@ -717,7 +746,7 @@ function renderMyClan(data) {
           <button class="btn btn-sm btn-ghost" onclick="filterCards('soutien')" id="filterSoutien">🛡️ Soutien</button>
           <button class="btn btn-sm btn-ghost" onclick="filterCards('assassin')" id="filterAssassin">🗡️ Assassin</button>
         </div>
-        <div id="cardInventory" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
+        <div id="cardInventory" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
           <div class="loading">Chargement...</div>
         </div>
       </div>
@@ -1481,16 +1510,73 @@ function renderInventory() {
     const inDeck = deckKeys.includes(card.key);
     return `
       <div class="raid-card ${inDeck?'in-deck':''}"
-           onclick="equipCard('${card.key}')"
-           onmouseenter="showCardTooltip(event,'${card.key}')"
-           onmouseleave="hideCardTooltip()">
+           onclick="openCardZoom('${card.key}')"
+           ondblclick="equipCard('${card.key}')">
         <div class="rc-type">${TYPE_ICON[card.type]||''}</div>
         <span class="rc-rarity ${RARITY_COLOR[card.rarity]||''}">${RARITY_LABEL[card.rarity]||''}</span>
         <img src="${esc(card.image)}" alt="${esc(card.name)}" onerror="this.src=''; this.style.height='80px';">
         <div class="rc-name">${esc(card.name)}</div>
-        ${inDeck ? '<div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;color:#7f5cff;font-weight:900">ÉQUIPÉE</div>' : ''}
+        ${inDeck ? '<div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;color:#7f5cff;font-weight:900;background:rgba(0,0,0,.5);padding:2px">ÉQUIPÉE</div>' : ''}
       </div>`;
   }).join('');
+}
+
+function openCardZoom(cardKey) {
+  const card = (_deckData?.catalogue || []).find(c => c.key === cardKey);
+  if (!card) return;
+
+  const deckKeys = (_deckData?.deck || []).filter(Boolean).map(c => c.key);
+  const inDeck = deckKeys.includes(cardKey);
+
+  const lines = [];
+  if (card.dmg_bonus) lines.push({ icon:'⚔️', text:`+${card.dmg_bonus}% DMG`, color:'#ff8844' });
+  if (card.crit) lines.push({ icon:'💥', text:`+${card.crit}% Crit`, color:'#ffd84d' });
+  if (card.first_attack) lines.push({ icon:'⚡', text:`+${card.first_attack}% 1ère frappe`, color:'#44aaff' });
+  if (card.hp_threshold !== null) lines.push({ icon:'📊', text:`Boss ${card.hp_above?'>':'<'}${card.hp_threshold}% HP`, color:'#aaa' });
+  if (card.team_synergy) lines.push({ icon:'🔗', text:'Synergie clan', color:'#c084ff' });
+
+  const rarityColors = { common:'#ccc', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+  const rarityNames = { common:'Commune', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+
+  const modal = document.createElement('div');
+  modal.className = 'raid-card-modal';
+  modal.innerHTML = `
+    <div class="raid-card-modal-inner" style="position:relative">
+      <span class="raid-card-modal-close" onclick="this.closest('.raid-card-modal').remove()">✕</span>
+      <div class="raid-card-modal-img">
+        <img src="${esc(card.image)}" alt="${esc(card.name)}" onerror="this.style.display='none'">
+      </div>
+      <div class="raid-card-modal-info">
+        <div class="raid-card-modal-name">${esc(card.name)}</div>
+        <div class="raid-card-modal-type">
+          <span style="color:${rarityColors[card.rarity]}">${RARITY_LABEL[card.rarity]} ${rarityNames[card.rarity]}</span>
+          &nbsp;·&nbsp; ${TYPE_ICON[card.type]} ${card.type}
+        </div>
+        ${lines.map(l => `<div class="raid-card-modal-stat"><span>${l.icon}</span><span style="color:${l.color}">${esc(l.text)}</span></div>`).join('')}
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          ${_selectedSlot
+            ? `<button class="btn btn-sm" style="background:rgba(127,92,255,.3);border-color:rgba(127,92,255,.5)" onclick="equipCard('${cardKey}');this.closest('.raid-card-modal').remove()">
+                Équiper slot ${_selectedSlot}
+               </button>`
+            : `<button class="btn btn-sm btn-ghost" onclick="this.closest('.raid-card-modal').remove();_selectedSlot=null;renderDeckSlots();showAlert('Sélectionne un slot puis clique Équiper','success')">
+                Équiper...
+               </button>`
+          }
+          ${inDeck ? `<button class="btn btn-sm btn-danger" onclick="removeCardFromDeck('${cardKey}');this.closest('.raid-card-modal').remove()">Retirer</button>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="this.closest('.raid-card-modal').remove()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function removeCardFromDeck(cardKey) {
+  // Trouver le slot de la carte
+  const deck = _deckData?.deck || [];
+  const slot = deck.findIndex(c => c?.key === cardKey) + 1;
+  if (slot > 0) await removeFromSlot(slot);
 }
 
 let _tooltip = null;
