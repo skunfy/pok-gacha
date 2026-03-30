@@ -353,6 +353,43 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 .section-hidden{display:none}
 
+/* LAST RAID RECAP */
+.last-raid-card{
+  margin-top:16px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:16px;padding:18px 20px;
+}
+.last-raid-header{
+  display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;
+}
+.last-raid-title{font-size:14px;font-weight:900;opacity:.9;flex:1}
+.last-raid-badge{
+  font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;
+}
+.last-raid-badge.win{background:rgba(51,255,153,.15);color:#33ff99;border:1px solid rgba(51,255,153,.3)}
+.last-raid-badge.fail{background:rgba(255,68,68,.15);color:#ff6868;border:1px solid rgba(255,68,68,.3)}
+.last-raid-meta{font-size:12px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.last-raid-players{display:flex;flex-direction:column;gap:7px}
+.lrp-row{display:flex;align-items:center;gap:10px}
+.lrp-rank{font-size:13px;font-weight:900;min-width:22px;text-align:center}
+.lrp-avatar{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-weight:900;font-size:11px;
+  background-size:cover;background-position:center;
+}
+.lrp-name{flex:1;font-size:13px;font-weight:700}
+.lrp-dmg{font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap}
+.lrp-pct{font-size:11px;opacity:.55;white-space:nowrap;min-width:36px;text-align:right}
+.lrp-bar-wrap{flex:1;min-width:60px;background:rgba(255,255,255,.08);border-radius:999px;height:5px;overflow:hidden}
+.lrp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.lrp-mvp{
+  font-size:10px;font-weight:900;color:#ffd84d;
+  background:rgba(255,216,77,.12);border:1px solid rgba(255,216,77,.25);
+  border-radius:999px;padding:2px 7px;flex-shrink:0;
+}
+
 /* DECK */
 .raid-card{
   border-radius:12px;border:2px solid rgba(255,255,255,.12);
@@ -828,6 +865,7 @@ function renderBossTab(boss, clan) {
           <div class="loading">Chargement des boss...</div>
         </div>
         <div id="raidAlert"></div>
+        <div id="lastRaidRecap"></div>
       </div>
     `;
   }
@@ -1017,6 +1055,7 @@ async function loadBossData() {
           </div>
         `;
       }).join('');
+      loadLastRaid();
       return;
     }
 
@@ -1091,6 +1130,77 @@ function startRaidTimer() {
   }
   updateTimer();
   _raidTimer = setInterval(updateTimer, 1000);
+}
+
+// ===========================
+// LAST RAID RECAP
+// ===========================
+async function loadLastRaid() {
+  const el = document.getElementById("lastRaidRecap");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/raid/last");
+    if (!data.raid) { el.innerHTML = ''; return; }
+    const r = data.raid;
+
+    // Durée formatée
+    let durationStr = '—';
+    if (r.durationMs !== null) {
+      const totalSec = Math.floor(r.durationMs / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      durationStr = h > 0
+        ? `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+        : m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
+    }
+
+    // Diff label
+    const diffLabel = r.bossKey?.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
+    const badgeClass = r.defeated ? 'win' : 'fail';
+    const badgeText  = r.defeated ? '✅ Vaincu' : '💀 Échoué';
+
+    // Top dmg max pour les barres
+    const maxDmg = r.players.length ? r.players[0].total : 1;
+
+    const rankIcons = ['🥇','🥈','🥉'];
+
+    el.innerHTML = `
+      <div class="last-raid-card">
+        <div class="last-raid-header">
+          <div class="last-raid-title">📜 Dernier Raid — ${esc(r.bossName)} <span style="font-size:11px;opacity:.6">${diffLabel}</span></div>
+          <span class="last-raid-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="last-raid-meta">
+          <span>⏱️ Durée : <b>${durationStr}</b></span>
+          <span>⚔️ Dégâts totaux : <b>${fmtNum(r.totalDmg)}</b></span>
+          ${r.mvp ? `<span>🏅 MVP : <b style="color:var(--gold)">${esc(r.mvp)}</b></span>` : ''}
+          ${r.defeated ? `<span>💰 Récompense : <b style="color:var(--gold)">${fmtNum(r.reward)}</b> dollax</span>` : ''}
+        </div>
+        <div class="last-raid-players">
+          ${r.players.map((p, i) => {
+            const avatarStyle = p.avatar ? `background-image:url('${esc(p.avatar)}');background-color:transparent` : '';
+            const initials = (p.name||'?').slice(0,2).toUpperCase();
+            const barW = maxDmg > 0 ? Math.round((p.total / maxDmg) * 100) : 0;
+            const isMvp = p.name === r.mvp;
+            return `
+              <div class="lrp-row">
+                <span class="lrp-rank">${rankIcons[i] || `#${i+1}`}</span>
+                <div class="lrp-avatar" style="${avatarStyle}">${avatarStyle ? '' : initials}</div>
+                <span class="lrp-name">${esc(p.name)}</span>
+                ${isMvp ? '<span class="lrp-mvp">MVP</span>' : ''}
+                <div class="lrp-bar-wrap"><div class="lrp-bar" style="width:${barW}%"></div></div>
+                <span class="lrp-dmg">${fmtNum(p.total)}</span>
+                <span class="lrp-pct">${p.pct}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    console.warn("loadLastRaid:", e);
+  }
 }
 
 async function startRaid(bossKey) {

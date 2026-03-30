@@ -4384,20 +4384,23 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
 
     if (newHp <= 0) {
       await client.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
-      // Vider tous les stocks du raid
       await client.query(`DELETE FROM clan_raid_stock WHERE boss_id=$1`, [boss.id]);
 
-      const totalQ = await client.query(`SELECT SUM(damage) as total FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
-      const total = Number(totalQ.rows[0].total) || 1;
-      const contributors = await client.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id`, [boss.id]);
+      const contributors = await client.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id ORDER BY dmg DESC`, [boss.id]);
+      const nbContribs = contributors.rows.length;
 
-      for (const c of contributors.rows) {
-        const share = Math.floor((Number(c.dmg) / total) * boss.reward);
-        if (share > 0) {
-          await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [share, c.user_id]);
+      if (nbContribs > 0) {
+        const equalShare = Math.floor(boss.reward / nbContribs);
+        const topDmgUserId = contributors.rows[0].user_id;
+        const TOP_BONUS = 1000;
+
+        for (const c of contributors.rows) {
+          const isTop = c.user_id === topDmgUserId;
+          const reward = equalShare + (isTop ? TOP_BONUS : 0);
+          await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [reward, c.user_id]);
           await client.query(
             `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','🏆 Boss vaincu !',$2,NULL,0,$3)`,
-            [c.user_id, `${def.name} a été vaincu ! Tu reçois ${share} dollax.`, Date.now()]
+            [c.user_id, `${def.name} vaincu ! Tu reçois ${equalShare} dollax${isTop ? ` + 1 000 dollax (top dégâts) 🏅` : ''}.`, Date.now()]
           );
         }
       }
@@ -4460,6 +4463,65 @@ app.get("/api/clan/raid/banner", auth, async (req, res) => {
       top3: topQ.rows.map(r => ({ name: r.name, total: Number(r.total) })),
     });
   } catch(e) { res.json({ active: false }); }
+});
+
+// GET /api/clan/raid/last — dernier raid terminé (vaincu ou échoué)
+app.get("/api/clan/raid/last", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.status(403).json({ error: "Non membre" });
+
+    // Dernier raid terminé (defeated=1 ou failed=1)
+    const bQ = await pool.query(
+      `SELECT * FROM clan_boss WHERE clan_id=$1 AND (defeated=1 OR failed=1) ORDER BY id DESC LIMIT 1`,
+      [m.clan_id]
+    );
+    if (!bQ.rows.length) return res.json({ raid: null });
+
+    const boss = bQ.rows[0];
+    const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas_easy || Object.values(RAID_BOSSES)[0];
+
+    // Dégâts par joueur
+    const dmgQ = await pool.query(
+      `SELECT u.name, u.avatar, SUM(d.damage) as total
+       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+       WHERE d.boss_id=$1 GROUP BY u.name, u.avatar ORDER BY total DESC`,
+      [boss.id]
+    );
+
+    // Durée du raid
+    let durationMs = null;
+    if (boss.defeated === 1 && boss.defeated_at && boss.started_at) {
+      durationMs = Number(boss.defeated_at) - Number(boss.started_at);
+    }
+
+    const totalDmg = dmgQ.rows.reduce((acc, r) => acc + Number(r.total), 0);
+
+    res.json({
+      raid: {
+        bossName: boss.name || def.name,
+        bossKey: boss.boss_key,
+        image: def.image,
+        defeated: boss.defeated === 1,
+        durationMs,
+        startedAt: Number(boss.started_at),
+        defeatedAt: boss.defeated_at ? Number(boss.defeated_at) : null,
+        hpMax: boss.hp_max,
+        reward: boss.reward,
+        players: dmgQ.rows.map(r => ({
+          name: r.name,
+          avatar: r.avatar,
+          total: Number(r.total),
+          pct: totalDmg > 0 ? Math.round((Number(r.total) / totalDmg) * 100) : 0,
+        })),
+        totalDmg,
+        mvp: dmgQ.rows[0]?.name || null,
+      }
+    });
+  } catch(e) {
+    console.error("Raid last error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 // GET /api/clan/leaderboard
