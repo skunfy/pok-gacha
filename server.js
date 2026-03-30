@@ -776,6 +776,20 @@ async function initDb() {
     )
   `);
 
+  // === SYSTÈME PERSONNAGE ===
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_character (
+      user_id INTEGER NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      char_xp   BIGINT NOT NULL DEFAULT 0,
+      char_level INTEGER NOT NULL DEFAULT 1,
+      stat_force       INTEGER NOT NULL DEFAULT 0,
+      stat_agilite     INTEGER NOT NULL DEFAULT 0,
+      stat_intelligence INTEGER NOT NULL DEFAULT 0,
+      stat_dexterite   INTEGER NOT NULL DEFAULT 0,
+      points_available INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -879,6 +893,85 @@ function levelForXp(xp){
   // courbe simple: lvl 1 -> 0 xp, lvl 2 -> 100 xp, lvl 3 -> 300 xp, etc.
   // (100 * (lvl-1)^2)
   return Math.floor(Math.sqrt(x / 100)) + 1;
+}
+
+// ===========================
+// SYSTÈME PERSONNAGE
+// ===========================
+
+// XP nécessaire pour atteindre un niveau (lvl 1 = 0, lvl 60 = max)
+const CHAR_MAX_LEVEL = 60;
+
+// XP total cumulé pour passer du lvl 1 au lvl N
+// Courbe progressive : chaque niveau demande 200 * (lvl-1) XP supplémentaires
+function charXpForLevel(lvl) {
+  lvl = Math.max(1, Math.min(lvl, CHAR_MAX_LEVEL));
+  // Somme de 200*(0 + 1 + 2 + ... + (lvl-2)) = 200 * (lvl-1)*(lvl-2)/2
+  return lvl <= 1 ? 0 : 100 * (lvl - 1) * (lvl - 2) + 200 * (lvl - 1);
+}
+
+function charLevelForXp(xp) {
+  xp = Math.max(0, Number(xp) || 0);
+  let lvl = 1;
+  while (lvl < CHAR_MAX_LEVEL && xp >= charXpForLevel(lvl + 1)) lvl++;
+  return lvl;
+}
+
+// XP perso gagné par raid vaincu selon le boss
+const CHAR_XP_PER_RAID = {
+  arakas_easy: 200,
+  arakas_hard: 400,
+  myntalis_easy: 500,
+  myntalis_hard: 900,
+  xenos_easy: 1200,
+  xenos_hard: 2000,
+};
+
+// Récupère ou crée le profil personnage
+async function getOrCreateCharacter(userId) {
+  const q = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
+  if (q.rows.length) return q.rows[0];
+  await pool.query(`INSERT INTO player_character(user_id) VALUES($1) ON CONFLICT DO NOTHING`, [userId]);
+  return (await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId])).rows[0];
+}
+
+// Ajoute de l'XP perso et gère les montées de niveau
+async function addCharXp(userId, xpGain) {
+  const char = await getOrCreateCharacter(userId);
+  if (Number(char.char_level) >= CHAR_MAX_LEVEL) return char; // déjà max
+
+  const newXp = Number(char.char_xp) + xpGain;
+  const newLevel = charLevelForXp(newXp);
+  const oldLevel = Number(char.char_level);
+  const levelsGained = Math.max(0, newLevel - oldLevel);
+  const newPoints = Number(char.points_available) + levelsGained;
+
+  await pool.query(`
+    UPDATE player_character
+    SET char_xp=$1, char_level=$2, points_available=$3
+    WHERE user_id=$4
+  `, [newXp, newLevel, newPoints, userId]);
+
+  return { ...char, char_xp: newXp, char_level: newLevel, points_available: newPoints, levelsGained };
+}
+
+// Calcule les bonus de stats perso pour le raid
+// Force : +dmg_bonus (0.5% par point)
+// Agilité : +crit (0.4% par point)
+// Intelligence : +dmg si boss HP < 50% (0.6% par point)
+// Dextérité : +first_attack (0.5% par point)
+function charStatBonus(char, bossHpPct) {
+  const force = Number(char?.stat_force || 0);
+  const agilite = Number(char?.stat_agilite || 0);
+  const intelligence = Number(char?.stat_intelligence || 0);
+  const dexterite = Number(char?.stat_dexterite || 0);
+
+  return {
+    dmg_bonus:    force * 0.5,
+    crit:         agilite * 0.4,
+    intel_bonus:  bossHpPct < 50 ? intelligence * 0.6 : 0,
+    first_attack: dexterite * 0.5,
+  };
 }
 
 function xpForOpen(grade){
@@ -4413,10 +4506,18 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
     if (defeated) {
       await checkClanLevelUp(m.clan_id).catch(() => {});
       const contribs = await pool.query(`SELECT DISTINCT user_id FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+      const charXpGain = CHAR_XP_PER_RAID[boss.boss_key] || 200;
       for (const c of contribs.rows) {
         await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
-        // Drop de cartes pour chaque contributeur
         await dropRaidCards(c.user_id).catch(() => {});
+        // XP personnage
+        const charResult = await addCharXp(c.user_id, charXpGain).catch(() => null);
+        if (charResult?.levelsGained > 0) {
+          await pool.query(
+            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⬆️ Niveau atteint !',$2,NULL,0,$3)`,
+            [c.user_id, `Ton personnage passe au niveau ${charResult.char_level} ! +${charResult.levelsGained} point${charResult.levelsGained > 1 ? 's' : ''} de stat à distribuer.`, Date.now()]
+          );
+        }
       }
     }
 
@@ -4465,61 +4566,93 @@ app.get("/api/clan/raid/banner", auth, async (req, res) => {
   } catch(e) { res.json({ active: false }); }
 });
 
-// GET /api/clan/raid/last — dernier raid terminé (vaincu ou échoué)
-app.get("/api/clan/raid/last", auth, async (req, res) => {
+// ===========================
+// API PERSONNAGE
+// ===========================
+
+// GET /api/character — profil perso de l'utilisateur connecté
+app.get("/api/character", auth, async (req, res) => {
   try {
-    const m = await getMyMembership(req.user.id);
-    if (!m) return res.status(403).json({ error: "Non membre" });
-
-    // Dernier raid terminé (defeated=1 ou failed=1)
-    const bQ = await pool.query(
-      `SELECT * FROM clan_boss WHERE clan_id=$1 AND (defeated=1 OR failed=1) ORDER BY id DESC LIMIT 1`,
-      [m.clan_id]
-    );
-    if (!bQ.rows.length) return res.json({ raid: null });
-
-    const boss = bQ.rows[0];
-    const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas_easy || Object.values(RAID_BOSSES)[0];
-
-    // Dégâts par joueur
-    const dmgQ = await pool.query(
-      `SELECT u.name, u.avatar, SUM(d.damage) as total
-       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
-       WHERE d.boss_id=$1 GROUP BY u.name, u.avatar ORDER BY total DESC`,
-      [boss.id]
-    );
-
-    // Durée du raid
-    let durationMs = null;
-    if (boss.defeated === 1 && boss.defeated_at && boss.started_at) {
-      durationMs = Number(boss.defeated_at) - Number(boss.started_at);
-    }
-
-    const totalDmg = dmgQ.rows.reduce((acc, r) => acc + Number(r.total), 0);
-
+    const char = await getOrCreateCharacter(req.user.id);
+    const lvl  = Number(char.char_level);
+    const xp   = Number(char.char_xp);
+    const xpCurrent = xp - charXpForLevel(lvl);
+    const xpNext = lvl < CHAR_MAX_LEVEL ? charXpForLevel(lvl + 1) - charXpForLevel(lvl) : 0;
     res.json({
-      raid: {
-        bossName: boss.name || def.name,
-        bossKey: boss.boss_key,
-        image: def.image,
-        defeated: boss.defeated === 1,
-        durationMs,
-        startedAt: Number(boss.started_at),
-        defeatedAt: boss.defeated_at ? Number(boss.defeated_at) : null,
-        hpMax: boss.hp_max,
-        reward: boss.reward,
-        players: dmgQ.rows.map(r => ({
-          name: r.name,
-          avatar: r.avatar,
-          total: Number(r.total),
-          pct: totalDmg > 0 ? Math.round((Number(r.total) / totalDmg) * 100) : 0,
-        })),
-        totalDmg,
-        mvp: dmgQ.rows[0]?.name || null,
+      char_level: lvl,
+      char_xp:    xp,
+      xp_current_level: xpCurrent,
+      xp_for_next:      xpNext,
+      xp_pct: xpNext > 0 ? Math.min(100, Math.round((xpCurrent / xpNext) * 100)) : 100,
+      stat_force:        Number(char.stat_force),
+      stat_agilite:      Number(char.stat_agilite),
+      stat_intelligence: Number(char.stat_intelligence),
+      stat_dexterite:    Number(char.stat_dexterite),
+      points_available:  Number(char.points_available),
+      max_level: CHAR_MAX_LEVEL,
+      bonus_preview: {
+        dmg_bonus:    Number(char.stat_force) * 0.5,
+        crit:         Number(char.stat_agilite) * 0.4,
+        intel_bonus:  Number(char.stat_intelligence) * 0.6,
+        first_attack: Number(char.stat_dexterite) * 0.5,
       }
     });
   } catch(e) {
-    console.error("Raid last error:", e);
+    console.error("GET /api/character:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/allocate — dépenser un point dans une stat
+app.post("/api/character/allocate", auth, async (req, res) => {
+  const stat = req.body?.stat;
+  const validStats = ['stat_force', 'stat_agilite', 'stat_intelligence', 'stat_dexterite'];
+  if (!validStats.includes(stat)) return res.status(400).json({ error: "Stat invalide" });
+
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    if (Number(char.points_available) < 1) return res.status(400).json({ error: "Pas de points disponibles" });
+
+    await pool.query(
+      `UPDATE player_character SET ${stat}=${stat}+1, points_available=points_available-1 WHERE user_id=$1`,
+      [req.user.id]
+    );
+    const updated = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [req.user.id]);
+    const c = updated.rows[0];
+    res.json({
+      ok: true,
+      stat,
+      new_value: Number(c[stat]),
+      points_available: Number(c.points_available),
+    });
+  } catch(e) {
+    console.error("POST /api/character/allocate:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/reset — réinitialiser les stats (coût : 500 dollax)
+app.post("/api/character/reset", auth, async (req, res) => {
+  const RESET_COST = 500;
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    const userQ = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    const money = Number(userQ.rows[0]?.money || 0);
+    if (money < RESET_COST) return res.status(400).json({ error: `Reset coûte ${RESET_COST} dollax` });
+
+    const totalStats = Number(char.stat_force) + Number(char.stat_agilite) + Number(char.stat_intelligence) + Number(char.stat_dexterite);
+    const totalPoints = totalStats + Number(char.points_available);
+
+    await pool.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [RESET_COST, req.user.id]);
+    await pool.query(`
+      UPDATE player_character
+      SET stat_force=0, stat_agilite=0, stat_intelligence=0, stat_dexterite=0, points_available=$1
+      WHERE user_id=$2
+    `, [totalPoints, req.user.id]);
+
+    res.json({ ok: true, points_available: totalPoints, cost: RESET_COST });
+  } catch(e) {
+    console.error("POST /api/character/reset:", e);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
@@ -4752,11 +4885,20 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
     }
   }
 
+  // === BONUS STATS PERSONNAGE ===
+  const charQ = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
+  const char = charQ.rows[0] || null;
+  const statBonus = charStatBonus(char, bossHpPct);
+  dmg_bonus   += statBonus.dmg_bonus + statBonus.intel_bonus;
+  crit        += statBonus.crit;
+  first_attack += statBonus.first_attack;
+
   return {
     dmg_bonus: Math.round(dmg_bonus * 10) / 10,
     crit: Math.round(crit * 10) / 10,
     first_attack: Math.round(first_attack * 10) / 10,
     cards,
+    charStatBonus: statBonus,
   };
 }
 
