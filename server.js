@@ -4782,6 +4782,10 @@ app.post("/api/raid/deck", auth, async (req, res) => {
       if (hasLeg) return res.status(400).json({ error: "1 légendaire max par deck !" });
     }
 
+    // Pas de doublon dans le deck
+    const dupQ = await pool.query(`SELECT slot FROM player_raid_deck WHERE user_id=$1 AND card_key=$2 AND slot!=$3`, [req.user.id, cardKey, slot]);
+    if (dupQ.rows.length) return res.status(400).json({ error: "Cette carte est déjà dans ton deck !" });
+
     await pool.query(`
       INSERT INTO player_raid_deck(user_id, slot, card_key) VALUES($1,$2,$3)
       ON CONFLICT(user_id, slot) DO UPDATE SET card_key=$3
