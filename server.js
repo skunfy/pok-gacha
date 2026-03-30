@@ -4716,27 +4716,37 @@ function applyDeckToStock(stock, bonus, isFirstAttack) {
 
 // Drop cartes après boss vaincu
 async function dropRaidCards(userId) {
-  const drops = [];
-  const allKeys = Object.keys(RAID_CARDS);
+  // Récupérer les cartes déjà possédées
+  const owned = await pool.query(`SELECT DISTINCT card_key FROM player_raid_cards WHERE user_id=$1`, [userId]);
+  const ownedKeys = new Set(owned.rows.map(r => r.card_key));
 
-  // 1 commune garantie
-  const commons = allKeys.filter(k => RAID_CARDS[k].rarity === 'common');
-  drops.push(commons[Math.floor(Math.random() * commons.length)]);
+  const allKeys = Object.keys(RAID_CARDS);
+  const drops = [];
+
+  function pickRarity(rarity) {
+    const available = allKeys.filter(k => RAID_CARDS[k].rarity === rarity && !ownedKeys.has(k));
+    if (!available.length) return null; // toutes déjà possédées
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // 1 commune garantie (si pas déjà toutes possédées)
+  const common = pickRarity('common');
+  if (common) drops.push(common);
 
   // 50% rare
   if (Math.random() < 0.50) {
-    const rares = allKeys.filter(k => RAID_CARDS[k].rarity === 'rare');
-    drops.push(rares[Math.floor(Math.random() * rares.length)]);
+    const rare = pickRarity('rare');
+    if (rare) drops.push(rare);
   }
   // 20% épique
   if (Math.random() < 0.20) {
-    const epics = allKeys.filter(k => RAID_CARDS[k].rarity === 'epic');
-    drops.push(epics[Math.floor(Math.random() * epics.length)]);
+    const epic = pickRarity('epic');
+    if (epic) drops.push(epic);
   }
   // 5% légendaire
   if (Math.random() < 0.05) {
-    const legs = allKeys.filter(k => RAID_CARDS[k].rarity === 'legendary');
-    drops.push(legs[Math.floor(Math.random() * legs.length)]);
+    const leg = pickRarity('legendary');
+    if (leg) drops.push(leg);
   }
 
   const now = Date.now();

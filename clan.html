@@ -1414,17 +1414,47 @@ async function loadDeckBonusRecap() {
 function renderBonusRecap(data) {
   if (!data || data.noClan) return '';
   const b = data.bonus;
-  if (!b || (!b.dmg_bonus && !b.crit && !b.first_attack)) {
-    return `<div class="bonus-recap"><div style="opacity:.6;font-size:13px">🃏 Aucun bonus actif — équipe des cartes dans ton deck !</div></div>`;
-  }
+  if (!b) return '';
+
   const tags = [];
   if (b.dmg_bonus > 0) tags.push(`<span class="bonus-tag" style="color:#ff8844">⚔️ +${b.dmg_bonus}% DMG</span>`);
   if (b.crit > 0) tags.push(`<span class="bonus-tag" style="color:#ffd84d">💥 +${b.crit}% CRIT</span>`);
   if (b.first_attack > 0) tags.push(`<span class="bonus-tag" style="color:#44aaff">⚡ +${b.first_attack}% 1ère frappe</span>`);
+
+  // Bonus conditionnels inactifs (condition HP non remplie)
+  const conditionalTags = [];
+  if (b.cards && _deckData?.catalogue) {
+    for (const card of b.cards) {
+      const full = _deckData.catalogue.find(c => c.key === card.key);
+      if (!full || full.hp_threshold === null) continue;
+
+      // Vérifier si la condition n'est PAS remplie actuellement
+      const conditionActive = full.hp_above
+        ? data.hpPct > full.hp_threshold
+        : data.hpPct < full.hp_threshold;
+
+      if (!conditionActive) {
+        const condText = full.hp_above ? `boss > ${full.hp_threshold}% HP` : `boss < ${full.hp_threshold}% HP`;
+        if (full.dmg_bonus) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">⚔️ +${full.dmg_bonus}% DMG</span>`);
+        if (full.crit) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">💥 +${full.crit}% CRIT</span>`);
+        if (full.first_attack) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">⚡ +${full.first_attack}% 1ère frappe</span>`);
+        conditionalTags.push(`<span style="font-size:10px;opacity:.5;align-self:center">(${condText})</span>`);
+      }
+    }
+  }
+
+  if (!tags.length && !conditionalTags.length) {
+    return `<div class="bonus-recap"><div style="opacity:.6;font-size:13px">🃏 Aucun bonus actif — équipe des cartes dans ton deck !</div></div>`;
+  }
+
   return `
     <div class="bonus-recap">
       <div style="font-size:12px;opacity:.7;margin-bottom:6px">🃏 Bonus deck actifs (${data.hpPct}% HP boss)</div>
-      <div class="bonus-row">${tags.join('')}</div>
+      <div class="bonus-row">${tags.join('') || '<span style="opacity:.5;font-size:12px">Aucun bonus actif pour le HP actuel</span>'}</div>
+      ${conditionalTags.length ? `
+        <div style="font-size:11px;opacity:.6;margin-top:8px;margin-bottom:4px">⏳ Bonus conditionnels (inactifs) :</div>
+        <div class="bonus-row">${conditionalTags.join('')}</div>
+      ` : ''}
       ${b.cards?.length ? `<div style="font-size:11px;opacity:.5;margin-top:6px">${b.cards.map(c=>c.name).join(' · ')}</div>` : ''}
     </div>
   `;
