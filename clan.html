@@ -353,42 +353,78 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 .section-hidden{display:none}
 
-/* LAST RAID RECAP */
-.last-raid-card{
-  margin-top:16px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:16px;padding:18px 20px;
+/* PERSONNAGE */
+.char-wrap{display:flex;flex-direction:column;gap:16px}
+.char-header{
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  padding:20px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(127,92,255,.18),rgba(240,83,197,.12));
+  border:1px solid rgba(127,92,255,.3);
 }
-.last-raid-header{
-  display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;
-}
-.last-raid-title{font-size:14px;font-weight:900;opacity:.9;flex:1}
-.last-raid-badge{
-  font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;
-}
-.last-raid-badge.win{background:rgba(51,255,153,.15);color:#33ff99;border:1px solid rgba(51,255,153,.3)}
-.last-raid-badge.fail{background:rgba(255,68,68,.15);color:#ff6868;border:1px solid rgba(255,68,68,.3)}
-.last-raid-meta{font-size:12px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
-.last-raid-players{display:flex;flex-direction:column;gap:7px}
-.lrp-row{display:flex;align-items:center;gap:10px}
-.lrp-rank{font-size:13px;font-weight:900;min-width:22px;text-align:center}
-.lrp-avatar{
-  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+.char-avatar-big{
+  width:72px;height:72px;border-radius:16px;flex-shrink:0;
   background:linear-gradient(135deg,var(--accent),var(--accent2));
-  display:grid;place-items:center;font-weight:900;font-size:11px;
-  background-size:cover;background-position:center;
+  display:grid;place-items:center;font-size:30px;
+  box-shadow:0 0 24px rgba(127,92,255,.4);
 }
-.lrp-name{flex:1;font-size:13px;font-weight:700}
-.lrp-dmg{font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap}
-.lrp-pct{font-size:11px;opacity:.55;white-space:nowrap;min-width:36px;text-align:right}
-.lrp-bar-wrap{flex:1;min-width:60px;background:rgba(255,255,255,.08);border-radius:999px;height:5px;overflow:hidden}
-.lrp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
-.lrp-mvp{
-  font-size:10px;font-weight:900;color:#ffd84d;
-  background:rgba(255,216,77,.12);border:1px solid rgba(255,216,77,.25);
-  border-radius:999px;padding:2px 7px;flex-shrink:0;
+.char-info{flex:1;min-width:180px}
+.char-name{font-size:18px;font-weight:900;margin-bottom:4px}
+.char-level-badge{
+  display:inline-block;font-size:12px;font-weight:900;
+  padding:3px 10px;border-radius:999px;margin-bottom:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
 }
+.char-xp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin-bottom:4px}
+.char-xp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#ffd84d,#ff8800);transition:width .5s}
+.char-xp-label{font-size:11px;opacity:.6}
+.char-points-badge{
+  background:rgba(255,216,77,.15);border:1px solid rgba(255,216,77,.35);
+  border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.char-points-val{font-size:24px;font-weight:900;color:var(--gold)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:16px;
+}
+.stat-card.force  {border-color:rgba(255,100,100,.3);background:rgba(255,80,80,.06)}
+.stat-card.agilite{border-color:rgba(100,255,150,.3);background:rgba(51,255,153,.06)}
+.stat-card.intel  {border-color:rgba(100,180,255,.3);background:rgba(77,166,255,.06)}
+.stat-card.dex    {border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.stat-icon{font-size:26px;margin-bottom:6px}
+.stat-name{font-size:13px;font-weight:900;margin-bottom:2px}
+.stat-desc{font-size:11px;opacity:.55;margin-bottom:12px;line-height:1.5}
+.stat-value-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stat-value{font-size:22px;font-weight:900}
+.stat-bonus{font-size:11px;opacity:.65}
+.stat-dots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px}
+.stat-dot{width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.12)}
+.stat-dot.filled.force  {background:#ff6464}
+.stat-dot.filled.agilite{background:#33ff99}
+.stat-dot.filled.intel  {background:#4da6ff}
+.stat-dot.filled.dex    {background:#ffd84d}
+.stat-alloc-btn{
+  width:100%;padding:8px;border-radius:10px;border:none;cursor:pointer;
+  font-weight:900;font-size:13px;color:#fff;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  transition:all .15s;
+}
+.stat-alloc-btn:hover:not(:disabled){background:rgba(255,255,255,.2);transform:translateY(-1px)}
+.stat-alloc-btn:disabled{opacity:.35;cursor:not-allowed}
+.stat-alloc-btn.force  {background:rgba(255,80,80,.25);border-color:rgba(255,80,80,.4)}
+.stat-alloc-btn.force:hover:not(:disabled){background:rgba(255,80,80,.4)}
+.stat-alloc-btn.agilite{background:rgba(51,255,153,.2);border-color:rgba(51,255,153,.35)}
+.stat-alloc-btn.agilite:hover:not(:disabled){background:rgba(51,255,153,.35)}
+.stat-alloc-btn.intel  {background:rgba(77,166,255,.2);border-color:rgba(77,166,255,.35)}
+.stat-alloc-btn.intel:hover:not(:disabled){background:rgba(77,166,255,.35)}
+.stat-alloc-btn.dex    {background:rgba(255,216,77,.2);border-color:rgba(255,216,77,.35)}
+.stat-alloc-btn.dex:hover:not(:disabled){background:rgba(255,216,77,.35)}
+.char-xp-table{width:100%;border-collapse:collapse;font-size:13px}
+.char-xp-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.char-xp-table tr:last-child td{border:none}
+.char-xp-table .boss-cell{font-weight:800}
+.char-xp-table .xp-cell{color:var(--gold);font-weight:800;text-align:right}
 
 /* DECK */
 .raid-card{
@@ -720,6 +756,7 @@ function renderMyClan(data) {
       <div class="tab" onclick="switchTab('chat',this)">💬 Chat</div>
       <div class="tab" onclick="switchTab('talents',this)">🌳 Talents</div>
       <div class="tab" onclick="switchTab('deck',this)">🃏 Deck</div>
+      <div class="tab" onclick="switchTab('character',this)">🧬 Personnage</div>
       <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
       ${isLeader ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>` : ''}
     </div>
@@ -797,6 +834,11 @@ function renderMyClan(data) {
       </div>
     </div>
 
+    <!-- PERSONNAGE TAB -->
+    <div id="tab-character" class="section-hidden">
+      <div id="characterContent"><div class="loading">Chargement du personnage...</div></div>
+    </div>
+
     <!-- MANAGE TAB -->
     ${isLeader ? `
     <div id="tab-manage" class="section-hidden">
@@ -865,7 +907,6 @@ function renderBossTab(boss, clan) {
           <div class="loading">Chargement des boss...</div>
         </div>
         <div id="raidAlert"></div>
-        <div id="lastRaidRecap"></div>
       </div>
     `;
   }
@@ -963,7 +1004,7 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 
-  ['boss','missions','members','chat','talents','deck','leaderboard','manage'].forEach(t => {
+  ['boss','missions','members','chat','talents','deck','character','leaderboard','manage'].forEach(t => {
     const tabEl = document.getElementById('tab-'+t);
     if (tabEl) tabEl.classList.toggle('section-hidden', t !== name);
   });
@@ -975,6 +1016,190 @@ function switchTab(name, el) {
   if (name === 'boss') { _bossFirstLoad = true; loadBossData(); startBossPolling(); loadDeckBonusRecap(); } else { stopBossPolling(); }
   if (name === 'talents') loadTalents();
   if (name === 'deck') loadDeck();
+  if (name === 'character') loadCharacter();
+}
+
+// ===========================
+// PERSONNAGE
+// ===========================
+let _charData = null;
+
+async function loadCharacter() {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+  try {
+    const c = await api('/api/character');
+    _charData = c;
+    renderCharacter(c);
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-error">Erreur chargement personnage</div>`;
+  }
+}
+
+function renderCharacter(c) {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+
+  const name = myData?.name || 'Inconnu';
+  const avatarStyle = myData?.avatar ? `background-image:url('${esc(myData.avatar)}');background-color:transparent` : '';
+  const isMax = c.char_level >= c.max_level;
+  const hasPoints = c.points_available > 0;
+
+  const stats = [
+    {
+      key: 'stat_force', cls: 'force', icon: '⚔️', label: 'Force',
+      val: c.stat_force,
+      desc: 'Augmente les dégâts de base sur le boss.',
+      bonus: `+${(c.stat_force * 0.5).toFixed(1)}% DMG`,
+      color: '#ff6464',
+    },
+    {
+      key: 'stat_agilite', cls: 'agilite', icon: '🌪️', label: 'Agilité',
+      val: c.stat_agilite,
+      desc: 'Augmente la chance de coup critique.',
+      bonus: `+${(c.stat_agilite * 0.4).toFixed(1)}% Crit`,
+      color: '#33ff99',
+    },
+    {
+      key: 'stat_intelligence', cls: 'intel', icon: '🔮', label: 'Intelligence',
+      val: c.stat_intelligence,
+      desc: 'Dégâts bonus quand le boss est sous 50% PV.',
+      bonus: `+${(c.stat_intelligence * 0.6).toFixed(1)}% DMG <50% HP`,
+      color: '#4da6ff',
+    },
+    {
+      key: 'stat_dexterite', cls: 'dex', icon: '⚡', label: 'Dextérité',
+      val: c.stat_dexterite,
+      desc: 'Bonus de dégâts sur la première attaque du raid.',
+      bonus: `+${(c.stat_dexterite * 0.5).toFixed(1)}% 1ère frappe`,
+      color: '#ffd84d',
+    },
+  ];
+
+  // Barres de stat (max visuel = 30 points pour les dots)
+  const DOT_MAX = 30;
+
+  el.innerHTML = `
+    <div class="char-wrap">
+
+      <!-- HEADER PERSO -->
+      <div class="char-header">
+        <div class="char-avatar-big" style="${avatarStyle}">${avatarStyle ? '' : '🧬'}</div>
+        <div class="char-info">
+          <div class="char-name">${esc(name)}</div>
+          <div class="char-level-badge">Niveau ${c.char_level}${isMax ? ' · MAX' : ''}</div>
+          ${isMax ? '' : `
+            <div class="char-xp-bar-wrap">
+              <div class="char-xp-bar" style="width:${c.xp_pct}%"></div>
+            </div>
+            <div class="char-xp-label">${fmtNum(c.xp_current_level)} / ${fmtNum(c.xp_for_next)} XP · ${c.xp_pct}%</div>
+          `}
+        </div>
+        ${hasPoints ? `
+          <div class="char-points-badge">
+            <span class="char-points-val">${c.points_available}</span>
+            <div>
+              <div style="font-size:13px;font-weight:800">Point${c.points_available > 1 ? 's' : ''} disponible${c.points_available > 1 ? 's' : ''}</div>
+              <div style="font-size:11px;opacity:.6">Distribue-les dans tes stats !</div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-grid">
+        ${stats.map(s => {
+          const dots = Array.from({length: DOT_MAX}, (_, i) =>
+            `<div class="stat-dot ${i < s.val ? 'filled ' + s.cls : ''}"></div>`
+          ).join('');
+          return `
+            <div class="stat-card ${s.cls}">
+              <div class="stat-icon">${s.icon}</div>
+              <div class="stat-name">${s.label}</div>
+              <div class="stat-desc">${s.desc}</div>
+              <div class="stat-value-row">
+                <span class="stat-value" style="color:${s.color}">${s.val}</span>
+                <span class="stat-bonus" style="color:${s.color}">${s.bonus}</span>
+              </div>
+              <div class="stat-dots">${dots}</div>
+              <button
+                class="stat-alloc-btn ${s.cls}"
+                onclick="allocateStat('${s.key}')"
+                ${!hasPoints ? 'disabled' : ''}
+              >
+                ${hasPoints ? `+ Allouer (${c.points_available} pts)` : 'Aucun point disponible'}
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <!-- XP TABLEAU -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">📊 XP Personnage par Raid</div>
+        <table class="char-xp-table">
+          <tr><td class="boss-cell">👹 Arakas Facile</td><td class="xp-cell">+200 XP</td></tr>
+          <tr><td class="boss-cell">💀 Arakas Hardcore</td><td class="xp-cell">+400 XP</td></tr>
+          <tr><td class="boss-cell">👹 Myntalis Facile</td><td class="xp-cell">+500 XP</td></tr>
+          <tr><td class="boss-cell">💀 Myntalis Hardcore</td><td class="xp-cell">+900 XP</td></tr>
+          <tr><td class="boss-cell">👹 Xenos Facile</td><td class="xp-cell">+1 200 XP</td></tr>
+          <tr><td class="boss-cell">💀 Xenos Hardcore</td><td class="xp-cell">+2 000 XP</td></tr>
+        </table>
+        <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.04);border-radius:10px;font-size:12px;opacity:.7;line-height:1.8">
+          🧬 Gagné en participant au raid (même sans être le MVP)<br>
+          ⬆️ Chaque niveau donne <b>1 point de stat</b> à distribuer<br>
+          🔄 Reset des stats : <b>500 dollax</b>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-ghost btn-sm" onclick="resetStats()">🔄 Réinitialiser les stats (500 💰)</button>
+        </div>
+        <div id="charAlert" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+  `;
+}
+
+async function allocateStat(statKey) {
+  try {
+    const data = await api('/api/character/allocate', {
+      method: 'POST',
+      body: JSON.stringify({ stat: statKey })
+    });
+    if (data.ok) {
+      // Mettre à jour localement sans reload
+      _charData[statKey.replace('stat_', 'stat_')] = data.new_value;
+      _charData.points_available = data.points_available;
+      // Recalc bonus_preview
+      _charData.stat_force        = statKey === 'stat_force'        ? data.new_value : _charData.stat_force;
+      _charData.stat_agilite      = statKey === 'stat_agilite'      ? data.new_value : _charData.stat_agilite;
+      _charData.stat_intelligence = statKey === 'stat_intelligence'  ? data.new_value : _charData.stat_intelligence;
+      _charData.stat_dexterite    = statKey === 'stat_dexterite'    ? data.new_value : _charData.stat_dexterite;
+      renderCharacter(_charData);
+    }
+  } catch(e) {
+    showAlert(e.message || 'Erreur', 'error');
+  }
+}
+
+async function resetStats() {
+  if (!confirm('Réinitialiser toutes tes stats pour 500 dollax ?')) return;
+  const alertEl = document.getElementById('charAlert');
+  try {
+    const data = await api('/api/character/reset', { method: 'POST' });
+    if (data.ok) {
+      _charData.stat_force = 0;
+      _charData.stat_agilite = 0;
+      _charData.stat_intelligence = 0;
+      _charData.stat_dexterite = 0;
+      _charData.points_available = data.points_available;
+      renderCharacter(_charData);
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Stats réinitialisées ! ${data.points_available} points récupérés.</div>`;
+      setTimeout(() => { if(alertEl) alertEl.innerHTML = ''; }, 3000);
+    }
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
 }
 
 // ===========================
@@ -1055,7 +1280,6 @@ async function loadBossData() {
           </div>
         `;
       }).join('');
-      loadLastRaid();
       return;
     }
 
@@ -1130,77 +1354,6 @@ function startRaidTimer() {
   }
   updateTimer();
   _raidTimer = setInterval(updateTimer, 1000);
-}
-
-// ===========================
-// LAST RAID RECAP
-// ===========================
-async function loadLastRaid() {
-  const el = document.getElementById("lastRaidRecap");
-  if (!el) return;
-  try {
-    const data = await api("/api/clan/raid/last");
-    if (!data.raid) { el.innerHTML = ''; return; }
-    const r = data.raid;
-
-    // Durée formatée
-    let durationStr = '—';
-    if (r.durationMs !== null) {
-      const totalSec = Math.floor(r.durationMs / 1000);
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
-      durationStr = h > 0
-        ? `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
-        : m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
-    }
-
-    // Diff label
-    const diffLabel = r.bossKey?.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
-    const badgeClass = r.defeated ? 'win' : 'fail';
-    const badgeText  = r.defeated ? '✅ Vaincu' : '💀 Échoué';
-
-    // Top dmg max pour les barres
-    const maxDmg = r.players.length ? r.players[0].total : 1;
-
-    const rankIcons = ['🥇','🥈','🥉'];
-
-    el.innerHTML = `
-      <div class="last-raid-card">
-        <div class="last-raid-header">
-          <div class="last-raid-title">📜 Dernier Raid — ${esc(r.bossName)} <span style="font-size:11px;opacity:.6">${diffLabel}</span></div>
-          <span class="last-raid-badge ${badgeClass}">${badgeText}</span>
-        </div>
-        <div class="last-raid-meta">
-          <span>⏱️ Durée : <b>${durationStr}</b></span>
-          <span>⚔️ Dégâts totaux : <b>${fmtNum(r.totalDmg)}</b></span>
-          ${r.mvp ? `<span>🏅 MVP : <b style="color:var(--gold)">${esc(r.mvp)}</b></span>` : ''}
-          ${r.defeated ? `<span>💰 Récompense : <b style="color:var(--gold)">${fmtNum(r.reward)}</b> dollax</span>` : ''}
-        </div>
-        <div class="last-raid-players">
-          ${r.players.map((p, i) => {
-            const avatarStyle = p.avatar ? `background-image:url('${esc(p.avatar)}');background-color:transparent` : '';
-            const initials = (p.name||'?').slice(0,2).toUpperCase();
-            const barW = maxDmg > 0 ? Math.round((p.total / maxDmg) * 100) : 0;
-            const isMvp = p.name === r.mvp;
-            return `
-              <div class="lrp-row">
-                <span class="lrp-rank">${rankIcons[i] || `#${i+1}`}</span>
-                <div class="lrp-avatar" style="${avatarStyle}">${avatarStyle ? '' : initials}</div>
-                <span class="lrp-name">${esc(p.name)}</span>
-                ${isMvp ? '<span class="lrp-mvp">MVP</span>' : ''}
-                <div class="lrp-bar-wrap"><div class="lrp-bar" style="width:${barW}%"></div></div>
-                <span class="lrp-dmg">${fmtNum(p.total)}</span>
-                <span class="lrp-pct">${p.pct}%</span>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-  } catch(e) {
-    console.warn("loadLastRaid:", e);
-  }
 }
 
 async function startRaid(bossKey) {
