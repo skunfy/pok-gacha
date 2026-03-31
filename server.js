@@ -4625,6 +4625,65 @@ app.get("/api/clan/raid/banner", auth, async (req, res) => {
   } catch(e) { res.json({ active: false }); }
 });
 
+// GET /api/clan/raid/last — dernier raid terminé (vaincu ou échoué)
+app.get("/api/clan/raid/last", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.status(403).json({ error: "Non membre" });
+
+    // Dernier raid terminé (defeated=1 ou failed=1)
+    const bQ = await pool.query(
+      `SELECT * FROM clan_boss WHERE clan_id=$1 AND (defeated=1 OR failed=1) ORDER BY id DESC LIMIT 1`,
+      [m.clan_id]
+    );
+    if (!bQ.rows.length) return res.json({ raid: null });
+
+    const boss = bQ.rows[0];
+    const def = RAID_BOSSES[boss.boss_key] || Object.values(RAID_BOSSES)[0];
+
+    // Dégâts par joueur
+    const dmgQ = await pool.query(
+      `SELECT u.name, u.avatar, SUM(d.damage) as total
+       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+       WHERE d.boss_id=$1 GROUP BY u.name, u.avatar ORDER BY total DESC`,
+      [boss.id]
+    );
+
+    // Durée du raid (seulement si vaincu)
+    let durationMs = null;
+    if (Number(boss.defeated) === 1 && boss.defeated_at && boss.started_at) {
+      durationMs = Number(boss.defeated_at) - Number(boss.started_at);
+    }
+
+    const totalDmg = dmgQ.rows.reduce((acc, r) => acc + Number(r.total), 0);
+
+    res.json({
+      raid: {
+        bossName:  boss.name || def.name,
+        bossKey:   boss.boss_key,
+        image:     def.image,
+        defeated:  Number(boss.defeated) === 1,
+        durationMs,
+        startedAt:  Number(boss.started_at),
+        defeatedAt: boss.defeated_at ? Number(boss.defeated_at) : null,
+        hpMax:   boss.hp_max,
+        reward:  boss.reward,
+        players: dmgQ.rows.map(r => ({
+          name:   r.name,
+          avatar: r.avatar,
+          total:  Number(r.total),
+          pct:    totalDmg > 0 ? Math.round((Number(r.total) / totalDmg) * 100) : 0,
+        })),
+        totalDmg,
+        mvp: dmgQ.rows[0]?.name || null,
+      }
+    });
+  } catch(e) {
+    console.error("GET /api/clan/raid/last:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 // ===========================
 // API PERSONNAGE
 // ===========================
