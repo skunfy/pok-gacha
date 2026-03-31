@@ -1315,13 +1315,39 @@ function renderCharacter(c) {
               ` : `<div style="color:${clsColor};font-size:13px;font-weight:900">⭐ Niveau maximum atteint !</div>`}
             </div>
 
-            ${cls ? `
+            ${cls ? (() => {
+              // Calcul des totaux (passif classe + stats investies)
+              const totalDmg        = ((c.class_passive?.dmg_bonus   || 0) + (c.stat_force        * (c.stat_rates?.force        ?? 0.5))).toFixed(1);
+              const totalCrit       = ((c.class_passive?.crit         || 0) + (c.stat_agilite      * (c.stat_rates?.agilite      ?? 0.4))).toFixed(1);
+              const totalIntel      = ((c.class_passive?.intel_bonus  || 0) + (c.stat_intelligence * (c.stat_rates?.intelligence ?? 0.6))).toFixed(1);
+              const totalFirstAtk   = ((c.class_passive?.first_attack || 0) + (c.stat_dexterite    * (c.stat_rates?.dexterite    ?? 0.5))).toFixed(1);
+
+              // Lignes à afficher selon ce qui est non-nul
+              const lines = [];
+              if (Number(totalDmg)      > 0) lines.push({ label: 'DMG',         val: totalDmg,      passiveOnly: c.class_passive?.dmg_bonus   || 0, statPart: (c.stat_force        * (c.stat_rates?.force        ?? 0.5)).toFixed(1) });
+              if (Number(totalCrit)     > 0) lines.push({ label: 'Crit',        val: totalCrit,     passiveOnly: c.class_passive?.crit         || 0, statPart: (c.stat_agilite      * (c.stat_rates?.agilite      ?? 0.4)).toFixed(1) });
+              if (Number(totalIntel)    > 0) lines.push({ label: 'DMG <50% HP', val: totalIntel,    passiveOnly: c.class_passive?.intel_bonus  || 0, statPart: (c.stat_intelligence * (c.stat_rates?.intelligence ?? 0.6)).toFixed(1) });
+              if (Number(totalFirstAtk) > 0) lines.push({ label: '1ère frappe', val: totalFirstAtk, passiveOnly: c.class_passive?.first_attack || 0, statPart: (c.stat_dexterite    * (c.stat_rates?.dexterite    ?? 0.5)).toFixed(1) });
+
+              return `
               <div class="char-passive-row">
-                <div class="char-passive-title">Bonus passif · ${cls.label}</div>
-                <div style="color:${clsColor};font-weight:700">${cls.passives}</div>
-                <div style="font-size:11px;opacity:.55;margin-top:2px">${cls.desc}</div>
+                <div class="char-passive-title">Bonus total · ${cls.label}</div>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+                  ${lines.map(l => `
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                      <span style="color:${clsColor};font-weight:900;font-size:14px">+${l.val}% ${l.label}</span>
+                      <span style="font-size:10px;opacity:.5;display:flex;gap:4px;align-items:center">
+                        <span style="background:rgba(255,255,255,.08);border-radius:4px;padding:1px 5px">passif +${l.passiveOnly}%</span>
+                        ${Number(l.statPart) > 0 ? `<span style="background:rgba(255,255,255,.08);border-radius:4px;padding:1px 5px">stats +${l.statPart}%</span>` : ''}
+                      </span>
+                    </div>
+                  `).join('')}
+                </div>
+                <div style="font-size:11px;opacity:.45;margin-top:6px">${cls.desc}</div>
               </div>
-            ` : ''}
+              `;
+            })() : ''}
+
           </div>
         </div>
 
