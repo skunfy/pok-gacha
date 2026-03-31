@@ -383,20 +383,38 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 /* Badge "Possédée" */
 .badgeOwned{
-  background:rgba(51,255,153,.18);
-  border-color:rgba(51,255,153,.4);
-  color:#33ff99;
-  font-size:11px;
-  padding:4px 9px;
   position:absolute;
-  top:8px;
-  left:8px;
-  z-index:2;
+  top:0; left:0; right:0;
+  z-index:3;
+  background:linear-gradient(90deg,rgba(20,20,20,.92),rgba(20,20,20,.75));
+  border-bottom:2px solid #33ff99;
+  color:#33ff99;
+  font-size:12px;
+  font-weight:900;
+  padding:6px 10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  border-radius:16px 16px 0 0;
+  text-shadow:0 0 10px rgba(51,255,153,.6);
+  letter-spacing:.03em;
 }
-/* Carte déjà possédée : légère teinte verte sur le bord */
+.badgeOwned .owned-check{
+  font-size:14px;
+  filter:drop-shadow(0 0 6px #33ff99);
+}
+.badgeOwned .owned-qty{
+  margin-left:auto;
+  background:rgba(51,255,153,.2);
+  border:1px solid rgba(51,255,153,.4);
+  border-radius:999px;
+  padding:1px 8px;
+  font-size:11px;
+}
+/* Carte possédée : contour vert net */
 .card.isOwned{
-  border-color:rgba(51,255,153,.35) !important;
-  box-shadow:0 0 0 1px rgba(51,255,153,.2);
+  border-color:rgba(51,255,153,.55) !important;
+  box-shadow:0 0 0 1px rgba(51,255,153,.25), 0 10px 26px rgba(51,255,153,.08);
 }
 
 /* Card body */
@@ -1029,10 +1047,10 @@ function applyMarketFilters(listings){
   const gradeMin   = Number(fGradeMin.value||0);
   const priceMax   = Number(fPriceMax.value||0);
 
-  // Set des idKeys ET cardIds possédés pour lookup rapide
+  // Set idKey ET cardId possédés
   const ownedSet = new Set();
   for (const x of myItems) {
-    if (x.idKey) ownedSet.add(String(x.idKey));
+    if (x.idKey)  ownedSet.add(String(x.idKey));
     if (x.cardId) ownedSet.add(String(x.cardId));
   }
 
@@ -1040,7 +1058,7 @@ function applyMarketFilters(listings){
     if (mintOnly && !l.mint) return false;
     if (hideMine && me && (String(l.sellerName||"") === String(me.name||""))) return false;
     if (hideOwned) {
-      const lIdKey = String(l.idKey || l.idkey || "");
+      const lIdKey  = String(l.idKey || l.idkey || "");
       const lCardId = lIdKey ? lIdKey.split("__").pop() : String(l.cardId || "");
       if (ownedSet.has(lIdKey) || ownedSet.has(lCardId)) return false;
     }
@@ -1071,20 +1089,16 @@ function renderMarket(listings){
   }
   show(msgMarket, "");
 
-  // Map idKey → quantité possédée
-  // idKey format: game__setId__localId__cardId
+  // Map idKey ET cardId → quantité possédée
   const ownedMap = new Map();
   for (const x of myItems) {
-    // Indexer par idKey complet
     if (x.idKey) ownedMap.set(String(x.idKey), Number(x.count || 1));
-    // Aussi indexer par cardId seul (fallback)
     if (x.cardId) ownedMap.set(String(x.cardId), Number(x.count || 1));
   }
 
   listings.forEach(l => {
     const el = document.createElement("div");
-    // Chercher par idKey d'abord, puis par cardId extrait de idKey
-    const lIdKey = String(l.idKey || l.idkey || "");
+    const lIdKey  = String(l.idKey || l.idkey || "");
     const lCardId = lIdKey ? lIdKey.split("__").pop() : String(l.cardId || "");
     const isOwned = ownedMap.has(lIdKey) || ownedMap.has(lCardId);
     const ownedQty = isOwned ? (ownedMap.get(lIdKey) || ownedMap.get(lCardId) || 1) : 0;
@@ -1097,7 +1111,7 @@ function renderMarket(listings){
         <div class="cardOverlay">
           <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(l.price)}</b></span>
         </div>
-        ${isOwned ? '<span class="badge badgeOwned">✅ Possédée ×' + ownedQty + '</span>' : ''}
+        ${isOwned ? '<div class="badgeOwned"><span class="owned-check">✅</span> Dans ta collection <span class="owned-qty">×' + ownedQty + '</span></div>' : ''}
       </div>
 
       <div class="cardBody">
