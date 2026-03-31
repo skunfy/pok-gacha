@@ -1029,13 +1029,21 @@ function applyMarketFilters(listings){
   const gradeMin   = Number(fGradeMin.value||0);
   const priceMax   = Number(fPriceMax.value||0);
 
-  // Construire un Set des cardIds possédés pour lookup rapide
-  const ownedSet = new Set(myItems.map(x => String(x.cardId || x.id || "")));
+  // Set des idKeys ET cardIds possédés pour lookup rapide
+  const ownedSet = new Set();
+  for (const x of myItems) {
+    if (x.idKey) ownedSet.add(String(x.idKey));
+    if (x.cardId) ownedSet.add(String(x.cardId));
+  }
 
   return (listings || []).filter(l => {
     if (mintOnly && !l.mint) return false;
     if (hideMine && me && (String(l.sellerName||"") === String(me.name||""))) return false;
-    if (hideOwned && ownedSet.has(String(l.cardId || ""))) return false;
+    if (hideOwned) {
+      const lIdKey = String(l.idKey || l.idkey || "");
+      const lCardId = lIdKey ? lIdKey.split("__").pop() : String(l.cardId || "");
+      if (ownedSet.has(lIdKey) || ownedSet.has(lCardId)) return false;
+    }
     if (gradeMin && Number(l.grade||0) < gradeMin) return false;
     if (priceMax && Number(l.price||0) > priceMax) return false;
     return true;
@@ -1063,17 +1071,23 @@ function renderMarket(listings){
   }
   show(msgMarket, "");
 
-  // Map cardId → quantité possédée
+  // Map idKey → quantité possédée
+  // idKey format: game__setId__localId__cardId
   const ownedMap = new Map();
   for (const x of myItems) {
-    const key = String(x.cardId || x.id || "");
-    if (key) ownedMap.set(key, Number(x.count || 1));
+    // Indexer par idKey complet
+    if (x.idKey) ownedMap.set(String(x.idKey), Number(x.count || 1));
+    // Aussi indexer par cardId seul (fallback)
+    if (x.cardId) ownedMap.set(String(x.cardId), Number(x.count || 1));
   }
 
   listings.forEach(l => {
     const el = document.createElement("div");
-    const isOwned = ownedMap.has(String(l.cardId || ""));
-    const ownedQty = isOwned ? ownedMap.get(String(l.cardId || "")) : 0;
+    // Chercher par idKey d'abord, puis par cardId extrait de idKey
+    const lIdKey = String(l.idKey || l.idkey || "");
+    const lCardId = lIdKey ? lIdKey.split("__").pop() : String(l.cardId || "");
+    const isOwned = ownedMap.has(lIdKey) || ownedMap.has(lCardId);
+    const ownedQty = isOwned ? (ownedMap.get(lIdKey) || ownedMap.get(lCardId) || 1) : 0;
     el.className = "card" + (isOwned ? " isOwned" : "");
     const mintTxt = l.mint ? "MINT" : "Normal";
 
