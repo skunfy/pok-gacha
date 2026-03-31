@@ -598,7 +598,8 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 /* ── PANIER ────────────────────────────────────────────────── */
 .cartBtn{
   position:relative;
-  padding:8px 14px;border-radius:14px;
+  padding:8px 14px;
+  border-radius:14px;
   border:1px solid rgba(255,255,255,.12);
   background:rgba(255,255,255,.07);
   color:#fff;font-weight:900;font-size:13px;
@@ -612,16 +613,16 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   border-radius:999px;padding:2px 6px;min-width:18px;text-align:center;
   display:none;
 }
+/* Bouton panier sur la carte */
 .cartAddBtn{
-  padding:8px 10px;border-radius:12px;
-  border:1px solid rgba(127,92,255,.35);
-  background:rgba(127,92,255,.12);color:#a78bff;
-  font-weight:900;font-size:16px;
-  cursor:pointer;transition:all .15s;line-height:1;flex-shrink:0;
+  padding:8px 10px;border-radius:12px;border:1px solid rgba(127,92,255,.35);
+  background:rgba(127,92,255,.12);color:#a78bff;font-weight:900;font-size:12px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
 }
 .cartAddBtn:hover{ background:rgba(127,92,255,.25);border-color:rgba(127,92,255,.6); }
 .cartAddBtn.inCart{ background:rgba(127,92,255,.35);border-color:rgba(127,92,255,.8);color:#fff; }
 .cartAddBtn:disabled{ opacity:.4;cursor:not-allowed; }
+
 /* Modal panier */
 .cartBack{
   position:fixed;inset:0;display:none;place-items:center;padding:16px;
@@ -642,8 +643,9 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .cartModalClose{ padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer;border:none;color:#fff;font-size:15px; }
 .cartItems{ overflow-y:auto;flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:10px; }
 .cartItem{
-  display:flex;align-items:center;gap:12px;padding:10px 12px;
-  border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:14px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
 }
 .cartItemThumb{
   width:44px;height:62px;border-radius:10px;flex-shrink:0;
@@ -670,7 +672,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 }
 .cartBuyAllBtn:hover{ opacity:.85;transform:translateY(-1px); }
 .cartBuyAllBtn:disabled{ opacity:.4;cursor:not-allowed;transform:none; }
-.cartLimitMsg{ font-size:11px;color:#ff8888;opacity:.85;margin-top:3px; }
+.cartLimitMsg{ font-size:11px;color:#ff8888;opacity:.85; }
 </style>
 </head>
 
@@ -722,7 +724,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
         <option value="name">Nom A-Z</option>
       </select>
 
-      <button class="cartBtn" id="cartNavBtn" onclick="openCartModal()">🛒 <span class="cartBadge" id="cartBadge">0</span></button>
+      <button class="cartBtn" id="cartNavBtn" onclick="openCartModal()">🛒 Panier <span class="cartBadge" id="cartBadge">0</span></button>
       <button class="btnGhost" onclick="location.href='/collection.html'">COLLECTION</button>
       <button class="btnGhost" onclick="location.href='/'">← Retour</button>
     </div>
@@ -1198,7 +1200,7 @@ function renderMarket(listings){
         </div>
 
         <div class="buyRow">
-          <button class="cartAddBtn" type="button" id="cartBtn-${l.id}" title="Ajouter au panier">🛒</button>
+          <button class="cartAddBtn" type="button" id="cartBtn-${l.id}">+ Panier</button>
           <button class="buyBtn" type="button">Acheter</button>
         </div>
 
@@ -1221,13 +1223,22 @@ function renderMarket(listings){
     };
 
     const cartAddBtnEl = el.querySelector(".cartAddBtn");
-    if (cartContains(l.id)) { cartAddBtnEl.textContent = "✅"; cartAddBtnEl.classList.add("inCart"); }
-    if (cart.length >= CART_MAX && !cartContains(l.id)) { cartAddBtnEl.disabled = true; }
+    // Refléter l'état du panier actuel
+    if (cartContains(l.id)) {
+      cartAddBtnEl.textContent = "✓ Ajouté";
+      cartAddBtnEl.classList.add("inCart");
+    }
+    if (cart.length >= CART_MAX && !cartContains(l.id)) {
+      cartAddBtnEl.disabled = true;
+      cartAddBtnEl.title = `Maximum ${CART_MAX} cartes`;
+    }
     cartAddBtnEl.onclick = (ev) => {
       ev.stopPropagation();
       toggleCart(l, ev.currentTarget);
+      // Mettre à jour les autres boutons si max atteint
       document.querySelectorAll(".cartAddBtn:not(.inCart)").forEach(b => {
         b.disabled = cart.length >= CART_MAX;
+        b.title = cart.length >= CART_MAX ? `Maximum ${CART_MAX} cartes` : "";
       });
     };
 
@@ -1441,7 +1452,7 @@ async function boot(){
 // SYSTÈME PANIER
 // ═══════════════════════════════════════════════
 const CART_MAX = 20;
-let cart = [];
+let cart = []; // [{ listing }]
 
 function cartContains(listingId) {
   return cart.some(x => x.listing.id === listingId);
@@ -1449,23 +1460,27 @@ function cartContains(listingId) {
 
 function updateCartBadge() {
   const badge = document.getElementById("cartBadge");
-  const n = cart.length;
+  const btn   = document.getElementById("cartNavBtn");
   if (!badge) return;
+  const n = cart.length;
   badge.textContent = n;
   badge.style.display = n > 0 ? "block" : "none";
+  if (btn) btn.textContent = `🛒 Panier `;
+  if (btn) btn.appendChild(badge);
 }
 
 function toggleCart(listing, btnEl) {
   if (cartContains(listing.id)) {
+    // Retirer du panier
     cart = cart.filter(x => x.listing.id !== listing.id);
-    if (btnEl) { btnEl.textContent = "🛒"; btnEl.classList.remove("inCart"); btnEl.disabled = false; }
+    if (btnEl) { btnEl.textContent = "+ Panier"; btnEl.classList.remove("inCart"); }
   } else {
     if (cart.length >= CART_MAX) {
-      showAlert && showAlert("Maximum " + CART_MAX + " cartes dans le panier", "error");
+      showAlert(`Maximum ${CART_MAX} cartes dans le panier`, "error");
       return;
     }
     cart.push({ listing });
-    if (btnEl) { btnEl.textContent = "✅"; btnEl.classList.add("inCart"); }
+    if (btnEl) { btnEl.textContent = "✓ Ajouté"; btnEl.classList.add("inCart"); }
   }
   updateCartBadge();
 }
@@ -1474,43 +1489,45 @@ function openCartModal() {
   renderCartModal();
   document.getElementById("cartBack").style.display = "grid";
 }
+
 function closeCartModal() {
   document.getElementById("cartBack").style.display = "none";
 }
-document.getElementById("cartBack")?.addEventListener("click", e => {
+
+document.getElementById("cartBack")?.addEventListener("click", (e) => {
   if (e.target === document.getElementById("cartBack")) closeCartModal();
 });
 
 function renderCartModal() {
-  const el     = document.getElementById("cartItems");
-  const total  = document.getElementById("cartTotalPrice");
-  const limit  = document.getElementById("cartLimitMsg");
-  const buyBtn = document.getElementById("cartBuyAllBtn");
-  if (!el) return;
+  const el    = document.getElementById("cartItems");
+  const total = document.getElementById("cartTotalPrice");
+  const limit = document.getElementById("cartLimitMsg");
+  const buyBtn= document.getElementById("cartBuyAllBtn");
 
   if (!cart.length) {
     el.innerHTML = '<div class="cartEmpty">🛒 Ton panier est vide.</div>';
-    if (total)  total.textContent  = "0";
-    if (limit)  limit.textContent  = "";
-    if (buyBtn) buyBtn.disabled    = true;
+    if (total) total.textContent = "0";
+    if (limit) limit.textContent = "";
+    if (buyBtn) buyBtn.disabled = true;
     return;
   }
 
   const totalPrice = cart.reduce((s, x) => s + Number(x.listing.price || 0), 0);
-  if (total)  total.textContent  = totalPrice.toLocaleString();
-  if (limit)  limit.textContent  = cart.length >= CART_MAX ? "⚠️ Maximum " + CART_MAX + " cartes atteint" : cart.length + " / " + CART_MAX + " cartes";
-  if (buyBtn) buyBtn.disabled    = false;
+  if (total) total.textContent = fmtNum ? fmtNum(totalPrice) : totalPrice;
+  if (limit) limit.textContent = cart.length >= CART_MAX ? `⚠️ Maximum ${CART_MAX} cartes atteint` : `${cart.length} / ${CART_MAX} cartes`;
+  if (buyBtn) buyBtn.disabled = false;
 
   el.innerHTML = "";
   cart.forEach(({ listing: l }) => {
     const row = document.createElement("div");
     row.className = "cartItem";
+    const mintTxt = l.mint ? " • MINT" : "";
     row.innerHTML = `
       <div class="cartItemThumb" style="background-image:url('${l.image}')"></div>
       <div class="cartItemInfo">
         <div class="cartItemName">${escapeHtml(l.name)}</div>
-        <div class="cartItemSub">${escapeHtml(l.setName || "")} • Grade ${escapeHtml(String(l.grade))}${l.mint ? " • MINT" : ""}</div>
-        <div class="cartItemSub">Vendeur : ${escapeHtml(l.sellerName || "")}</div>
+        <div class="cartItemSub">${escapeHtml(l.setName || "")} • Grade ${escapeHtml(l.grade)}${mintTxt}</div>
+        <div class="cartItemSub" style="margin-top:2px">Vendeur : ${escapeHtml(l.sellerName || "")}</div>
       </div>
       <div class="cartItemPrice">${escapeHtml(String(l.price))} 💰</div>
       <button class="cartItemRemove" onclick="removeFromCart(${l.id})">✕</button>
@@ -1523,10 +1540,9 @@ function removeFromCart(listingId) {
   cart = cart.filter(x => x.listing.id !== listingId);
   updateCartBadge();
   renderCartModal();
+  // Mettre à jour le bouton sur la carte
   const btn = document.getElementById("cartBtn-" + listingId);
-  if (btn) { btn.textContent = "🛒"; btn.classList.remove("inCart"); btn.disabled = false; }
-  // Re-enable all disabled cart buttons
-  document.querySelectorAll(".cartAddBtn:not(.inCart)").forEach(b => { b.disabled = cart.length >= CART_MAX; });
+  if (btn) { btn.textContent = "+ Panier"; btn.classList.remove("inCart"); }
 }
 
 async function buyAllCart() {
@@ -1536,23 +1552,33 @@ async function buyAllCart() {
 
   const errors = [];
   const bought = [];
-  for (const { listing: l } of [...cart]) {
+
+  for (const { listing: l } of cart) {
     try {
-      await api("/api/market/buy", { method:"POST", body: JSON.stringify({ listingId: l.id, qty: 1 }) });
+      await api("/api/market/buy", {
+        method: "POST",
+        body: JSON.stringify({ listingId: l.id, qty: 1 })
+      });
       bought.push(l);
-    } catch(e) { errors.push(l.name + " : " + e.message); }
+    } catch(e) {
+      errors.push(`${l.name} : ${e.message}`);
+    }
   }
 
+  // Vider les cartes achetées du panier
   const boughtIds = new Set(bought.map(l => l.id));
   cart = cart.filter(x => !boughtIds.has(x.listing.id));
   updateCartBadge();
+
   closeCartModal();
 
   if (errors.length) {
-    alert("✅ " + bought.length + " achetée(s).\nErreurs :\n" + errors.join("\n"));
+    showAlert(`${bought.length} achetée(s). Erreurs : ${errors.join(", ")}`, "error");
   } else {
-    showAlert && showAlert("✅ " + bought.length + " carte(s) achetée(s) !", "success");
+    showAlert(`✅ ${bought.length} carte(s) achetée(s) !`, "success");
   }
+
+  // Refresh
   await boot(true);
 }
 
