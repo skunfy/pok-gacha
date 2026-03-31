@@ -355,33 +355,122 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 /* PERSONNAGE */
 .char-wrap{display:flex;flex-direction:column;gap:16px}
-.char-header{
-  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
-  padding:20px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(127,92,255,.18),rgba(240,83,197,.12));
-  border:1px solid rgba(127,92,255,.3);
+
+/* === CARTE HERO === */
+.char-hero-card{
+  border-radius:20px;overflow:hidden;position:relative;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,20,.6);
+  display:flex;flex-direction:column;
 }
-.char-avatar-big{
-  width:72px;height:72px;border-radius:16px;flex-shrink:0;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  display:grid;place-items:center;font-size:30px;
-  box-shadow:0 0 24px rgba(127,92,255,.4);
+.char-hero-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center top;
+  opacity:.18;filter:blur(2px);transform:scale(1.05);
+  transition:opacity .4s;
 }
-.char-info{flex:1;min-width:180px}
-.char-name{font-size:18px;font-weight:900;margin-bottom:4px}
-.char-level-badge{
-  display:inline-block;font-size:12px;font-weight:900;
-  padding:3px 10px;border-radius:999px;margin-bottom:10px;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
+.char-hero-top{
+  position:relative;z-index:1;
+  display:flex;gap:0;min-height:220px;
 }
-.char-xp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin-bottom:4px}
-.char-xp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#ffd84d,#ff8800);transition:width .5s}
+.char-hero-img-col{
+  width:180px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 0 16px;
+}
+.char-hero-img{
+  width:160px;height:210px;object-fit:contain;object-position:bottom;
+  filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+  transition:filter .4s,transform .3s;
+}
+.char-hero-img:hover{transform:scale(1.04) translateY(-4px)}
+.char-hero-img-placeholder{
+  width:160px;height:210px;display:flex;align-items:center;justify-content:center;
+  font-size:80px;filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+}
+.char-hero-info-col{
+  flex:1;padding:24px 20px 20px;display:flex;flex-direction:column;justify-content:space-between;
+}
+.char-hero-name{font-size:22px;font-weight:900;margin-bottom:4px}
+.char-class-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:900;padding:4px 12px;border-radius:999px;margin-bottom:14px;
+  border:1px solid;
+}
+.char-class-pill.no-class{
+  background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;opacity:.7;
+}
+.char-level-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.char-level-num{font-size:36px;font-weight:900;line-height:1}
+.char-level-label{font-size:13px;opacity:.6;font-weight:700}
+.char-xp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin-bottom:5px}
+.char-xp-bar{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 .char-xp-label{font-size:11px;opacity:.6}
-.char-points-badge{
-  background:rgba(255,216,77,.15);border:1px solid rgba(255,216,77,.35);
-  border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+.char-passive-row{
+  margin-top:14px;padding:10px 14px;border-radius:10px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;line-height:1.7;
 }
-.char-points-val{font-size:24px;font-weight:900;color:var(--gold)}
+.char-passive-title{font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+
+/* Points badge flottant */
+.char-points-float{
+  position:absolute;top:14px;right:14px;z-index:2;
+  background:linear-gradient(135deg,#ffd84d,#ff8800);
+  border-radius:12px;padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(255,216,77,.35);
+  animation:pointsPulse 2s ease infinite;
+}
+@keyframes pointsPulse{0%,100%{box-shadow:0 4px 20px rgba(255,216,77,.35)}50%{box-shadow:0 4px 32px rgba(255,216,77,.6)}}
+.char-points-float-num{font-size:20px;font-weight:900;color:#000}
+.char-points-float-label{font-size:11px;font-weight:800;color:rgba(0,0,0,.7)}
+
+/* Barre XP bottom */
+.char-hero-xp-bar-full{
+  position:relative;z-index:1;
+  height:6px;background:rgba(255,255,255,.08);
+}
+.char-hero-xp-bar-fill{
+  height:100%;transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+/* === CHOIX DE CLASSE === */
+.class-pick-screen{
+  border-radius:20px;padding:28px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  text-align:center;
+}
+.class-pick-title{font-size:20px;font-weight:900;margin-bottom:6px}
+.class-pick-sub{font-size:13px;opacity:.6;margin-bottom:24px}
+.class-cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:700px){.class-cards-row{grid-template-columns:1fr}}
+.class-pick-card{
+  border-radius:16px;padding:20px 14px;cursor:pointer;
+  border:2px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);
+  transition:all .2s;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.class-pick-card:hover{transform:translateY(-4px);border-color:var(--cls-color)!important;background:rgba(255,255,255,.08)}
+.class-pick-card.selected{border-color:var(--cls-color)!important;background:rgba(255,255,255,.1)}
+.class-pick-img{width:110px;height:145px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 0 16px var(--cls-color))}
+.class-pick-img-ph{font-size:56px;height:110px;display:flex;align-items:flex-end;justify-content:center}
+.class-pick-name{font-size:16px;font-weight:900}
+.class-pick-desc{font-size:11px;opacity:.6;line-height:1.5}
+.class-pick-passives{
+  font-size:11px;padding:8px 10px;border-radius:8px;
+  background:rgba(0,0,0,.25);width:100%;text-align:left;line-height:1.8;
+}
+.class-pick-btn{
+  margin-top:20px;padding:12px 36px;border-radius:12px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  transition:opacity .15s,transform .12s;
+}
+.class-pick-btn:hover{opacity:.85;transform:translateY(-1px)}
+.class-pick-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* === STATS === */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
 .stat-card{
@@ -392,14 +481,15 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .stat-card.agilite{border-color:rgba(100,255,150,.3);background:rgba(51,255,153,.06)}
 .stat-card.intel  {border-color:rgba(100,180,255,.3);background:rgba(77,166,255,.06)}
 .stat-card.dex    {border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
-.stat-icon{font-size:26px;margin-bottom:6px}
+.stat-icon{font-size:22px;margin-bottom:4px}
 .stat-name{font-size:13px;font-weight:900;margin-bottom:2px}
-.stat-desc{font-size:11px;opacity:.55;margin-bottom:12px;line-height:1.5}
-.stat-value-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stat-desc{font-size:11px;opacity:.55;margin-bottom:10px;line-height:1.5}
+.stat-value-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .stat-value{font-size:22px;font-weight:900}
 .stat-bonus{font-size:11px;opacity:.65}
+.stat-passive-line{font-size:10px;opacity:.5;margin-bottom:6px;font-style:italic}
 .stat-dots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px}
-.stat-dot{width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.12)}
+.stat-dot{width:11px;height:11px;border-radius:3px;background:rgba(255,255,255,.12)}
 .stat-dot.filled.force  {background:#ff6464}
 .stat-dot.filled.agilite{background:#33ff99}
 .stat-dot.filled.intel  {background:#4da6ff}
@@ -1023,6 +1113,20 @@ function switchTab(name, el) {
 // PERSONNAGE
 // ===========================
 let _charData = null;
+let _selectedClass = null;
+
+// ⚠️ URLs GitHub de tes images de classe
+const CLASS_IMAGES = {
+  slayer:   'https://raw.githubusercontent.com/skunf/gachax/main/slayer.png',
+  assassin: 'https://raw.githubusercontent.com/skunf/gachax/main/assassin.png',
+  soutien:  'https://raw.githubusercontent.com/skunf/gachax/main/soutient.png',
+};
+
+const CLASS_DEF = {
+  slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464', desc:'Maître du combat direct.', passives:'+10% DMG permanent' },
+  assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff', desc:'Frappe vite et fort.',      passives:'+8% Crit · +15% 1ère frappe' },
+  soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff', desc:'Explosif en fin de combat.',passives:'+12% DMG quand boss <50% HP' },
+};
 
 async function loadCharacter() {
   const el = document.getElementById('characterContent');
@@ -1030,113 +1134,255 @@ async function loadCharacter() {
   try {
     const c = await api('/api/character');
     _charData = c;
-    renderCharacter(c);
+    if (!c.char_class) {
+      renderClassPicker(c);
+    } else {
+      renderCharacter(c);
+    }
   } catch(e) {
     el.innerHTML = `<div class="alert alert-error">Erreur chargement personnage</div>`;
   }
 }
 
+// === ÉCRAN CHOIX DE CLASSE ===
+function renderClassPicker(c, isChange = false) {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+  _selectedClass = null;
+
+  const cost = isChange ? 1000 : 0;
+
+  el.innerHTML = `
+    <div class="char-wrap">
+      <div class="class-pick-screen">
+        <div class="class-pick-title">${isChange ? '🔄 Changer de classe' : '⚔️ Choisis ta classe'}</div>
+        <div class="class-pick-sub">
+          ${isChange
+            ? `Changer de classe coûte <b style="color:var(--gold)">1 000 dollax</b>. Tes stats restent acquises.`
+            : 'Ton choix définit ton bonus passif permanent en raid. Tu pourras en changer pour 1 000 dollax.'}
+        </div>
+        <div class="class-cards-row" id="classCardsRow">
+          ${Object.entries(CLASS_DEF).map(([key, cls]) => `
+            <div class="class-pick-card" id="classpick-${key}"
+                 style="--cls-color:${cls.color}"
+                 onclick="selectClassCard('${key}')">
+              <img src="${CLASS_IMAGES[key]}" alt="${cls.label}"
+                   class="class-pick-img"
+                   onerror="this.outerHTML='<div class=\\'class-pick-img-ph\\'>${cls.icon}</div>'">
+              <div class="class-pick-name" style="color:${cls.color}">${cls.icon} ${cls.label}</div>
+              <div class="class-pick-desc">${cls.desc}</div>
+              <div class="class-pick-passives">${cls.passives}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="class-pick-btn" id="confirmClassBtn" disabled onclick="confirmClass(${isChange})">
+            ${isChange ? `Changer (1 000 💰)` : 'Choisir cette classe'}
+          </button>
+          ${isChange ? `<button class="btn btn-ghost btn-sm" onclick="renderCharacter(_charData)">Annuler</button>` : ''}
+        </div>
+        <div id="classPickAlert" style="margin-top:12px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function selectClassCard(key) {
+  _selectedClass = key;
+  document.querySelectorAll('.class-pick-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('classpick-' + key);
+  if (card) card.classList.add('selected');
+  const btn = document.getElementById('confirmClassBtn');
+  if (btn) btn.disabled = false;
+}
+
+async function confirmClass(isChange) {
+  if (!_selectedClass) return;
+  const alertEl = document.getElementById('classPickAlert');
+  try {
+    const data = await api('/api/character/class', {
+      method: 'POST',
+      body: JSON.stringify({ char_class: _selectedClass })
+    });
+    if (data.ok) {
+      const fresh = await api('/api/character');
+      _charData = fresh;
+      renderCharacter(fresh);
+    }
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// === VUE PRINCIPALE PERSONNAGE ===
 function renderCharacter(c) {
   const el = document.getElementById('characterContent');
   if (!el) return;
 
-  const name = myData?.name || 'Inconnu';
-  const avatarStyle = myData?.avatar ? `background-image:url('${esc(myData.avatar)}');background-color:transparent` : '';
-  const isMax = c.char_level >= c.max_level;
-  const hasPoints = c.points_available > 0;
+  const name     = myData?.name || 'Inconnu';
+  const isMax    = c.char_level >= c.max_level;
+  const hasPoints= c.points_available > 0;
+  const cls      = CLASS_DEF[c.char_class] || null;
+  const clsColor = cls?.color || '#7f5cff';
+  const imgSrc   = c.char_class ? CLASS_IMAGES[c.char_class] : null;
+
+  // Gradient couleur de classe pour la XP bar
+  const xpGradient = c.char_class === 'slayer'
+    ? 'linear-gradient(90deg,#ff4444,#ff8800)'
+    : c.char_class === 'assassin'
+    ? 'linear-gradient(90deg,#9b59b6,#e040fb)'
+    : c.char_class === 'soutien'
+    ? 'linear-gradient(90deg,#1a78ff,#33c6ff)'
+    : 'linear-gradient(90deg,#ffd84d,#ff8800)';
 
   const stats = [
     {
-      key: 'stat_force', cls: 'force', icon: '⚔️', label: 'Force',
-      val: c.stat_force,
-      desc: 'Augmente les dégâts de base sur le boss.',
-      bonus: `+${(c.stat_force * 0.5).toFixed(1)}% DMG`,
-      color: '#ff6464',
+      key:'stat_force', cls2:'force', icon:'⚔️', label:'Force',
+      val: c.stat_force, desc:'Augmente les dégâts de base.',
+      rate: c.stat_rates?.force ?? 0.5, statName:'force', color:'#ff6464',
+      passive: c.class_passive?.dmg_bonus > 0 ? `+${c.class_passive.dmg_bonus}% DMG passif (${cls?.label})` : null,
     },
     {
-      key: 'stat_agilite', cls: 'agilite', icon: '🌪️', label: 'Agilité',
-      val: c.stat_agilite,
-      desc: 'Augmente la chance de coup critique.',
-      bonus: `+${(c.stat_agilite * 0.4).toFixed(1)}% Crit`,
-      color: '#33ff99',
+      key:'stat_agilite', cls2:'agilite', icon:'🌪️', label:'Agilité',
+      val: c.stat_agilite, desc:'Augmente la chance de crit.',
+      rate: c.stat_rates?.agilite ?? 0.4, statName:'agilite', color:'#33ff99',
+      passive: c.class_passive?.crit > 0 ? `+${c.class_passive.crit}% Crit passif (${cls?.label})` : null,
     },
     {
-      key: 'stat_intelligence', cls: 'intel', icon: '🔮', label: 'Intelligence',
-      val: c.stat_intelligence,
-      desc: 'Dégâts bonus quand le boss est sous 50% PV.',
-      bonus: `+${(c.stat_intelligence * 0.6).toFixed(1)}% DMG <50% HP`,
-      color: '#4da6ff',
+      key:'stat_intelligence', cls2:'intel', icon:'🔮', label:'Intelligence',
+      val: c.stat_intelligence, desc:'Bonus DMG quand boss < 50% PV.',
+      rate: c.stat_rates?.intelligence ?? 0.6, statName:'intelligence', color:'#4da6ff',
+      passive: c.class_passive?.intel_bonus > 0 ? `+${c.class_passive.intel_bonus}% DMG <50% passif (${cls?.label})` : null,
     },
     {
-      key: 'stat_dexterite', cls: 'dex', icon: '⚡', label: 'Dextérité',
-      val: c.stat_dexterite,
-      desc: 'Bonus de dégâts sur la première attaque du raid.',
-      bonus: `+${(c.stat_dexterite * 0.5).toFixed(1)}% 1ère frappe`,
-      color: '#ffd84d',
+      key:'stat_dexterite', cls2:'dex', icon:'⚡', label:'Dextérité',
+      val: c.stat_dexterite, desc:'Bonus sur la première frappe du raid.',
+      rate: c.stat_rates?.dexterite ?? 0.5, statName:'dexterite', color:'#ffd84d',
+      passive: c.class_passive?.first_attack > 0 ? `+${c.class_passive.first_attack}% 1ère frappe passif (${cls?.label})` : null,
     },
   ];
 
-  // Barres de stat (max visuel = 30 points pour les dots)
   const DOT_MAX = 30;
 
   el.innerHTML = `
-    <div class="char-wrap">
+    <div class="char-wrap" style="--cls-color:${clsColor}">
 
-      <!-- HEADER PERSO -->
-      <div class="char-header">
-        <div class="char-avatar-big" style="${avatarStyle}">${avatarStyle ? '' : '🧬'}</div>
-        <div class="char-info">
-          <div class="char-name">${esc(name)}</div>
-          <div class="char-level-badge">Niveau ${c.char_level}${isMax ? ' · MAX' : ''}</div>
-          ${isMax ? '' : `
-            <div class="char-xp-bar-wrap">
-              <div class="char-xp-bar" style="width:${c.xp_pct}%"></div>
-            </div>
-            <div class="char-xp-label">${fmtNum(c.xp_current_level)} / ${fmtNum(c.xp_for_next)} XP · ${c.xp_pct}%</div>
-          `}
-        </div>
+      <!-- CARTE HÉROS -->
+      <div class="char-hero-card">
+        <!-- bg flou classe -->
+        ${imgSrc ? `<div class="char-hero-bg" style="background-image:url('${esc(imgSrc)}')"></div>` : ''}
+
+        <!-- Badge points flottant -->
         ${hasPoints ? `
-          <div class="char-points-badge">
-            <span class="char-points-val">${c.points_available}</span>
+          <div class="char-points-float">
             <div>
-              <div style="font-size:13px;font-weight:800">Point${c.points_available > 1 ? 's' : ''} disponible${c.points_available > 1 ? 's' : ''}</div>
-              <div style="font-size:11px;opacity:.6">Distribue-les dans tes stats !</div>
+              <div class="char-points-float-num">${c.points_available}</div>
+              <div class="char-points-float-label">pt${c.points_available > 1 ? 's' : ''} dispo</div>
             </div>
+            <div style="font-size:20px">⬆️</div>
           </div>
         ` : ''}
+
+        <div class="char-hero-top">
+          <!-- Image personnage à gauche -->
+          <div class="char-hero-img-col">
+            ${imgSrc
+              ? `<img src="${esc(imgSrc)}" alt="${cls?.label || ''}" class="char-hero-img"
+                      onerror="this.outerHTML='<div class=\\'char-hero-img-placeholder\\'>${cls?.icon || '🧬'}</div>'">`
+              : `<div class="char-hero-img-placeholder">🧬</div>`
+            }
+          </div>
+
+          <!-- Infos à droite -->
+          <div class="char-hero-info-col">
+            <div>
+              <div class="char-hero-name">${esc(name)}</div>
+              ${cls
+                ? `<div class="char-class-pill" style="color:${clsColor};border-color:${clsColor};background:${clsColor}22">
+                    ${cls.icon} ${cls.label}
+                   </div>`
+                : `<div class="char-class-pill no-class">Aucune classe</div>`
+              }
+              <div class="char-level-row">
+                <span class="char-level-num" style="color:${clsColor}">${c.char_level}</span>
+                <span class="char-level-label">${isMax ? '· MAX' : `/ ${c.max_level}`}</span>
+              </div>
+              ${!isMax ? `
+                <div class="char-xp-bar-wrap">
+                  <div class="char-xp-bar" style="width:${c.xp_pct}%;background:${xpGradient}"></div>
+                </div>
+                <div class="char-xp-label">${fmtNum(c.xp_current_level)} / ${fmtNum(c.xp_for_next)} XP · ${c.xp_pct}%</div>
+              ` : `<div style="color:${clsColor};font-size:13px;font-weight:900">⭐ Niveau maximum atteint !</div>`}
+            </div>
+
+            ${cls ? `
+              <div class="char-passive-row">
+                <div class="char-passive-title">Bonus passif · ${cls.label}</div>
+                <div style="color:${clsColor};font-weight:700">${cls.passives}</div>
+                <div style="font-size:11px;opacity:.55;margin-top:2px">${cls.desc}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- XP bar tout en bas de la carte -->
+        <div class="char-hero-xp-bar-full">
+          <div class="char-hero-xp-bar-fill" style="width:${isMax ? 100 : c.xp_pct}%;background:${xpGradient}"></div>
+        </div>
       </div>
 
       <!-- STATS -->
       <div class="stats-grid">
         ${stats.map(s => {
+          const isPrimary   = (c.class_primary   || []).includes(s.statName);
+          const isSecondary = (c.class_secondary || []).includes(s.statName);
+          const isWeak      = c.char_class && !isPrimary && !isSecondary;
+
+          // Badge de tier
+          const tierBadge = isPrimary
+            ? `<span style="font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;background:${clsColor}33;color:${clsColor};border:1px solid ${clsColor}66;margin-left:6px">PRIMAIRE ×${s.rate.toFixed(1)}</span>`
+            : isSecondary
+            ? `<span style="font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15);margin-left:6px">SECOND. ×${s.rate.toFixed(1)}</span>`
+            : isWeak
+            ? `<span style="font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;background:rgba(255,80,80,.08);color:rgba(255,120,120,.5);border:1px solid rgba(255,80,80,.15);margin-left:6px">FAIBLE ×${s.rate.toFixed(1)}</span>`
+            : '';
+
+          // Bonus calculé avec le bon rate
+          const bonusVal = (s.val * s.rate).toFixed(1);
+          const bonusLabel = s.cls2 === 'force'   ? `+${bonusVal}% DMG`
+                           : s.cls2 === 'agilite'  ? `+${bonusVal}% Crit`
+                           : s.cls2 === 'intel'    ? `+${bonusVal}% DMG <50%`
+                           :                         `+${bonusVal}% 1ère frappe`;
+
           const dots = Array.from({length: DOT_MAX}, (_, i) =>
-            `<div class="stat-dot ${i < s.val ? 'filled ' + s.cls : ''}"></div>`
+            `<div class="stat-dot ${i < s.val ? 'filled ' + s.cls2 : ''}"></div>`
           ).join('');
+
           return `
-            <div class="stat-card ${s.cls}">
-              <div class="stat-icon">${s.icon}</div>
-              <div class="stat-name">${s.label}</div>
+            <div class="stat-card ${s.cls2}" style="${isWeak ? 'opacity:.75' : ''}">
+              <div style="display:flex;align-items:center;margin-bottom:4px">
+                <span class="stat-icon" style="margin-bottom:0;margin-right:6px;font-size:18px">${s.icon}</span>
+                <span class="stat-name" style="margin-bottom:0">${s.label}</span>
+                ${tierBadge}
+              </div>
               <div class="stat-desc">${s.desc}</div>
               <div class="stat-value-row">
                 <span class="stat-value" style="color:${s.color}">${s.val}</span>
-                <span class="stat-bonus" style="color:${s.color}">${s.bonus}</span>
+                <span class="stat-bonus" style="color:${isPrimary ? s.color : 'rgba(255,255,255,.45)'}">${bonusLabel}</span>
               </div>
+              ${s.passive ? `<div class="stat-passive-line" style="color:${clsColor}">✦ ${s.passive}</div>` : ''}
               <div class="stat-dots">${dots}</div>
-              <button
-                class="stat-alloc-btn ${s.cls}"
-                onclick="allocateStat('${s.key}')"
-                ${!hasPoints ? 'disabled' : ''}
-              >
-                ${hasPoints ? `+ Allouer (${c.points_available} pts)` : 'Aucun point disponible'}
+              <button class="stat-alloc-btn ${s.cls2}" onclick="allocateStat('${s.key}')" ${!hasPoints ? 'disabled' : ''}>
+                ${hasPoints ? `+ Allouer (${c.points_available} pt${c.points_available > 1 ? 's' : ''})` : 'Aucun point disponible'}
               </button>
             </div>
           `;
         }).join('')}
       </div>
 
-      <!-- XP TABLEAU -->
+      <!-- INFOS & ACTIONS -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:12px">📊 XP Personnage par Raid</div>
+        <div class="card-title" style="margin-bottom:14px">📊 XP Personnage par Raid</div>
         <table class="char-xp-table">
           <tr><td class="boss-cell">👹 Arakas Facile</td><td class="xp-cell">+200 XP</td></tr>
           <tr><td class="boss-cell">💀 Arakas Hardcore</td><td class="xp-cell">+400 XP</td></tr>
@@ -1146,12 +1392,13 @@ function renderCharacter(c) {
           <tr><td class="boss-cell">💀 Xenos Hardcore</td><td class="xp-cell">+2 000 XP</td></tr>
         </table>
         <div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.04);border-radius:10px;font-size:12px;opacity:.7;line-height:1.8">
-          🧬 Gagné en participant au raid (même sans être le MVP)<br>
-          ⬆️ Chaque niveau donne <b>1 point de stat</b> à distribuer<br>
-          🔄 Reset des stats : <b>500 dollax</b>
+          🧬 XP gagnée en participant au raid (même sans être MVP)<br>
+          ⬆️ Chaque niveau = 1 point de stat à distribuer<br>
+          🔄 Reset des stats : <b>500 dollax</b> · Changer de classe : <b>1 000 dollax</b>
         </div>
-        <div style="margin-top:12px">
-          <button class="btn btn-ghost btn-sm" onclick="resetStats()">🔄 Réinitialiser les stats (500 💰)</button>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="resetStats()">🔄 Reset stats (500 💰)</button>
+          <button class="btn btn-ghost btn-sm" onclick="renderClassPicker(_charData, true)">⚔️ Changer de classe (1 000 💰)</button>
         </div>
         <div id="charAlert" style="margin-top:10px"></div>
       </div>
@@ -1167,14 +1414,11 @@ async function allocateStat(statKey) {
       body: JSON.stringify({ stat: statKey })
     });
     if (data.ok) {
-      // Mettre à jour localement sans reload
-      _charData[statKey.replace('stat_', 'stat_')] = data.new_value;
-      _charData.points_available = data.points_available;
-      // Recalc bonus_preview
       _charData.stat_force        = statKey === 'stat_force'        ? data.new_value : _charData.stat_force;
       _charData.stat_agilite      = statKey === 'stat_agilite'      ? data.new_value : _charData.stat_agilite;
       _charData.stat_intelligence = statKey === 'stat_intelligence'  ? data.new_value : _charData.stat_intelligence;
       _charData.stat_dexterite    = statKey === 'stat_dexterite'    ? data.new_value : _charData.stat_dexterite;
+      _charData.points_available  = data.points_available;
       renderCharacter(_charData);
     }
   } catch(e) {
@@ -1194,7 +1438,7 @@ async function resetStats() {
       _charData.stat_dexterite = 0;
       _charData.points_available = data.points_available;
       renderCharacter(_charData);
-      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Stats réinitialisées ! ${data.points_available} points récupérés.</div>`;
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Stats reset ! ${data.points_available} points récupérés.</div>`;
       setTimeout(() => { if(alertEl) alertEl.innerHTML = ''; }, 3000);
     }
   } catch(e) {

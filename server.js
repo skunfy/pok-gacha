@@ -786,9 +786,11 @@ async function initDb() {
       stat_agilite     INTEGER NOT NULL DEFAULT 0,
       stat_intelligence INTEGER NOT NULL DEFAULT 0,
       stat_dexterite   INTEGER NOT NULL DEFAULT 0,
-      points_available INTEGER NOT NULL DEFAULT 0
+      points_available INTEGER NOT NULL DEFAULT 0,
+      char_class TEXT DEFAULT NULL
     )
   `);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS char_class TEXT DEFAULT NULL`);
 
   console.log("✅ Postgres DB ready");
 }
@@ -955,22 +957,79 @@ async function addCharXp(userId, xpGain) {
   return { ...char, char_xp: newXp, char_level: newLevel, points_available: newPoints, levelsGained };
 }
 
-// Calcule les bonus de stats perso pour le raid
-// Force : +dmg_bonus (0.5% par point)
-// Agilité : +crit (0.4% par point)
-// Intelligence : +dmg si boss HP < 50% (0.6% par point)
-// Dextérité : +first_attack (0.5% par point)
+// Définition des classes, bonus passifs et multiplicateurs de stat
+const CHAR_CLASSES = {
+  slayer: {
+    label: 'Slayer',
+    passive_dmg_bonus:   10,
+    passive_crit:         0,
+    passive_intel_bonus:  0,
+    passive_first_attack: 0,
+    color: '#ff6464',
+    desc: 'Maître du combat direct. +10% DMG permanents.',
+    // Multiplicateurs par stat (base × mult = bonus final %)
+    scale: { force: 2.0, agilite: 0.8, intelligence: 0.4, dexterite: 1.5 },
+    // Stat primaire/secondaire pour affichage
+    primary: ['force'],
+    secondary: ['dexterite'],
+  },
+  assassin: {
+    label: 'Assassin',
+    passive_dmg_bonus:   0,
+    passive_crit:        8,
+    passive_intel_bonus: 0,
+    passive_first_attack: 15,
+    color: '#c084ff',
+    desc: 'Frappe vite et fort. +8% Crit et +15% 1ère frappe.',
+    scale: { force: 0.6, agilite: 2.0, intelligence: 0.5, dexterite: 2.0 },
+    primary: ['agilite', 'dexterite'],
+    secondary: [],
+  },
+  soutien: {
+    label: 'Soutien',
+    passive_dmg_bonus:   5,
+    passive_crit:        3,
+    passive_intel_bonus: 12,
+    passive_first_attack: 0,
+    color: '#4da6ff',
+    desc: 'Explosif en fin de combat. +12% DMG quand boss < 50% HP.',
+    scale: { force: 0.5, agilite: 1.2, intelligence: 2.5, dexterite: 0.8 },
+    primary: ['intelligence'],
+    secondary: ['agilite'],
+  },
+};
+
+// Base rate par stat (sans classe)
+const STAT_BASE_RATE = { force: 0.5, agilite: 0.4, intelligence: 0.6, dexterite: 0.5 };
+
+// Calcule le multiplicateur effectif d'une stat pour une classe
+function statEffectiveRate(statName, charClass) {
+  const base = STAT_BASE_RATE[statName] || 0.5;
+  const scale = CHAR_CLASSES[charClass]?.scale?.[statName] ?? 1.0;
+  return base * scale;
+}
+
+// Calcule les bonus de stats perso pour le raid (stats × scale de classe + passif)
 function charStatBonus(char, bossHpPct) {
-  const force = Number(char?.stat_force || 0);
-  const agilite = Number(char?.stat_agilite || 0);
+  const force        = Number(char?.stat_force || 0);
+  const agilite      = Number(char?.stat_agilite || 0);
   const intelligence = Number(char?.stat_intelligence || 0);
-  const dexterite = Number(char?.stat_dexterite || 0);
+  const dexterite    = Number(char?.stat_dexterite || 0);
+  const charClass    = char?.char_class || null;
+  const cls          = CHAR_CLASSES[charClass] || null;
+
+  const passive_dmg   = cls?.passive_dmg_bonus   || 0;
+  const passive_crit  = cls?.passive_crit         || 0;
+  const passive_intel = cls?.passive_intel_bonus  || 0;
+  const passive_first = cls?.passive_first_attack || 0;
 
   return {
-    dmg_bonus:    force * 0.5,
-    crit:         agilite * 0.4,
-    intel_bonus:  bossHpPct < 50 ? intelligence * 0.6 : 0,
-    first_attack: dexterite * 0.5,
+    dmg_bonus:    force        * statEffectiveRate('force',        charClass) + passive_dmg,
+    crit:         agilite      * statEffectiveRate('agilite',      charClass) + passive_crit,
+    intel_bonus:  bossHpPct < 50
+                    ? intelligence * statEffectiveRate('intelligence', charClass) + passive_intel
+                    : 0,
+    first_attack: dexterite    * statEffectiveRate('dexterite',   charClass) + passive_first,
   };
 }
 
@@ -4578,6 +4637,17 @@ app.get("/api/character", auth, async (req, res) => {
     const xp   = Number(char.char_xp);
     const xpCurrent = xp - charXpForLevel(lvl);
     const xpNext = lvl < CHAR_MAX_LEVEL ? charXpForLevel(lvl + 1) - charXpForLevel(lvl) : 0;
+    const charClass = char.char_class || null;
+    const cls = CHAR_CLASSES[charClass] || null;
+
+    // Taux effectif par stat selon la classe
+    const rates = {
+      force:        statEffectiveRate('force',        charClass),
+      agilite:      statEffectiveRate('agilite',      charClass),
+      intelligence: statEffectiveRate('intelligence', charClass),
+      dexterite:    statEffectiveRate('dexterite',    charClass),
+    };
+
     res.json({
       char_level: lvl,
       char_xp:    xp,
@@ -4590,15 +4660,61 @@ app.get("/api/character", auth, async (req, res) => {
       stat_dexterite:    Number(char.stat_dexterite),
       points_available:  Number(char.points_available),
       max_level: CHAR_MAX_LEVEL,
+      char_class: charClass,
+      class_label: cls?.label || null,
+      class_color: cls?.color || null,
+      class_desc:  cls?.desc  || null,
+      class_primary:   cls?.primary   || [],
+      class_secondary: cls?.secondary || [],
+      stat_rates: rates,
+      class_passive: cls ? {
+        dmg_bonus:    cls.passive_dmg_bonus,
+        crit:         cls.passive_crit,
+        intel_bonus:  cls.passive_intel_bonus,
+        first_attack: cls.passive_first_attack,
+      } : null,
+      classes_def: CHAR_CLASSES,
       bonus_preview: {
-        dmg_bonus:    Number(char.stat_force) * 0.5,
-        crit:         Number(char.stat_agilite) * 0.4,
-        intel_bonus:  Number(char.stat_intelligence) * 0.6,
-        first_attack: Number(char.stat_dexterite) * 0.5,
+        dmg_bonus:    Number(char.stat_force)        * rates.force        + (cls?.passive_dmg_bonus   || 0),
+        crit:         Number(char.stat_agilite)      * rates.agilite      + (cls?.passive_crit        || 0),
+        intel_bonus:  Number(char.stat_intelligence) * rates.intelligence + (cls?.passive_intel_bonus || 0),
+        first_attack: Number(char.stat_dexterite)    * rates.dexterite    + (cls?.passive_first_attack || 0),
       }
     });
   } catch(e) {
     console.error("GET /api/character:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/class — choisir ou changer de classe
+app.post("/api/character/class", auth, async (req, res) => {
+  const CLASS_CHANGE_COST = 1000; // dollax pour changer (gratuit si pas encore de classe)
+  const newClass = req.body?.char_class;
+  if (!CHAR_CLASSES[newClass]) return res.status(400).json({ error: "Classe invalide" });
+
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    const alreadyHasClass = !!char.char_class;
+
+    if (alreadyHasClass && char.char_class === newClass) {
+      return res.status(400).json({ error: "Tu as déjà cette classe" });
+    }
+
+    if (alreadyHasClass) {
+      // Coût de changement
+      const userQ = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+      const money = Number(userQ.rows[0]?.money || 0);
+      if (money < CLASS_CHANGE_COST) {
+        return res.status(400).json({ error: `Changer de classe coûte ${CLASS_CHANGE_COST} dollax` });
+      }
+      await pool.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [CLASS_CHANGE_COST, req.user.id]);
+    }
+
+    await pool.query(`UPDATE player_character SET char_class=$1 WHERE user_id=$2`, [newClass, req.user.id]);
+    res.json({ ok: true, char_class: newClass, cost: alreadyHasClass ? CLASS_CHANGE_COST : 0 });
+  } catch(e) {
+    console.error("POST /api/character/class:", e);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
