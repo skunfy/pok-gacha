@@ -381,6 +381,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .badgePrice .dollaxIcon{
   filter: drop-shadow(0 2px 8px rgba(0,0,0,.55));
 }
+/* Badge "Possédée" */
+.badgeOwned{
+  background:rgba(51,255,153,.18);
+  border-color:rgba(51,255,153,.4);
+  color:#33ff99;
+  font-size:11px;
+  padding:4px 9px;
+  position:absolute;
+  top:8px;
+  left:8px;
+  z-index:2;
+}
+/* Carte déjà possédée : légère teinte verte sur le bord */
+.card.isOwned{
+  border-color:rgba(51,255,153,.35) !important;
+  box-shadow:0 0 0 1px rgba(51,255,153,.2);
+}
 
 /* Card body */
 .cardBody{
@@ -649,6 +666,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
           <span>Masquer mes ventes</span>
         </div>
 
+        <div class="fChip" title="Masquer les cartes que tu possèdes déjà">
+          <input class="cb" type="checkbox" id="fHideOwned">
+          <span>Masquer possédées</span>
+        </div>
+
         <div class="fChip" title="Filtrer par grade minimum">
           <span class="fLabel">Grade min</span>
           <select class="fMiniSelect" id="fGradeMin">
@@ -850,6 +872,7 @@ const marketGrid = document.getElementById("marketGrid");
 
 const fMint = document.getElementById("fMint");
 const fHideMine = document.getElementById("fHideMine");
+const fHideOwned = document.getElementById("fHideOwned");
 const fGradeMin = document.getElementById("fGradeMin");
 const fPriceMax = document.getElementById("fPriceMax");
 
@@ -1000,14 +1023,19 @@ async function loadMe(){
 }
 
 function applyMarketFilters(listings){
-  const mintOnly = !!fMint.checked;
-  const hideMine = !!fHideMine.checked;
-  const gradeMin = Number(fGradeMin.value||0);
-  const priceMax = Number(fPriceMax.value||0);
+  const mintOnly   = !!fMint.checked;
+  const hideMine   = !!fHideMine.checked;
+  const hideOwned  = !!fHideOwned.checked;
+  const gradeMin   = Number(fGradeMin.value||0);
+  const priceMax   = Number(fPriceMax.value||0);
+
+  // Construire un Set des cardIds possédés pour lookup rapide
+  const ownedSet = new Set(myItems.map(x => String(x.cardId || x.id || "")));
 
   return (listings || []).filter(l => {
     if (mintOnly && !l.mint) return false;
     if (hideMine && me && (String(l.sellerName||"") === String(me.name||""))) return false;
+    if (hideOwned && ownedSet.has(String(l.cardId || ""))) return false;
     if (gradeMin && Number(l.grade||0) < gradeMin) return false;
     if (priceMax && Number(l.price||0) > priceMax) return false;
     return true;
@@ -1030,24 +1058,32 @@ function updateKpis(listings){
 function renderMarket(listings){
   marketGrid.innerHTML = "";
   if(!listings.length){
-    show(msgMarket, "Aucune vente pour l’instant.");
+    show(msgMarket, "Aucune vente pour l'instant.");
     return;
   }
   show(msgMarket, "");
 
+  // Map cardId → quantité possédée
+  const ownedMap = new Map();
+  for (const x of myItems) {
+    const key = String(x.cardId || x.id || "");
+    if (key) ownedMap.set(key, Number(x.count || 1));
+  }
+
   listings.forEach(l => {
     const el = document.createElement("div");
-    el.className = "card";
+    const isOwned = ownedMap.has(String(l.cardId || ""));
+    const ownedQty = isOwned ? ownedMap.get(String(l.cardId || "")) : 0;
+    el.className = "card" + (isOwned ? " isOwned" : "");
     const mintTxt = l.mint ? "MINT" : "Normal";
 
-    // ✅ CARD: plus de badge jeu, plus de stock sur card
-    // ✅ prix sur l'image, bouton "Acheter" qui ouvre la modal
     el.innerHTML = `
       <div class="cardHead">
         <div class="cardImg" style="background-image:url('${l.image}')"></div>
         <div class="cardOverlay">
           <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(l.price)}</b></span>
         </div>
+        ${isOwned ? '<span class="badge badgeOwned">✅ Possédée ×' + ownedQty + '</span>' : ''}
       </div>
 
       <div class="cardBody">
@@ -1266,6 +1302,7 @@ function refilter(){
 }
 fMint.addEventListener("change", refilter);
 fHideMine.addEventListener("change", refilter);
+fHideOwned.addEventListener("change", refilter);
 fGradeMin.addEventListener("change", refilter);
 fPriceMax.addEventListener("input", refilter);
 
