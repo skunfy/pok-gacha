@@ -835,7 +835,7 @@ function renderMyClan(data) {
           <span class="cstat">👑 Chef: <b>${esc(clan.leader_name)}</b></span>
         </div>
       </div>
-      ${!isLeader ? `<button class="btn btn-danger btn-sm" onclick="leaveClan()">Quitter</button>` : ''}
+      ${!isLeader ? '' : ''}
     </div>
 
     <!-- TABS -->
@@ -848,7 +848,10 @@ function renderMyClan(data) {
       <div class="tab" onclick="switchTab('deck',this)">🃏 Deck</div>
       <div class="tab" onclick="switchTab('character',this)">🧬 Personnage</div>
       <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
-      ${isLeader ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>` : ''}
+      ${isLeader
+        ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>`
+        : `<div class="tab" style="background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.3);color:#ff8888" onclick="leaveClan()">🚪 Quitter</div>`
+      }
     </div>
 
     <!-- BOSS TAB -->
@@ -997,6 +1000,7 @@ function renderBossTab(boss, clan) {
           <div class="loading">Chargement des boss...</div>
         </div>
         <div id="raidAlert"></div>
+        <div id="lastRaidRecap"></div>
       </div>
     `;
   }
@@ -1550,6 +1554,7 @@ async function loadBossData() {
           </div>
         `;
       }).join('');
+      loadLastRaid();
       return;
     }
 
@@ -1624,6 +1629,75 @@ function startRaidTimer() {
   }
   updateTimer();
   _raidTimer = setInterval(updateTimer, 1000);
+}
+
+async function loadLastRaid() {
+  const el = document.getElementById('lastRaidRecap');
+  if (!el) return;
+  try {
+    const data = await api('/api/clan/raid/last');
+    if (!data.raid) { el.innerHTML = ''; return; }
+    const r = data.raid;
+
+    // Durée formatée
+    let durationStr = '—';
+    if (r.durationMs !== null) {
+      const totalSec = Math.floor(r.durationMs / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      durationStr = h > 0
+        ? `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+        : m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
+    }
+
+    const diffLabel = r.bossKey?.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
+    const badgeClass = r.defeated ? 'win' : 'fail';
+    const badgeText  = r.defeated ? '✅ Vaincu' : '💀 Échoué';
+    const maxDmg = r.players?.length ? r.players[0].total : 1;
+    const rankIcons = ['🥇','🥈','🥉'];
+
+    el.innerHTML = `
+      <div style="margin-top:20px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:900;opacity:.9">📜 Dernier Raid — ${esc(r.bossName)} <span style="font-size:11px;opacity:.5">${diffLabel}</span></span>
+          <span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;${r.defeated
+            ? 'background:rgba(51,255,153,.15);color:#33ff99;border:1px solid rgba(51,255,153,.3)'
+            : 'background:rgba(255,68,68,.15);color:#ff6868;border:1px solid rgba(255,68,68,.3)'
+          }">${badgeText}</span>
+        </div>
+        <div style="font-size:12px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+          <span>⏱️ Durée : <b>${durationStr}</b></span>
+          <span>⚔️ Total : <b>${fmtNum(r.totalDmg)}</b></span>
+          ${r.mvp ? `<span>🏅 MVP : <b style="color:var(--gold)">${esc(r.mvp)}</b></span>` : ''}
+          ${r.defeated ? `<span>💰 Récompense : <b style="color:var(--gold)">${fmtNum(r.reward)}</b> dollax</span>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          ${(r.players || []).map((p, i) => {
+            const barW = maxDmg > 0 ? Math.round((p.total / maxDmg) * 100) : 0;
+            const isMvp = p.name === r.mvp;
+            const avatarStyle = p.avatar ? `background-image:url('${esc(p.avatar)}');background-color:transparent` : '';
+            const initials = (p.name||'?').slice(0,2).toUpperCase();
+            return `
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:13px;font-weight:900;min-width:22px;text-align:center">${rankIcons[i] || '#'+(i+1)}</span>
+                <div style="width:30px;height:30px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900;font-size:11px;background-size:cover;background-position:center;${avatarStyle}">${avatarStyle?'':initials}</div>
+                <span style="flex:1;font-size:13px;font-weight:700">${esc(p.name)}</span>
+                ${isMvp ? `<span style="font-size:10px;font-weight:900;color:#ffd84d;background:rgba(255,216,77,.12);border:1px solid rgba(255,216,77,.25);border-radius:999px;padding:2px 7px;flex-shrink:0">MVP</span>` : ''}
+                <div style="flex:1;min-width:60px;background:rgba(255,255,255,.08);border-radius:999px;height:5px;overflow:hidden">
+                  <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:${barW}%"></div>
+                </div>
+                <span style="font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap">${fmtNum(p.total)}</span>
+                <span style="font-size:11px;opacity:.5;min-width:34px;text-align:right">${p.pct}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    console.warn('loadLastRaid:', e);
+  }
 }
 
 async function startRaid(bossKey) {
