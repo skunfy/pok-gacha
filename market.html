@@ -1683,15 +1683,31 @@ function renderCartModal() {
   for (const { listing: l } of cart) {
     const row = document.createElement("div");
     row.className = "cartItem";
-    row.innerHTML =
-      '<div class="cartItemThumb" style="background-image:url('' + l.image + '')"></div>' +
-      '<div class="cartItemInfo">' +
-        '<div class="cartItemName">' + escapeHtml(l.name) + '</div>' +
-        '<div class="cartItemSub">' + escapeHtml(l.setName || "") + ' • Grade ' + escapeHtml(String(l.grade)) + (l.mint ? " • MINT" : "") + '</div>' +
-        '<div class="cartItemSub">Vendeur : ' + escapeHtml(l.sellerName || "") + '</div>' +
-      '</div>' +
-      '<div class="cartItemPrice">' + escapeHtml(String(l.price)) + ' 💰</div>' +
-      '<button class="cartItemRemove" onclick="removeFromCart(' + l.id + ')">✕</button>';
+
+    const thumb = document.createElement("div");
+    thumb.className = "cartItemThumb";
+    thumb.style.backgroundImage = "url('" + l.image + "')";
+
+    const info = document.createElement("div");
+    info.className = "cartItemInfo";
+    info.innerHTML =
+      '<div class="cartItemName">' + escapeHtml(l.name) + '</div>' +
+      '<div class="cartItemSub">' + escapeHtml(l.setName || "") + ' • Grade ' + escapeHtml(String(l.grade)) + (l.mint ? " • MINT" : "") + '</div>' +
+      '<div class="cartItemSub">Vendeur : ' + escapeHtml(l.sellerName || "") + '</div>';
+
+    const priceEl = document.createElement("div");
+    priceEl.className = "cartItemPrice";
+    priceEl.textContent = l.price + " 💰";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "cartItemRemove";
+    removeBtn.textContent = "✕";
+    removeBtn.onclick = () => removeFromCart(l.id);
+
+    row.appendChild(thumb);
+    row.appendChild(info);
+    row.appendChild(priceEl);
+    row.appendChild(removeBtn);
     list.appendChild(row);
   }
 }
