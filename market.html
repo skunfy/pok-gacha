@@ -542,34 +542,107 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   display:none;
   place-items:center;
   padding:16px;
-  background: rgba(0,0,0,.58);
-  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,.72);
+  backdrop-filter: blur(18px);
   z-index:50;
 }
 .modal{
-  width:min(900px, 96vw);
-  border-radius:24px;
-  border:1px solid rgba(255,255,255,.10);
-  background: linear-gradient(180deg, rgba(20,22,34,.92), rgba(12,13,22,.92));
-  box-shadow: 0 30px 120px rgba(0,0,0,.60);
+  width:min(860px, 96vw);
+  border-radius:28px;
+  border:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(160deg, rgba(22,24,38,.97), rgba(10,11,20,.97));
+  box-shadow: 0 40px 140px rgba(0,0,0,.75);
   overflow:hidden;
 }
-.modalInner{ display:grid; grid-template-columns: 1.05fr .95fr; }
-@media (max-width: 880px){ .modalInner{ grid-template-columns:1fr; } }
-.modalImg{
-  min-height:360px;
+.modalInner{
+  display:grid;
+  grid-template-columns: 340px 1fr;
+  min-height:500px;
+}
+@media (max-width:820px){ .modalInner{ grid-template-columns:1fr; } }
+
+/* Zone slab côté gauche */
+.modalSlabZone{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px 24px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(127,92,255,.12), transparent 70%);
+  border-right:1px solid rgba(255,255,255,.07);
+  perspective:900px;
+}
+@media(max-width:820px){
+  .modalSlabZone{ border-right:none; border-bottom:1px solid rgba(255,255,255,.07); padding:28px 16px; }
+}
+
+/* Slab dans la modal */
+.mSlab{
+  width:240px; height:340px;
+  border-radius:18px;
+  position:relative;
+  transform-style:preserve-3d;
+  will-change:transform;
+  cursor:grab;
+  filter: drop-shadow(0 26px 80px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(255,255,255,.06));
+  transition: filter .25s ease, opacity .25s ease;
+  user-select:none;
+}
+.mSlab:active{ cursor:grabbing; }
+.mSlab .mShell{
+  position:absolute; inset:0; border-radius:18px;
+  background: linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.02));
+  backdrop-filter:blur(4px);
+  box-shadow: 0 24px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  transform:translateZ(8px);
   overflow:hidden;
-  background:center/102% no-repeat;
-  background-color: rgba(0,0,0,.25);
-  border-right:1px solid rgba(255,255,255,.06);
 }
-@media (max-width: 880px){
-  .modalImg{ border-right:none; border-bottom:1px solid rgba(255,255,255,.06); }
+.mSlab .mCardImg{
+  position:absolute; inset:10px 10px 48px;
+  border-radius:12px;
+  background:center/cover no-repeat;
+  background-color:rgba(0,0,0,.2);
+  overflow:hidden;
 }
-.modalBody{ padding:14px; display:grid; gap:10px; }
+.mSlab .mCardFoil{
+  position:absolute;inset:0;border-radius:12px;
+  pointer-events:none;opacity:0;
+  mix-blend-mode:color-dodge;
+  background:linear-gradient(125deg,rgba(0,0,0,0),rgba(120,180,255,.30) 20%,rgba(140,255,180,.34) 40%,rgba(255,220,100,.42) 60%,rgba(255,140,180,.32) 80%,rgba(0,0,0,0));
+  transition:opacity .15s ease;
+  z-index:2;
+}
+.mSlab .mCardGlare{
+  position:absolute;inset:0;border-radius:12px;
+  pointer-events:none;opacity:0;
+  mix-blend-mode:soft-light;
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,.55) 0%,rgba(0,0,0,0) 62%);
+  transition:opacity .15s ease;
+  z-index:3;
+}
+.mSlab .mLabel{
+  position:absolute; bottom:0; left:0; right:0; height:44px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 12px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.mSlab .mLabelName{ font-size:11px; font-weight:900; opacity:.85; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mSlab .mGrade{
+  font-size:18px; font-weight:1100; color:#fff;
+  background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.18);
+  border-radius:10px; padding:2px 8px;
+  text-shadow:0 0 14px rgba(255,255,255,.3);
+}
+/* Tier colors */
+.mSlab[data-tier="g"] .mGrade{ color:#ffd84d; border-color:rgba(255,216,77,.4); text-shadow:0 0 14px rgba(255,200,0,.5); }
+.mSlab[data-tier="v"] .mGrade{ color:#c084ff; border-color:rgba(192,132,255,.4); text-shadow:0 0 14px rgba(190,100,255,.5); }
+.mSlab[data-tier="b"] .mGrade{ color:#4da6ff; border-color:rgba(77,166,255,.4); text-shadow:0 0 14px rgba(80,160,255,.5); }
+.mSlab[data-mint="1"] .mGrade{ color:#ff6060; border-color:rgba(255,80,80,.4); text-shadow:0 0 14px rgba(255,60,60,.5); }
+
+.modalBody{ padding:28px 24px; display:flex; flex-direction:column; gap:14px; }
 .modalTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
-.modalTitle{ font-size:18px; font-weight:1100; line-height:1.1; }
-.modalClose{ padding:8px 10px; border-radius:14px; background: rgba(255,255,255,.08); }
+.modalTitle{ font-size:20px; font-weight:1100; line-height:1.1; }
+.modalClose{ padding:8px 10px; border-radius:14px; background: rgba(255,255,255,.08); flex-shrink:0; }
 .note{ font-size:12px; color: var(--muted); }
 
 /* stronger modal buy button */
@@ -594,85 +667,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   opacity:.88;
   max-width:760px;
 }
-
-/* ── PANIER ────────────────────────────────────────────────── */
-.cartBtn{
-  position:relative;
-  padding:8px 14px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.07);
-  color:#fff;font-weight:900;font-size:13px;
-  cursor:pointer;transition:background .15s;
-}
-.cartBtn:hover{ background:rgba(255,255,255,.13); }
-.cartBadge{
-  position:absolute;top:-6px;right:-6px;
-  background:linear-gradient(135deg,#7f5cff,#f053c5);
-  color:#fff;font-size:10px;font-weight:900;
-  border-radius:999px;padding:2px 6px;min-width:18px;text-align:center;
-  display:none;
-}
-/* Bouton panier sur la carte */
-.cartAddBtn{
-  padding:8px 10px;border-radius:12px;border:1px solid rgba(127,92,255,.35);
-  background:rgba(127,92,255,.12);color:#a78bff;font-weight:900;font-size:12px;
-  cursor:pointer;transition:all .15s;white-space:nowrap;
-}
-.cartAddBtn:hover{ background:rgba(127,92,255,.25);border-color:rgba(127,92,255,.6); }
-.cartAddBtn.inCart{ background:rgba(127,92,255,.35);border-color:rgba(127,92,255,.8);color:#fff; }
-.cartAddBtn:disabled{ opacity:.4;cursor:not-allowed; }
-
-/* Modal panier */
-.cartBack{
-  position:fixed;inset:0;display:none;place-items:center;padding:16px;
-  background:rgba(0,0,0,.72);backdrop-filter:blur(18px);z-index:60;
-}
-.cartModal{
-  width:min(640px,96vw);max-height:85vh;
-  border-radius:24px;border:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(160deg,rgba(22,24,38,.97),rgba(10,11,20,.97));
-  box-shadow:0 40px 140px rgba(0,0,0,.75);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.cartModalHead{
-  padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.07);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
-}
-.cartModalTitle{ font-size:17px;font-weight:900; }
-.cartModalClose{ padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.08);cursor:pointer;border:none;color:#fff;font-size:15px; }
-.cartItems{ overflow-y:auto;flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:10px; }
-.cartItem{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 12px;border-radius:14px;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-}
-.cartItemThumb{
-  width:44px;height:62px;border-radius:10px;flex-shrink:0;
-  background:center/cover no-repeat;border:1px solid rgba(255,255,255,.1);
-}
-.cartItemInfo{ flex:1;min-width:0; }
-.cartItemName{ font-size:13px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.cartItemSub{ font-size:11px;opacity:.6;margin-top:2px; }
-.cartItemPrice{ font-size:13px;font-weight:900;color:#ffd84d;white-space:nowrap; }
-.cartItemRemove{ padding:5px 8px;border-radius:8px;background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.25);color:#ff8888;cursor:pointer;font-size:12px;font-weight:900; }
-.cartItemRemove:hover{ background:rgba(255,68,68,.3); }
-.cartEmpty{ text-align:center;padding:40px;opacity:.5;font-size:14px; }
-.cartModalFoot{
-  padding:14px 20px;border-top:1px solid rgba(255,255,255,.07);
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;
-}
-.cartTotal{ font-size:15px;font-weight:900; }
-.cartTotal span{ color:#ffd84d; }
-.cartBuyAllBtn{
-  padding:11px 24px;border-radius:14px;border:none;cursor:pointer;
-  font-weight:900;font-size:14px;color:#fff;
-  background:linear-gradient(135deg,#7f5cff,#f053c5);
-  transition:opacity .15s,transform .12s;
-}
-.cartBuyAllBtn:hover{ opacity:.85;transform:translateY(-1px); }
-.cartBuyAllBtn:disabled{ opacity:.4;cursor:not-allowed;transform:none; }
-.cartLimitMsg{ font-size:11px;color:#ff8888;opacity:.85; }
 </style>
 </head>
 
@@ -724,7 +718,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
         <option value="name">Nom A-Z</option>
       </select>
 
-      <button class="cartBtn" id="cartNavBtn" onclick="openCartModal()">🛒 Panier <span class="cartBadge" id="cartBadge">0</span></button>
       <button class="btnGhost" onclick="location.href='/collection.html'">COLLECTION</button>
       <button class="btnGhost" onclick="location.href='/'">← Retour</button>
     </div>
@@ -853,7 +846,23 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 <div class="modalBack" id="modalBack" role="dialog" aria-modal="true">
   <div class="modal">
     <div class="modalInner">
-      <div class="modalImg" id="modalImg"></div>
+
+      <!-- Slab côté gauche -->
+      <div class="modalSlabZone">
+        <div class="mSlab" id="mSlab" data-tier="w" data-mint="0">
+          <div class="mShell"></div>
+          <div class="mCardImg" id="mCardImg">
+            <div class="mCardFoil" id="mCardFoil"></div>
+            <div class="mCardGlare" id="mCardGlare"></div>
+          </div>
+          <div class="mLabel">
+            <div class="mLabelName" id="mLabelName"></div>
+            <div class="mGrade" id="mGradeEl">?</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infos côté droit -->
       <div class="modalBody">
         <div class="modalTop">
           <div>
@@ -867,7 +876,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 
         <div class="sep"></div>
 
-        <!-- ✅ quantité uniquement dans la modal -->
         <div class="buyRow">
           <div class="stepper">
             <button id="mMinus" type="button">−</button>
@@ -991,7 +999,6 @@ const mineList = document.getElementById("mineList");
 /* Modal */
 const modalBack = document.getElementById("modalBack");
 const modalClose = document.getElementById("modalClose");
-const modalImg = document.getElementById("modalImg");
 const modalTitle = document.getElementById("modalTitle");
 const modalSub = document.getElementById("modalSub");
 const modalBadges = document.getElementById("modalBadges");
@@ -1067,15 +1074,97 @@ mPlus.onclick  = ()=> syncModalQty(+1);
 mQty.addEventListener("input", ()=> syncModalQty(0));
 
 /* Modal */
+// ── Slab modal tilt ──────────────────────────────────────────
+const mSlab     = document.getElementById("mSlab");
+const mCardImg  = document.getElementById("mCardImg");
+const mCardFoil = document.getElementById("mCardFoil");
+const mCardGlare= document.getElementById("mCardGlare");
+const mGradeEl  = document.getElementById("mGradeEl");
+const mLabelName= document.getElementById("mLabelName");
+
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}else{
+    const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;default:h=((r-g)/d+4)/6;}
+  }
+  return [Math.round(h*360),Math.round(s*100),Math.round(l*100)];
+}
+function getSlabTierM(sl){ return sl?.dataset?.mint==="1"?"m":(sl?.dataset?.tier||"w"); }
+function applyMFoil(px,py){
+  if(!mCardFoil) return;
+  const angle=115+(px-0.5)*60;
+  mCardFoil.style.setProperty("--foil-angle",`${angle}deg`);
+  mCardFoil.style.opacity="1";
+  if(mCardGlare){
+    mCardGlare.style.setProperty("--glare-x",`${px*100}%`);
+    mCardGlare.style.setProperty("--glare-y",`${py*100}%`);
+    mCardGlare.style.opacity="1";
+  }
+}
+function resetMFoil(){
+  if(mCardFoil) mCardFoil.style.opacity="0";
+  if(mCardGlare) mCardGlare.style.opacity="0";
+}
+function setMTilt(clientX,clientY){
+  if(!mSlab) return;
+  const r=mSlab.getBoundingClientRect();
+  const px=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
+  const py=Math.max(0,Math.min(1,(clientY-r.top)/r.height));
+  mSlab.style.transform=`rotateX(${(0.5-py)*28}deg) rotateY(${(px-0.5)*28}deg)`;
+  const tier=getSlabTierM(mSlab);
+  const gc=tier==="g"?"rgba(255,200,0,.35)":tier==="v"?"rgba(190,100,255,.35)":tier==="b"?"rgba(80,160,255,.35)":tier==="m"?"rgba(255,60,60,.35)":"rgba(200,220,255,.18)";
+  const sx=(px-0.5)*-28,sy=(py-0.5)*-20;
+  mSlab.style.filter=`drop-shadow(${sx}px ${sy+30}px 60px rgba(0,0,0,.60)) drop-shadow(0 0 28px ${gc})`;
+  if(mCardImg){
+    const cr=mCardImg.getBoundingClientRect();
+    const cpx=Math.max(0,Math.min(1,(clientX-cr.left)/cr.width));
+    const cpy=Math.max(0,Math.min(1,(clientY-cr.top)/cr.height));
+    applyMFoil(cpx,cpy);
+  }
+}
+let mSlabDragging=false;
+mSlab?.addEventListener("mousemove", (e)=>{ if(!mSlabDragging) setMTilt(e.clientX,e.clientY); });
+mSlab?.addEventListener("mouseenter",()=>{ mSlab.style.transition="filter .25s ease"; });
+mSlab?.addEventListener("mouseleave",()=>{
+  mSlab.style.transition="transform .25s ease, filter .25s ease";
+  mSlab.style.transform="rotateX(0deg) rotateY(0deg)";
+  mSlab.style.filter="drop-shadow(0 26px 80px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(255,255,255,.06))";
+  resetMFoil();
+});
+mSlab?.addEventListener("mousedown",()=>mSlabDragging=true);
+window.addEventListener("mouseup",()=>mSlabDragging=false);
+window.addEventListener("mousemove",(e)=>{ if(mSlabDragging && modalBack.style.display==="grid") setMTilt(e.clientX,e.clientY); });
+
+// ── Grade → tier ─────────────────────────────────────────────
+function gradeToTier(grade,mint){
+  if(mint) return "m";
+  const g=Number(grade||0);
+  if(g>=10) return "g";
+  if(g>=7)  return "v";
+  if(g>=5)  return "b";
+  return "w";
+}
+
 function openModal(listing){
   modalListing = listing;
-  modalImg.style.backgroundImage = `url('${listing.image}')`;
+
+  // Slab
+  if(mCardImg) mCardImg.style.backgroundImage = `url('${listing.image}')`;
+  if(mGradeEl) mGradeEl.textContent = listing.grade || "?";
+  if(mLabelName) mLabelName.textContent = listing.name || "";
+  const tier = gradeToTier(listing.grade, listing.mint);
+  if(mSlab){ mSlab.dataset.tier=tier; mSlab.dataset.mint=listing.mint?"1":"0"; }
+  resetMFoil();
+  if(mSlab){ mSlab.style.transform="rotateX(0deg) rotateY(0deg)"; mSlab.style.filter="drop-shadow(0 26px 80px rgba(0,0,0,.55)) drop-shadow(0 0 24px rgba(255,255,255,.06))"; }
+
+  // Infos
   modalTitle.textContent = listing.name || "Carte";
   modalSub.textContent = `${listing.setName || ""} • ${gameTag(listing.game || currentGame())}`;
 
   const mintTxt = listing.mint ? "MINT" : "Normal";
-
-  // ✅ Stock visible uniquement ici (modal)
   modalBadges.innerHTML = `
     <span class="pill soft">Grade ${escapeHtml(listing.grade)}</span>
     <span class="pill soft">${mintTxt}</span>
@@ -1090,6 +1179,7 @@ function openModal(listing){
 function closeModal(){
   modalBack.style.display = "none";
   modalListing = null;
+  resetMFoil();
 }
 modalClose.onclick = closeModal;
 modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeModal(); });
@@ -1200,7 +1290,6 @@ function renderMarket(listings){
         </div>
 
         <div class="buyRow">
-          <button class="cartAddBtn" type="button" id="cartBtn-${l.id}">+ Panier</button>
           <button class="buyBtn" type="button">Acheter</button>
         </div>
 
@@ -1220,26 +1309,6 @@ function renderMarket(listings){
     el.querySelector(".buyBtn").onclick = (ev) => {
       ev.stopPropagation();
       openModal(l);
-    };
-
-    const cartAddBtnEl = el.querySelector(".cartAddBtn");
-    // Refléter l'état du panier actuel
-    if (cartContains(l.id)) {
-      cartAddBtnEl.textContent = "✓ Ajouté";
-      cartAddBtnEl.classList.add("inCart");
-    }
-    if (cart.length >= CART_MAX && !cartContains(l.id)) {
-      cartAddBtnEl.disabled = true;
-      cartAddBtnEl.title = `Maximum ${CART_MAX} cartes`;
-    }
-    cartAddBtnEl.onclick = (ev) => {
-      ev.stopPropagation();
-      toggleCart(l, ev.currentTarget);
-      // Mettre à jour les autres boutons si max atteint
-      document.querySelectorAll(".cartAddBtn:not(.inCart)").forEach(b => {
-        b.disabled = cart.length >= CART_MAX;
-        b.title = cart.length >= CART_MAX ? `Maximum ${CART_MAX} cartes` : "";
-      });
     };
 
     marketGrid.appendChild(el);
@@ -1447,139 +1516,6 @@ async function boot(){
 }
 
 (async () => { await boot(); })();
-
-// ═══════════════════════════════════════════════
-// SYSTÈME PANIER
-// ═══════════════════════════════════════════════
-const CART_MAX = 20;
-let cart = []; // [{ listing }]
-
-function cartContains(listingId) {
-  return cart.some(x => x.listing.id === listingId);
-}
-
-function updateCartBadge() {
-  const badge = document.getElementById("cartBadge");
-  const btn   = document.getElementById("cartNavBtn");
-  if (!badge) return;
-  const n = cart.length;
-  badge.textContent = n;
-  badge.style.display = n > 0 ? "block" : "none";
-  if (btn) btn.textContent = `🛒 Panier `;
-  if (btn) btn.appendChild(badge);
-}
-
-function toggleCart(listing, btnEl) {
-  if (cartContains(listing.id)) {
-    // Retirer du panier
-    cart = cart.filter(x => x.listing.id !== listing.id);
-    if (btnEl) { btnEl.textContent = "+ Panier"; btnEl.classList.remove("inCart"); }
-  } else {
-    if (cart.length >= CART_MAX) {
-      showAlert(`Maximum ${CART_MAX} cartes dans le panier`, "error");
-      return;
-    }
-    cart.push({ listing });
-    if (btnEl) { btnEl.textContent = "✓ Ajouté"; btnEl.classList.add("inCart"); }
-  }
-  updateCartBadge();
-}
-
-function openCartModal() {
-  renderCartModal();
-  document.getElementById("cartBack").style.display = "grid";
-}
-
-function closeCartModal() {
-  document.getElementById("cartBack").style.display = "none";
-}
-
-document.getElementById("cartBack")?.addEventListener("click", (e) => {
-  if (e.target === document.getElementById("cartBack")) closeCartModal();
-});
-
-function renderCartModal() {
-  const el    = document.getElementById("cartItems");
-  const total = document.getElementById("cartTotalPrice");
-  const limit = document.getElementById("cartLimitMsg");
-  const buyBtn= document.getElementById("cartBuyAllBtn");
-
-  if (!cart.length) {
-    el.innerHTML = '<div class="cartEmpty">🛒 Ton panier est vide.</div>';
-    if (total) total.textContent = "0";
-    if (limit) limit.textContent = "";
-    if (buyBtn) buyBtn.disabled = true;
-    return;
-  }
-
-  const totalPrice = cart.reduce((s, x) => s + Number(x.listing.price || 0), 0);
-  if (total) total.textContent = fmtNum ? fmtNum(totalPrice) : totalPrice;
-  if (limit) limit.textContent = cart.length >= CART_MAX ? `⚠️ Maximum ${CART_MAX} cartes atteint` : `${cart.length} / ${CART_MAX} cartes`;
-  if (buyBtn) buyBtn.disabled = false;
-
-  el.innerHTML = "";
-  cart.forEach(({ listing: l }) => {
-    const row = document.createElement("div");
-    row.className = "cartItem";
-    const mintTxt = l.mint ? " • MINT" : "";
-    row.innerHTML = `
-      <div class="cartItemThumb" style="background-image:url('${l.image}')"></div>
-      <div class="cartItemInfo">
-        <div class="cartItemName">${escapeHtml(l.name)}</div>
-        <div class="cartItemSub">${escapeHtml(l.setName || "")} • Grade ${escapeHtml(l.grade)}${mintTxt}</div>
-        <div class="cartItemSub" style="margin-top:2px">Vendeur : ${escapeHtml(l.sellerName || "")}</div>
-      </div>
-      <div class="cartItemPrice">${escapeHtml(String(l.price))} 💰</div>
-      <button class="cartItemRemove" onclick="removeFromCart(${l.id})">✕</button>
-    `;
-    el.appendChild(row);
-  });
-}
-
-function removeFromCart(listingId) {
-  cart = cart.filter(x => x.listing.id !== listingId);
-  updateCartBadge();
-  renderCartModal();
-  // Mettre à jour le bouton sur la carte
-  const btn = document.getElementById("cartBtn-" + listingId);
-  if (btn) { btn.textContent = "+ Panier"; btn.classList.remove("inCart"); }
-}
-
-async function buyAllCart() {
-  if (!cart.length) return;
-  const buyBtn = document.getElementById("cartBuyAllBtn");
-  if (buyBtn) buyBtn.disabled = true;
-
-  const errors = [];
-  const bought = [];
-
-  for (const { listing: l } of cart) {
-    try {
-      await api("/api/market/buy", {
-        method: "POST",
-        body: JSON.stringify({ listingId: l.id, qty: 1 })
-      });
-      bought.push(l);
-    } catch(e) {
-      errors.push(`${l.name} : ${e.message}`);
-    }
-  }
-
-  // Vider les cartes achetées du panier
-  const boughtIds = new Set(bought.map(l => l.id));
-  cart = cart.filter(x => !boughtIds.has(x.listing.id));
-  updateCartBadge();
-
-  closeCartModal();
-
-  if (errors.length) {
-    showAlert(`${bought.length} achetée(s). Erreurs : ${errors.join(", ")}`, "error");
-  } else {
-    showAlert(`✅ ${bought.length} carte(s) achetée(s) !`, "success");
-  }
-
-  // Refresh
-  await boot(true);
-}
-
 </script>
+</body>
+</html>
