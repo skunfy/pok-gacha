@@ -4202,8 +4202,7 @@ app.post("/api/clan/create", auth, async (req, res) => {
     `, [name, tag, desc, logo, color, req.user.id, Date.now()]);
     const clan = cQ.rows[0];
     await client.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'leader',$3)`, [req.user.id, clan.id, Date.now()]);
-    await client.query(`INSERT INTO clan_boss(clan_id,name,hp_max,hp_current,reward,started_at) VALUES($1,$2,50000,50000,5000,$3)`,
-      [clan.id, randomBossName(), Date.now()]);
+    // Pas de boss automatique — les raids se lancent manuellement
     await client.query("COMMIT");
     res.json({ ok: true, clan });
   } catch(e) {
