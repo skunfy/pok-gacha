@@ -386,7 +386,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   position:absolute;
   top:0; left:0; right:0;
   z-index:3;
-  background:linear-gradient(90deg,rgba(20,20,20,.92),rgba(20,20,20,.75));
+  background:linear-gradient(90deg,rgba(10,30,15,.95),rgba(10,30,15,.80));
   border-bottom:2px solid #33ff99;
   color:#33ff99;
   font-size:12px;
@@ -396,25 +396,20 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   align-items:center;
   gap:6px;
   border-radius:16px 16px 0 0;
-  text-shadow:0 0 10px rgba(51,255,153,.6);
-  letter-spacing:.03em;
-}
-.badgeOwned .owned-check{
-  font-size:14px;
-  filter:drop-shadow(0 0 6px #33ff99);
+  text-shadow:0 0 10px rgba(51,255,153,.5);
+  letter-spacing:.02em;
 }
 .badgeOwned .owned-qty{
   margin-left:auto;
   background:rgba(51,255,153,.2);
-  border:1px solid rgba(51,255,153,.4);
+  border:1px solid rgba(51,255,153,.45);
   border-radius:999px;
   padding:1px 8px;
   font-size:11px;
 }
-/* Carte possédée : contour vert net */
 .card.isOwned{
-  border-color:rgba(51,255,153,.55) !important;
-  box-shadow:0 0 0 1px rgba(51,255,153,.25), 0 10px 26px rgba(51,255,153,.08);
+  border-color:rgba(51,255,153,.6) !important;
+  box-shadow:0 0 0 2px rgba(51,255,153,.2), 0 10px 26px rgba(51,255,153,.07);
 }
 
 /* Card body */
@@ -1092,7 +1087,7 @@ function renderMarket(listings){
   // Map idKey ET cardId → quantité possédée
   const ownedMap = new Map();
   for (const x of myItems) {
-    if (x.idKey) ownedMap.set(String(x.idKey), Number(x.count || 1));
+    if (x.idKey)  ownedMap.set(String(x.idKey),  Number(x.count || 1));
     if (x.cardId) ownedMap.set(String(x.cardId), Number(x.count || 1));
   }
 
@@ -1111,7 +1106,7 @@ function renderMarket(listings){
         <div class="cardOverlay">
           <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(l.price)}</b></span>
         </div>
-        ${isOwned ? '<div class="badgeOwned"><span class="owned-check">✅</span> Dans ta collection <span class="owned-qty">×' + ownedQty + '</span></div>' : ''}
+        ${isOwned ? '<div class="badgeOwned">✅ Dans ta collection <span class="owned-qty">×' + ownedQty + '</span></div>' : ''}
       </div>
 
       <div class="cardBody">
@@ -1341,8 +1336,8 @@ mySort.addEventListener("change", ()=> loadMyCollection());
 async function boot(){
   try{
     await loadMe();
-    await loadMarket();
-    await loadMyCollection();
+    await loadMyCollection(); // charger la collection D'ABORD pour les badges "possédée"
+    await loadMarket();       // ensuite le market (myItems est déjà rempli)
     await loadMine();
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
