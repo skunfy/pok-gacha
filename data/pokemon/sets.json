@@ -726,5 +726,85 @@
   {
     "id": "me02.5",
     "name": "Héros Transcendants"
+  },
+  {
+    "id": "base4",
+    "name": "Base Set 2"
+  },
+  {
+    "id": "gym1",
+    "name": "Gym Heroes"
+  },
+  {
+    "id": "gym2",
+    "name": "Gym Challenge"
+  },
+  {
+    "id": "si1",
+    "name": "Southern Islands"
+  },
+  {
+    "id": "lc",
+    "name": "Legendary Collection"
+  },
+  {
+    "id": "bog",
+    "name": "Best of game"
+  },
+  {
+    "id": "ecard3",
+    "name": "Skyridge"
+  },
+  {
+    "id": "ex5.5",
+    "name": "Poké Card Creator Pack"
+  },
+  {
+    "id": "ex7",
+    "name": "Team Rocket Returns"
+  },
+  {
+    "id": "pop5",
+    "name": "POP Series 5"
+  },
+  {
+    "id": "pop6",
+    "name": "POP Series 6"
+  },
+  {
+    "id": "pop8",
+    "name": "POP Series 8"
+  },
+  {
+    "id": "pl4",
+    "name": "Arceus"
+  },
+  {
+    "id": "ru1",
+    "name": "Pokémon Rumble"
+  },
+  {
+    "id": "2012bw",
+    "name": "Macdonald's Collection 2012"
+  },
+  {
+    "id": "bw11",
+    "name": "Legendary Treasures"
+  },
+  {
+    "id": "2018sm",
+    "name": "Macdonald's Collection 2018"
+  },
+  {
+    "id": "2019sm",
+    "name": "Macdonald's Collection 2019"
+  },
+  {
+    "id": "fut2020",
+    "name": "Pokémon Futsal 2020"
+  },
+  {
+    "id": "B1",
+    "name": "Mega Rising"
   }
 ]
