@@ -1,0 +1,2762 @@
+[
+  {
+    "cardId": "brainrot-241",
+    "setId": "brainrot-ag",
+    "localId": "1",
+    "name": "Bluberini Octopusini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-241.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-241.jpg"
+  },
+  {
+    "cardId": "brainrot-254",
+    "setId": "brainrot-ag",
+    "localId": "34",
+    "name": "Tracotucotulu Delapeladustuz",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Special Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-254.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-254.jpg"
+  },
+  {
+    "cardId": "brainrot-162",
+    "setId": "brainrot-ag",
+    "localId": "128",
+    "name": "Bungoletti Spaghettini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-162.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-162.jpg"
+  },
+  {
+    "cardId": "brainrot-190",
+    "setId": "brainrot-ag",
+    "localId": "15",
+    "name": "Crocodilo Potatino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-190.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-190.jpg"
+  },
+  {
+    "cardId": "brainrot-196",
+    "setId": "brainrot-ag",
+    "localId": "140",
+    "name": "Mostrillo Masticamozziconi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-196.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-196.jpg"
+  },
+  {
+    "cardId": "brainrot-175",
+    "setId": "brainrot-ag",
+    "localId": "93",
+    "name": "Glitchus Memoji",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-175.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-175.jpg"
+  },
+  {
+    "cardId": "brainrot-134",
+    "setId": "brainrot-ag",
+    "localId": "85",
+    "name": "Il Mago Tiramisu",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-134.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-134.jpg"
+  },
+  {
+    "cardId": "brainrot-158",
+    "setId": "brainrot-ag",
+    "localId": "13",
+    "name": "Caprampante Sottopanca",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-158.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-158.jpg"
+  },
+  {
+    "cardId": "brainrot-155",
+    "setId": "brainrot-ag",
+    "localId": "10",
+    "name": "Cervello Pudding",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-155.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-155.jpg"
+  },
+  {
+    "cardId": "brainrot-238",
+    "setId": "brainrot-ag",
+    "localId": "11",
+    "name": "Gnammo Slammo E Sgommo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-238.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-238.jpg"
+  },
+  {
+    "cardId": "brainrot-228",
+    "setId": "brainrot-ag",
+    "localId": "107",
+    "name": "Bombardino Bearino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-228.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-228.jpg"
+  },
+  {
+    "cardId": "brainrot-223",
+    "setId": "brainrot-ag",
+    "localId": "95",
+    "name": "Managero Uccello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-223.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-223.jpg"
+  },
+  {
+    "cardId": "brainrot-225",
+    "setId": "brainrot-ag",
+    "localId": "102",
+    "name": "Brr Brr Patapim",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-225.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-225.jpg"
+  },
+  {
+    "cardId": "brainrot-180",
+    "setId": "brainrot-ag",
+    "localId": "115",
+    "name": "La Vaca Saturno Saturnita",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-180.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-180.jpg"
+  },
+  {
+    "cardId": "brainrot-163",
+    "setId": "brainrot-ag",
+    "localId": "46",
+    "name": "Tacchitacchi Attaccaticcio",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-163.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-163.jpg"
+  },
+  {
+    "cardId": "brainrot-160",
+    "setId": "brainrot-ag",
+    "localId": "71",
+    "name": "Kotletino Merkatino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-160.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-160.jpg"
+  },
+  {
+    "cardId": "brainrot-231",
+    "setId": "brainrot-ag",
+    "localId": "52",
+    "name": "Batatoso Peloso Strambo E Guloso",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-231.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-231.jpg"
+  },
+  {
+    "cardId": "brainrot-236",
+    "setId": "brainrot-ag",
+    "localId": "37",
+    "name": "Trr Trr Patepim",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-236.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-236.jpg"
+  },
+  {
+    "cardId": "brainrot-189",
+    "setId": "brainrot-ag",
+    "localId": "74",
+    "name": "Bomboclat Crococlat",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-189.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-189.jpg"
+  },
+  {
+    "cardId": "brainrot-215",
+    "setId": "brainrot-ag",
+    "localId": "77",
+    "name": "Bearorito Applepitolirotito",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-215.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-215.jpg"
+  },
+  {
+    "cardId": "brainrot-143",
+    "setId": "brainrot-ag",
+    "localId": "12",
+    "name": "Aeromucca Armata",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-143.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-143.jpg"
+  },
+  {
+    "cardId": "brainrot-170",
+    "setId": "brainrot-ag",
+    "localId": "82",
+    "name": "Merluzzini Marraquetini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-170.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-170.jpg"
+  },
+  {
+    "cardId": "brainrot-232",
+    "setId": "brainrot-ag",
+    "localId": "38",
+    "name": "Lirili Larila",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-232.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-232.jpg"
+  },
+  {
+    "cardId": "brainrot-165",
+    "setId": "brainrot-ag",
+    "localId": "145",
+    "name": "Kiwiquello Chevuoi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-165.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-165.jpg"
+  },
+  {
+    "cardId": "brainrot-347",
+    "setId": "brainrot-ag",
+    "localId": "117",
+    "name": "Focaccina Ululina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-347.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-347.jpg"
+  },
+  {
+    "cardId": "brainrot-195",
+    "setId": "brainrot-ag",
+    "localId": "138",
+    "name": "Malame Amarale",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-195.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-195.jpg"
+  },
+  {
+    "cardId": "brainrot-320",
+    "setId": "brainrot-ag",
+    "localId": "71",
+    "name": "Frigo Camelo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-320.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-320.jpg"
+  },
+  {
+    "cardId": "brainrot-184",
+    "setId": "brainrot-ag",
+    "localId": "130",
+    "name": "Catpuccino Cactonino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-184.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-184.jpg"
+  },
+  {
+    "cardId": "brainrot-210",
+    "setId": "brainrot-ag",
+    "localId": "122",
+    "name": "Sbrocco Se Tocco",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-210.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-210.jpg"
+  },
+  {
+    "cardId": "brainrot-245",
+    "setId": "brainrot-ag",
+    "localId": "16",
+    "name": "Boneca Ambalabu",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-245.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-245.jpg"
+  },
+  {
+    "cardId": "brainrot-403",
+    "setId": "brainrot-ag",
+    "localId": "102",
+    "name": "Setter Island",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-403.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-403.jpg"
+  },
+  {
+    "cardId": "brainrot-154",
+    "setId": "brainrot-ag",
+    "localId": "19",
+    "name": "Ballerino Lololo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-154.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-154.jpg"
+  },
+  {
+    "cardId": "brainrot-402",
+    "setId": "brainrot-ag",
+    "localId": "18",
+    "name": "Ton Pron Torn",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-402.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-402.jpg"
+  },
+  {
+    "cardId": "brainrot-140",
+    "setId": "brainrot-ag",
+    "localId": "134",
+    "name": "Followello Pecorello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-140.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-140.jpg"
+  },
+  {
+    "cardId": "brainrot-218",
+    "setId": "brainrot-ag",
+    "localId": "118",
+    "name": "Palla Gialla",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-218.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-218.jpg"
+  },
+  {
+    "cardId": "brainrot-172",
+    "setId": "brainrot-ag",
+    "localId": "92",
+    "name": "Mucca Mokka Ravanello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-172.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-172.jpg"
+  },
+  {
+    "cardId": "brainrot-356",
+    "setId": "brainrot-ag",
+    "localId": "142",
+    "name": "Rugbiro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-356.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-356.jpg"
+  },
+  {
+    "cardId": "brainrot-243",
+    "setId": "brainrot-ag",
+    "localId": "14",
+    "name": "Frulli Frulla",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-243.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-243.jpg"
+  },
+  {
+    "cardId": "brainrot-375",
+    "setId": "brainrot-ag",
+    "localId": "67",
+    "name": "Patatrack",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-375.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-375.jpg"
+  },
+  {
+    "cardId": "brainrot-205",
+    "setId": "brainrot-ag",
+    "localId": "63",
+    "name": "Raccrapappiccicante",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-205.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-205.jpg"
+  },
+  {
+    "cardId": "brainrot-178",
+    "setId": "brainrot-ag",
+    "localId": "72",
+    "name": "Scio Scio Champignon",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-178.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-178.jpg"
+  },
+  {
+    "cardId": "brainrot-410",
+    "setId": "brainrot-ag",
+    "localId": "14",
+    "name": "Capracciosa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-410.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-410.jpg"
+  },
+  {
+    "cardId": "brainrot-151",
+    "setId": "brainrot-ag",
+    "localId": "57",
+    "name": "Phone Selfone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-151.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-151.jpg"
+  },
+  {
+    "cardId": "brainrot-166",
+    "setId": "brainrot-ag",
+    "localId": "39",
+    "name": "Platypus Boos Boos Boos",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-166.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-166.jpg"
+  },
+  {
+    "cardId": "brainrot-216",
+    "setId": "brainrot-ag",
+    "localId": "109",
+    "name": "Thortellino Fulminato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-216.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-216.jpg"
+  },
+  {
+    "cardId": "brainrot-411",
+    "setId": "brainrot-ag",
+    "localId": "11",
+    "name": "Therocorno Mannaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-411.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-411.jpg"
+  },
+  {
+    "cardId": "brainrot-407",
+    "setId": "brainrot-ag",
+    "localId": "88",
+    "name": "Porcospinno Spinnato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-407.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-407.jpg"
+  },
+  {
+    "cardId": "brainrot-388",
+    "setId": "brainrot-ag",
+    "localId": "33",
+    "name": "Cemmetto Armato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-388.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-388.jpg"
+  },
+  {
+    "cardId": "brainrot-249",
+    "setId": "brainrot-ag",
+    "localId": "18",
+    "name": "Rugginato Lupogt",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-249.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-249.jpg"
+  },
+  {
+    "cardId": "brainrot-239",
+    "setId": "brainrot-ag",
+    "localId": "31",
+    "name": "Pastarugo Calamarello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-239.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-239.jpg"
+  },
+  {
+    "cardId": "brainrot-250",
+    "setId": "brainrot-ag",
+    "localId": "5",
+    "name": "Marco Pollo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-250.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-250.jpg"
+  },
+  {
+    "cardId": "brainrot-251",
+    "setId": "brainrot-ag",
+    "localId": "119",
+    "name": "Trippi Troppi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-251.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-251.jpg"
+  },
+  {
+    "cardId": "brainrot-169",
+    "setId": "brainrot-ag",
+    "localId": "139",
+    "name": "Bobrini Cactusini Su Saturno",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-169.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-169.jpg"
+  },
+  {
+    "cardId": "brainrot-177",
+    "setId": "brainrot-ag",
+    "localId": "148",
+    "name": "Trombonini Linguini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-177.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-177.jpg"
+  },
+  {
+    "cardId": "brainrot-374",
+    "setId": "brainrot-ag",
+    "localId": "36",
+    "name": "Blackmamba Killerchair",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-374.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-374.jpg"
+  },
+  {
+    "cardId": "brainrot-373",
+    "setId": "brainrot-ag",
+    "localId": "8",
+    "name": "Truvi Linghippo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-373.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-373.jpg"
+  },
+  {
+    "cardId": "brainrot-413",
+    "setId": "brainrot-ag",
+    "localId": "141",
+    "name": "Trippi Troppi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Special Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-413.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-413.jpg"
+  },
+  {
+    "cardId": "brainrot-408",
+    "setId": "brainrot-ag",
+    "localId": "120",
+    "name": "Spegetti Bolognaise",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-408.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-408.jpg"
+  },
+  {
+    "cardId": "brainrot-406",
+    "setId": "brainrot-ag",
+    "localId": "9",
+    "name": "Baffi Doppi Buffi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-406.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-406.jpg"
+  },
+  {
+    "cardId": "brainrot-144",
+    "setId": "brainrot-ag",
+    "localId": "53",
+    "name": "Piccione Macchina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-144.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-144.jpg"
+  },
+  {
+    "cardId": "brainrot-246",
+    "setId": "brainrot-ag",
+    "localId": "28",
+    "name": "Chimpanzini Bananini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-246.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-246.jpg"
+  },
+  {
+    "cardId": "brainrot-201",
+    "setId": "brainrot-ag",
+    "localId": "59",
+    "name": "Fomo Sapiens",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-201.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-201.jpg"
+  },
+  {
+    "cardId": "brainrot-409",
+    "setId": "brainrot-ag",
+    "localId": "136",
+    "name": "Strapper Skitarrato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-409.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-409.jpg"
+  },
+  {
+    "cardId": "brainrot-248",
+    "setId": "brainrot-ag",
+    "localId": "7",
+    "name": "Gangster Footera",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-248.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-248.jpg"
+  },
+  {
+    "cardId": "brainrot-194",
+    "setId": "brainrot-ag",
+    "localId": "133",
+    "name": "Tralachicko Jockerito",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-194.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-194.jpg"
+  },
+  {
+    "cardId": "brainrot-230",
+    "setId": "brainrot-ag",
+    "localId": "99",
+    "name": "Bruto Gialutto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-230.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-230.jpg"
+  },
+  {
+    "cardId": "brainrot-174",
+    "setId": "brainrot-ag",
+    "localId": "117",
+    "name": "Linguicine Serpentine",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-174.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-174.jpg"
+  },
+  {
+    "cardId": "brainrot-185",
+    "setId": "brainrot-ag",
+    "localId": "54",
+    "name": "Melanini Pandanini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-185.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-185.jpg"
+  },
+  {
+    "cardId": "brainrot-405",
+    "setId": "brainrot-ag",
+    "localId": "131",
+    "name": "Susy Sushy",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-405.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-405.jpg"
+  },
+  {
+    "cardId": "brainrot-161",
+    "setId": "brainrot-ag",
+    "localId": "141",
+    "name": "Cocofanto Elefanto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-161.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-161.jpg"
+  },
+  {
+    "cardId": "brainrot-136",
+    "setId": "brainrot-ag",
+    "localId": "58",
+    "name": "Strand Bier",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-136.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-136.jpg"
+  },
+  {
+    "cardId": "brainrot-141",
+    "setId": "brainrot-ag",
+    "localId": "86",
+    "name": "Seam Salad Bean",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-141.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-141.jpg"
+  },
+  {
+    "cardId": "brainrot-412",
+    "setId": "brainrot-ag",
+    "localId": "48",
+    "name": "Drin Dron Dran",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-412.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-412.jpg"
+  },
+  {
+    "cardId": "brainrot-152",
+    "setId": "brainrot-ag",
+    "localId": "4",
+    "name": "Panbroncio Al Latte",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-152.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-152.jpg"
+  },
+  {
+    "cardId": "brainrot-253",
+    "setId": "brainrot-ag",
+    "localId": "17",
+    "name": "Trippa Troppa Tralala Liri Lira Tung Tung Sahur Boneca Tung Tung Tralalelo Trippi Troppa Crocodina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-253.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-253.jpg"
+  },
+  {
+    "cardId": "brainrot-142",
+    "setId": "brainrot-ag",
+    "localId": "20",
+    "name": "La Vaca Atomo Atomita",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-142.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-142.jpg"
+  },
+  {
+    "cardId": "brainrot-298",
+    "setId": "brainrot-ag",
+    "localId": "21",
+    "name": "Carmela",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-298.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-298.jpg"
+  },
+  {
+    "cardId": "brainrot-182",
+    "setId": "brainrot-ag",
+    "localId": "22",
+    "name": "Apollino Cappuccino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-182.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-182.jpg"
+  },
+  {
+    "cardId": "brainrot-181",
+    "setId": "brainrot-ag",
+    "localId": "110",
+    "name": "Picciopicchio Impiccione",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-181.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-181.jpg"
+  },
+  {
+    "cardId": "brainrot-404",
+    "setId": "brainrot-ag",
+    "localId": "91",
+    "name": "Clisso Moonnero",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-404.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-404.jpg"
+  },
+  {
+    "cardId": "brainrot-171",
+    "setId": "brainrot-ag",
+    "localId": "104",
+    "name": "Burbaloni Luliloli",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-171.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-171.jpg"
+  },
+  {
+    "cardId": "brainrot-187",
+    "setId": "brainrot-ag",
+    "localId": "69",
+    "name": "Babbobombo Caramello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-187.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-187.jpg"
+  },
+  {
+    "cardId": "brainrot-203",
+    "setId": "brainrot-ag",
+    "localId": "61",
+    "name": "Tralalito Boccioso",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-203.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-203.jpg"
+  },
+  {
+    "cardId": "brainrot-224",
+    "setId": "brainrot-ag",
+    "localId": "98",
+    "name": "Patapum Patapa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-224.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-224.jpg"
+  },
+  {
+    "cardId": "brainrot-207",
+    "setId": "brainrot-ag",
+    "localId": "67",
+    "name": "Rupipipipipipi Streamimimimimimi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-207.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-207.jpg"
+  },
+  {
+    "cardId": "brainrot-179",
+    "setId": "brainrot-ag",
+    "localId": "55",
+    "name": "Los Liralitos Dicen Larila",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-179.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-179.jpg"
+  },
+  {
+    "cardId": "brainrot-153",
+    "setId": "brainrot-ag",
+    "localId": "97",
+    "name": "Ganganzeli Trulala",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-153.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-153.jpg"
+  },
+  {
+    "cardId": "brainrot-247",
+    "setId": "brainrot-ag",
+    "localId": "24",
+    "name": "Pararell Bararell",
+    "set": "Allucinazione Cosmica",
+    "rarity": "rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-247.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-247.jpg"
+  },
+  {
+    "cardId": "brainrot-240",
+    "setId": "brainrot-ag",
+    "localId": "32",
+    "name": "Evil Baby Octi Triplets",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-240.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-240.jpg"
+  },
+  {
+    "cardId": "brainrot-227",
+    "setId": "brainrot-ag",
+    "localId": "127",
+    "name": "Felice Volantino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-227.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-227.jpg"
+  },
+  {
+    "cardId": "brainrot-173",
+    "setId": "brainrot-ag",
+    "localId": "78",
+    "name": "Frigo Camelo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-173.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-173.jpg"
+  },
+  {
+    "cardId": "brainrot-147",
+    "setId": "brainrot-ag",
+    "localId": "25",
+    "name": "Buraburra Burattinaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-147.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-147.jpg"
+  },
+  {
+    "cardId": "brainrot-156",
+    "setId": "brainrot-ag",
+    "localId": "103",
+    "name": "Petozzo Rimbalbalbalbalzino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-156.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-156.jpg"
+  },
+  {
+    "cardId": "brainrot-351",
+    "setId": "brainrot-ag",
+    "localId": "127",
+    "name": "Gonfialetti Flautosenti",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-351.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-351.jpg"
+  },
+  {
+    "cardId": "brainrot-188",
+    "setId": "brainrot-ag",
+    "localId": "73",
+    "name": "Belerick",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-188.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-188.jpg"
+  },
+  {
+    "cardId": "brainrot-211",
+    "setId": "brainrot-ag",
+    "localId": "125",
+    "name": "Tukitukitukituki Tukitukitukita",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-211.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-211.jpg"
+  },
+  {
+    "cardId": "brainrot-317",
+    "setId": "brainrot-ag",
+    "localId": "64",
+    "name": "Milandia Fabula",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-317.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-317.jpg"
+  },
+  {
+    "cardId": "brainrot-217",
+    "setId": "brainrot-ag",
+    "localId": "116",
+    "name": "Bicicletta Del Gatto Santo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-217.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-217.jpg"
+  },
+  {
+    "cardId": "brainrot-133",
+    "setId": "brainrot-ag",
+    "localId": "96",
+    "name": "Bulbosauro Arrossato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-133.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-133.jpg"
+  },
+  {
+    "cardId": "brainrot-206",
+    "setId": "brainrot-ag",
+    "localId": "65",
+    "name": "Graipussi Medussi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-206.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-206.jpg"
+  },
+  {
+    "cardId": "brainrot-138",
+    "setId": "brainrot-ag",
+    "localId": "106",
+    "name": "Tankitanka Tarlone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-138.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-138.jpg"
+  },
+  {
+    "cardId": "brainrot-305",
+    "setId": "brainrot-ag",
+    "localId": "38",
+    "name": "Brinky Trinky",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-305.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-305.jpg"
+  },
+  {
+    "cardId": "brainrot-263",
+    "setId": "brainrot-ag",
+    "localId": "9",
+    "name": "Raparrapa Che Para",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-263.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-263.jpg"
+  },
+  {
+    "cardId": "brainrot-209",
+    "setId": "brainrot-ag",
+    "localId": "70",
+    "name": "Frr Frr Chimpanifriti",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-209.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-209.jpg"
+  },
+  {
+    "cardId": "brainrot-192",
+    "setId": "brainrot-ag",
+    "localId": "48",
+    "name": "Cagnoilno Insaponato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-192.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-192.jpg"
+  },
+  {
+    "cardId": "brainrot-137",
+    "setId": "brainrot-ag",
+    "localId": "136",
+    "name": "Polpetta Erbivora",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-137.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-137.jpg"
+  },
+  {
+    "cardId": "brainrot-198",
+    "setId": "brainrot-ag",
+    "localId": "142",
+    "name": "Fishano Shoebano",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-198.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-198.jpg"
+  },
+  {
+    "cardId": "brainrot-266",
+    "setId": "brainrot-ag",
+    "localId": "42",
+    "name": "Tung Tung Tung Sahur",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-266.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-266.jpg"
+  },
+  {
+    "cardId": "brainrot-164",
+    "setId": "brainrot-ag",
+    "localId": "94",
+    "name": "Astrobarista Shampista",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-164.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-164.jpg"
+  },
+  {
+    "cardId": "brainrot-150",
+    "setId": "brainrot-ag",
+    "localId": "44",
+    "name": "Dissatrullo Canniballo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-150.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-150.jpg"
+  },
+  {
+    "cardId": "brainrot-145",
+    "setId": "brainrot-ag",
+    "localId": "137",
+    "name": "Luguanluguanlulushijiandaole",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-145.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-145.jpg"
+  },
+  {
+    "cardId": "brainrot-229",
+    "setId": "brainrot-ag",
+    "localId": "108",
+    "name": "Fratmadrillo Flexoso",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-229.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-229.jpg"
+  },
+  {
+    "cardId": "brainrot-204",
+    "setId": "brainrot-ag",
+    "localId": "62",
+    "name": "Bitburger Coin",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-204.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-204.jpg"
+  },
+  {
+    "cardId": "brainrot-329",
+    "setId": "brainrot-ag",
+    "localId": "86",
+    "name": "Lady Matcha",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-329.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-329.jpg"
+  },
+  {
+    "cardId": "brainrot-214",
+    "setId": "brainrot-ag",
+    "localId": "113",
+    "name": "Frusciorso Cagasotto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-214.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-214.jpg"
+  },
+  {
+    "cardId": "brainrot-260",
+    "setId": "brainrot-ag",
+    "localId": "75",
+    "name": "Bombaristo Sealsto Seal",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-260.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-260.jpg"
+  },
+  {
+    "cardId": "brainrot-148",
+    "setId": "brainrot-ag",
+    "localId": "149",
+    "name": "Capuchino Assessino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-148.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-148.jpg"
+  },
+  {
+    "cardId": "brainrot-242",
+    "setId": "brainrot-ag",
+    "localId": "30",
+    "name": "Mangga Terkuat",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-242.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-242.jpg"
+  },
+  {
+    "cardId": "brainrot-167",
+    "setId": "brainrot-ag",
+    "localId": "50",
+    "name": "Girraffa Celeste",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-167.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-167.jpg"
+  },
+  {
+    "cardId": "brainrot-252",
+    "setId": "brainrot-ag",
+    "localId": "112",
+    "name": "Trulimero Trulicina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-252.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-252.jpg"
+  },
+  {
+    "cardId": "brainrot-139",
+    "setId": "brainrot-ag",
+    "localId": "56",
+    "name": "Tangerini Octopusini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-139.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-139.jpg"
+  },
+  {
+    "cardId": "brainrot-255",
+    "setId": "brainrot-ag",
+    "localId": "26",
+    "name": "Luminaria Fiorenza",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-255.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-255.jpg"
+  },
+  {
+    "cardId": "brainrot-199",
+    "setId": "brainrot-ag",
+    "localId": "147",
+    "name": "Ghiacciopuzzo Pupazzo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-199.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-199.jpg"
+  },
+  {
+    "cardId": "brainrot-146",
+    "setId": "brainrot-ag",
+    "localId": "101",
+    "name": "Pink Pony Scrub",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-146.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-146.jpg"
+  },
+  {
+    "cardId": "brainrot-168",
+    "setId": "brainrot-ag",
+    "localId": "2",
+    "name": "Tirilicalica Tirilicalaco",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-168.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-168.jpg"
+  },
+  {
+    "cardId": "brainrot-193",
+    "setId": "brainrot-ag",
+    "localId": "131",
+    "name": "Formichiazzo Pazzo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-193.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-193.jpg"
+  },
+  {
+    "cardId": "brainrot-208",
+    "setId": "brainrot-ag",
+    "localId": "68",
+    "name": "Zampatigna Zoppicante",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-208.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-208.jpg"
+  },
+  {
+    "cardId": "brainrot-380",
+    "setId": "brainrot-ag",
+    "localId": "78",
+    "name": "Tung Tung Tung Sahur",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-380.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-380.jpg"
+  },
+  {
+    "cardId": "brainrot-176",
+    "setId": "brainrot-ag",
+    "localId": "146",
+    "name": "Gallina Galletta Galeotta",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-176.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-176.jpg"
+  },
+  {
+    "cardId": "brainrot-202",
+    "setId": "brainrot-ag",
+    "localId": "60",
+    "name": "Ballerina Cappuccina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-202.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-202.jpg"
+  },
+  {
+    "cardId": "brainrot-234",
+    "setId": "brainrot-ag",
+    "localId": "21",
+    "name": "Trikitrakatelas",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-234.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-234.jpg"
+  },
+  {
+    "cardId": "brainrot-324",
+    "setId": "brainrot-ag",
+    "localId": "77",
+    "name": "Boneca Ambalabu",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-324.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-324.jpg"
+  },
+  {
+    "cardId": "brainrot-346",
+    "setId": "brainrot-ag",
+    "localId": "116",
+    "name": "Marcella Mattonella",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-346.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-346.jpg"
+  },
+  {
+    "cardId": "brainrot-220",
+    "setId": "brainrot-ag",
+    "localId": "87",
+    "name": "Bombardino Aquilino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-220.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-220.jpg"
+  },
+  {
+    "cardId": "brainrot-135",
+    "setId": "brainrot-ag",
+    "localId": "27",
+    "name": "Ratatino Rottamino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-135.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-135.jpg"
+  },
+  {
+    "cardId": "brainrot-219",
+    "setId": "brainrot-ag",
+    "localId": "79",
+    "name": "Margeriti Octopusini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-219.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-219.jpg"
+  },
+  {
+    "cardId": "brainrot-222",
+    "setId": "brainrot-ag",
+    "localId": "88",
+    "name": "Gambero Spero",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-222.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-222.jpg"
+  },
+  {
+    "cardId": "brainrot-286",
+    "setId": "brainrot-ag",
+    "localId": "6",
+    "name": "Spamolento Il Conquistatore",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-286.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-286.jpg"
+  },
+  {
+    "cardId": "brainrot-183",
+    "setId": "brainrot-ag",
+    "localId": "84",
+    "name": "Sqquitti Squittio Tossichio",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-183.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-183.jpg"
+  },
+  {
+    "cardId": "brainrot-149",
+    "setId": "brainrot-ag",
+    "localId": "121",
+    "name": "Trenostruzzo Turbo 3000",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-149.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-149.jpg"
+  },
+  {
+    "cardId": "brainrot-221",
+    "setId": "brainrot-ag",
+    "localId": "91",
+    "name": "Fritticci Capricci",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-221.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-221.jpg"
+  },
+  {
+    "cardId": "brainrot-233",
+    "setId": "brainrot-ag",
+    "localId": "47",
+    "name": "Budinaccio Del Disgusto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-233.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-233.jpg"
+  },
+  {
+    "cardId": "brainrot-369",
+    "setId": "brainrot-ag",
+    "localId": "13",
+    "name": "Bollo Saponaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-369.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-369.jpg"
+  },
+  {
+    "cardId": "brainrot-244",
+    "setId": "brainrot-ag",
+    "localId": "8",
+    "name": "Cacto Ippopotamo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-244.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-244.jpg"
+  },
+  {
+    "cardId": "brainrot-291",
+    "setId": "brainrot-ag",
+    "localId": "3",
+    "name": "Anatrullol",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-291.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-291.jpg"
+  },
+  {
+    "cardId": "brainrot-200",
+    "setId": "brainrot-ag",
+    "localId": "143",
+    "name": "Gattino Aereoplanino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-200.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-200.jpg"
+  },
+  {
+    "cardId": "brainrot-285",
+    "setId": "brainrot-ag",
+    "localId": "137",
+    "name": "Offenser Dispenser",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-285.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-285.jpg"
+  },
+  {
+    "cardId": "brainrot-313",
+    "setId": "brainrot-ag",
+    "localId": "56",
+    "name": "Farpalla Frullaballa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-313.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-313.jpg"
+  },
+  {
+    "cardId": "brainrot-268",
+    "setId": "brainrot-ag",
+    "localId": "76",
+    "name": "Tralalero Tralala",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-268.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-268.jpg"
+  },
+  {
+    "cardId": "brainrot-271",
+    "setId": "brainrot-ag",
+    "localId": "111",
+    "name": "Frullafrutti Frattale Ninja",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-271.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-271.jpg"
+  },
+  {
+    "cardId": "brainrot-328",
+    "setId": "brainrot-ag",
+    "localId": "82",
+    "name": "Labbrador",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-328.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-328.jpg"
+  },
+  {
+    "cardId": "brainrot-300",
+    "setId": "brainrot-ag",
+    "localId": "25",
+    "name": "Rafaela Rafanela",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-300.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-300.jpg"
+  },
+  {
+    "cardId": "brainrot-159",
+    "setId": "brainrot-ag",
+    "localId": "120",
+    "name": "Legeni Peshkaqeni",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-159.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-159.jpg"
+  },
+  {
+    "cardId": "brainrot-237",
+    "setId": "brainrot-ag",
+    "localId": "35",
+    "name": "Tric Trac Baraboom",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-237.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-237.jpg"
+  },
+  {
+    "cardId": "brainrot-398",
+    "setId": "brainrot-ag",
+    "localId": "42",
+    "name": "Lavateacher",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-398.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-398.jpg"
+  },
+  {
+    "cardId": "brainrot-396",
+    "setId": "brainrot-ag",
+    "localId": "57",
+    "name": "Marranzana Bam Bam",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-396.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-396.jpg"
+  },
+  {
+    "cardId": "brainrot-321",
+    "setId": "brainrot-ag",
+    "localId": "73",
+    "name": "Bombardiro Crocodillo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-321.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-321.jpg"
+  },
+  {
+    "cardId": "brainrot-235",
+    "setId": "brainrot-ag",
+    "localId": "36",
+    "name": "Matteo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-235.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-235.jpg"
+  },
+  {
+    "cardId": "brainrot-270",
+    "setId": "brainrot-ag",
+    "localId": "45",
+    "name": "Mousarini Pistolini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-270.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-270.jpg"
+  },
+  {
+    "cardId": "brainrot-391",
+    "setId": "brainrot-ag",
+    "localId": "30",
+    "name": "Robertina Mixerina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-391.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-391.jpg"
+  },
+  {
+    "cardId": "brainrot-295",
+    "setId": "brainrot-ag",
+    "localId": "15",
+    "name": "Sedia Boss",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-295.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-295.jpg"
+  },
+  {
+    "cardId": "brainrot-157",
+    "setId": "brainrot-ag",
+    "localId": "90",
+    "name": "El Maialino Candito",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-157.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-157.jpg"
+  },
+  {
+    "cardId": "brainrot-191",
+    "setId": "brainrot-ag",
+    "localId": "33",
+    "name": "Sgommabirillo Brillo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-191.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-191.jpg"
+  },
+  {
+    "cardId": "brainrot-265",
+    "setId": "brainrot-ag",
+    "localId": "3",
+    "name": "Coccodrillo Formaggioso",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-265.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-265.jpg"
+  },
+  {
+    "cardId": "brainrot-325",
+    "setId": "brainrot-ag",
+    "localId": "79",
+    "name": "Chimpanzini Bananini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-325.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-325.jpg"
+  },
+  {
+    "cardId": "brainrot-279",
+    "setId": "brainrot-ag",
+    "localId": "94",
+    "name": "Tung Tung Tung Tung Tung Tung Tung Tung Tung Assassino Boneca",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-279.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-279.jpg"
+  },
+  {
+    "cardId": "brainrot-381",
+    "setId": "brainrot-ag",
+    "localId": "132",
+    "name": "Pignolini Boschetti",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-381.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-381.jpg"
+  },
+  {
+    "cardId": "brainrot-358",
+    "setId": "brainrot-ag",
+    "localId": "148",
+    "name": "Aghina Ughina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-358.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-358.jpg"
+  },
+  {
+    "cardId": "brainrot-322",
+    "setId": "brainrot-ag",
+    "localId": "75",
+    "name": "Ballerina Cappuccina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-322.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-322.jpg"
+  },
+  {
+    "cardId": "brainrot-359",
+    "setId": "brainrot-ag",
+    "localId": "150",
+    "name": "Tronello Aguzzo Mangiamerluzzo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-359.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-359.jpg"
+  },
+  {
+    "cardId": "brainrot-306",
+    "setId": "brainrot-ag",
+    "localId": "41",
+    "name": "Calatamarrata Sterrata",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-306.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-306.jpg"
+  },
+  {
+    "cardId": "brainrot-382",
+    "setId": "brainrot-ag",
+    "localId": "27",
+    "name": "Capicapibarabara",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-382.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-382.jpg"
+  },
+  {
+    "cardId": "brainrot-262",
+    "setId": "brainrot-ag",
+    "localId": "80",
+    "name": "Pecorini Lanusini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-262.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-262.jpg"
+  },
+  {
+    "cardId": "brainrot-287",
+    "setId": "brainrot-ag",
+    "localId": "12",
+    "name": "Buum Buum Meloncito",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-287.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-287.jpg"
+  },
+  {
+    "cardId": "brainrot-393",
+    "setId": "brainrot-ag",
+    "localId": "37",
+    "name": "Tanitina Tanica",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-393.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-393.jpg"
+  },
+  {
+    "cardId": "brainrot-293",
+    "setId": "brainrot-ag",
+    "localId": "7",
+    "name": "Angelone Bippottrittone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-293.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-293.jpg"
+  },
+  {
+    "cardId": "brainrot-301",
+    "setId": "brainrot-ag",
+    "localId": "28",
+    "name": "Carpacio",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-301.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-301.jpg"
+  },
+  {
+    "cardId": "brainrot-312",
+    "setId": "brainrot-ag",
+    "localId": "54",
+    "name": "Nonnancasaura",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-312.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-312.jpg"
+  },
+  {
+    "cardId": "brainrot-213",
+    "setId": "brainrot-ag",
+    "localId": "114",
+    "name": "Bombardino Crocodillo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-213.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-213.jpg"
+  },
+  {
+    "cardId": "brainrot-264",
+    "setId": "brainrot-ag",
+    "localId": "43",
+    "name": "Apellone Di Pollopelle",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-264.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-264.jpg"
+  },
+  {
+    "cardId": "brainrot-280",
+    "setId": "brainrot-ag",
+    "localId": "44",
+    "name": "Odin Dean Dunmadin Dundunu Din Din Dun",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-280.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-280.jpg"
+  },
+  {
+    "cardId": "brainrot-284",
+    "setId": "brainrot-ag",
+    "localId": "101",
+    "name": "Natano Sbellicano",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-284.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-284.jpg"
+  },
+  {
+    "cardId": "brainrot-372",
+    "setId": "brainrot-ag",
+    "localId": "72",
+    "name": "Capuchino Assessino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-372.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-372.jpg"
+  },
+  {
+    "cardId": "brainrot-269",
+    "setId": "brainrot-ag",
+    "localId": "49",
+    "name": "Ping Pong Pongaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-269.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-269.jpg"
+  },
+  {
+    "cardId": "brainrot-272",
+    "setId": "brainrot-ag",
+    "localId": "89",
+    "name": "Bombombini Gusini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-272.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-272.jpg"
+  },
+  {
+    "cardId": "brainrot-348",
+    "setId": "brainrot-ag",
+    "localId": "118",
+    "name": "Mimi Maki Mu",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-348.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-348.jpg"
+  },
+  {
+    "cardId": "brainrot-308",
+    "setId": "brainrot-ag",
+    "localId": "47",
+    "name": "Carro Amato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-308.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-308.jpg"
+  },
+  {
+    "cardId": "brainrot-310",
+    "setId": "brainrot-ag",
+    "localId": "50",
+    "name": "Err_cache_miss",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-310.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-310.jpg"
+  },
+  {
+    "cardId": "brainrot-371",
+    "setId": "brainrot-ag",
+    "localId": "140",
+    "name": "Lamantino Lavandino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-371.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-371.jpg"
+  },
+  {
+    "cardId": "brainrot-330",
+    "setId": "brainrot-ag",
+    "localId": "87",
+    "name": "Gattaro Mannaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-330.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-330.jpg"
+  },
+  {
+    "cardId": "brainrot-390",
+    "setId": "brainrot-ag",
+    "localId": "125",
+    "name": "Spremutona Spiralosa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-390.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-390.jpg"
+  },
+  {
+    "cardId": "brainrot-288",
+    "setId": "brainrot-ag",
+    "localId": "145",
+    "name": "Brum Brum Pastafa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-288.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-288.jpg"
+  },
+  {
+    "cardId": "brainrot-344",
+    "setId": "brainrot-ag",
+    "localId": "114",
+    "name": "Kallimeno Gufarelo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-344.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-344.jpg"
+  },
+  {
+    "cardId": "brainrot-261",
+    "setId": "brainrot-ag",
+    "localId": "41",
+    "name": "Tiktarugo Ritardone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-261.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-261.jpg"
+  },
+  {
+    "cardId": "brainrot-283",
+    "setId": "brainrot-ag",
+    "localId": "147",
+    "name": "Snooffi Zeffirulli",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-283.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-283.jpg"
+  },
+  {
+    "cardId": "brainrot-361",
+    "setId": "brainrot-ag",
+    "localId": "23",
+    "name": "Assunta Tavola",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-361.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-361.jpg"
+  },
+  {
+    "cardId": "brainrot-392",
+    "setId": "brainrot-ag",
+    "localId": "121",
+    "name": "Pizzolina Puzzolona",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-392.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-392.jpg"
+  },
+  {
+    "cardId": "brainrot-212",
+    "setId": "brainrot-ag",
+    "localId": "126",
+    "name": "Tracotocutulo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-212.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-212.jpg"
+  },
+  {
+    "cardId": "brainrot-303",
+    "setId": "brainrot-ag",
+    "localId": "32",
+    "name": "Spaghettina Carbonarella",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-303.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-303.jpg"
+  },
+  {
+    "cardId": "brainrot-281",
+    "setId": "brainrot-ag",
+    "localId": "1",
+    "name": "Trullalli Broccoli",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-281.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-281.jpg"
+  },
+  {
+    "cardId": "brainrot-399",
+    "setId": "brainrot-ag",
+    "localId": "74",
+    "name": "Tralalero Tralala",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-399.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-399.jpg"
+  },
+  {
+    "cardId": "brainrot-386",
+    "setId": "brainrot-ag",
+    "localId": "52",
+    "name": "Leospresso",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-386.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-386.jpg"
+  },
+  {
+    "cardId": "brainrot-311",
+    "setId": "brainrot-ag",
+    "localId": "51",
+    "name": "Chiwawa Ndowada",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-311.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-311.jpg"
+  },
+  {
+    "cardId": "brainrot-397",
+    "setId": "brainrot-ag",
+    "localId": "16",
+    "name": "Brittiribrottiribuuum",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-397.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-397.jpg"
+  },
+  {
+    "cardId": "brainrot-387",
+    "setId": "brainrot-ag",
+    "localId": "55",
+    "name": "Geode Gedeone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-387.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-387.jpg"
+  },
+  {
+    "cardId": "brainrot-292",
+    "setId": "brainrot-ag",
+    "localId": "5",
+    "name": "Vaiper Purput",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-292.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-292.jpg"
+  },
+  {
+    "cardId": "brainrot-383",
+    "setId": "brainrot-ag",
+    "localId": "84",
+    "name": "Paul Dente",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-383.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-383.jpg"
+  },
+  {
+    "cardId": "brainrot-378",
+    "setId": "brainrot-ag",
+    "localId": "137",
+    "name": "Tartalefono Drin Drin",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-378.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-378.jpg"
+  },
+  {
+    "cardId": "brainrot-296",
+    "setId": "brainrot-ag",
+    "localId": "19",
+    "name": "Joy Stick",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-296.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-296.jpg"
+  },
+  {
+    "cardId": "brainrot-389",
+    "setId": "brainrot-ag",
+    "localId": "93",
+    "name": "Gateau",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-389.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-389.jpg"
+  },
+  {
+    "cardId": "brainrot-379",
+    "setId": "brainrot-ag",
+    "localId": "85",
+    "name": "Cipopocigno Starnazzone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-379.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-379.jpg"
+  },
+  {
+    "cardId": "brainrot-350",
+    "setId": "brainrot-ag",
+    "localId": "123",
+    "name": "Minimitrottitigru",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-350.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-350.jpg"
+  },
+  {
+    "cardId": "brainrot-304",
+    "setId": "brainrot-ag",
+    "localId": "34",
+    "name": "Ivonne Macaronne",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-304.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-304.jpg"
+  },
+  {
+    "cardId": "brainrot-307",
+    "setId": "brainrot-ag",
+    "localId": "46",
+    "name": "Mauricchio Lucchetto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-307.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-307.jpg"
+  },
+  {
+    "cardId": "brainrot-259",
+    "setId": "brainrot-ag",
+    "localId": "6",
+    "name": "Oca Del Rover Lunare",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-259.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-259.jpg"
+  },
+  {
+    "cardId": "brainrot-385",
+    "setId": "brainrot-ag",
+    "localId": "26",
+    "name": "Carolina Passatina",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-385.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-385.jpg"
+  },
+  {
+    "cardId": "brainrot-365",
+    "setId": "brainrot-ag",
+    "localId": "17",
+    "name": "Al Cappone",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-365.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-365.jpg"
+  },
+  {
+    "cardId": "brainrot-384",
+    "setId": "brainrot-ag",
+    "localId": "149",
+    "name": "Unghi Unghi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-384.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-384.jpg"
+  },
+  {
+    "cardId": "brainrot-278",
+    "setId": "brainrot-ag",
+    "localId": "77",
+    "name": "Matteo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-278.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-278.jpg"
+  },
+  {
+    "cardId": "brainrot-401",
+    "setId": "brainrot-ag",
+    "localId": "126",
+    "name": "Raccomandatela Indietroska",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-401.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-401.jpg"
+  },
+  {
+    "cardId": "brainrot-258",
+    "setId": "brainrot-ag",
+    "localId": "144",
+    "name": "Coccodrillo Robloxino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-258.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-258.jpg"
+  },
+  {
+    "cardId": "brainrot-360",
+    "setId": "brainrot-ag",
+    "localId": "144",
+    "name": "Teiera Ciminiera",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-360.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-360.jpg"
+  },
+  {
+    "cardId": "brainrot-349",
+    "setId": "brainrot-ag",
+    "localId": "122",
+    "name": "Freddino Guantaccioni",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-349.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-349.jpg"
+  },
+  {
+    "cardId": "brainrot-339",
+    "setId": "brainrot-ag",
+    "localId": "104",
+    "name": "Pantino Pantano",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-339.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-339.jpg"
+  },
+  {
+    "cardId": "brainrot-326",
+    "setId": "brainrot-ag",
+    "localId": "80",
+    "name": "Trippi Troppi",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-326.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-326.jpg"
+  },
+  {
+    "cardId": "brainrot-282",
+    "setId": "brainrot-ag",
+    "localId": "11",
+    "name": "Zanzarona Zen",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-282.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-282.jpg"
+  },
+  {
+    "cardId": "brainrot-332",
+    "setId": "brainrot-ag",
+    "localId": "90",
+    "name": "Bulbobullo Sgangheratak",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-332.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-332.jpg"
+  },
+  {
+    "cardId": "brainrot-226",
+    "setId": "brainrot-ag",
+    "localId": "105",
+    "name": "Los Tralaleritos Dicen Tralala!",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-226.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-226.jpg"
+  },
+  {
+    "cardId": "brainrot-323",
+    "setId": "brainrot-ag",
+    "localId": "76",
+    "name": "Matteo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-323.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-323.jpg"
+  },
+  {
+    "cardId": "brainrot-267",
+    "setId": "brainrot-ag",
+    "localId": "40",
+    "name": "Garam Mararam Raraman Mararaman Dan Madu Dungdungdung Taktungtung Pekuntung",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-267.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-267.jpg"
+  },
+  {
+    "cardId": "brainrot-364",
+    "setId": "brainrot-ag",
+    "localId": "138",
+    "name": "Rhino Danzerino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-364.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-364.jpg"
+  },
+  {
+    "cardId": "brainrot-315",
+    "setId": "brainrot-ag",
+    "localId": "59",
+    "name": "Cikki Nikki Stikki",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-315.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-315.jpg"
+  },
+  {
+    "cardId": "brainrot-256",
+    "setId": "brainrot-ag",
+    "localId": "123",
+    "name": "Orangutini Ananasini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-256.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-256.jpg"
+  },
+  {
+    "cardId": "brainrot-353",
+    "setId": "brainrot-ag",
+    "localId": "130",
+    "name": "Pun Pun Pun Ponnugaro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-353.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-353.jpg"
+  },
+  {
+    "cardId": "brainrot-290",
+    "setId": "brainrot-ag",
+    "localId": "82",
+    "name": "Brri Brri Bicus Dicus Bombicus",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-290.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-290.jpg"
+  },
+  {
+    "cardId": "brainrot-395",
+    "setId": "brainrot-ag",
+    "localId": "95",
+    "name": "Mess Botilla Mas Familla",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-395.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-395.jpg"
+  },
+  {
+    "cardId": "brainrot-368",
+    "setId": "brainrot-ag",
+    "localId": "135",
+    "name": "Tartatanka",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-368.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-368.jpg"
+  },
+  {
+    "cardId": "brainrot-352",
+    "setId": "brainrot-ag",
+    "localId": "129",
+    "name": "Scocciona Abrasiva",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-352.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-352.jpg"
+  },
+  {
+    "cardId": "brainrot-335",
+    "setId": "brainrot-ag",
+    "localId": "96",
+    "name": "Ginotonicofotonico",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-335.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-335.jpg"
+  },
+  {
+    "cardId": "brainrot-377",
+    "setId": "brainrot-ag",
+    "localId": "108",
+    "name": "Pippistrelliera",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-377.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-377.jpg"
+  },
+  {
+    "cardId": "brainrot-327",
+    "setId": "brainrot-ag",
+    "localId": "81",
+    "name": "Polposition",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-327.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-327.jpg"
+  },
+  {
+    "cardId": "brainrot-363",
+    "setId": "brainrot-ag",
+    "localId": "128",
+    "name": "Porcino Porcellino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-363.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-363.jpg"
+  },
+  {
+    "cardId": "brainrot-299",
+    "setId": "brainrot-ag",
+    "localId": "24",
+    "name": "Claudiva Orsa",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-299.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-299.jpg"
+  },
+  {
+    "cardId": "brainrot-309",
+    "setId": "brainrot-ag",
+    "localId": "49",
+    "name": "Micini Spicciolini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-309.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-309.jpg"
+  },
+  {
+    "cardId": "brainrot-394",
+    "setId": "brainrot-ag",
+    "localId": "68",
+    "name": "Daria Mezzaaaria",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-394.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-394.jpg"
+  },
+  {
+    "cardId": "brainrot-319",
+    "setId": "brainrot-ag",
+    "localId": "66",
+    "name": "Molletta Ammanetta",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-319.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-319.jpg"
+  },
+  {
+    "cardId": "brainrot-294",
+    "setId": "brainrot-ag",
+    "localId": "12",
+    "name": "Burritos Sabrosos",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-294.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-294.jpg"
+  },
+  {
+    "cardId": "brainrot-400",
+    "setId": "brainrot-ag",
+    "localId": "124",
+    "name": "Regina Del Ghiacci",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-400.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-400.jpg"
+  },
+  {
+    "cardId": "brainrot-357",
+    "setId": "brainrot-ag",
+    "localId": "146",
+    "name": "Taaaaz Mania",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-357.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-357.jpg"
+  },
+  {
+    "cardId": "brainrot-302",
+    "setId": "brainrot-ag",
+    "localId": "29",
+    "name": "Corvus Imperactores",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-302.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-302.jpg"
+  },
+  {
+    "cardId": "brainrot-316",
+    "setId": "brainrot-ag",
+    "localId": "62",
+    "name": "Cuccetta Cassetta",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-316.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-316.jpg"
+  },
+  {
+    "cardId": "brainrot-345",
+    "setId": "brainrot-ag",
+    "localId": "115",
+    "name": "Pupidipopidipuh",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-345.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-345.jpg"
+  },
+  {
+    "cardId": "brainrot-343",
+    "setId": "brainrot-ag",
+    "localId": "112",
+    "name": "Espressone Signore",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-343.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-343.jpg"
+  },
+  {
+    "cardId": "brainrot-340",
+    "setId": "brainrot-ag",
+    "localId": "107",
+    "name": "Silurazza",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-340.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-340.jpg"
+  },
+  {
+    "cardId": "brainrot-362",
+    "setId": "brainrot-ag",
+    "localId": "97",
+    "name": "Geode Giada",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-362.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-362.jpg"
+  },
+  {
+    "cardId": "brainrot-355",
+    "setId": "brainrot-ag",
+    "localId": "139",
+    "name": "Totanotonto",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-355.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-355.jpg"
+  },
+  {
+    "cardId": "brainrot-341",
+    "setId": "brainrot-ag",
+    "localId": "109",
+    "name": "Pietro",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-341.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-341.jpg"
+  },
+  {
+    "cardId": "brainrot-334",
+    "setId": "brainrot-ag",
+    "localId": "94",
+    "name": "Fishus Fishus Blobilus",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-334.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-334.jpg"
+  },
+  {
+    "cardId": "brainrot-297",
+    "setId": "brainrot-ag",
+    "localId": "20",
+    "name": "Casettagirl",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-297.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-297.jpg"
+  },
+  {
+    "cardId": "brainrot-257",
+    "setId": "brainrot-ag",
+    "localId": "124",
+    "name": "Cocco Bello Sala Mello",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-257.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-257.jpg"
+  },
+  {
+    "cardId": "brainrot-314",
+    "setId": "brainrot-ag",
+    "localId": "58",
+    "name": "Gira Click Fina Clock",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-314.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-314.jpg"
+  },
+  {
+    "cardId": "brainrot-376",
+    "setId": "brainrot-ag",
+    "localId": "83",
+    "name": "Evil Denziato",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-376.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-376.jpg"
+  },
+  {
+    "cardId": "brainrot-318",
+    "setId": "brainrot-ag",
+    "localId": "65",
+    "name": "Debborah Conlacca",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-318.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-318.jpg"
+  },
+  {
+    "cardId": "brainrot-337",
+    "setId": "brainrot-ag",
+    "localId": "101",
+    "name": "Naninani Miamimiami",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-337.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-337.jpg"
+  },
+  {
+    "cardId": "brainrot-331",
+    "setId": "brainrot-ag",
+    "localId": "89",
+    "name": "Croccocantino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Rare",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-331.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-331.jpg"
+  },
+  {
+    "cardId": "brainrot-370",
+    "setId": "brainrot-ag",
+    "localId": "40",
+    "name": "Magheritti Pirriporri",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-370.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-370.jpg"
+  },
+  {
+    "cardId": "brainrot-342",
+    "setId": "brainrot-ag",
+    "localId": "111",
+    "name": "Plushficus Incubus",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-342.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-342.jpg"
+  },
+  {
+    "cardId": "brainrot-366",
+    "setId": "brainrot-ag",
+    "localId": "44",
+    "name": "Ceccoceppo",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-366.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-366.jpg"
+  },
+  {
+    "cardId": "brainrot-367",
+    "setId": "brainrot-ag",
+    "localId": "106",
+    "name": "Guffalino Pandorino",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-367.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-367.jpg"
+  },
+  {
+    "cardId": "brainrot-336",
+    "setId": "brainrot-ag",
+    "localId": "99",
+    "name": "Cliclclack",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-336.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-336.jpg"
+  },
+  {
+    "cardId": "brainrot-354",
+    "setId": "brainrot-ag",
+    "localId": "133",
+    "name": "Skibidi Cactus",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-354.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-354.jpg"
+  },
+  {
+    "cardId": "brainrot-333",
+    "setId": "brainrot-ag",
+    "localId": "92",
+    "name": "Salepeppepeppepeppe",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-333.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-333.jpg"
+  },
+  {
+    "cardId": "brainrot-186",
+    "setId": "brainrot-ag",
+    "localId": "129",
+    "name": "Geladrone Attack!",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-186.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-186.jpg"
+  },
+  {
+    "cardId": "brainrot-197",
+    "setId": "brainrot-ag",
+    "localId": "150",
+    "name": "Olegolini, Der Zauberini",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-197.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-197.jpg"
+  },
+  {
+    "cardId": "brainrot-338",
+    "setId": "brainrot-ag",
+    "localId": "139",
+    "name": "Bobrini Cactusini Su Saturno",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Uncommon",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-338.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-338.jpg"
+  },
+  {
+    "cardId": "brainrot-289",
+    "setId": "brainrot-ag",
+    "localId": "16",
+    "name": "Boneca Ambalabu",
+    "set": "Allucinazione Cosmica",
+    "rarity": "Common",
+    "image": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-289.jpg",
+    "imageHigh": "https://pub-ea31777b7dfe4d62ae560773aa05708e.r2.dev/brainrot/brainrot-289.jpg"
+  }
+]
