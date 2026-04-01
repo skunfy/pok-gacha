@@ -231,6 +231,13 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow: var(--shadow), var(--inset);
 }
 
+/* Grid layout */
+.grid2{
+  display:grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap:14px;
+}
+@media (max-width: 980px){ .grid2{ grid-template-columns:1fr; } }
 
 .hrow{
   display:flex;
@@ -306,12 +313,11 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 /* Market grid */
 .grid{
   display:grid;
-  grid-template-columns:repeat(5,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:12px;
 }
-@media (max-width: 1100px){ .grid{ grid-template-columns:repeat(4,1fr); } }
-@media (max-width: 800px){ .grid{ grid-template-columns:repeat(3,1fr); } }
-@media (max-width: 520px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width: 1100px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width: 720px){ .grid{ grid-template-columns:repeat(2,1fr); } }
 
 /* Card */
 .card{
@@ -528,6 +534,55 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .pageBtn:disabled{ opacity:.35; cursor:not-allowed; }
 .pageInfo{ font-size:13px; opacity:.65; padding:0 4px; }
 
+/* Right sections */
+.sectionTitle{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+}
+.sectionTitle .hint{ font-size:12px; color: var(--muted); }
+
+/* Collection selectable */
+.selGrid{
+  margin-top:12px;
+  max-height:420px;
+  overflow:auto;
+  padding-right:6px;
+}
+.selCard{ cursor:pointer; }
+.selCard.selected{
+  border-color: rgba(130,170,255,.20);
+  box-shadow:
+    0 16px 44px rgba(0,0,0,.40),
+    0 0 0 4px rgba(80,130,255,.10),
+    inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+/* My listings list */
+.list{ display:grid; gap:10px; margin-top:12px; }
+.itemRow{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.055);
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.030));
+  box-shadow: 0 10px 26px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.itemRow:hover{
+  border-color: rgba(255,255,255,.09);
+  box-shadow: var(--shadow2), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.thumb{
+  width:42px;height:58px;border-radius:14px;
+  background:center/102% no-repeat;
+  border:1px solid rgba(255,255,255,.055);
+  cursor:pointer;
+}
+.spacer{ flex:1 1 auto; }
 
 /* Modal */
 .modalBack{
@@ -799,60 +854,73 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     </div>
   </div>
 
-  <!-- MARKET (pleine largeur) -->
-  <div class="panel">
-    <div class="hrow">
-      <b>Ventes en cours</b>
-      <div class="kpi">
-        <span class="pill soft" id="kpiCount">0 offres</span>
-        <span class="pill soft" id="kpiRange">—</span>
-        <button id="refresh">Rafraîchir</button>
+  <div class="grid2">
+
+    <!-- MARKET -->
+    <div class="panel">
+      <div class="hrow">
+        <b>Ventes en cours</b>
+        <div class="kpi">
+          <span class="pill soft" id="kpiCount">0 offres</span>
+          <span class="pill soft" id="kpiRange">—</span>
+          <button id="refresh">Rafraîchir</button>
+        </div>
       </div>
+
+      <div class="marketDisclaimer pill soft">
+         All marketplace trades use a fictional in-game currency with no real-world monetary value.
+      </div>
+
+      <!-- Filters -->
+      <div class="filtersBar">
+        <div class="fChip" title="Afficher seulement les cartes MINT">
+          <input class="cb" type="checkbox" id="fMint">
+          <span>MINT only</span>
+        </div>
+
+        <div class="fChip" title="Masquer tes propres ventes">
+          <input class="cb" type="checkbox" id="fHideMine">
+          <span>Masquer mes ventes</span>
+        </div>
+
+        <div class="fChip" title="Masquer les cartes que tu possèdes déjà">
+          <input class="cb" type="checkbox" id="fHideOwned">
+          <span>Masquer possédées</span>
+        </div>
+
+        <div class="fChip" title="Filtrer par grade minimum">
+          <span class="fLabel">Grade min</span>
+          <select class="fMiniSelect" id="fGradeMin">
+            <option value="0">0</option>
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+
+        <div class="fChip" title="Prix maximum">
+          <span class="fLabel">Prix max</span>
+          <input class="fMiniInput" id="fPriceMax" type="number" min="0" placeholder="∞">
+        </div>
+      </div>
+
+      <div class="msg" id="msgMarket"></div>
+      <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
+      <div class="pagination" id="marketPagination"></div>
     </div>
 
-    <div class="marketDisclaimer pill soft">
-       All marketplace trades use a fictional in-game currency with no real-world monetary value.
+    <!-- MES VENTES -->
+    <div class="panel">
+      <div class="sectionTitle">
+        <b>Mes ventes</b>
+        <button id="reloadMine">Recharger</button>
+      </div>
+      <div class="msg" id="msgMine"></div>
+      <div class="list" id="mineList"></div>
     </div>
 
-    <!-- Filters -->
-    <div class="filtersBar">
-      <div class="fChip" title="Afficher seulement les cartes MINT">
-        <input class="cb" type="checkbox" id="fMint">
-        <span>MINT only</span>
-      </div>
-
-      <div class="fChip" title="Masquer tes propres ventes">
-        <input class="cb" type="checkbox" id="fHideMine">
-        <span>Masquer mes ventes</span>
-      </div>
-
-      <div class="fChip" title="Masquer les cartes que tu possèdes déjà">
-        <input class="cb" type="checkbox" id="fHideOwned">
-        <span>Masquer possédées</span>
-      </div>
-
-      <div class="fChip" title="Filtrer par grade minimum">
-        <span class="fLabel">Grade min</span>
-        <select class="fMiniSelect" id="fGradeMin">
-          <option value="0">0</option>
-          <option value="5">5</option>
-          <option value="7">7</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-        </select>
-      </div>
-
-      <div class="fChip" title="Prix maximum">
-        <span class="fLabel">Prix max</span>
-        <input class="fMiniInput" id="fPriceMax" type="number" min="0" placeholder="∞">
-      </div>
-    </div>
-
-    <div class="msg" id="msgMarket"></div>
-    <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
-    <div class="pagination" id="marketPagination"></div>
   </div>
-
 </div>
 
 <!-- Modal -->
@@ -986,14 +1054,18 @@ const refreshBtn = document.getElementById("refresh");
 const msgMarket = document.getElementById("msgMarket");
 const marketGrid = document.getElementById("marketGrid");
 
-const fMint     = document.getElementById("fMint");
+const fMint = document.getElementById("fMint");
 const fHideMine = document.getElementById("fHideMine");
-const fHideOwned= document.getElementById("fHideOwned");
+const fHideOwned = document.getElementById("fHideOwned");
 const fGradeMin = document.getElementById("fGradeMin");
 const fPriceMax = document.getElementById("fPriceMax");
 
 const kpiCount = document.getElementById("kpiCount");
 const kpiRange = document.getElementById("kpiRange");
+
+const reloadMine = document.getElementById("reloadMine");
+const msgMine = document.getElementById("msgMine");
+const mineList = document.getElementById("mineList");
 
 /* Modal */
 const modalBack = document.getElementById("modalBack");
@@ -1379,6 +1451,51 @@ function renderPagination(){
   addBtn("→", currentPage+1, currentPage>=totalPages, false);
 }
 
+async function loadMine(){
+  show(msgMine, "Chargement...");
+  mineList.innerHTML = "";
+  const data = await api("/api/market/mine", { method:"GET", headers:{} });
+  const listings = data.listings || [];
+  if(!listings.length){
+    show(msgMine, "Aucune vente en cours.");
+    return;
+  }
+  show(msgMine, "");
+
+  listings.forEach(l => {
+    const row = document.createElement("div");
+    row.className = "itemRow";
+
+    row.innerHTML = `
+      <div class="thumb" style="background-image:url('${l.image}')"></div>
+      <div style="min-width:220px">
+        <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName || "")}</span></div>
+        <div class="small">Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix <b>${escapeHtml(l.price)}</b> • Stock ${escapeHtml(l.qty)}</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="cancelBtn" type="button">Annuler…</button>
+    `;
+
+    row.querySelector(".thumb").onclick = () => openModal(l);
+
+    row.querySelector(".cancelBtn").onclick = async () => {
+      try{
+        const want = clamp(Number(prompt(`Quantité à annuler ? (max ${l.qty})`, String(l.qty)) || "0")|0, 1, Number(l.qty||1));
+        if(!want) return;
+        await api("/api/market/cancel", {
+          method:"POST",
+          body: JSON.stringify({ listingId: l.id, qty: want })
+        });
+        await loadMine();
+      }catch(e){
+        alert("❌ " + e.message);
+      }
+    };
+
+    mineList.appendChild(row);
+  });
+}
+
 /* listeners */
 searchEl.addEventListener("input", () => { currentPage = 1; loadMarket(); });
 sortEl.addEventListener("change", () => { currentPage = 1; loadMarket(); });
@@ -1395,6 +1512,8 @@ fHideOwned.addEventListener("change", refilter);
 fGradeMin.addEventListener("change", refilter);
 fPriceMax.addEventListener("input", refilter);
 
+reloadMine.onclick = () => loadMine();
+
 async function boot(){
   try{
     const bootData = await api("/api/market/boot", { method:"GET", headers:{} });
@@ -1406,10 +1525,12 @@ async function boot(){
     gameBadge.textContent = gameTag(currentGame());
     loadAvatar();
 
-    // On garde myItems en mémoire pour les filtres "possédée" / badge vert
     myItems = bootData.collection?.items || [];
 
-    await loadMarket();
+    await Promise.all([
+      loadMarket(),
+      loadMine(),
+    ]);
 
   }catch(e){
     console.error("boot error", e);
