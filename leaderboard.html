@@ -401,6 +401,18 @@ th{
   box-shadow: 0 0 18px rgba(120,170,255,.18);
 }
 
+.clanTag{
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:1000;
+  border:1px solid rgba(255,180,80,.35);
+  background: rgba(255,180,80,.12);
+  color:rgba(255,200,120,.95);
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
 /* ===== MOBILE ===== */
 @media (max-width: 520px){
   .podium{ gap:18px; }
@@ -545,6 +557,7 @@ function rowHtml(x, myRank){
             ${esc(x.name)}
             ${x.rank === myRank ? `<span class="meTag">TOI</span>` : ``}
           </div>
+          ${x.clanTag ? `<span class="clanTag" title="${esc(x.clanName)}">${esc(x.clanTag)}</span>` : ``}
           <button class="profileBtn" type="button" onclick="openProfile('${esc(go)}')">Profil</button>
         </div>
       </td>
