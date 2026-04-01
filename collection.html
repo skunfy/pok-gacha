@@ -914,6 +914,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
         <option value="senpaigodesshaven">Senpai Goddess Haven</option>
         <option value="magic">Magic: The Gathering</option>
         <option value="weissschwarz">Weiss Schwarz</option>
+        <option value="brainrot">BrainRot TCG</option>
       </select>
 
       <select id="viewSel" title="Affichage">
@@ -1048,7 +1049,8 @@ function currentGame(){
     g === "unionarena" ||
     g === "senpaigodesshaven" ||
     g === "magic" ||
-    g === "weissschwarz"
+    g === "weissschwarz" ||
+    g === "brainrot"
   ) return g;
   return "pokemon";
 }
