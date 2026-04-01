@@ -1334,7 +1334,12 @@ mBuy.onclick = async () => {
 };
 
 async function loadMe(){
-  me = await api("/api/me", { method:"GET", headers:{} });
+  // Utilise le cache du boot si disponible
+  if (window._bootData?.me) {
+    me = window._bootData.me;
+  } else {
+    me = await api("/api/me", { method:"GET", headers:{} });
+  }
   moneyEl.textContent = me.money ?? 0;
   miniName.textContent = me.name || "...";
   gameBadge.textContent = gameTag(currentGame());
@@ -1533,7 +1538,8 @@ function sortMyItems(items){
 }
 
 async function loadMyCollection(){
-  const data = await api("/api/collection", { method:"GET", headers:{} });
+  // Utilise le cache du boot si disponible
+  const data = window._bootData?.collection || await api("/api/collection", { method:"GET", headers:{} });
   myItems = data.items || [];
 
   const q = String(mySearch.value||"").toLowerCase().trim();
@@ -1695,11 +1701,31 @@ mySort.addEventListener("change", ()=> loadMyCollection());
 
 async function boot(){
   try{
-    await loadMe();
-    await loadMyCollection(); // charger la collection D'ABORD pour les badges "possédée"
-    await loadMarket();       // ensuite le market (myItems est déjà rempli)
-    await loadMine();
+    // ── Appel unique qui charge me + collection en parallèle côté serveur
+    const bootData = await api("/api/market/boot", { method:"GET", headers:{} });
+    window._bootData = bootData;
+
+    // ── Appliquer les données immédiatement
+    me = bootData.me;
+    moneyEl.textContent = me.money ?? 0;
+    miniName.textContent = me.name || "...";
+    gameBadge.textContent = gameTag(currentGame());
+    loadAvatar();
+
+    myItems = bootData.collection?.items || [];
+
+    // ── Lancer market + collection rendu + mes ventes en parallèle
+    await Promise.all([
+      loadMarket(),
+      (async () => {
+        // Utilise loadMyCollection qui va lire myItems depuis le cache
+        await loadMyCollection();
+      })(),
+      loadMine(),
+    ]);
+
   }catch(e){
+    console.error("boot error", e);
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
   }

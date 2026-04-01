@@ -3350,6 +3350,73 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
 // =========================
 
 // GET market listings
+// ── /api/market/boot — charge me + collection en PARALLÈLE ──────
+app.get("/api/market/boot", auth, async (req, res) => {
+  try {
+    // 1. applyPay une seule fois
+    await applyPayForUser(req.user.id);
+    await applyTicketsForUser(req.user.id);
+
+    // 2. Toutes les requêtes en parallèle
+    const game = getGame(req);
+    const [userQ, statsQ, collQ, clanBonus] = await Promise.all([
+      pool.query(`SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`, [req.user.id]),
+      pool.query(`SELECT COUNT(*)::int AS total,
+        SUM(CASE WHEN grade BETWEEN 1 AND 4 THEN 1 ELSE 0 END)::int AS w,
+        SUM(CASE WHEN grade BETWEEN 5 AND 6 THEN 1 ELSE 0 END)::int AS b,
+        SUM(CASE WHEN grade BETWEEN 7 AND 9 THEN 1 ELSE 0 END)::int AS v,
+        SUM(CASE WHEN grade = 10 THEN 1 ELSE 0 END)::int AS g10,
+        SUM(CASE WHEN mint = 1 THEN 1 ELSE 0 END)::int AS mint
+        FROM pulls WHERE user_id=$1`, [req.user.id]),
+      pool.query(`SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
+        FROM collection WHERE user_id=$1 ORDER BY lastAt DESC`, [req.user.id]),
+      getClanBonusForUser(req.user.id).catch(() => null),
+    ]);
+
+    const u = userQ.rows[0];
+    const st = statsQ.rows[0] || {};
+    const payRate = PAY_AMOUNT + (clanBonus?.dollaxBonus || 0);
+
+    let friendCode = u?.friendcode || u?.friendCode || null;
+    if (!friendCode) {
+      friendCode = randFriendCode();
+      for (let i = 0; i < 3; i++) {
+        try { await pool.query(`UPDATE users SET friendCode=$1 WHERE id=$2`, [friendCode, req.user.id]); break; }
+        catch { friendCode = randFriendCode(); }
+      }
+    }
+
+    const items = collQ.rows.map(x => {
+      const itemGame = x.game || game;
+      const cardId = x.cardid || x.cardId || null;
+      const rawImage = x.image;
+      const rawImageHigh = x.imagehigh || x.imageHigh || null;
+      const image = itemGame === "magic" ? rewriteMagicImageUrl(rawImage, cardId) : rawImage;
+      const imageHigh = itemGame === "magic" ? rewriteMagicImageUrl(rawImageHigh || rawImage, cardId) : (rawImageHigh || null);
+      return {
+        idKey: x.idkey || x.idKey, game: itemGame, name: x.name,
+        set: x.setname || x.setName, cardId, setId: x.setid || x.setId || null,
+        localId: x.localid || x.localId || null, image, imageHigh,
+        grade: x.grade, mint: Boolean(x.mint), count: x.count, lastAt: x.lastat || x.lastAt
+      };
+    });
+
+    res.json({
+      me: {
+        name: u?.name, money: u?.money || 0, friendCode,
+        total: st.total || 0, w: st.w || 0, b: st.b || 0, v: st.v || 0,
+        g10: st.g10 || 0, mint: st.mint || 0,
+        xp: Number(u?.xp || 0), level: levelForXp(u?.xp || 0),
+        avatar: u?.avatar || "", tickets: Number(u?.tickets || 0),
+        dollax: Number(u?.money || 0), payRate,
+      },
+      collection: { money: u?.money || 0, items },
+    });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/market", auth, async (req, res) => {
   const q = String(req.query.search || "").toLowerCase().trim();
   const sort = String(req.query.sort || "recent");
