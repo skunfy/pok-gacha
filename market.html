@@ -231,13 +231,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow: var(--shadow), var(--inset);
 }
 
-/* Grid layout */
-.grid2{
-  display:grid;
-  grid-template-columns: 1.2fr .8fr;
-  gap:14px;
-}
-@media (max-width: 980px){ .grid2{ grid-template-columns:1fr; } }
 
 .hrow{
   display:flex;
@@ -313,11 +306,12 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 /* Market grid */
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(5,1fr);
   gap:12px;
 }
-@media (max-width: 1100px){ .grid{ grid-template-columns:repeat(3,1fr); } }
-@media (max-width: 720px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width: 1100px){ .grid{ grid-template-columns:repeat(4,1fr); } }
+@media (max-width: 800px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width: 520px){ .grid{ grid-template-columns:repeat(2,1fr); } }
 
 /* Card */
 .card{
@@ -534,55 +528,6 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .pageBtn:disabled{ opacity:.35; cursor:not-allowed; }
 .pageInfo{ font-size:13px; opacity:.65; padding:0 4px; }
 
-/* Right sections */
-.sectionTitle{
-  display:flex;
-  align-items:baseline;
-  justify-content:space-between;
-  gap:10px;
-}
-.sectionTitle .hint{ font-size:12px; color: var(--muted); }
-
-/* Collection selectable */
-.selGrid{
-  margin-top:12px;
-  max-height:420px;
-  overflow:auto;
-  padding-right:6px;
-}
-.selCard{ cursor:pointer; }
-.selCard.selected{
-  border-color: rgba(130,170,255,.20);
-  box-shadow:
-    0 16px 44px rgba(0,0,0,.40),
-    0 0 0 4px rgba(80,130,255,.10),
-    inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-/* My listings list */
-.list{ display:grid; gap:10px; margin-top:12px; }
-.itemRow{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-  padding:12px;
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.055);
-  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.030));
-  box-shadow: 0 10px 26px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04);
-}
-.itemRow:hover{
-  border-color: rgba(255,255,255,.09);
-  box-shadow: var(--shadow2), inset 0 1px 0 rgba(255,255,255,.05);
-}
-.thumb{
-  width:42px;height:58px;border-radius:14px;
-  background:center/102% no-repeat;
-  border:1px solid rgba(255,255,255,.055);
-  cursor:pointer;
-}
-.spacer{ flex:1 1 auto; }
 
 /* Modal */
 .modalBack{
@@ -854,124 +799,60 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
     </div>
   </div>
 
-  <div class="grid2">
-
-    <!-- MARKET -->
-    <div class="panel">
-      <div class="hrow">
-        <b>Ventes en cours</b>
-        <div class="kpi">
-          <span class="pill soft" id="kpiCount">0 offres</span>
-          <span class="pill soft" id="kpiRange">—</span>
-          <button id="refresh">Rafraîchir</button>
-        </div>
+  <!-- MARKET (pleine largeur) -->
+  <div class="panel">
+    <div class="hrow">
+      <b>Ventes en cours</b>
+      <div class="kpi">
+        <span class="pill soft" id="kpiCount">0 offres</span>
+        <span class="pill soft" id="kpiRange">—</span>
+        <button id="refresh">Rafraîchir</button>
       </div>
-
-      <div class="marketDisclaimer pill soft">
-         All marketplace trades use a fictional in-game currency with no real-world monetary value.
-      </div>
-
-      <!-- Filters -->
-      <div class="filtersBar">
-        <div class="fChip" title="Afficher seulement les cartes MINT">
-          <input class="cb" type="checkbox" id="fMint">
-          <span>MINT only</span>
-        </div>
-
-        <div class="fChip" title="Masquer tes propres ventes">
-          <input class="cb" type="checkbox" id="fHideMine">
-          <span>Masquer mes ventes</span>
-        </div>
-
-        <div class="fChip" title="Masquer les cartes que tu possèdes déjà">
-          <input class="cb" type="checkbox" id="fHideOwned">
-          <span>Masquer possédées</span>
-        </div>
-
-        <div class="fChip" title="Filtrer par grade minimum">
-          <span class="fLabel">Grade min</span>
-          <select class="fMiniSelect" id="fGradeMin">
-            <option value="0">0</option>
-            <option value="5">5</option>
-            <option value="7">7</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-          </select>
-        </div>
-
-        <div class="fChip" title="Prix maximum">
-          <span class="fLabel">Prix max</span>
-          <input class="fMiniInput" id="fPriceMax" type="number" min="0" placeholder="∞">
-        </div>
-      </div>
-
-      <div class="msg" id="msgMarket"></div>
-      <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
-      <div class="pagination" id="marketPagination"></div>
     </div>
 
-    <!-- SELL + MINE -->
-    <div class="panel">
-      <div class="sectionTitle">
-        <b>Mettre en vente</b>
-        <span class="hint">Sélectionne une carte</span>
-      </div>
-
-      <div class="msg" id="msgSell"></div>
-
-      <div class="buyRow" style="margin-top:10px;">
-        <div class="fChip" title="Prix unitaire">
-          <span class="fLabel">Prix</span>
-          <input class="fMiniInput" id="price" type="number" min="1" value="5" style="width:110px">
-        </div>
-
-        <div class="stepper" title="Quantité">
-          <button id="qMinus" type="button">−</button>
-          <input id="qty" type="number" min="1" value="1">
-          <button id="qPlus" type="button">+</button>
-        </div>
-
-        <button id="btnList" class="btnPrimary" disabled>VENDRE</button>
-      </div>
-
-      <div class="note" id="selected" style="margin-top:10px;">Aucune carte sélectionnée.</div>
-
-      <hr class="sep">
-
-      <div class="sectionTitle">
-        <b>Ta collection (sélection)</b>
-        <span class="hint">scroll • clique pour choisir</span>
-      </div>
-
-      <div class="filtersBar" style="margin-top:10px;">
-        <div class="fChip" title="Recherche rapide dans ta collection">
-          <span>🔎</span>
-          <input class="fMiniInput" id="mySearch" placeholder="Filtrer..." style="width:170px">
-        </div>
-        <div class="fChip" title="Trier ta sélection">
-          <span class="fLabel">Trier</span>
-          <select class="fMiniSelect" id="mySort">
-            <option value="recent">Récents</option>
-            <option value="grade">Grade</option>
-            <option value="name">Nom</option>
-            <option value="count">Qté</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid selGrid" id="myCollectionGrid"></div>
-
-      <hr class="sep">
-
-      <div class="sectionTitle">
-        <b>Mes ventes</b>
-        <button id="reloadMine">Recharger</button>
-      </div>
-      <div class="msg" id="msgMine"></div>
-      <div class="list" id="mineList"></div>
+    <div class="marketDisclaimer pill soft">
+       All marketplace trades use a fictional in-game currency with no real-world monetary value.
     </div>
 
+    <!-- Filters -->
+    <div class="filtersBar">
+      <div class="fChip" title="Afficher seulement les cartes MINT">
+        <input class="cb" type="checkbox" id="fMint">
+        <span>MINT only</span>
+      </div>
+
+      <div class="fChip" title="Masquer tes propres ventes">
+        <input class="cb" type="checkbox" id="fHideMine">
+        <span>Masquer mes ventes</span>
+      </div>
+
+      <div class="fChip" title="Masquer les cartes que tu possèdes déjà">
+        <input class="cb" type="checkbox" id="fHideOwned">
+        <span>Masquer possédées</span>
+      </div>
+
+      <div class="fChip" title="Filtrer par grade minimum">
+        <span class="fLabel">Grade min</span>
+        <select class="fMiniSelect" id="fGradeMin">
+          <option value="0">0</option>
+          <option value="5">5</option>
+          <option value="7">7</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+      </div>
+
+      <div class="fChip" title="Prix maximum">
+        <span class="fLabel">Prix max</span>
+        <input class="fMiniInput" id="fPriceMax" type="number" min="0" placeholder="∞">
+      </div>
+    </div>
+
+    <div class="msg" id="msgMarket"></div>
+    <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
+    <div class="pagination" id="marketPagination"></div>
   </div>
+
 </div>
 
 <!-- Modal -->
@@ -1105,30 +986,14 @@ const refreshBtn = document.getElementById("refresh");
 const msgMarket = document.getElementById("msgMarket");
 const marketGrid = document.getElementById("marketGrid");
 
-const fMint = document.getElementById("fMint");
+const fMint     = document.getElementById("fMint");
 const fHideMine = document.getElementById("fHideMine");
-const fHideOwned = document.getElementById("fHideOwned");
+const fHideOwned= document.getElementById("fHideOwned");
 const fGradeMin = document.getElementById("fGradeMin");
 const fPriceMax = document.getElementById("fPriceMax");
 
 const kpiCount = document.getElementById("kpiCount");
 const kpiRange = document.getElementById("kpiRange");
-
-const msgSell = document.getElementById("msgSell");
-const myCollectionGrid = document.getElementById("myCollectionGrid");
-const selectedEl = document.getElementById("selected");
-const priceEl = document.getElementById("price");
-const qtyEl = document.getElementById("qty");
-const btnList = document.getElementById("btnList");
-const qMinus = document.getElementById("qMinus");
-const qPlus = document.getElementById("qPlus");
-
-const mySearch = document.getElementById("mySearch");
-const mySort = document.getElementById("mySort");
-
-const reloadMine = document.getElementById("reloadMine");
-const msgMine = document.getElementById("msgMine");
-const mineList = document.getElementById("mineList");
 
 /* Modal */
 const modalBack = document.getElementById("modalBack");
@@ -1145,7 +1010,6 @@ const mBuy   = document.getElementById("mBuy");
 /* State */
 let me = null;
 let myItems = [];
-let selectedItem = null;
 let lastMarketListings = [];
 let modalListing = null;
 let currentPage = 1;
@@ -1187,16 +1051,6 @@ async function loadAvatar(){
     // ok: on garde fallback
   }
 }
-
-/* Quantity steppers (SELL) */
-function syncSellQty(delta){
-  const max = selectedItem ? Number(selectedItem.count||1) : 9999;
-  const cur = Number(qtyEl.value||1)|0;
-  qtyEl.value = String(clamp(cur + delta, 1, max));
-}
-qMinus.onclick = ()=> syncSellQty(-1);
-qPlus.onclick  = ()=> syncSellQty(+1);
-qtyEl.addEventListener("input", ()=> syncSellQty(0));
 
 /* Quantity steppers (MODAL BUY) */
 function syncModalQty(delta){
@@ -1525,160 +1379,6 @@ function renderPagination(){
   addBtn("→", currentPage+1, currentPage>=totalPages, false);
 }
 
-function sortMyItems(items){
-  const mode = String(mySort.value||"recent");
-  const arr = [...(items||[])];
-
-  if(mode === "grade") arr.sort((a,b)=> (Number(b.grade||0)-Number(a.grade||0)) || (Number(b.lastAt||0)-Number(a.lastAt||0)));
-  else if(mode === "name") arr.sort((a,b)=> String(a.name||"").localeCompare(String(b.name||"")));
-  else if(mode === "count") arr.sort((a,b)=> (Number(b.count||0)-Number(a.count||0)) || (Number(b.lastAt||0)-Number(a.lastAt||0)));
-  else arr.sort((a,b)=> (Number(b.lastAt||0)-Number(a.lastAt||0)));
-
-  return arr;
-}
-
-async function loadMyCollection(){
-  // Utilise le cache du boot si disponible
-  const data = window._bootData?.collection || await api("/api/collection", { method:"GET", headers:{} });
-  myItems = data.items || [];
-
-  const q = String(mySearch.value||"").toLowerCase().trim();
-  let items = myItems;
-
-  if(q){
-    items = items.filter(x => {
-      const n = String(x.name||"").toLowerCase();
-      const s = String(x.setName||x.set||"").toLowerCase();
-      return n.includes(q) || s.includes(q);
-    });
-  }
-
-  items = sortMyItems(items);
-
-  myCollectionGrid.innerHTML = "";
-  if(!items.length){
-    myCollectionGrid.innerHTML = `<div class="small" style="opacity:.8;">Aucune carte.</div>`;
-    return;
-  }
-
-  items.forEach(x => {
-    const el = document.createElement("div");
-    el.className = "card selCard" + ((selectedItem && selectedItem.idKey === x.idKey) ? " selected" : "");
-
-    el.innerHTML = `
-      <div class="cardHead">
-        <div class="cardImg" style="height:170px;background-image:url('${x.image}')"></div>
-        <div class="cardOverlay">
-          <span class="badge">×${escapeHtml(x.count || 1)}</span>
-        </div>
-      </div>
-      <div class="cardBody">
-        <div class="cardTitle">${escapeHtml(x.name)}</div>
-        <div class="cardSet">${escapeHtml(x.set || x.setName || "")}</div>
-        <div class="metaRow">
-          <span class="pill soft">Grade ${escapeHtml(x.grade)}${x.mint ? " • MINT" : ""}</span>
-        </div>
-      </div>
-    `;
-
-    el.onclick = () => {
-      selectedItem = x;
-      btnList.disabled = false;
-      selectedEl.textContent =
-        "Sélection : " + fmtCardLine({
-          name: x.name,
-          setName: x.set || x.setName || "",
-          grade: x.grade,
-          mint: x.mint
-        }) + ` • Dispo: ×${x.count}`;
-      syncSellQty(0);
-      show(msgSell, "");
-      loadMyCollection(); // refresh highlight
-    };
-
-    myCollectionGrid.appendChild(el);
-  });
-}
-
-async function loadMine(){
-  show(msgMine, "Chargement...");
-  mineList.innerHTML = "";
-  const data = await api("/api/market/mine", { method:"GET", headers:{} });
-  const listings = data.listings || [];
-  if(!listings.length){
-    show(msgMine, "Aucune vente en cours.");
-    return;
-  }
-  show(msgMine, "");
-
-  listings.forEach(l => {
-    const row = document.createElement("div");
-    row.className = "itemRow";
-
-    row.innerHTML = `
-      <div class="thumb" style="background-image:url('${l.image}')"></div>
-      <div style="min-width:220px">
-        <div><b>${escapeHtml(l.name)}</b> <span class="small">• ${escapeHtml(l.setName || "")}</span></div>
-        <div class="small">Grade ${escapeHtml(l.grade)}${l.mint ? " (MINT)" : ""} • Prix <b>${escapeHtml(l.price)}</b> • Stock ${escapeHtml(l.qty)}</div>
-      </div>
-      <div class="spacer"></div>
-      <button class="cancelBtn" type="button">Annuler…</button>
-    `;
-
-    row.querySelector(".thumb").onclick = () => openModal(l);
-
-    row.querySelector(".cancelBtn").onclick = async () => {
-      try{
-        const want = clamp(Number(prompt(`Quantité à annuler ? (max ${l.qty})`, String(l.qty)) || "0")|0, 1, Number(l.qty||1));
-        if(!want) return;
-        await api("/api/market/cancel", {
-          method:"POST",
-          body: JSON.stringify({ listingId: l.id, qty: want })
-        });
-        await loadMine();
-        await loadMyCollection();
-      }catch(e){
-        alert("❌ " + e.message);
-      }
-    };
-
-    mineList.appendChild(row);
-  });
-}
-
-btnList.onclick = async () => {
-  try{
-    if(!selectedItem) { show(msgSell, "Sélectionne une carte."); return; }
-
-    const price = Math.max(1, Number(priceEl.value||1)|0);
-    const qty = clamp(Number(qtyEl.value||1)|0, 1, Number(selectedItem.count||1));
-
-    if(qty > selectedItem.count){
-      show(msgSell, `Quantité trop grande (tu as ×${selectedItem.count}).`);
-      return;
-    }
-
-    btnList.disabled = true;
-    await api("/api/market/list", {
-      method:"POST",
-      body: JSON.stringify({ idKey: selectedItem.idKey, qty, price })
-    });
-
-    show(msgSell, "✅ Mise en vente !");
-    selectedItem = null;
-    btnList.disabled = true;
-    selectedEl.textContent = "Aucune carte sélectionnée.";
-
-    await loadMarket();
-    await loadMyCollection();
-    await loadMine();
-  }catch(e){
-    show(msgSell, "❌ " + e.message);
-  }finally{
-    btnList.disabled = (selectedItem === null);
-  }
-};
-
 /* listeners */
 searchEl.addEventListener("input", () => { currentPage = 1; loadMarket(); });
 sortEl.addEventListener("change", () => { currentPage = 1; loadMarket(); });
@@ -1695,34 +1395,21 @@ fHideOwned.addEventListener("change", refilter);
 fGradeMin.addEventListener("change", refilter);
 fPriceMax.addEventListener("input", refilter);
 
-reloadMine.onclick = () => loadMine();
-mySearch.addEventListener("input", ()=> loadMyCollection());
-mySort.addEventListener("change", ()=> loadMyCollection());
-
 async function boot(){
   try{
-    // ── Appel unique qui charge me + collection en parallèle côté serveur
     const bootData = await api("/api/market/boot", { method:"GET", headers:{} });
     window._bootData = bootData;
 
-    // ── Appliquer les données immédiatement
     me = bootData.me;
     moneyEl.textContent = me.money ?? 0;
     miniName.textContent = me.name || "...";
     gameBadge.textContent = gameTag(currentGame());
     loadAvatar();
 
+    // On garde myItems en mémoire pour les filtres "possédée" / badge vert
     myItems = bootData.collection?.items || [];
 
-    // ── Lancer market + collection rendu + mes ventes en parallèle
-    await Promise.all([
-      loadMarket(),
-      (async () => {
-        // Utilise loadMyCollection qui va lire myItems depuis le cache
-        await loadMyCollection();
-      })(),
-      loadMine(),
-    ]);
+    await loadMarket();
 
   }catch(e){
     console.error("boot error", e);
