@@ -346,6 +346,22 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   background-color: rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.055);
   cursor:pointer;
+  transition: background-image .15s ease;
+}
+/* Skeleton shimmer avant chargement */
+.cardImg.lazy-pending {
+  background-image: none !important;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,.04) 25%,
+    rgba(255,255,255,.09) 50%,
+    rgba(255,255,255,.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Overlay: on garde seulement le PRIX (plus de badge jeu) */
@@ -1358,7 +1374,7 @@ function renderMarket(listings){
 
     el.innerHTML = `
       <div class="cardHead">
-        <div class="cardImg" style="background-image:url('${l.image}')"></div>
+        <div class="cardImg lazy-pending" data-src="${l.image}"></div>
         <div class="cardOverlay">
           <span class="badge badgePrice"><img src="dollax.png" class="dollaxIcon" alt=""> <b>${escapeHtml(l.price)}</b></span>
         </div>
@@ -1414,6 +1430,9 @@ function renderMarket(listings){
 
     marketGrid.appendChild(el);
   });
+
+  // Lancer le lazy loading après rendu
+  observeLazyImages();
 }
 
 async function loadMarket(){
@@ -1752,6 +1771,28 @@ async function buyAllCart() {
     alert("✅ " + bought.length + " achetée(s).\n❌ Erreurs :\n" + errors.join("\n"));
   }
   await boot(true);
+}
+
+
+// ── LAZY LOADING IMAGES ──────────────────────────────────────
+const imgObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const src = el.dataset.src;
+    if (src) {
+      el.style.backgroundImage = `url('${src}')`;
+      el.classList.remove("lazy-pending");
+      delete el.dataset.src;
+    }
+    imgObserver.unobserve(el);
+  });
+}, { rootMargin: "200px 0px" }); // précharge 200px avant d'entrer dans le viewport
+
+function observeLazyImages() {
+  document.querySelectorAll(".cardImg.lazy-pending[data-src]").forEach(el => {
+    imgObserver.observe(el);
+  });
 }
 
 </script>
