@@ -3350,7 +3350,7 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
 // =========================
 
 // GET market listings
-// ── /api/market/boot — charge me + collection en PARALLÈLE ──────
+// ── /api/market/boot — charge me + clés de collection (allégé) ──
 app.get("/api/market/boot", auth, async (req, res) => {
   try {
     // 1. applyPay une seule fois
@@ -3358,7 +3358,8 @@ app.get("/api/market/boot", auth, async (req, res) => {
     await applyTicketsForUser(req.user.id);
 
     // 2. Toutes les requêtes en parallèle
-    const game = getGame(req);
+    // ⚡ On ne charge plus que idKey + cardId + count (au lieu de toute la collection)
+    //    Le market n'a besoin que de ça pour les filtres "possédée" et le badge vert.
     const [userQ, statsQ, collQ, clanBonus] = await Promise.all([
       pool.query(`SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`, [req.user.id]),
       pool.query(`SELECT COUNT(*)::int AS total,
@@ -3368,8 +3369,7 @@ app.get("/api/market/boot", auth, async (req, res) => {
         SUM(CASE WHEN grade = 10 THEN 1 ELSE 0 END)::int AS g10,
         SUM(CASE WHEN mint = 1 THEN 1 ELSE 0 END)::int AS mint
         FROM pulls WHERE user_id=$1`, [req.user.id]),
-      pool.query(`SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
-        FROM collection WHERE user_id=$1 ORDER BY lastAt DESC`, [req.user.id]),
+      pool.query(`SELECT idKey, cardId, count FROM collection WHERE user_id=$1`, [req.user.id]),
       getClanBonusForUser(req.user.id).catch(() => null),
     ]);
 
@@ -3386,20 +3386,12 @@ app.get("/api/market/boot", auth, async (req, res) => {
       }
     }
 
-    const items = collQ.rows.map(x => {
-      const itemGame = x.game || game;
-      const cardId = x.cardid || x.cardId || null;
-      const rawImage = x.image;
-      const rawImageHigh = x.imagehigh || x.imageHigh || null;
-      const image = itemGame === "magic" ? rewriteMagicImageUrl(rawImage, cardId) : rawImage;
-      const imageHigh = itemGame === "magic" ? rewriteMagicImageUrl(rawImageHigh || rawImage, cardId) : (rawImageHigh || null);
-      return {
-        idKey: x.idkey || x.idKey, game: itemGame, name: x.name,
-        set: x.setname || x.setName, cardId, setId: x.setid || x.setId || null,
-        localId: x.localid || x.localId || null, image, imageHigh,
-        grade: x.grade, mint: Boolean(x.mint), count: x.count, lastAt: x.lastat || x.lastAt
-      };
-    });
+    // On renvoie uniquement les clés nécessaires aux filtres côté client
+    const ownedKeys = collQ.rows.map(x => ({
+      idKey: x.idkey || x.idKey,
+      cardId: x.cardid || x.cardId || null,
+      count: x.count,
+    }));
 
     res.json({
       me: {
@@ -3410,7 +3402,8 @@ app.get("/api/market/boot", auth, async (req, res) => {
         avatar: u?.avatar || "", tickets: Number(u?.tickets || 0),
         dollax: Number(u?.money || 0), payRate,
       },
-      collection: { money: u?.money || 0, items },
+      // collection.items est remplacé par ownedKeys, plus léger (~10x moins de données)
+      collection: { items: ownedKeys },
     });
   } catch(e) {
     res.status(500).json({ error: e.message });
