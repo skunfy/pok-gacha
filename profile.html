@@ -1182,7 +1182,7 @@ async function load(){
   const baseP = isFriendView ? ("/api/friends/" + encodeURIComponent(friendCode) + "/collection") : "/api/collection";
   const baseO = baseP;
 
-  const [cP, cO, cL, cD, cU, cS, cMG, cWS] = await Promise.all([
+  const [cP, cO, cL, cD, cU, cS, cMG, cWS, cBR] = await Promise.all([
     apiGame(baseP, "pokemon",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
     apiGame(baseO, "onepiece",          { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
     apiGame(baseO, "lorcana",           { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
@@ -1202,7 +1202,8 @@ async function load(){
   const itemsMG = (cMG.items||[]).map(x => ({ ...x, game: x.game || "magic",           set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
   const itemsWS = (cWS.items||[]).map(x => ({ ...x, game: x.game || "weissschwarz",    set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
 
-  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU, ...itemsS, ...itemsMG, ...itemsWS];
+  const itemsBR = (cBR.items||[]).map(x => ({ ...x, game: x.game || "brainrot", set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
+  allItems = [...itemsP, ...itemsO, ...itemsL, ...itemsD, ...itemsU, ...itemsS, ...itemsMG, ...itemsWS, ...itemsBR];
 
   
 

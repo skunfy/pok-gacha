@@ -107,6 +107,7 @@
     .senpaigodesshaven { background: linear-gradient(135deg, #ff6fa8, #c2185b); }
     .magic { background: linear-gradient(135deg, #b5865a, #6b3a1f); }
     .weissschwarz { background: linear-gradient(135deg, #2a2a2a, #555555); }
+    .brainrot { background: linear-gradient(135deg, #1a0a2e, #6b21a8); }
 
     .gameLogo {
       width: 160px;
@@ -213,6 +214,12 @@
         <img src="Weis.png" alt="Logo Weiss Schwarz" class="gameLogo" loading="lazy" />
         <p>Ouvre des cartes Weiss Schwarz, collectionne et trade.</p>
       </button>
+
+      <button class="card brainrot" data-game="brainrot" type="button" aria-label="Choisir BrainRot TCG">
+        <span class="badge">Sélectionné</span>
+        <img src="brainrot.png" alt="Logo BrainRot TCG" class="gameLogo" loading="lazy" />
+        <p>Ouvre des cartes BrainRot TCG, collectionne et trade.</p>
+      </button>
     </section>
 
     <footer>Gachax • Multi Game</footer>
@@ -230,6 +237,7 @@
       if (g === "senpaigodesshaven") return "senpaigodesshaven";
       if (g === "magic") return "magic";
       if (g === "weissschwarz") return "weissschwarz";
+      if (g === "brainrot") return "brainrot";
       return "pokemon";
     }
 
