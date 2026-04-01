@@ -382,6 +382,51 @@ function drawOfflineMagicCard() {
 // =========================
 // OFFLINE POKEMON CATALOG
 // =========================
+// ── BRAINROT TCG ─────────────────────────────────────────────
+const OFFLINE_BRAINROT_DIR        = path.join(__dirname, "data", "brainrot");
+const OFFLINE_BRAINROT_CARDS_PATH = path.join(OFFLINE_BRAINROT_DIR, "cards.json");
+const OFFLINE_BRAINROT_SETS_PATH  = path.join(OFFLINE_BRAINROT_DIR, "sets.json");
+
+let offlineBrainrotCards = [];
+let offlineBrainrotSets  = [];
+const offlineBrainrotCardsBySet = new Map();
+
+function loadOfflineBrainrot() {
+  try {
+    offlineBrainrotCards = [];
+    offlineBrainrotSets  = [];
+    offlineBrainrotCardsBySet.clear();
+    if (fs.existsSync(OFFLINE_BRAINROT_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_BRAINROT_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineBrainrotCards = parsed;
+    }
+    if (fs.existsSync(OFFLINE_BRAINROT_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_BRAINROT_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineBrainrotSets = parsed;
+    }
+    for (const c of offlineBrainrotCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineBrainrotCardsBySet.has(setId)) offlineBrainrotCardsBySet.set(setId, []);
+      offlineBrainrotCardsBySet.get(setId).push(c);
+    }
+    console.log(`📦 BrainRot sets: ${offlineBrainrotSets.length}, cards: ${offlineBrainrotCards.length}`);
+  } catch(e) { console.log("BrainRot load error:", e.message); }
+}
+loadOfflineBrainrot();
+
+function drawOfflineBrainrotCard() {
+  if (!offlineBrainrotCards?.length) throw new Error("BrainRot pool empty");
+  const c = offlineBrainrotCards[Math.floor(Math.random() * offlineBrainrotCards.length)];
+  return {
+    cardId: c.cardId || null, setId: c.setId || null, localId: c.localId || null,
+    name: c.name || "Unknown", set: c.set || "BrainRot", rarity: c.rarity || "",
+    image: c.image || null, imageHigh: c.imageHigh || c.image || null
+  };
+}
+
 const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
 
 const OFFLINE_POKEMON_DIR = path.join(__dirname, "data", "pokemon");
@@ -877,6 +922,7 @@ function getGame(req){
   if (g === "senpaigodesshaven") return "senpaigodesshaven";
   if (g === "weissschwarz") return "weissschwarz";
   if (g === "magic") return "magic";
+  if (g === "brainrot") return "brainrot";
   return "pokemon";
 }
 
@@ -1724,6 +1770,12 @@ if (game === "weissschwarz") {
     image: c.image || null,
     imageHigh: c.imageHigh || c.image || null
   };
+}
+// BRAINROT //
+if (game === "brainrot") {
+  const c = drawOfflineBrainrotCard();
+  console.log("📦 source=OFFLINE_BRAINROT");
+  return c;
 }
   // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
   if (FORCE_OFFLINE) {
@@ -2738,6 +2790,18 @@ app.get("/api/sets", auth, async (req, res) => {
     }
 
 
+    if (game === "brainrot") {
+      if (offlineBrainrotSets.length)
+        return res.json({ sets: offlineBrainrotSets.map(s => ({ id: s.id, name: s.name })) });
+      const bySet = new Map();
+      for (const c of offlineBrainrotCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) bySet.set(setId, { id: setId, name: String(c?.set || setId) });
+      }
+      return res.json({ sets: Array.from(bySet.values()) });
+    }
+
     return res.json({ sets: [] });
   } catch (e) {
     return res.status(502).json({ error: "sets failed" });
@@ -2875,6 +2939,18 @@ app.get("/api/sets", auth, async (req, res) => {
         }))
       });
     }
+    // BRAINROT //
+    if (game === "brainrot") {
+      const cards = offlineBrainrotCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "", localId: String(c.localId || ""),
+          name: c.name || "", image: c.image || null, imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
+
     // ===== MAGIC =====
     if (game === "magic") {
 
@@ -3347,6 +3423,7 @@ app.post("/api/market/list", auth, async (req, res) => {
     gameFromKey === "senpaigodesshaven" ? "senpaigodesshaven" :
     gameFromKey === "weissschwarz" ? "weissschwarz" :
     gameFromKey === "magic" ? "magic" :
+    gameFromKey === "brainrot" ? "brainrot" :
     "pokemon";
 
   const client = await pool.connect();

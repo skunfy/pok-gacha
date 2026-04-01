@@ -1191,6 +1191,7 @@ async function load(){
     apiGame(baseO, "senpaigodesshaven", { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
     apiGame(baseO, "magic",            { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
     apiGame(baseO, "weissschwarz",     { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
+    apiGame(baseO, "brainrot",         { method:"GET", headers:{} }).catch(()=> ({ items: [] })),
 ]);
 
   const itemsP = (cP.items||[]).map(x => ({ ...x, game: x.game || "pokemon",           set: x.set || x.setName || "", imageHigh: x.imageHigh || x.imagehigh || x.image || "" }));
