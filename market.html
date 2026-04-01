@@ -1750,4 +1750,27 @@ async function buyAllCart() {
   await boot(true);
 }
 
+
+<!-- Modal panier -->
+<div class="cartBack" id="cartBack">
+  <div class="cartModal">
+    <div class="cartModalHead">
+      <div class="cartModalTitle">🛒 Mon panier</div>
+      <button class="cartModalClose" onclick="closeCartModal()">✕</button>
+    </div>
+    <div class="cartItems" id="cartItems">
+      <div class="cartEmpty">Ton panier est vide.</div>
+    </div>
+    <div class="cartModalFoot">
+      <div>
+        <div class="cartTotalLabel">Total : <span id="cartTotalPrice">0</span> 💰</div>
+        <div class="cartLimitMsg" id="cartLimitMsg"></div>
+      </div>
+      <button class="cartBuyAllBtn" id="cartBuyAllBtn" onclick="buyAllCart()" disabled>Acheter le lot</button>
+    </div>
+  </div>
+</div>
+
 </script>
+</body>
+</html>
