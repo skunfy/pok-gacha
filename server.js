@@ -3353,7 +3353,10 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
 app.get("/api/market", auth, async (req, res) => {
   const q = String(req.query.search || "").toLowerCase().trim();
   const sort = String(req.query.sort || "recent");
-  const game = getGame(req); // filtre par jeu (pokemon/onepiece)
+  const game = getGame(req);
+  const page = Math.max(1, Number(req.query.page || 1) | 0);
+  const limit = 50;
+  const offset = (page - 1) * limit;
 
   const params = [game];
   let where = `WHERE m.game = $1`;
@@ -3367,6 +3370,17 @@ app.get("/api/market", auth, async (req, res) => {
   if (sort === "price") order = "m.price ASC, m.createdAt DESC";
   if (sort === "grade") order = "m.grade DESC, m.createdAt DESC";
   if (sort === "name") order = "m.name ASC, m.createdAt DESC";
+
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*) AS total FROM market_listings m JOIN users u ON u.id = m.seller_user_id ${where}`,
+    [...params]
+  );
+  const total = Number(countRows[0]?.total || 0);
+  const totalPages = Math.ceil(total / limit);
+
+  const queryParams = [...params, limit, offset];
+  const limitIdx = queryParams.length - 1;
+  const offsetIdx = queryParams.length;
 
   const { rows } = await pool.query(
     `
@@ -3388,9 +3402,9 @@ app.get("/api/market", auth, async (req, res) => {
     JOIN users u ON u.id = m.seller_user_id
     ${where}
     ORDER BY ${order}
-    LIMIT 200
+    LIMIT $${limitIdx} OFFSET $${offsetIdx}
     `,
-    params
+    queryParams
   );
 
   res.json({
@@ -3402,6 +3416,9 @@ app.get("/api/market", auth, async (req, res) => {
       setName: r.setname || r.setName,
       sellerName: r.sellerName || r.sellername,
     })),
+    page,
+    totalPages,
+    total,
   });
 });
 

@@ -503,6 +503,37 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
   box-shadow: 0 10px 22px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.06);
 }
 
+/* Pagination */
+.pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:16px 0 8px;
+  flex-wrap:wrap;
+}
+.pageBtn{
+  padding:7px 13px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.07);
+  color:#fff;
+  font-weight:900;
+  font-size:13px;
+  cursor:pointer;
+  transition:background .15s;
+  min-width:38px;
+  text-align:center;
+}
+.pageBtn:hover{ background:rgba(255,255,255,.14); }
+.pageBtn.active{
+  background:linear-gradient(135deg,rgba(127,92,255,.5),rgba(240,83,197,.4));
+  border-color:rgba(127,92,255,.6);
+  color:#fff;
+}
+.pageBtn:disabled{ opacity:.35; cursor:not-allowed; }
+.pageInfo{ font-size:13px; opacity:.65; padding:0 4px; }
+
 /* Right sections */
 .sectionTitle{
   display:flex;
@@ -876,6 +907,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 
       <div class="msg" id="msgMarket"></div>
       <div class="grid" id="marketGrid" style="margin-top:12px;"></div>
+      <div class="pagination" id="marketPagination"></div>
     </div>
 
     <!-- SELL + MINE -->
@@ -1116,6 +1148,8 @@ let myItems = [];
 let selectedItem = null;
 let lastMarketListings = [];
 let modalListing = null;
+let currentPage = 1;
+let totalPages = 1;
 
 gameSel.value = currentGame();
 gameSel.addEventListener("change", async () => {
@@ -1435,19 +1469,55 @@ function renderMarket(listings){
   observeLazyImages();
 }
 
-async function loadMarket(){
+async function loadMarket(page){
+  if (page !== undefined) currentPage = page;
   show(msgMarket, "Chargement...");
   marketGrid.innerHTML = "";
+  const paginationEl = document.getElementById("marketPagination");
+  if (paginationEl) paginationEl.innerHTML = "";
 
   const q = encodeURIComponent((searchEl.value||"").trim());
   const sort = encodeURIComponent(sortEl.value || "recent");
-  const data = await api(`/api/market?search=${q}&sort=${sort}`, { method:"GET", headers:{} });
+  const data = await api(`/api/market?search=${q}&sort=${sort}&page=${currentPage}`, { method:"GET", headers:{} });
 
+  totalPages = data.totalPages || 1;
   lastMarketListings = data.listings || [];
   let listings = applyMarketFilters(lastMarketListings);
 
-  updateKpis(listings);
+  // KPI avec le total serveur
+  const serverTotal = data.total || listings.length;
+  kpiCount.textContent = `${serverTotal} offre${serverTotal>1?"s":""}`;
+  if(listings.length){
+    const prices = listings.map(l=>Number(l.price||0)).filter(p=>p>0);
+    kpiRange.textContent = prices.length ? `Prix ${Math.min(...prices)} → ${Math.max(...prices)}` : "—";
+  } else { kpiRange.textContent = "—"; }
+
   renderMarket(listings);
+  renderPagination();
+}
+
+function renderPagination(){
+  const el = document.getElementById("marketPagination");
+  if (!el || totalPages <= 1) { if(el) el.innerHTML=""; return; }
+  el.innerHTML = "";
+
+  const addBtn = (label, page, disabled, active) => {
+    const btn = document.createElement("button");
+    btn.className = "pageBtn" + (active ? " active" : "");
+    btn.textContent = label;
+    btn.disabled = disabled;
+    if (!disabled) btn.onclick = () => { loadMarket(page); window.scrollTo({top:0,behavior:"smooth"}); };
+    el.appendChild(btn);
+  };
+  const dots = () => { const s = document.createElement("span"); s.className="pageInfo"; s.textContent="…"; el.appendChild(s); };
+
+  addBtn("←", currentPage-1, currentPage<=1, false);
+  let start = Math.max(1, currentPage-2);
+  let end   = Math.min(totalPages, currentPage+2);
+  if (start > 1) { addBtn("1", 1, false, false); if(start > 2) dots(); }
+  for (let p=start; p<=end; p++) addBtn(String(p), p, false, p===currentPage);
+  if (end < totalPages) { if(end < totalPages-1) dots(); addBtn(String(totalPages), totalPages, false, false); }
+  addBtn("→", currentPage+1, currentPage>=totalPages, false);
 }
 
 function sortMyItems(items){
@@ -1604,9 +1674,9 @@ btnList.onclick = async () => {
 };
 
 /* listeners */
-searchEl.addEventListener("input", () => loadMarket());
-sortEl.addEventListener("change", () => loadMarket());
-refreshBtn.onclick = () => loadMarket();
+searchEl.addEventListener("input", () => { currentPage = 1; loadMarket(); });
+sortEl.addEventListener("change", () => { currentPage = 1; loadMarket(); });
+refreshBtn.onclick = () => { currentPage=1; loadMarket(); };
 
 function refilter(){
   const list = applyMarketFilters(lastMarketListings);
