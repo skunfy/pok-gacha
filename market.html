@@ -1644,18 +1644,18 @@ function toggleCart(listing, btnEl) {
   updateCartBadge();
 }
 
-function openCartModal() {
-  renderCartModal();
-  const el = document.getElementById("cartBack");
-  if (el) el.style.display = "grid";
+async function openCartModal() {
+  if (!cart.length) {
+    alert("Ton panier est vide.");
+    return;
+  }
+  const lines = cart.map(x => "• " + x.listing.name + " (" + x.listing.price + " 💰)").join("\n");
+  const total = cart.reduce((s, x) => s + Number(x.listing.price || 0), 0);
+  const ok = confirm("🛒 Acheter " + cart.length + " carte(s) pour " + total + " 💰 ?\n\n" + lines);
+  if (!ok) return;
+  await buyAllCart();
 }
-function closeCartModal() {
-  const el = document.getElementById("cartBack");
-  if (el) el.style.display = "none";
-}
-document.getElementById("cartBack")?.addEventListener("click", e => {
-  if (e.target.id === "cartBack") closeCartModal();
-});
+function closeCartModal() {}
 
 function renderCartModal() {
   const list   = document.getElementById("cartItems");
