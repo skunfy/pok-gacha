@@ -304,6 +304,7 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   border:1px solid rgba(255,255,255,.05);
   cursor:pointer;
   overflow:hidden;
+  position:relative;
   transition: transform .16s ease, box-shadow .16s ease;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
 }
@@ -832,6 +833,204 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
   font-size:12px;
 }
 
+/* ===== Bannière MARKET sur chaque carte ===== */
+.marketBanner{
+  position:absolute;
+  bottom:0; left:0; right:0;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  background: linear-gradient(90deg,
+    rgba(60,20,120,.92) 0%,
+    rgba(90,30,180,.95) 35%,
+    rgba(50,80,220,.95) 65%,
+    rgba(30,50,160,.92) 100%
+  );
+  border-top: 1px solid rgba(140,100,255,.35);
+  border-radius: 0 0 14px 14px;
+  transition: opacity .15s ease, filter .15s ease;
+  z-index:4;
+  overflow:hidden;
+}
+.marketBanner::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,.07) 50%,
+    transparent 100%
+  );
+  pointer-events:none;
+}
+.marketBanner:hover{
+  filter: brightness(1.18);
+}
+.marketBanner:active{
+  filter: brightness(.92);
+}
+.marketBannerLogo{
+  width:20px; height:20px;
+  object-fit:contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.55));
+  flex-shrink:0;
+}
+.marketBannerText{
+  font-size:12px;
+  font-weight:1000;
+  color:rgba(255,255,255,.90);
+  letter-spacing:.6px;
+  text-shadow: 0 1px 8px rgba(0,0,0,.5);
+  text-transform:uppercase;
+}
+
+/* ===== Modal MARKET (mise en vente) ===== */
+.sellModalBack{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(18px);
+  display:none;
+  place-items:center;
+  padding:20px;
+  z-index:10000;
+}
+.sellModalBack.open{ display:grid; }
+
+.sellModal{
+  width:min(440px, 96vw);
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(160deg, rgba(22,24,38,.97), rgba(10,11,20,.97));
+  box-shadow: 0 40px 140px rgba(0,0,0,.75);
+  overflow:hidden;
+}
+
+.sellModalHead{
+  padding:18px 20px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.sellModalTitle{
+  font-size:16px;
+  font-weight:1000;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.sellModalClose{
+  padding:7px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.08);
+  color:#fff;
+  font-size:15px;
+  cursor:pointer;
+}
+.sellModalClose:hover{ background:rgba(255,255,255,.14); }
+
+.sellModalCard{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  padding:16px 20px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.sellModalImg{
+  width:62px;
+  height:87px;
+  border-radius:10px;
+  background:center/cover no-repeat rgba(0,0,0,.2);
+  border:1px solid rgba(255,255,255,.10);
+  flex-shrink:0;
+}
+.sellModalInfo{ min-width:0; }
+.sellModalName{
+  font-weight:1000;
+  font-size:14px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.sellModalSub{
+  font-size:12px;
+  opacity:.65;
+  margin-top:3px;
+}
+.sellModalBadges{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.sellModalBody{ padding:16px 20px 20px; display:grid; gap:14px; }
+
+.sellModalRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.sellModalLabel{
+  font-size:13px;
+  font-weight:900;
+  opacity:.75;
+  min-width:60px;
+}
+
+.sellModalInput{
+  flex:1;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(15,17,26,.88);
+  color:#fff;
+  font-weight:1000;
+  font-size:15px;
+  outline:none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+}
+.sellModalInput:focus{
+  border-color:rgba(130,100,255,.45);
+  box-shadow: 0 0 0 3px rgba(100,70,255,.12), inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.sellModalHint{
+  font-size:11px;
+  opacity:.55;
+  margin-top:-8px;
+}
+
+.sellModalBtn{
+  width:100%;
+  padding:13px;
+  border-radius:16px;
+  border:none;
+  cursor:pointer;
+  font-weight:1000;
+  font-size:14px;
+  color:#fff;
+  background:linear-gradient(135deg, rgba(90,40,200,.9), rgba(50,100,240,.9));
+  box-shadow: 0 10px 30px rgba(60,20,180,.35);
+  transition: opacity .15s, transform .12s;
+  letter-spacing:.3px;
+}
+.sellModalBtn:hover{ opacity:.88; transform:translateY(-1px); }
+.sellModalBtn:active{ transform:translateY(0); opacity:.80; }
+.sellModalBtn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
+
+.sellModalMsg{
+  font-size:13px;
+  text-align:center;
+  opacity:.85;
+  min-height:18px;
+}
+
 /* ===== Modale Puzzle ===== */
 .puzzleModal{
   position:fixed; inset:0;
@@ -1015,6 +1214,47 @@ button:disabled{opacity:.55;cursor:not-allowed; transform:none}
       <canvas class="cardSparkle" id="zoomSparkle"></canvas>
       <div class="cardFoil" id="zoomFoil"></div>
       <div class="cardGlare" id="zoomGlare"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALE MISE EN VENTE MARKET ===== -->
+<div class="sellModalBack" id="sellModalBack">
+  <div class="sellModal">
+    <div class="sellModalHead">
+      <div class="sellModalTitle">
+        <img src="market.png" style="width:20px;height:20px;object-fit:contain;" alt="">
+        Mettre en vente
+      </div>
+      <button class="sellModalClose" id="sellModalClose">✕</button>
+    </div>
+
+    <div class="sellModalCard">
+      <div class="sellModalImg" id="sellModalImg"></div>
+      <div class="sellModalInfo">
+        <div class="sellModalName" id="sellModalName">—</div>
+        <div class="sellModalSub" id="sellModalSub">—</div>
+        <div class="sellModalBadges" id="sellModalBadges"></div>
+      </div>
+    </div>
+
+    <div class="sellModalBody">
+      <div class="sellModalRow">
+        <div class="sellModalLabel">Prix</div>
+        <input class="sellModalInput" id="sellModalPrice" type="number" min="1" value="1">
+        <span style="font-size:13px;opacity:.6;white-space:nowrap;">💰 / carte</span>
+      </div>
+
+      <div class="sellModalRow">
+        <div class="sellModalLabel">Quantité</div>
+        <input class="sellModalInput" id="sellModalQty" type="number" min="1" value="1">
+        <span style="font-size:12px;opacity:.5;" id="sellModalStock"></span>
+      </div>
+
+      <div class="sellModalHint">Le prix suggéré est basé sur le grade de ta carte.</div>
+
+      <button class="sellModalBtn" id="sellModalBtn">Mettre en vente</button>
+      <div class="sellModalMsg" id="sellModalMsg"></div>
     </div>
   </div>
 </div>
@@ -1570,7 +1810,12 @@ function render(items){
       : x.image;
 
     el.innerHTML=`
-      <div class="cImg" style="background-image:url('${imgForCard}')"></div>
+      <div class="cImg" style="background-image:url('${imgForCard}');position:relative;">
+        <div class="marketBanner" data-idkey="${x.idKey}">
+          <img class="marketBannerLogo" src="market.png" alt="Market">
+          <span class="marketBannerText">Market</span>
+        </div>
+      </div>
 
       <div class="selRow" style="margin-top:10px;">
         <div style="opacity:.75;font-size:12px;">${gameTag}</div>
@@ -1602,7 +1847,17 @@ function render(items){
       </div>
     `;
 
-    el.querySelector(".cImg").onclick = () => openZoom(x);
+    // Clic sur l'image = zoom (mais pas sur la bannière)
+    el.querySelector(".cImg").addEventListener("click", (e) => {
+      if (e.target.closest(".marketBanner")) return;
+      openZoom(x);
+    });
+
+    // Clic sur la bannière = modal market
+    el.querySelector(".marketBanner").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openSellModal(x);
+    });
 
     const box = el.querySelector(".selBox");
     const qtyInput = el.querySelector(".qtyInput");
@@ -2171,6 +2426,88 @@ window.addEventListener("mousemove",(e)=>{ if(zDragging&&modal.classList.contain
 // Reset tilt à la fermeture
 modal.addEventListener("click",e=>{ if(e.target===modal) resetZoomTilt(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&modal.classList.contains("open")) resetZoomTilt(); });
+
+// ══════════════════════════════════════════════
+// MODAL MISE EN VENTE MARKET
+// ══════════════════════════════════════════════
+const sellModalBack  = document.getElementById("sellModalBack");
+const sellModalClose = document.getElementById("sellModalClose");
+const sellModalImg   = document.getElementById("sellModalImg");
+const sellModalName  = document.getElementById("sellModalName");
+const sellModalSub   = document.getElementById("sellModalSub");
+const sellModalBadges= document.getElementById("sellModalBadges");
+const sellModalPrice = document.getElementById("sellModalPrice");
+const sellModalQty   = document.getElementById("sellModalQty");
+const sellModalStock = document.getElementById("sellModalStock");
+const sellModalBtn   = document.getElementById("sellModalBtn");
+const sellModalMsg   = document.getElementById("sellModalMsg");
+
+let _sellItem = null;
+
+function openSellModal(x){
+  _sellItem = x;
+  sellModalMsg.textContent = "";
+  sellModalMsg.style.color = "";
+  sellModalBtn.disabled = false;
+
+  const img = x.image || x.imageHigh || x.imagehigh || null;
+  sellModalImg.style.backgroundImage = img ? `url('${img}')` : "none";
+  sellModalName.textContent = x.name || "—";
+  sellModalSub.textContent  = (x.set || x.setName || "");
+
+  sellModalBadges.innerHTML =
+    `<span class="badge grade">G${x.grade}</span>` +
+    (x.mint ? `<span class="badge mint">MINT</span>` : "") +
+    `<span class="badge count">×${x.count}</span>`;
+
+  const suggested = sellPriceLabel(x.grade || 0, !!x.mint);
+  sellModalPrice.value = String(suggested);
+  sellModalQty.value   = "1";
+  sellModalQty.max     = String(x.count || 1);
+  sellModalStock.textContent = `max ${x.count}`;
+
+  sellModalBack.classList.add("open");
+}
+
+function closeSellModal(){
+  sellModalBack.classList.remove("open");
+  _sellItem = null;
+}
+
+sellModalClose.onclick = closeSellModal;
+sellModalBack.addEventListener("click", (e) => {
+  if (e.target === sellModalBack) closeSellModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && sellModalBack.classList.contains("open")) closeSellModal();
+});
+
+sellModalBtn.onclick = async () => {
+  if (!_sellItem) return;
+  const price = Math.max(1, Number(sellModalPrice.value) | 0);
+  const qty   = Math.max(1, Math.min(Number(_sellItem.count) || 1, Number(sellModalQty.value) | 0));
+
+  sellModalBtn.disabled = true;
+  sellModalMsg.textContent = "Mise en vente…";
+  sellModalMsg.style.color = "";
+
+  try{
+    await api("/api/market/list", {
+      method: "POST",
+      body: JSON.stringify({ idKey: _sellItem.idKey, qty, price })
+    });
+    sellModalMsg.textContent = "✅ Carte mise en vente !";
+    sellModalMsg.style.color = "#6affb4";
+    setTimeout(() => {
+      closeSellModal();
+      loadCollection().then(() => applyFilters());
+    }, 900);
+  } catch(e){
+    sellModalMsg.textContent = "❌ " + (e.message || "Erreur");
+    sellModalMsg.style.color = "#ff8888";
+    sellModalBtn.disabled = false;
+  }
+};
 
 boot();
 
