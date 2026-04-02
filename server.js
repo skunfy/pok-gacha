@@ -3418,12 +3418,51 @@ app.get("/api/market", auth, async (req, res) => {
   const limit = 50;
   const offset = (page - 1) * limit;
 
+  // Filtres côté serveur
+  const mintOnly  = req.query.mintOnly  === "1";
+  const hideMine  = req.query.hideMine  === "1";
+  const gradeMin  = Math.max(0, Number(req.query.gradeMin  || 0) | 0);
+  const priceMax  = Math.max(0, Number(req.query.priceMax  || 0) | 0);
+
+  // hideOwned : tableau d'idKeys JSON encodé
+  let ownedKeys = [];
+  if (req.query.hideOwned) {
+    try { ownedKeys = JSON.parse(req.query.hideOwned); } catch {}
+    if (!Array.isArray(ownedKeys)) ownedKeys = [];
+  }
+
   const params = [game];
   let where = `WHERE m.game = $1`;
 
   if (q) {
     params.push(`%${q}%`);
-    where += ` AND (LOWER(m.name) LIKE $2 OR LOWER(m.setName) LIKE $2)`;
+    where += ` AND (LOWER(m.name) LIKE $${params.length} OR LOWER(m.setName) LIKE $${params.length})`;
+  }
+
+  if (mintOnly) {
+    where += ` AND m.mint = 1`;
+  }
+
+  if (hideMine) {
+    params.push(req.user.id);
+    where += ` AND m.seller_user_id != $${params.length}`;
+  }
+
+  if (gradeMin > 0) {
+    params.push(gradeMin);
+    where += ` AND m.grade >= $${params.length}`;
+  }
+
+  if (priceMax > 0) {
+    params.push(priceMax);
+    where += ` AND m.price <= $${params.length}`;
+  }
+
+  if (ownedKeys.length > 0) {
+    // Limiter à 10 000 clés max pour éviter les requêtes trop lourdes
+    const safeKeys = ownedKeys.slice(0, 10000).map(k => String(k));
+    params.push(safeKeys);
+    where += ` AND m.idKey != ALL($${params.length}::text[])`;
   }
 
   let order = "m.createdAt DESC";

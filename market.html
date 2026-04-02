@@ -1251,18 +1251,9 @@ mBuy.onclick = async () => {
   if(!modalListing) return;
   try{
     const want = clamp(Number(mQty.value||1)|0, 1, Number(modalListing.qty||1));
-    const result = await api("/api/market/buy", { method:"POST", body: JSON.stringify({ listingId: modalListing.id, qty: want }) });
+    await api("/api/market/buy", { method:"POST", body: JSON.stringify({ listingId: modalListing.id, qty: want }) });
     closeModal();
-
-    // Mettre à jour l'argent immédiatement
-    if(result.money !== undefined) moneyEl.textContent = result.money;
-
-    // Recharger la page courante, reculer si elle devient vide
-    await loadMarket(currentPage);
-    if(lastMarketListings.length === 0 && currentPage > 1){
-      await loadMarket(currentPage - 1);
-    }
-
+    await boot(true);
   }catch(e){
     alert("❌ " + e.message);
   }
@@ -1418,7 +1409,21 @@ async function loadMarket(page){
 
   const q = encodeURIComponent((searchEl.value||"").trim());
   const sort = encodeURIComponent(sortEl.value || "recent");
-  const data = await api(`/api/market?search=${q}&sort=${sort}&page=${currentPage}`, { method:"GET", headers:{} });
+
+  // Construire les paramètres de filtre côté serveur
+  let filterParams = "";
+  if (fMint.checked)    filterParams += "&mintOnly=1";
+  if (fHideMine.checked) filterParams += "&hideMine=1";
+  if (fHideOwned.checked && myItems.length) {
+    const keys = myItems.map(x => String(x.idKey || "")).filter(Boolean);
+    if (keys.length) filterParams += "&hideOwned=" + encodeURIComponent(JSON.stringify(keys));
+  }
+  const gradeMin = Number(fGradeMin.value || 0);
+  if (gradeMin > 0) filterParams += "&gradeMin=" + gradeMin;
+  const priceMax = Number(fPriceMax.value || 0);
+  if (priceMax > 0) filterParams += "&priceMax=" + priceMax;
+
+  const data = await api(`/api/market?search=${q}&sort=${sort}&page=${currentPage}${filterParams}`, { method:"GET", headers:{} });
 
   totalPages = data.totalPages || 1;
   lastMarketListings = data.listings || [];
@@ -1510,16 +1515,23 @@ searchEl.addEventListener("input", () => { currentPage = 1; loadMarket(); });
 sortEl.addEventListener("change", () => { currentPage = 1; loadMarket(); });
 refreshBtn.onclick = () => { currentPage=1; loadMarket(); };
 
+// Tous les filtres se font maintenant côté serveur → on recharge la page 1
 function refilter(){
-  const list = applyMarketFilters(lastMarketListings);
-  updateKpis(list);
-  renderMarket(list);
+  currentPage = 1;
+  loadMarket();
 }
+
+let _priceMaxTimer = null;
+function refilterDebounced(){
+  clearTimeout(_priceMaxTimer);
+  _priceMaxTimer = setTimeout(() => { currentPage = 1; loadMarket(); }, 400);
+}
+
 fMint.addEventListener("change", refilter);
 fHideMine.addEventListener("change", refilter);
 fHideOwned.addEventListener("change", refilter);
 fGradeMin.addEventListener("change", refilter);
-fPriceMax.addEventListener("input", refilter);
+fPriceMax.addEventListener("input", refilterDebounced);
 
 reloadMine.onclick = () => loadMine();
 
@@ -1683,17 +1695,7 @@ async function buyAllCart() {
   if (errors.length) {
     alert("✅ " + bought.length + " achetée(s).\n❌ Erreurs :\n" + errors.join("\n"));
   }
-
-  // Mettre à jour l'argent + recharger la page courante
-  try{
-    const me2 = await api("/api/me", { method:"GET", headers:{} });
-    moneyEl.textContent = me2.money ?? 0;
-  }catch{}
-
-  await loadMarket(currentPage);
-  if(lastMarketListings.length === 0 && currentPage > 1){
-    await loadMarket(currentPage - 1);
-  }
+  await boot(true);
 }
 
 
