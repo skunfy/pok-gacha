@@ -969,10 +969,10 @@ function charLevelForXp(xp) {
 const CHAR_XP_PER_RAID = {
   arakas_easy: 400,
   arakas_hard: 1000,
-  myntalis_easy: 1500,
-  myntalis_hard: 3500,
-  xenos_easy: 10000,
-  xenos_hard: 25000,
+  myntalis_easy: 2500,
+  myntalis_hard: 6000,
+  xenos_easy: 15000,
+  xenos_hard: 35000,
 };
 
 // Récupère ou crée le profil personnage
