@@ -967,12 +967,12 @@ function charLevelForXp(xp) {
 
 // XP perso gagné par raid vaincu selon le boss
 const CHAR_XP_PER_RAID = {
-  arakas_easy: 200,
-  arakas_hard: 400,
-  myntalis_easy: 500,
-  myntalis_hard: 900,
-  xenos_easy: 1200,
-  xenos_hard: 2000,
+  arakas_easy: 400,
+  arakas_hard: 1000,
+  myntalis_easy: 1500,
+  myntalis_hard: 3500,
+  xenos_easy: 10000,
+  xenos_hard: 25000,
 };
 
 // Récupère ou crée le profil personnage
@@ -2019,7 +2019,7 @@ const RAID_BOSSES = {
     name: 'Myntalis', difficulty: 'easy', diffLabel: '🟢 Facile',
     image: '/Boss2.gif',
     hp_max: 500000,
-    reward: 20000, xpReward: 2000,
+    reward: 20000, xpReward: 4000,
     duration: 4 * 60 * 60 * 1000,
     cooldownDays: 3,
   },
@@ -2028,7 +2028,7 @@ const RAID_BOSSES = {
     name: 'Myntalis', difficulty: 'hard', diffLabel: '🔴 Hardcore',
     image: '/Boss2.gif',
     hp_max: 500000,
-    reward: 50000, xpReward: 4000,
+    reward: 50000, xpReward: 8000,
     duration: 1 * 60 * 60 * 1000,
     cooldownDays: 3,
   },
@@ -2037,7 +2037,7 @@ const RAID_BOSSES = {
     name: 'Xenos', difficulty: 'easy', diffLabel: '🟢 Facile',
     image: '/Boss3.gif',
     hp_max: 2000000,
-    reward: 50000, xpReward: 5000,
+    reward: 50000, xpReward: 25000,
     duration: 4 * 60 * 60 * 1000,
     cooldownDays: 7,
   },
@@ -2046,7 +2046,7 @@ const RAID_BOSSES = {
     name: 'Xenos', difficulty: 'hard', diffLabel: '🔴 Hardcore',
     image: '/Boss3.gif',
     hp_max: 2000000,
-    reward: 100000, xpReward: 10000,
+    reward: 100000, xpReward: 50000,
     duration: 1 * 60 * 60 * 1000,
     cooldownDays: 7,
   },
