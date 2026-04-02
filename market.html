@@ -1414,10 +1414,7 @@ async function loadMarket(page){
   let filterParams = "";
   if (fMint.checked)    filterParams += "&mintOnly=1";
   if (fHideMine.checked) filterParams += "&hideMine=1";
-  if (fHideOwned.checked && myItems.length) {
-    const keys = myItems.map(x => String(x.idKey || "")).filter(Boolean);
-    if (keys.length) filterParams += "&hideOwned=" + encodeURIComponent(JSON.stringify(keys));
-  }
+  if (fHideOwned.checked) filterParams += "&hideOwned=1";
   const gradeMin = Number(fGradeMin.value || 0);
   if (gradeMin > 0) filterParams += "&gradeMin=" + gradeMin;
   const priceMax = Number(fPriceMax.value || 0);

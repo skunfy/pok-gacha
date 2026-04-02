@@ -3424,12 +3424,8 @@ app.get("/api/market", auth, async (req, res) => {
   const gradeMin  = Math.max(0, Number(req.query.gradeMin  || 0) | 0);
   const priceMax  = Math.max(0, Number(req.query.priceMax  || 0) | 0);
 
-  // hideOwned : tableau d'idKeys JSON encodé
-  let ownedKeys = [];
-  if (req.query.hideOwned) {
-    try { ownedKeys = JSON.parse(req.query.hideOwned); } catch {}
-    if (!Array.isArray(ownedKeys)) ownedKeys = [];
-  }
+  // hideOwned : sous-requête SQL directe, pas besoin d'envoyer les clés depuis le client
+  const hideOwned = req.query.hideOwned === "1";
 
   const params = [game];
   let where = `WHERE m.game = $1`;
@@ -3458,11 +3454,9 @@ app.get("/api/market", auth, async (req, res) => {
     where += ` AND m.price <= $${params.length}`;
   }
 
-  if (ownedKeys.length > 0) {
-    // Limiter à 10 000 clés max pour éviter les requêtes trop lourdes
-    const safeKeys = ownedKeys.slice(0, 10000).map(k => String(k));
-    params.push(safeKeys);
-    where += ` AND m.idKey != ALL($${params.length}::text[])`;
+  if (hideOwned) {
+    params.push(req.user.id);
+    where += ` AND m.idKey NOT IN (SELECT idKey FROM collection WHERE user_id=$${params.length})`;
   }
 
   let order = "m.createdAt DESC";
