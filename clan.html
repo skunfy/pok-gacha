@@ -602,8 +602,8 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
   overflow:hidden;
 }
 .perso-col-left{
-  display:flex;flex-direction:column;justify-content:center;gap:8px;
-  padding:10px 8px;border-right:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;
+  padding:16px 12px;border-right:1px solid rgba(255,255,255,.06);
 }
 .perso-col-center{
   display:flex;flex-direction:column;align-items:center;width:220px;
@@ -624,27 +624,52 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 .perso-char-ph{width:260px;height:380px;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.3;}
 .perso-class-badge{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid;margin:0 0 10px;}
 .perso-col-right{
-  display:flex;flex-direction:column;justify-content:center;gap:8px;
-  padding:10px 8px;border-left:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;
+  padding:16px 12px;border-left:1px solid rgba(255,255,255,.06);
 }
 .eq-slot{
-  background:rgba(255,255,255,.04);border:1.5px dashed rgba(255,255,255,.12);
-  border-radius:10px;padding:6px 8px;cursor:pointer;transition:all .15s;
-  display:flex;align-items:center;gap:6px;min-width:130px;position:relative;
+  width:88px;height:88px;
+  background:rgba(255,255,255,.04);
+  border:2px dashed rgba(255,255,255,.18);
+  border-radius:14px;
+  cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;position:relative;overflow:visible;flex-shrink:0;
 }
-.eq-slot:hover{background:rgba(127,92,255,.10);border-color:rgba(127,92,255,.4);}
-.eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.06);}
-.eq-slot.filled.legendary{border-color:rgba(255,184,0,.4);background:rgba(255,184,0,.05);}
-.eq-slot.filled.epic{border-color:rgba(192,132,255,.4);background:rgba(192,132,255,.05);}
-.eq-slot.filled.rare{border-color:rgba(77,166,255,.4);background:rgba(77,166,255,.05);}
-.eq-slot-img{width:30px;height:30px;object-fit:contain;border-radius:6px;flex-shrink:0;}
-.eq-slot-empty-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:16px;opacity:.3;flex-shrink:0;}
-.eq-slot-info{min-width:0;flex:1;}
-.eq-slot-label{font-size:8px;color:rgba(255,255,255,.35);font-weight:900;letter-spacing:.06em;text-transform:uppercase;}
-.eq-slot-name{font-size:10px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
-.eq-slot-stats{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px;}
-.eq-slot-unequip{position:absolute;top:3px;right:5px;font-size:10px;opacity:.3;cursor:pointer;padding:2px 4px;border-radius:4px;}
-.eq-slot-unequip:hover{opacity:.8;background:rgba(255,80,80,.2);}
+.eq-slot:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.6);transform:translateY(-2px);box-shadow:0 6px 20px rgba(127,92,255,.25);}
+.eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);padding:0;}
+.eq-slot.filled.legendary{border-color:rgba(255,184,0,.6);background:rgba(255,184,0,.07);box-shadow:0 0 16px rgba(255,184,0,.25);}
+.eq-slot.filled.epic{border-color:rgba(192,132,255,.6);background:rgba(192,132,255,.07);box-shadow:0 0 16px rgba(192,132,255,.25);}
+.eq-slot.filled.rare{border-color:rgba(77,166,255,.6);background:rgba(77,166,255,.07);box-shadow:0 0 12px rgba(77,166,255,.2);}
+.eq-slot.filled:hover{transform:translateY(-3px);}
+.eq-slot-img{width:100%;height:100%;object-fit:contain;border-radius:12px;display:block;}
+.eq-slot-empty-icon{font-size:22px;opacity:.25;}
+.eq-slot-info{display:none;}
+.eq-slot-name{display:none;}
+.eq-slot-stats{display:none;}
+.eq-slot-label{font-size:8px;color:rgba(255,255,255,.3);font-weight:900;letter-spacing:.06em;text-transform:uppercase;}
+.eq-slot-unequip{
+  position:absolute;top:-7px;right:-7px;width:20px;height:20px;
+  background:rgba(255,50,50,.9);border-radius:50%;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;
+  opacity:0;transition:opacity .15s;box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.eq-slot:hover .eq-slot-unequip{opacity:1;}
+.eq-slot-unequip:hover{background:rgba(255,80,80,1);}
+.eq-slot-tooltip{
+  position:absolute;bottom:calc(100% + 10px);left:50%;
+  transform:translateX(-50%) translateY(6px);
+  background:#0e0f1f;border:1px solid rgba(127,92,255,.45);
+  border-radius:14px;padding:12px 14px;min-width:175px;max-width:220px;
+  pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;
+  z-index:9999;box-shadow:0 12px 40px rgba(0,0,0,.75);white-space:nowrap;
+}
+.eq-slot:hover .eq-slot-tooltip{opacity:1;transform:translateX(-50%) translateY(0);}
+.eq-slot-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0e0f1f;}
+.eq-tooltip-name{font-size:13px;font-weight:900;margin-bottom:4px;}
+.eq-tooltip-rarity{font-size:10px;font-weight:800;opacity:.7;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;}
+.eq-tooltip-stat{font-size:12px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+.eq-tooltip-empty{font-size:12px;opacity:.4;font-style:italic;}
 .perso-bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .perso-inventory{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;}
 .perso-inv-title{font-size:12px;font-weight:900;opacity:.65;margin-bottom:10px;}
@@ -1920,26 +1945,36 @@ function buildStatLine(item) {
 function renderSlot(slot, equipped) {
   const def  = SLOT_DEF[slot];
   const item = equipped[slot];
+  const rarityNames = { common:'Commun', rare:'Rare', epic:'\u00c9pique', legendary:'L\u00e9gendaire' };
+
   if (item) {
-    const col   = EQ_RARITY_COLOR[item.rarity] || '#aaa';
-    const stats = buildStatLine(item);
+    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const statLines = [];
+    if (item.dmg_bonus)    statLines.push(`<div class="eq-tooltip-stat"><span>\u2694\ufe0f</span><span style="color:#ff8844">+${item.dmg_bonus}% DMG</span></div>`);
+    if (item.crit)         statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udca5</span><span style="color:#ffd84d">+${item.crit}% Crit</span></div>`);
+    if (item.first_attack) statLines.push(`<div class="eq-tooltip-stat"><span>\u26a1</span><span style="color:#44aaff">+${item.first_attack}% 1\u00e8re frappe</span></div>`);
+    if (item.clan_dmg)     statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udee1\ufe0f</span><span style="color:#4da6ff">+${item.clan_dmg}% DMG clan</span></div>`);
+    if (item.clan_crit)    statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udcab</span><span style="color:#c084ff">+${item.clan_crit}% Crit clan</span></div>`);
+
     return `
       <div class="eq-slot filled ${item.rarity}" onclick="openEquipInventory('${slot}')">
         <img class="eq-slot-img" src="${esc(item.image)}" alt="" onerror="this.style.display='none'">
-        <div class="eq-slot-info">
-          <div class="eq-slot-label">${def.label}</div>
-          <div class="eq-slot-name" style="color:${col}">${esc(item.name)}</div>
-          <div class="eq-slot-stats">${stats}</div>
+        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">\u2715</span>
+        <div class="eq-slot-tooltip">
+          <div class="eq-tooltip-name">${esc(item.name)}</div>
+          <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} \u00b7 ${rarityNames[item.rarity]||item.rarity}</div>
+          ${statLines.length ? statLines.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
         </div>
-        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">✕</span>
       </div>`;
   }
+
   return `
     <div class="eq-slot" onclick="openEquipInventory('${slot}')">
       <div class="eq-slot-empty-icon">${def.icon}</div>
-      <div class="eq-slot-info">
-        <div class="eq-slot-label">${def.label}</div>
-        <div class="eq-slot-name" style="opacity:.3">Vide</div>
+      <div class="eq-slot-label">${def.label}</div>
+      <div class="eq-slot-tooltip">
+        <div class="eq-tooltip-empty">${def.icon} ${def.label} \u2014 vide</div>
+        <div style="font-size:11px;opacity:.4;margin-top:4px">Clique pour \u00e9quiper</div>
       </div>
     </div>`;
 }
