@@ -683,6 +683,10 @@ async function initDb() {
   await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS setId TEXT;`);
   await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS localId TEXT;`);
 
+  // grades_json : tableau JSON des grades de chaque exemplaire ex: [3,7,7,5]
+  // Permet de calculer le vrai prix de vente par exemplaire (pas le meilleur grade)
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS grades_json TEXT;`);
+
   await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS cardId TEXT;`);
   await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;`);
   await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;`);
@@ -894,6 +898,38 @@ function drawOfflinePokemonCard() {
 function randFriendCode() {
   const s = crypto.randomBytes(4).toString("hex").toUpperCase();
   return s.slice(0, 4) + "-" + s.slice(4, 8);
+}
+
+// ── GRADES JSON helpers ─────────────────────────────────────
+// Parse le tableau de grades stocké en DB
+function parseGrades(gradesJson, count) {
+  try {
+    const arr = JSON.parse(gradesJson || "[]");
+    if (Array.isArray(arr) && arr.length) return arr.map(Number);
+  } catch {}
+  // Fallback pour les anciennes cartes sans grades_json : répéter le grade connu
+  return Array(Math.max(1, Number(count) || 1)).fill(0);
+}
+
+// Calcule le prix total pour vendre qty exemplaires
+// On vend en priorité les moins bons grades (sauf si on a le meilleur)
+function sellPriceForGrades(gradesArr, qty, mint) {
+  // Trier du moins bon au meilleur
+  const sorted = [...gradesArr].sort((a, b) => a - b);
+  // Prendre les qty premiers (les moins bons)
+  const toSell = sorted.slice(0, qty);
+  let total = 0;
+  for (const g of toSell) {
+    total += sellPriceFor(g, mint && g === Math.max(...gradesArr));
+  }
+  return total;
+}
+
+// Retire qty grades du tableau (les moins bons en premier)
+function removeGrades(gradesArr, qty) {
+  const sorted = [...gradesArr].sort((a, b) => a - b);
+  sorted.splice(0, qty);
+  return sorted;
 }
 
 function sellPriceFor(grade, mint){
@@ -2346,12 +2382,23 @@ app.post("/api/open", auth, async (req, res) => {
       ]
     );
 
+    // Récupérer le grades_json existant pour l'enrichir
+    const existingQ = await client.query(
+      `SELECT grades_json, count FROM collection WHERE user_id=$1 AND idKey=$2`,
+      [req.user.id, idKey]
+    );
+    const existingRow = existingQ.rows[0];
+    const existingGrades = existingRow
+      ? parseGrades(existingRow.grades_json, existingRow.count)
+      : [];
+    const newGrades = JSON.stringify([...existingGrades, grade]);
+
     await client.query(
       `
       INSERT INTO collection
-        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json)
       VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13)
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13,$14)
       ON CONFLICT (user_id, idKey)
       DO UPDATE SET
         count = collection.count + 1,
@@ -2361,7 +2408,8 @@ app.post("/api/open", auth, async (req, res) => {
         lastAt = EXCLUDED.lastAt,
         cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
         setId  = COALESCE(collection.setId,  EXCLUDED.setId),
-        localId= COALESCE(collection.localId,EXCLUDED.localId)
+        localId= COALESCE(collection.localId,EXCLUDED.localId),
+        grades_json = $14
       `,
       [
         req.user.id,
@@ -2377,6 +2425,7 @@ app.post("/api/open", auth, async (req, res) => {
         grade,
         mint,
         now,
+        newGrades,
       ]
     );
 
@@ -2488,12 +2537,23 @@ app.post("/api/open_multi", auth, async (req, res) => {
         ]
       );
 
+      // grades_json pour open_multi
+      const existingQM = await client.query(
+        `SELECT grades_json, count FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
+      const existingRowM = existingQM.rows[0];
+      const existingGradesM = existingRowM
+        ? parseGrades(existingRowM.grades_json, existingRowM.count)
+        : [];
+      const newGradesM = JSON.stringify([...existingGradesM, grade]);
+
       await client.query(
         `
         INSERT INTO collection
-          (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+          (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json)
         VALUES
-          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13)
+          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13,$14)
         ON CONFLICT (user_id, idKey)
         DO UPDATE SET
           count = collection.count + 1,
@@ -2503,7 +2563,8 @@ app.post("/api/open_multi", auth, async (req, res) => {
           lastAt = EXCLUDED.lastAt,
           cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
           setId  = COALESCE(collection.setId,  EXCLUDED.setId),
-          localId= COALESCE(collection.localId,EXCLUDED.localId)
+          localId= COALESCE(collection.localId,EXCLUDED.localId),
+          grades_json = $14
         `,
         [
           req.user.id,
@@ -2518,7 +2579,8 @@ app.post("/api/open_multi", auth, async (req, res) => {
           c.imageHigh || c.image,
           grade,
           mint,
-          now + i
+          now + i,
+          newGradesM,
         ]
       );
 
@@ -2585,7 +2647,7 @@ app.get("/api/collection", auth, async (req, res) => {
   const game = getGame(req);
 
   const items = await pool.query(
-  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
+  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json
    FROM collection 
    WHERE user_id=$1 AND game=$2
    ORDER BY lastAt DESC`,
@@ -2627,6 +2689,7 @@ app.get("/api/collection", auth, async (req, res) => {
     mint: Boolean(x.mint),
     count: x.count,
     lastAt: Number(x.lastat || x.lastAt),
+    gradesJson: x.grades_json || null,
   };
 })
   });
@@ -3071,7 +3134,7 @@ app.post("/api/sell", auth, async (req, res) => {
     await client.query("BEGIN");
 
     const itemQ = await client.query(
-      `SELECT count, grade, mint FROM collection
+      `SELECT count, grade, mint, grades_json FROM collection
        WHERE user_id=$1 AND idKey=$2
        FOR UPDATE`,
       [req.user.id, idKey]
@@ -3089,8 +3152,16 @@ app.post("/api/sell", auth, async (req, res) => {
       return res.status(400).json({ error: "Quantité insuffisante" });
     }
 
-    const unitPrice = sellPriceFor(it.grade, Number(it.mint) === 1);
-    const total = unitPrice * qty;
+    // Calcul du prix réel avec les vrais grades de chaque exemplaire
+    const gradesArr = parseGrades(it.grades_json, owned);
+    const isMint = Number(it.mint) === 1;
+    const total = sellPriceForGrades(gradesArr, qty, isMint);
+    const unitPrice = Math.round(total / qty); // pour l'affichage
+
+    // Mettre à jour le grades_json en retirant les grades vendus
+    const remainingGrades = removeGrades(gradesArr, qty);
+    // Le nouveau grade affiché = le meilleur restant
+    const newBestGrade = remainingGrades.length ? Math.max(...remainingGrades) : it.grade;
 
     if (owned === qty) {
       await client.query(
@@ -3099,8 +3170,8 @@ app.post("/api/sell", auth, async (req, res) => {
       );
     } else {
       await client.query(
-        `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
-        [req.user.id, idKey, qty]
+        `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty, JSON.stringify(remainingGrades), newBestGrade]
       );
     }
 
@@ -3157,7 +3228,7 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     const keys = clean.map(x => x.idKey);
 
     const q = await client.query(
-      `SELECT idKey, count, grade, mint
+      `SELECT idKey, count, grade, mint, grades_json
        FROM collection
        WHERE user_id=$1 AND idKey = ANY($2::text[])
        FOR UPDATE`,
@@ -3169,7 +3240,7 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     let total = 0;
     let xpTotal = 0;
 
-    // 1) check + compute totals
+    // 1) check + compute totals avec les vrais grades
     for (const it of clean) {
       const row = byKey.get(it.idKey);
       if (!row) {
@@ -3183,17 +3254,20 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
         return res.status(400).json({ error: "Quantité insuffisante: " + it.idKey });
       }
 
-      const unit = sellPriceFor(row.grade, Number(row.mint) === 1);
-      total += unit * it.qty;
-
-      // ✅ XP bulk
-      xpTotal += xpForSell(unit, it.qty);
+      const gradesArr = parseGrades(row.grades_json, owned);
+      const isMint = Number(row.mint) === 1;
+      const itemTotal = sellPriceForGrades(gradesArr, it.qty, isMint);
+      total += itemTotal;
+      xpTotal += xpForSell(Math.round(itemTotal / it.qty), it.qty);
     }
 
-    // 2) update/remove cards
+    // 2) update/remove cards avec mise à jour des grades
     for (const it of clean) {
       const row = byKey.get(it.idKey);
       const owned = Number(row.count) || 0;
+      const gradesArr = parseGrades(row.grades_json, owned);
+      const remainingGrades = removeGrades(gradesArr, it.qty);
+      const newBestGrade = remainingGrades.length ? Math.max(...remainingGrades) : row.grade;
 
       if (owned === it.qty) {
         await client.query(
@@ -3202,8 +3276,8 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
         );
       } else {
         await client.query(
-          `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
-          [req.user.id, it.idKey, it.qty]
+          `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+          [req.user.id, it.idKey, it.qty, JSON.stringify(remainingGrades), newBestGrade]
         );
       }
     }

@@ -1429,6 +1429,24 @@ function sellPriceLabel(grade, mint){
   return 1;
 }
 
+// Retourne le prix du prochain doublon à vendre (le moins bon grade)
+function sellPriceDuplicate(item){
+  const grades = parseGradesClient(item.gradesJson, item.count);
+  if (!grades.length) return sellPriceLabel(item.grade || 0, !!item.mint);
+  const minGrade = Math.min(...grades);
+  // MINT seulement si c'est le dernier et qu'il est mint
+  const isMint = !!item.mint && grades.length === 1;
+  return sellPriceLabel(minGrade, isMint);
+}
+
+function parseGradesClient(gradesJson, count){
+  try {
+    const arr = JSON.parse(gradesJson || "[]");
+    if (Array.isArray(arr) && arr.length) return arr.map(Number);
+  } catch {}
+  return Array(Math.max(1, Number(count) || 1)).fill(0);
+}
+
 const SEL_CAP = 50;
 
 function refreshSelUI(){
@@ -1799,7 +1817,8 @@ function render(items){
       g === "magic" ? "🔮 Magic" :
       g === "weissschwarz" ? "⚔️ Weiss Schwarz" :
       "🟨 Pokémon";
-    const unit = sellPriceLabel(x.grade || 0, !!x.mint);
+    // Prix du doublon = grade le moins bon, pas le meilleur
+    const unit = x.count > 1 ? sellPriceDuplicate(x) : sellPriceLabel(x.grade || 0, !!x.mint);
 
     const wasSelected = selected.has(x.idKey);
     const selQty = selected.get(x.idKey) || 1;
