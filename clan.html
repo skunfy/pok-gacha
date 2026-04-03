@@ -1907,6 +1907,16 @@ function renderCharacter(c) {
   `;
 }
 
+function buildStatLine(item) {
+  const parts = [];
+  if (item.dmg_bonus)    parts.push(`<span style="color:#ff8844">⚔️ +${item.dmg_bonus}% DMG</span>`);
+  if (item.crit)         parts.push(`<span style="color:#ffd84d">💥 +${item.crit}% Crit</span>`);
+  if (item.first_attack) parts.push(`<span style="color:#44aaff">⚡ +${item.first_attack}% 1ère frappe</span>`);
+  if (item.clan_dmg)     parts.push(`<span style="color:#4da6ff">🛡️ +${item.clan_dmg}% DMG clan</span>`);
+  if (item.clan_crit)    parts.push(`<span style="color:#c084ff">💫 +${item.clan_crit}% Crit clan</span>`);
+  return parts.join(' · ') || '<span style="opacity:.4">—</span>';
+}
+
 function renderSlot(slot, equipped) {
   const def  = SLOT_DEF[slot];
   const item = equipped[slot];
