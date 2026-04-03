@@ -841,6 +841,18 @@ async function initDb() {
   `);
   await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS char_class TEXT DEFAULT NULL`);
 
+  // Table équipements
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_equipment (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      equip_key TEXT NOT NULL,
+      obtained_at BIGINT NOT NULL DEFAULT 0,
+      equipped_slot TEXT DEFAULT NULL
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_player_equipment_user ON player_equipment(user_id)`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -1223,6 +1235,125 @@ async function firstWorkingTcgdexImages(setId, localId, card = null) {
   tcgdexImageCache.set(key, null);
   return null;
 }
+
+// =========================
+// CATALOGUE ÉQUIPEMENTS
+// =========================
+const EQ_R2 = "https://pub-20dca79c351248edbe98e95c38baaafc.r2.dev";
+
+const EQUIPMENT = {
+  // ─── COMMUNS ───
+  sword1_c:   { key:'sword1_c',   name:'Épée du Novice',        slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/sword1.png`,   dmg_bonus:5,  crit:0,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  dagger1_c:  { key:'dagger1_c',  name:'Dague de Lune',         slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/dagger1.png`,  dmg_bonus:0,  crit:0,  first_attack:8,  clan_dmg:0,  clan_crit:0 },
+  staff1_c:   { key:'staff1_c',   name:'Bâton des Racines',     slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/staff1.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:0 },
+  armor1_c:   { key:'armor1_c',   name:'Tunique du Voyageur',   slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor1.png`,   dmg_bonus:0,  crit:4,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  armor2_c:   { key:'armor2_c',   name:'Robe du Disciple',      slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:3 },
+  armor3_c:   { key:'armor3_c',   name:'Plastron de Fer',       slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor3.png`,   dmg_bonus:7,  crit:0,  first_attack:4,  clan_dmg:0,  clan_crit:0 },
+  botte1_c:   { key:'botte1_c',   name:'Bottes du Marcheur',    slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/Botte1.png`,   dmg_bonus:0,  crit:0,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  botte2_c:   { key:'botte2_c',   name:'Chaussons du Sage',     slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:0 },
+  botte3_c:   { key:'botte3_c',   name:'Bottes du Chasseur',    slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte3.png`,   dmg_bonus:0,  crit:3,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  head1_c:    { key:'head1_c',    name:'Capuche de l\'Ombre',   slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head1.png`,    dmg_bonus:0,  crit:4,  first_attack:2,  clan_dmg:0,  clan_crit:0 },
+  head2_c:    { key:'head2_c',    name:'Chapeau du Mage',       slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head2.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:3 },
+  head3_c:    { key:'head3_c',    name:'Heaume du Guerrier',    slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head3.png`,    dmg_bonus:5,  crit:0,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  ring1_c:    { key:'ring1_c',    name:'Anneau Brut',           slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring1.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:3,  clan_crit:0 },
+  ring2_c:    { key:'ring2_c',    name:'Anneau de Clairvoyance',slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring2.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:3 },
+  ring3_c:    { key:'ring3_c',    name:'Anneau d\'Argent',      slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring3.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:2,  clan_crit:3 },
+
+  // ─── RARES ───
+  sword1_r:   { key:'sword1_r',   name:'Lame Céleste',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/sword1.png`,     dmg_bonus:10, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  dagger1_r:  { key:'dagger1_r',  name:'Croc de Jade',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/dagger1.png`,    dmg_bonus:0,  crit:12, first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  staff1_r:   { key:'staff1_r',   name:'Sceptre des Marées',    slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/staff1.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:9,  clan_crit:5 },
+  armor1_r:   { key:'armor1_r',   name:'Veste du Rôdeur',       slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor1.png`,     dmg_bonus:0,  crit:7,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  armor2_r:   { key:'armor2_r',   name:'Robe des Anciens',      slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:6 },
+  armor3_r:   { key:'armor3_r',   name:'Cuirasse du Conquérant',slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor3.png`,     dmg_bonus:12, crit:0,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  botte1_r:   { key:'botte1_r',   name:'Bottes du Dueliste',    slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte1r.png`,    dmg_bonus:0,  crit:7,  first_attack:0,  clan_dmg:5,  clan_crit:0 },
+  botte2_r:   { key:'botte2_r',   name:'Bottes du Héraut',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte2r.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:4 },
+  botte3_r:   { key:'botte3_r',   name:'Grèves de Fer Noir',    slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte3r.png`,    dmg_bonus:10, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  head1_r:    { key:'head1_r',    name:'Masque du Fantôme',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head1.png`,      dmg_bonus:0,  crit:8,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  head2_r:    { key:'head2_r',    name:'Capuche du Druide',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:9,  clan_crit:6 },
+  head3_r:    { key:'head3_r',    name:'Heaume du Paladin',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head3.png`,      dmg_bonus:12, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  ring1_r:    { key:'ring1_r',    name:'Anneau de Feu',         slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring1.png`,      dmg_bonus:5,  crit:8,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_r:    { key:'ring2_r',    name:'Anneau du Crépuscule',  slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:6 },
+  ring3_r:    { key:'ring3_r',    name:'Anneau Mystique',       slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring3.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:7 },
+
+  // ─── ÉPIQUES ───
+  sword1_e:   { key:'sword1_e',   name:'Lame des Runes',        slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/sword1.png`,     dmg_bonus:18, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  dagger1_e:  { key:'dagger1_e',  name:'Pointe de l\'Éclipse',  slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/dagger1.png`,    dmg_bonus:0,  crit:20, first_attack:12, clan_dmg:0,  clan_crit:0 },
+  staff1_e:   { key:'staff1_e',   name:'Sceptre du Chaos',      slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/staff1.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:16, clan_crit:10 },
+  armor1_e:   { key:'armor1_e',   name:'Manteau de l\'Éclaireur',slot:'armor', rarity:'epic',      image:`${EQ_R2}/epic/armor1.png`,     dmg_bonus:0,  crit:14, first_attack:10, clan_dmg:0,  clan_crit:0 },
+  armor2_e:   { key:'armor2_e',   name:'Toge des Abysses',      slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:15, clan_crit:10 },
+  armor3_e:   { key:'armor3_e',   name:'Armure du Titan',       slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor3.png`,     dmg_bonus:20, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  botte1_e:   { key:'botte1_e',   name:'Bottes du Traqueur',    slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte1.png`,     dmg_bonus:0,  crit:12, first_attack:0,  clan_dmg:8,  clan_crit:0 },
+  botte2_e:   { key:'botte2_e',   name:'Bottes de l\'Éclair',   slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:14, clan_crit:8 },
+  botte3_e:   { key:'botte3_e',   name:'Grèves du Colosse',     slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte3.png`,     dmg_bonus:18, crit:0,  first_attack:8,  clan_dmg:0,  clan_crit:0 },
+  head1_e:    { key:'head1_e',    name:'Voile du Néant',        slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head1.png`,      dmg_bonus:0,  crit:14, first_attack:10, clan_dmg:0,  clan_crit:0 },
+  head2_e:    { key:'head2_e',    name:'Capuche de l\'Arcane',  slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:16, clan_crit:10 },
+  head3_e:    { key:'head3_e',    name:'Heaume du Suzerain',    slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head3.png`,      dmg_bonus:20, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  ring1_e:    { key:'ring1_e',    name:'Anneau du Sang',        slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring1.png`,      dmg_bonus:10, crit:14, first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_e:    { key:'ring2_e',    name:'Anneau des Abysses',    slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:15, clan_crit:10 },
+  ring3_e:    { key:'ring3_e',    name:'Anneau de l\'Œil',      slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring3.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:10, clan_crit:12 },
+
+  // ─── LÉGENDAIRES ───
+  sword1_l:   { key:'sword1_l',   name:'Croc du Démon',         slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/sword1.png`,  dmg_bonus:30, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  dagger1_l:  { key:'dagger1_l',  name:'Serres du Néant',       slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/dagger1.png`, dmg_bonus:0,  crit:35, first_attack:20, clan_dmg:0,  clan_crit:0 },
+  staff1_l:   { key:'staff1_l',   name:'Sceptre de l\'Astre',   slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/staff1.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  armor1_l:   { key:'armor1_l',   name:'Cuirasse de l\'Archange',slot:'armor', rarity:'legendary', image:`${EQ_R2}/legendaire/armor1.png`,  dmg_bonus:0,  crit:25, first_attack:18, clan_dmg:0,  clan_crit:0 },
+  armor2_l:   { key:'armor2_l',   name:'Toge de l\'Empereur',   slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor2.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  armor3_l:   { key:'armor3_l',   name:'Armure du Dragon',      slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor3.png`,  dmg_bonus:35, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  botte1_l:   { key:'botte1_l',   name:'Bottes du Portail',     slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte1.png`,  dmg_bonus:0,  crit:22, first_attack:0,  clan_dmg:15, clan_crit:0 },
+  botte2_l:   { key:'botte2_l',   name:'Bottes de l\'Inferno',  slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte2.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:25, clan_crit:15 },
+  botte3_l:   { key:'botte3_l',   name:'Sabots de l\'Apocalypse',slot:'boots', rarity:'legendary', image:`${EQ_R2}/legendaire/botte3.png`,  dmg_bonus:32, crit:0,  first_attack:15, clan_dmg:0,  clan_crit:0 },
+  head1_l:    { key:'head1_l',    name:'Masque du Seigneur',    slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head1.png`,   dmg_bonus:0,  crit:25, first_attack:18, clan_dmg:0,  clan_crit:0 },
+  head2_l:    { key:'head2_l',    name:'Capuche du Faucheur',   slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  head3_l:    { key:'head3_l',    name:'Heaume du Conquérant',  slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head3.png`,   dmg_bonus:35, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  ring1_l:    { key:'ring1_l',    name:'Anneau du Dragon',      slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring1.png`,   dmg_bonus:18, crit:25, first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_l:    { key:'ring2_l',    name:'Anneau de l\'Éternité', slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  ring3_l:    { key:'ring3_l',    name:'Anneau du Vide',        slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring3.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:18, clan_crit:22 },
+};
+
+// Drop équipement — uniquement sur Myntalis
+async function dropEquipment(userId) {
+  const allKeys = Object.keys(EQUIPMENT);
+
+  function pickRarity(rarity) {
+    const available = allKeys.filter(k => EQUIPMENT[k].rarity === rarity);
+    if (!available.length) return null;
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  const drops = [];
+
+  // 1 commun garanti
+  const common = pickRarity('common');
+  if (common) drops.push(common);
+
+  // 40% rare
+  if (Math.random() < 0.40) {
+    const rare = pickRarity('rare');
+    if (rare) drops.push(rare);
+  }
+  // 15% épique
+  if (Math.random() < 0.15) {
+    const epic = pickRarity('epic');
+    if (epic) drops.push(epic);
+  }
+  // 3% légendaire
+  if (Math.random() < 0.03) {
+    const leg = pickRarity('legendary');
+    if (leg) drops.push(leg);
+  }
+
+  const now = Date.now();
+  for (const key of drops) {
+    await pool.query(
+      `INSERT INTO player_equipment(user_id, equip_key, obtained_at) VALUES($1,$2,$3)`,
+      [userId, key, now]
+    );
+  }
+  return drops.map(k => EQUIPMENT[k]);
+}
+
+
 
 // ----- PAY LOOP (server-side) -----
 const PAY_AMOUNT = 10;
@@ -4833,7 +4964,21 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
       const charXpGain = CHAR_XP_PER_RAID[boss.boss_key] || 200;
       for (const c of contribs.rows) {
         await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
-        await dropRaidCards(c.user_id).catch(() => {});
+
+        // Arakas → cartes de raid | Myntalis → équipements | Xenos → les deux
+        if (def.bossKey === 'arakas' || def.bossKey === 'xenos') {
+          await dropRaidCards(c.user_id).catch(() => {});
+        }
+        if (def.bossKey === 'myntalis' || def.bossKey === 'xenos') {
+          const eqDrops = await dropEquipment(c.user_id).catch(() => []);
+          if (eqDrops.length) {
+            const eqNames = eqDrops.map(e => e.name).join(', ');
+            await pool.query(
+              `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Équipement obtenu !',$2,NULL,0,$3)`,
+              [c.user_id, `Tu as obtenu : ${eqNames} !`, Date.now()]
+            );
+          }
+        }
         // XP personnage
         const charResult = await addCharXp(c.user_id, charXpGain).catch(() => null);
         if (charResult?.levelsGained > 0) {
@@ -4972,6 +5117,25 @@ app.get("/api/character", auth, async (req, res) => {
       dexterite:    statEffectiveRate('dexterite',    charClass),
     };
 
+    // Bonus d'équipement
+    const eqBonus = await getEquipmentBonus(req.user.id);
+
+    // Bonus stats perso
+    const statDmg        = Number(char.stat_force)        * rates.force;
+    const statCrit       = Number(char.stat_agilite)      * rates.agilite;
+    const statIntel      = Number(char.stat_intelligence) * rates.intelligence;
+    const statFirstAtk   = Number(char.stat_dexterite)    * rates.dexterite;
+
+    // Total cumulé (stats + passif classe + équipement)
+    const totalBonus = {
+      dmg_bonus:    Math.round((statDmg    + (cls?.passive_dmg_bonus   || 0) + eqBonus.dmg_bonus)    * 10) / 10,
+      crit:         Math.round((statCrit   + (cls?.passive_crit        || 0) + eqBonus.crit)          * 10) / 10,
+      intel_bonus:  Math.round((statIntel  + (cls?.passive_intel_bonus || 0))                         * 10) / 10,
+      first_attack: Math.round((statFirstAtk + (cls?.passive_first_attack || 0) + eqBonus.first_attack) * 10) / 10,
+      clan_dmg:     eqBonus.clan_dmg,
+      clan_crit:    eqBonus.clan_crit,
+    };
+
     res.json({
       char_level: lvl,
       char_xp:    xp,
@@ -4998,11 +5162,13 @@ app.get("/api/character", auth, async (req, res) => {
         first_attack: cls.passive_first_attack,
       } : null,
       classes_def: CHAR_CLASSES,
+      equipment_bonus: eqBonus,
+      total_bonus: totalBonus,
       bonus_preview: {
-        dmg_bonus:    Number(char.stat_force)        * rates.force        + (cls?.passive_dmg_bonus   || 0),
-        crit:         Number(char.stat_agilite)      * rates.agilite      + (cls?.passive_crit        || 0),
-        intel_bonus:  Number(char.stat_intelligence) * rates.intelligence + (cls?.passive_intel_bonus || 0),
-        first_attack: Number(char.stat_dexterite)    * rates.dexterite    + (cls?.passive_first_attack || 0),
+        dmg_bonus:    statDmg    + (cls?.passive_dmg_bonus   || 0),
+        crit:         statCrit   + (cls?.passive_crit        || 0),
+        intel_bonus:  statIntel  + (cls?.passive_intel_bonus || 0),
+        first_attack: statFirstAtk + (cls?.passive_first_attack || 0),
       }
     });
   } catch(e) {
@@ -5197,6 +5363,7 @@ app.post("/api/clan/talents/upgrade", auth, async (req, res) => {
 // CARTES DE RAID
 // =========================
 
+
 const DECK_R2 = "https://pub-027debf53a354fc0ba5821eb8ebb73c9.r2.dev";
 
 const RAID_CARDS = {
@@ -5329,9 +5496,18 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
   const charQ = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
   const char = charQ.rows[0] || null;
   const statBonus = charStatBonus(char, bossHpPct);
-  dmg_bonus   += statBonus.dmg_bonus + statBonus.intel_bonus;
-  crit        += statBonus.crit;
+  dmg_bonus    += statBonus.dmg_bonus + statBonus.intel_bonus;
+  crit         += statBonus.crit;
   first_attack += statBonus.first_attack;
+
+  // === BONUS ÉQUIPEMENT ===
+  const eqBonus = await getEquipmentBonus(userId);
+  dmg_bonus    += eqBonus.dmg_bonus;
+  crit         += eqBonus.crit;
+  first_attack += eqBonus.first_attack;
+  // clan_dmg et clan_crit s'appliquent comme bonus de soutien
+  dmg_bonus    += eqBonus.clan_dmg;
+  crit         += eqBonus.clan_crit;
 
   return {
     dmg_bonus: Math.round(dmg_bonus * 10) / 10,
@@ -5339,6 +5515,7 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
     first_attack: Math.round(first_attack * 10) / 10,
     cards,
     charStatBonus: statBonus,
+    equipmentBonus: eqBonus,
   };
 }
 
@@ -5359,6 +5536,7 @@ function applyDeckToStock(stock, bonus, isFirstAttack) {
 }
 
 // Drop cartes après boss vaincu
+
 async function dropRaidCards(userId) {
   // Récupérer les cartes déjà possédées
   const owned = await pool.query(`SELECT DISTINCT card_key FROM player_raid_cards WHERE user_id=$1`, [userId]);
@@ -5398,6 +5576,94 @@ async function dropRaidCards(userId) {
     await pool.query(`INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`, [userId, key, now]);
   }
   return drops.map(k => RAID_CARDS[k]);
+}
+
+// =========================
+// ÉQUIPEMENT — ROUTES
+// =========================
+
+// GET /api/equipment — inventaire + équipés
+app.get("/api/equipment", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, equip_key, obtained_at, equipped_slot FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
+    [req.user.id]
+  );
+
+  // Construire l'inventaire avec les données du catalogue
+  const inventory = rows.map(r => ({
+    id: r.id,
+    equip_key: r.equip_key,
+    equipped_slot: r.equipped_slot,
+    obtained_at: Number(r.obtained_at),
+    ...(EQUIPMENT[r.equip_key] || { name: r.equip_key, rarity: 'common', slot: 'weapon' }),
+  }));
+
+  // Slots équipés
+  const equipped = {};
+  for (const item of inventory) {
+    if (item.equipped_slot) equipped[item.equipped_slot] = item;
+  }
+
+  res.json({ inventory, equipped, catalogue: Object.values(EQUIPMENT) });
+});
+
+// POST /api/equipment/equip — équiper ou déséquiper
+app.post("/api/equipment/equip", auth, async (req, res) => {
+  const itemId = Number(req.body?.id || 0) | 0;
+  const unequip = req.body?.unequip === true;
+
+  if (!itemId) return res.status(400).json({ error: "Missing id" });
+
+  // Vérifier que l'item appartient au joueur
+  const itemQ = await pool.query(
+    `SELECT id, equip_key, equipped_slot FROM player_equipment WHERE id=$1 AND user_id=$2`,
+    [itemId, req.user.id]
+  );
+  const item = itemQ.rows[0];
+  if (!item) return res.status(404).json({ error: "Item introuvable" });
+
+  const def = EQUIPMENT[item.equip_key];
+  if (!def) return res.status(400).json({ error: "Item invalide" });
+
+  if (unequip) {
+    // Déséquiper
+    await pool.query(`UPDATE player_equipment SET equipped_slot=NULL WHERE id=$1`, [itemId]);
+    return res.json({ ok: true, action: 'unequipped' });
+  }
+
+  // Déséquiper l'item déjà en place sur ce slot
+  await pool.query(
+    `UPDATE player_equipment SET equipped_slot=NULL WHERE user_id=$1 AND equipped_slot=$2`,
+    [req.user.id, def.slot]
+  );
+
+  // Équiper le nouvel item
+  await pool.query(
+    `UPDATE player_equipment SET equipped_slot=$1 WHERE id=$2`,
+    [def.slot, itemId]
+  );
+
+  res.json({ ok: true, action: 'equipped', slot: def.slot });
+});
+
+// Helper : récupère les bonus d'équipement d'un joueur
+async function getEquipmentBonus(userId) {
+  const { rows } = await pool.query(
+    `SELECT equip_key FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    [userId]
+  );
+
+  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0, clan_crit = 0;
+  for (const r of rows) {
+    const eq = EQUIPMENT[r.equip_key];
+    if (!eq) continue;
+    dmg_bonus    += eq.dmg_bonus    || 0;
+    crit         += eq.crit         || 0;
+    first_attack += eq.first_attack || 0;
+    clan_dmg     += eq.clan_dmg     || 0;
+    clan_crit    += eq.clan_crit    || 0;
+  }
+  return { dmg_bonus, crit, first_attack, clan_dmg, clan_crit };
 }
 
 // GET /api/raid/cards — inventaire + deck du joueur
