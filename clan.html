@@ -589,6 +589,124 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
   .raid-card-modal-inner{flex-direction:column;align-items:center;}
   .raid-card-modal-img{width:120px;}
 }
+
+/* ── ÉQUIPEMENT RPG ─────────────────────────── */
+.eq-rpg-wrap{
+  display:grid;
+  grid-template-columns:1fr 200px 1fr;
+  gap:16px;
+  align-items:center;
+  margin:20px 0;
+}
+.eq-col-left,.eq-col-right{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.eq-col-right{ align-items:flex-start; }
+.eq-char-center{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.eq-char-img{
+  width:180px;
+  height:280px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 20px rgba(127,92,255,.4));
+  border-radius:12px;
+}
+.eq-char-placeholder{
+  width:180px;
+  height:280px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:80px;
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  border:1px dashed rgba(255,255,255,.10);
+}
+.eq-slot{
+  background:rgba(255,255,255,.05);
+  border:1.5px dashed rgba(255,255,255,.15);
+  border-radius:14px;
+  padding:10px;
+  cursor:pointer;
+  transition:all .15s;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:64px;
+  position:relative;
+}
+.eq-slot:hover{ background:rgba(127,92,255,.10); border-color:rgba(127,92,255,.4); }
+.eq-slot.filled{ border-style:solid; border-color:rgba(255,255,255,.15); background:rgba(255,255,255,.07); }
+.eq-slot.filled.legendary{ border-color:rgba(255,184,0,.5); background:rgba(255,184,0,.06); }
+.eq-slot.filled.epic{ border-color:rgba(192,132,255,.5); background:rgba(192,132,255,.06); }
+.eq-slot.filled.rare{ border-color:rgba(77,166,255,.5); background:rgba(77,166,255,.06); }
+.eq-slot-img{ width:44px; height:44px; object-fit:contain; border-radius:8px; flex-shrink:0; }
+.eq-slot-empty-icon{ width:44px; height:44px; display:flex; align-items:center; justify-content:center; font-size:22px; opacity:.4; flex-shrink:0; }
+.eq-slot-info{ min-width:0; flex:1; }
+.eq-slot-label{ font-size:10px; color:rgba(255,255,255,.4); font-weight:900; letter-spacing:.05em; text-transform:uppercase; }
+.eq-slot-name{ font-size:12px; font-weight:900; color:rgba(255,255,255,.9); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:1px; }
+.eq-slot-stats{ font-size:10px; color:rgba(255,255,255,.5); margin-top:2px; }
+.eq-slot-unequip{ position:absolute; top:4px; right:6px; font-size:11px; opacity:.4; cursor:pointer; padding:2px 5px; border-radius:6px; }
+.eq-slot-unequip:hover{ opacity:.8; background:rgba(255,80,80,.2); }
+
+.eq-rarity-common    { color:#aaa; }
+.eq-rarity-rare      { color:#4da6ff; }
+.eq-rarity-epic      { color:#c084ff; }
+.eq-rarity-legendary { color:#ffd84d; }
+
+.eq-inventory-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:8px;
+  margin-top:12px;
+  max-height:320px;
+  overflow-y:auto;
+  padding-right:4px;
+}
+.eq-inv-item{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;
+  padding:8px 6px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s;
+  position:relative;
+}
+.eq-inv-item:hover{ background:rgba(127,92,255,.15); border-color:rgba(127,92,255,.4); transform:translateY(-2px); }
+.eq-inv-item.equipped{ border-color:rgba(51,255,153,.5); background:rgba(51,255,153,.06); }
+.eq-inv-item.legendary{ border-color:rgba(255,184,0,.4); }
+.eq-inv-item.epic{ border-color:rgba(192,132,255,.3); }
+.eq-inv-item.rare{ border-color:rgba(77,166,255,.3); }
+.eq-inv-img{ width:48px; height:48px; object-fit:contain; }
+.eq-inv-name{ font-size:9px; color:rgba(255,255,255,.7); margin-top:4px; font-weight:900; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.eq-equipped-badge{ position:absolute; top:3px; right:3px; width:8px; height:8px; background:#33ff99; border-radius:50%; }
+
+.eq-total-recap{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:14px;
+  margin-top:16px;
+}
+.eq-total-title{ font-size:13px; font-weight:900; margin-bottom:10px; color:rgba(255,255,255,.8); }
+.eq-total-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.eq-total-item{ background:rgba(255,255,255,.05); border-radius:10px; padding:8px 12px; }
+.eq-total-val{ font-size:18px; font-weight:1000; }
+.eq-total-label{ font-size:10px; opacity:.55; margin-top:1px; }
+
+@media(max-width:600px){
+  .eq-rpg-wrap{ grid-template-columns:1fr; }
+  .eq-char-center{ order:-1; }
+  .eq-col-left,.eq-col-right{ flex-direction:row; flex-wrap:wrap; }
+  .eq-slot{ flex:1; min-width:140px; }
+}
 </style>
 </head>
 <body>
@@ -1117,6 +1235,7 @@ function switchTab(name, el) {
 // PERSONNAGE
 // ===========================
 let _charData = null;
+
 let _selectedClass = null;
 
 // ⚠️ URLs GitHub de tes images de classe
@@ -1136,7 +1255,10 @@ async function loadCharacter() {
   const el = document.getElementById('characterContent');
   if (!el) return;
   try {
-    const c = await api('/api/character');
+    const [c] = await Promise.all([
+      api('/api/character'),
+      loadEquipment(),
+    ]);
     _charData = c;
     if (!c.char_class) {
       renderClassPicker(c);
@@ -1433,8 +1555,196 @@ function renderCharacter(c) {
         <div id="charAlert" style="margin-top:10px"></div>
       </div>
 
+      <!-- ÉQUIPEMENT RPG -->
+      ${renderEquipmentSection(c)}
+
     </div>
   `;
+}
+
+// ── ÉQUIPEMENT ────────────────────────────────────────────
+let _equipData = null;
+
+const SLOT_DEF = {
+  weapon: { label:'Arme',    icon:'⚔️' },
+  armor:  { label:'Armure',  icon:'🛡️' },
+  boots:  { label:'Bottes',  icon:'👢' },
+  head:   { label:'Casque',  icon:'🪖' },
+  ring:   { label:'Anneau',  icon:'💍' },
+};
+
+const EQ_RARITY_COLOR = {
+  common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d'
+};
+const EQ_RARITY_LABEL = {
+  common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'
+};
+
+async function loadEquipment() {
+  try {
+    _equipData = await api('/api/equipment');
+  } catch(e) {
+    _equipData = { inventory:[], equipped:{} };
+  }
+}
+
+function renderEquipSlot(slot, equipped) {
+  const def = SLOT_DEF[slot];
+  const item = equipped[slot];
+  if (item) {
+    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const stats = buildStatLine(item);
+    return `
+      <div class="eq-slot filled ${item.rarity}" onclick="openEquipInventory('${slot}')">
+        <img class="eq-slot-img" src="${esc(item.image)}" alt="${esc(item.name)}" onerror="this.style.display='none'">
+        <div class="eq-slot-info">
+          <div class="eq-slot-label">${def.label}</div>
+          <div class="eq-slot-name" style="color:${col}">${esc(item.name)}</div>
+          <div class="eq-slot-stats">${stats}</div>
+        </div>
+        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})" title="Déséquiper">✕</span>
+      </div>`;
+  }
+  return `
+    <div class="eq-slot" onclick="openEquipInventory('${slot}')">
+      <div class="eq-slot-empty-icon">${def.icon}</div>
+      <div class="eq-slot-info">
+        <div class="eq-slot-label">${def.label}</div>
+        <div class="eq-slot-name" style="opacity:.4">Vide</div>
+      </div>
+    </div>`;
+}
+
+function buildStatLine(item) {
+  const parts = [];
+  if (item.dmg_bonus    > 0) parts.push(`+${item.dmg_bonus}% DMG`);
+  if (item.crit         > 0) parts.push(`+${item.crit}% Crit`);
+  if (item.first_attack > 0) parts.push(`+${item.first_attack}% 1ère`);
+  if (item.clan_dmg     > 0) parts.push(`+${item.clan_dmg}% DMG clan`);
+  if (item.clan_crit    > 0) parts.push(`+${item.clan_crit}% Crit clan`);
+  return parts.join(' · ') || '—';
+}
+
+function renderEquipmentSection(c) {
+  const equipped = _equipData?.equipped || {};
+  const inventory = _equipData?.inventory || [];
+
+  // Slots gauche et droite
+  const leftSlots  = ['weapon', 'boots'];
+  const rightSlots = ['head', 'armor', 'ring'];
+
+  const equippedIds = new Set(Object.values(equipped).map(e => e?.id).filter(Boolean));
+
+  return `
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="margin-bottom:4px">⚔️ Équipement</div>
+      <div style="font-size:11px;opacity:.5;margin-bottom:12px">Drops sur boss Myntalis · Clique sur un slot pour équiper</div>
+
+      <div class="eq-rpg-wrap">
+        <!-- Colonne gauche -->
+        <div class="eq-col-left">
+          ${leftSlots.map(s => renderEquipSlot(s, equipped)).join('')}
+        </div>
+
+        <!-- Personnage centre -->
+        <div class="eq-char-center">
+          ${c.char_class && CLASS_IMAGES[c.char_class]
+            ? `<img class="eq-char-img" src="${CLASS_IMAGES[c.char_class]}" alt="${c.char_class}">`
+            : `<div class="eq-char-placeholder">🧬</div>`
+          }
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="eq-col-right">
+          ${rightSlots.map(s => renderEquipSlot(s, equipped)).join('')}
+        </div>
+      </div>
+
+      <!-- Récap bonus total -->
+      ${renderTotalRecap(c)}
+
+      <!-- Inventaire -->
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:900;opacity:.7;margin-bottom:8px">
+          Inventaire (${inventory.length} item${inventory.length > 1 ? 's' : ''})
+        </div>
+        ${inventory.length === 0
+          ? `<div style="text-align:center;padding:20px;opacity:.4;font-size:13px">Aucun équipement · Vainc Myntalis pour en obtenir !</div>`
+          : `<div class="eq-inventory-grid">
+              ${inventory.map(item => `
+                <div class="eq-inv-item ${item.rarity} ${equippedIds.has(item.id) ? 'equipped' : ''}"
+                     onclick="equipItem(${item.id},'${item.slot}')"
+                     title="${esc(item.name)}&#10;${esc(EQ_RARITY_LABEL[item.rarity]||'')}&#10;${esc(buildStatLine(item))}">
+                  ${equippedIds.has(item.id) ? '<div class="eq-equipped-badge"></div>' : ''}
+                  <img class="eq-inv-img" src="${esc(item.image)}" alt="${esc(item.name)}" onerror="this.style.display='none'">
+                  <div class="eq-inv-name" style="color:${EQ_RARITY_COLOR[item.rarity]||'#aaa'}">${esc(item.name)}</div>
+                </div>
+              `).join('')}
+             </div>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderTotalRecap(c) {
+  const tb = c.total_bonus || {};
+  const eb = c.equipment_bonus || {};
+  const items = [
+    { label:'DMG perso',    val: tb.dmg_bonus    || 0, color:'#ff6464' },
+    { label:'Crit',         val: tb.crit         || 0, color:'#33ff99' },
+    { label:'1ère frappe',  val: tb.first_attack || 0, color:'#ffd84d' },
+    { label:'DMG clan',     val: (tb.clan_dmg    || 0) + (c.class_passive?.dmg_bonus||0), color:'#4da6ff' },
+  ].filter(i => i.val > 0);
+
+  const eqTotal = (eb.dmg_bonus||0)+(eb.crit||0)+(eb.first_attack||0)+(eb.clan_dmg||0)+(eb.clan_crit||0);
+
+  return `
+    <div class="eq-total-recap">
+      <div class="eq-total-title">📊 Récap bonus total (stats + classe + équipement)</div>
+      <div class="eq-total-grid">
+        ${items.map(i => `
+          <div class="eq-total-item">
+            <div class="eq-total-val" style="color:${i.color}">+${Number(i.val).toFixed(1)}%</div>
+            <div class="eq-total-label">${i.label}</div>
+          </div>
+        `).join('')}
+      </div>
+      ${eqTotal > 0 ? `<div style="font-size:10px;opacity:.4;margin-top:8px">⚔️ Équipement contribue +${eqTotal}% au total</div>` : ''}
+    </div>
+  `;
+}
+
+function openEquipInventory(slot) {
+  const inventory = (_equipData?.inventory || []).filter(i => i.slot === slot);
+  if (!inventory.length) {
+    showAlert(`Aucun équipement de type "${SLOT_DEF[slot]?.label}" dans ton inventaire.`, 'info');
+    return;
+  }
+  // Équiper le premier non-équipé de ce slot, ou ouvrir une confirmation
+  const unequipped = inventory.find(i => !i.equipped_slot);
+  if (unequipped) equipItem(unequipped.id, slot);
+  else showAlert('Tous tes items de ce type sont déjà équipés.', 'info');
+}
+
+async function equipItem(id, slot) {
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id }) });
+    await loadEquipment();
+    const fresh = await api('/api/character');
+    _charData = fresh;
+    renderCharacter(fresh);
+  } catch(e) { showAlert(e.message, 'error'); }
+}
+
+async function unequipItem(id) {
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
+    await loadEquipment();
+    const fresh = await api('/api/character');
+    _charData = fresh;
+    renderCharacter(fresh);
+  } catch(e) { showAlert(e.message, 'error'); }
 }
 
 async function allocateStat(statKey) {
