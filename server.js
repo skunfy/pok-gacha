@@ -5098,6 +5098,26 @@ app.get("/api/clan/raid/last", auth, async (req, res) => {
 // API PERSONNAGE
 // ===========================
 
+
+async function getEquipmentBonus(userId) {
+  const { rows } = await pool.query(
+    `SELECT equip_key FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    [userId]
+  );
+
+  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0, clan_crit = 0;
+  for (const r of rows) {
+    const eq = EQUIPMENT[r.equip_key];
+    if (!eq) continue;
+    dmg_bonus    += eq.dmg_bonus    || 0;
+    crit         += eq.crit         || 0;
+    first_attack += eq.first_attack || 0;
+    clan_dmg     += eq.clan_dmg     || 0;
+    clan_crit    += eq.clan_crit    || 0;
+  }
+  return { dmg_bonus, crit, first_attack, clan_dmg, clan_crit };
+}
+
 // GET /api/character — profil perso de l'utilisateur connecté
 app.get("/api/character", auth, async (req, res) => {
   try {
@@ -5647,24 +5667,6 @@ app.post("/api/equipment/equip", auth, async (req, res) => {
 });
 
 // Helper : récupère les bonus d'équipement d'un joueur
-async function getEquipmentBonus(userId) {
-  const { rows } = await pool.query(
-    `SELECT equip_key FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
-    [userId]
-  );
-
-  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0, clan_crit = 0;
-  for (const r of rows) {
-    const eq = EQUIPMENT[r.equip_key];
-    if (!eq) continue;
-    dmg_bonus    += eq.dmg_bonus    || 0;
-    crit         += eq.crit         || 0;
-    first_attack += eq.first_attack || 0;
-    clan_dmg     += eq.clan_dmg     || 0;
-    clan_crit    += eq.clan_crit    || 0;
-  }
-  return { dmg_bonus, crit, first_attack, clan_dmg, clan_crit };
-}
 
 // GET /api/raid/cards — inventaire + deck du joueur
 app.get("/api/raid/cards", auth, async (req, res) => {
