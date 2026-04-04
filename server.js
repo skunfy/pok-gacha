@@ -4864,9 +4864,20 @@ app.post("/api/clan/missions/claim-chest", auth, async (req, res) => {
       rewardLabel = `+${amount} Dollax`;
 
     } else if (loot.type === 'card') {
+      // Récupérer les cartes déjà possédées
+      const ownedQ = await pool.query(
+        `SELECT DISTINCT card_key FROM player_raid_cards WHERE user_id=$1`,
+        [userId]
+      );
+      const ownedKeys = new Set(ownedQ.rows.map(r => r.card_key));
+
+      // Filtrer les cartes de la rareté tirée que le joueur ne possède pas encore
       const allCards = Object.values(RAID_CARDS).filter(c => c.rarity === loot.detail);
-      if (allCards.length) {
-        const card = allCards[Math.floor(Math.random() * allCards.length)];
+      const newCards = allCards.filter(c => !ownedKeys.has(c.key));
+
+      if (newCards.length) {
+        // Donner une carte non possédée
+        const card = newCards[Math.floor(Math.random() * newCards.length)];
         await pool.query(
           `INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`,
           [userId, card.key, Date.now()]
@@ -4874,6 +4885,17 @@ app.post("/api/clan/missions/claim-chest", auth, async (req, res) => {
         rewardLabel = card.name;
         rewardImage = card.image;
         rewardRarity = card.rarity;
+      } else {
+        // Toutes les cartes de cette rareté sont déjà possédées → compensation en dollax
+        const compensation = loot.detail === 'legendary' ? 1000
+                           : loot.detail === 'epic'      ? 500
+                           : loot.detail === 'rare'      ? 250
+                           : 100;
+        await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [compensation, userId]);
+        rewardLabel = `+${compensation} Dollax (collection complète !)`;
+        rewardImage = null;
+        rewardRarity = loot.detail;
+        loot = { ...loot, type: 'money' };
       }
 
     } else if (loot.type === 'equipment') {
