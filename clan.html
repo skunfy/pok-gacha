@@ -353,6 +353,67 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 .section-hidden{display:none}
 
+/* ── BARRE PROGRESSION MISSIONS ── */
+.mission-prog-wrap{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:18px 20px;margin-bottom:16px;
+}
+.mission-prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.mission-prog-title{font-size:13px;font-weight:900;opacity:.7}
+.mission-prog-count{font-size:12px;font-weight:800;color:#c084ff}
+.mission-prog-bar-outer{position:relative;height:20px;background:rgba(255,255,255,.07);border-radius:999px;margin-bottom:6px;overflow:visible}
+.mission-prog-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7f5cff,#f053c5);transition:width .6s cubic-bezier(.4,0,.2,1);position:relative;min-width:0;}
+.mission-prog-bar-fill::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 0 8px rgba(127,92,255,.8);display:var(--dot-display,block)}
+.mission-milestones{display:flex;justify-content:space-between;margin-top:10px;padding:0 2px;position:relative}
+.mission-milestone{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.mission-milestone-dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:#0d0e1c;position:absolute;top:-25px;left:50%;transform:translateX(-50%);transition:all .3s;z-index:2}
+.mission-milestone-dot.reached{background:#7f5cff;border-color:#7f5cff;box-shadow:0 0 10px rgba(127,92,255,.5)}
+.mission-milestone-dot.done{background:#33ff99;border-color:#33ff99;box-shadow:0 0 10px rgba(51,255,153,.4)}
+.mission-milestone-label{font-size:9px;color:rgba(255,255,255,.3);font-weight:800;margin-top:2px}
+.mission-milestone-reward{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.07);white-space:nowrap;margin-top:2px;transition:all .3s}
+.mission-milestone-reward.reached{background:rgba(127,92,255,.2);color:#c084ff;border-color:rgba(127,92,255,.3)}
+.mission-milestone-reward.done{background:rgba(51,255,153,.12);color:#33ff99;border-color:rgba(51,255,153,.25)}
+.mission-prog-next{font-size:11px;color:rgba(255,255,255,.35);margin-top:8px}
+
+/* ── COFFRE ── */
+.chest-section{text-align:center;margin-bottom:16px}
+.chest-btn{
+  display:inline-flex;flex-direction:column;align-items:center;gap:10px;
+  background:rgba(255,184,0,.06);border:2px solid rgba(255,184,0,.3);
+  border-radius:20px;padding:20px 36px;cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.chest-btn:hover:not(:disabled){background:rgba(255,184,0,.12);border-color:rgba(255,184,0,.65);transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,184,0,.15)}
+.chest-btn:active:not(:disabled){transform:scale(.97)}
+.chest-btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}
+.chest-img{width:80px;height:80px;object-fit:contain;transition:transform .2s}
+.chest-btn:hover:not(:disabled) .chest-img{transform:scale(1.08) rotate(-4deg)}
+.chest-label{font-size:14px;font-weight:900;color:#ffd84d}
+.chest-sub{font-size:11px;color:rgba(255,255,255,.35)}
+.chest-claimed{font-size:12px;color:#33ff99;font-weight:800;margin-top:4px}
+@keyframes chestShine{0%{left:-100%}100%{left:200%}}
+.chest-btn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:chestShine 3s infinite}
+
+/* ── MODAL RÉCOMPENSE ── */
+.chest-result-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.chest-result-overlay.show{opacity:1;pointer-events:all}
+.chest-result-card{
+  background:#0e0f1f;border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;padding:28px 24px;max-width:320px;width:100%;text-align:center;
+  transform:scale(.85) translateY(20px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.chest-result-overlay.show .chest-result-card{transform:scale(1) translateY(0)}
+.chest-result-img{width:140px;height:140px;object-fit:contain;border-radius:14px;margin:0 auto 14px;display:block}
+.chest-result-icon{font-size:64px;margin-bottom:14px;display:block}
+.chest-result-rarity{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.chest-result-name{font-size:22px;font-weight:900;margin-bottom:4px}
+.chest-result-type{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:22px}
+.chest-result-close{padding:11px 28px;border-radius:12px;border:none;cursor:pointer;font-weight:900;font-size:14px;color:#fff;background:linear-gradient(135deg,#7f5cff,#f053c5)}
+
 /* PERSONNAGE */
 .char-wrap{display:flex;flex-direction:column;gap:16px}
 
@@ -1945,24 +2006,24 @@ function buildStatLine(item) {
 function renderSlot(slot, equipped) {
   const def  = SLOT_DEF[slot];
   const item = equipped[slot];
-  const rarityNames = { common:'Commun', rare:'Rare', epic:'\u00c9pique', legendary:'L\u00e9gendaire' };
+  const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
 
   if (item) {
     const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
     const statLines = [];
-    if (item.dmg_bonus)    statLines.push(`<div class="eq-tooltip-stat"><span>\u2694\ufe0f</span><span style="color:#ff8844">+${item.dmg_bonus}% DMG</span></div>`);
-    if (item.crit)         statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udca5</span><span style="color:#ffd84d">+${item.crit}% Crit</span></div>`);
-    if (item.first_attack) statLines.push(`<div class="eq-tooltip-stat"><span>\u26a1</span><span style="color:#44aaff">+${item.first_attack}% 1\u00e8re frappe</span></div>`);
-    if (item.clan_dmg)     statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udee1\ufe0f</span><span style="color:#4da6ff">+${item.clan_dmg}% DMG clan</span></div>`);
-    if (item.clan_crit)    statLines.push(`<div class="eq-tooltip-stat"><span>\ud83d\udcab</span><span style="color:#c084ff">+${item.clan_crit}% Crit clan</span></div>`);
+    if (item.dmg_bonus)    statLines.push(`<div class="eq-tooltip-stat"><span>⚔️</span><span style="color:#ff8844">+${item.dmg_bonus}% DMG</span></div>`);
+    if (item.crit)         statLines.push(`<div class="eq-tooltip-stat"><span>💥</span><span style="color:#ffd84d">+${item.crit}% Crit</span></div>`);
+    if (item.first_attack) statLines.push(`<div class="eq-tooltip-stat"><span>⚡</span><span style="color:#44aaff">+${item.first_attack}% 1ère frappe</span></div>`);
+    if (item.clan_dmg)     statLines.push(`<div class="eq-tooltip-stat"><span>🛡️</span><span style="color:#4da6ff">+${item.clan_dmg}% DMG clan</span></div>`);
+    if (item.clan_crit)    statLines.push(`<div class="eq-tooltip-stat"><span>💫</span><span style="color:#c084ff">+${item.clan_crit}% Crit clan</span></div>`);
 
     return `
       <div class="eq-slot filled ${item.rarity}" onclick="openEquipInventory('${slot}')">
         <img class="eq-slot-img" src="${esc(item.image)}" alt="" onerror="this.style.display='none'">
-        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">\u2715</span>
+        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">✕</span>
         <div class="eq-slot-tooltip">
           <div class="eq-tooltip-name">${esc(item.name)}</div>
-          <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} \u00b7 ${rarityNames[item.rarity]||item.rarity}</div>
+          <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
           ${statLines.length ? statLines.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
         </div>
       </div>`;
@@ -1973,8 +2034,8 @@ function renderSlot(slot, equipped) {
       <div class="eq-slot-empty-icon">${def.icon}</div>
       <div class="eq-slot-label">${def.label}</div>
       <div class="eq-slot-tooltip">
-        <div class="eq-tooltip-empty">${def.icon} ${def.label} \u2014 vide</div>
-        <div style="font-size:11px;opacity:.4;margin-top:4px">Clique pour \u00e9quiper</div>
+        <div class="eq-tooltip-empty">${def.icon} ${def.label} — vide</div>
+        <div style="font-size:11px;opacity:.4;margin-top:4px">Clique pour équiper</div>
       </div>
     </div>`;
 }
@@ -2413,29 +2474,133 @@ function showAlert(msg, type='success') {
 // ===========================
 // MISSIONS
 // ===========================
+// ── COFFRE IMAGE ──
+const CHEST_IMG = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/coffre.png';
+
+const CHEST_MILESTONES = [
+  { need:2,  label:'2/8', reward:'+100 XP' },
+  { need:4,  label:'4/8', reward:'+200 XP' },
+  { need:6,  label:'6/8', reward:'+100 💰' },
+  { need:8,  label:'8/8', reward:'Coffre 📦' },
+];
+
+
+
+let _chestClaimed = false;
+
 async function loadMissions() {
   const el = document.getElementById("missionsContent");
   if (!el) return;
   try {
     const data = await api("/api/clan/missions");
-    el.innerHTML = `<div class="missions-grid">` +
-      data.missions.map(m => {
-        const pct = m.goal > 0 ? Math.min(100, Math.round((m.progress/m.goal)*100)) : 0;
-        return `
-          <div class="mission-card" ${m.completed?'style="border-color:rgba(51,255,153,.3);background:rgba(51,255,153,.05)"':''}>
-            <div class="mission-label">
-              ${esc(m.label)}
-              ${m.completed?'<span class="mission-check">✅</span>':''}
-            </div>
-            <div class="mission-bar-wrap">
-              <div class="mission-bar ${m.completed?'done':''}" style="width:${pct}%"></div>
-            </div>
-            <div class="mission-prog">${m.progress}/${m.goal}</div>
-            <div class="mission-reward">🏅 +${m.xpClan} XP clan · +${m.bankReward} dollax banque</div>
-          </div>
-        `;
-      }).join("") + `</div>`;
+    const missions = data.missions;
+    const done = missions.filter(m => m.completed).length;
+    const total = missions.length;
+    const pctBar = Math.round((done / total) * 100);
+
+    // Vérifier si le coffre est déjà réclamé aujourd'hui
+    let chestClaimedToday = _chestClaimed;
+    try {
+      const chestInfo = await api("/api/clan/missions/chest-status");
+      chestClaimedToday = chestInfo.claimed;
+      _chestClaimed = chestClaimedToday;
+    } catch(e) {}
+
+    const allDone = done >= total;
+
+    // Barre de progression
+    const milestonesHtml = CHEST_MILESTONES.map(ms => {
+      const cls = done >= ms.need ? 'done' : (done >= ms.need - 1 ? 'reached' : '');
+      return `<div class="mission-milestone" style="position:relative">
+        <div class="mission-milestone-dot ${cls}"></div>
+        <div style="height:8px"></div>
+        <div class="mission-milestone-label">${ms.label}</div>
+        <div class="mission-milestone-reward ${cls}">${ms.reward}</div>
+      </div>`;
+    }).join('');
+
+    const nextMs = CHEST_MILESTONES.find(ms => done < ms.need);
+    const nextText = nextMs ? `Prochain palier : ${nextMs.label} — ${nextMs.reward}` : 'Toutes les récompenses débloquées !';
+
+    el.innerHTML = `
+      <!-- BARRE DE PROGRESSION -->
+      <div class="mission-prog-wrap">
+        <div class="mission-prog-header">
+          <div class="mission-prog-title">📅 Progression quotidienne</div>
+          <div class="mission-prog-count">${done} / ${total} missions</div>
+        </div>
+        <div class="mission-prog-bar-outer">
+          <div class="mission-prog-bar-fill" style="width:${pctBar}%;--dot-display:${pctBar===0?'none':'block'}"></div>
+          ${CHEST_MILESTONES.map(ms => `<div style="position:absolute;top:50%;left:${Math.round((ms.need/total)*100)}%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:${done>=ms.need?'#33ff99':'rgba(255,255,255,.2)'};z-index:3;border:2px solid ${done>=ms.need?'#33ff99':'rgba(255,255,255,.15)'}"></div>`).join('')}
+        </div>
+        <div class="mission-milestones">${milestonesHtml}</div>
+        <div class="mission-prog-next">${nextText}</div>
+      </div>
+
+      <!-- COFFRE -->
+      <div class="chest-section">
+        <div class="chest-btn" onclick="claimChest()" ${!allDone || chestClaimedToday ? 'disabled' : ''}>
+          <img class="chest-img" src="${CHEST_IMG}" alt="Coffre" onerror="this.style.fontSize='52px';this.outerHTML='<span style=\'font-size:52px\'>📦</span>'">
+          <span class="chest-label">${chestClaimedToday ? '✅ Coffre réclamé' : allDone ? '🎁 Ouvrir le coffre !' : 'Coffre journalier'}</span>
+          <span class="chest-sub">${chestClaimedToday ? 'Reviens demain !' : allDone ? 'Toutes les missions accomplies !' : `Complète toutes les missions pour l'ouvrir`}</span>
+        </div>
+      </div>
+
+      <!-- MISSIONS GRID -->
+      <div class="missions-grid">
+        ${missions.map(m => {
+          const pct = m.goal > 0 ? Math.min(100, Math.round((m.progress/m.goal)*100)) : 0;
+          return `
+            <div class="mission-card" ${m.completed?'style="border-color:rgba(51,255,153,.3);background:rgba(51,255,153,.05)"':''}>
+              <div class="mission-label">
+                ${esc(m.label)}
+                ${m.completed?'<span class="mission-check">✅</span>':''}
+              </div>
+              <div class="mission-bar-wrap">
+                <div class="mission-bar ${m.completed?'done':''}" style="width:${pct}%"></div>
+              </div>
+              <div class="mission-prog">${m.progress}/${m.goal}</div>
+              <div class="mission-reward">🏅 +${m.xpClan} XP clan · +${m.bankReward} dollax banque</div>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
+
   } catch(e) { el.innerHTML = '<div class="loading">Erreur</div>'; }
+}
+
+async function claimChest() {
+  try {
+    const data = await api("/api/clan/missions/claim-chest", { method: 'POST' });
+    if (!data.ok) { showAlert(data.error || 'Erreur', 'error'); return; }
+    _chestClaimed = true;
+
+    const r = data.reward;
+    const CHEST_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+    const CHEST_RARITY_LABEL = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+    const rarityColor = CHEST_RARITY_COLOR[r.rarity] || '#ffd84d';
+    const rarityLabel = CHEST_RARITY_LABEL[r.rarity] || r.rarity || '';
+    const typeLabel = r.type === 'money' ? 'Monnaie' : r.type === 'card' ? 'Carte de raid' : 'Équipement';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'chest-result-overlay';
+    overlay.innerHTML = `
+      <div class="chest-result-card" style="border-color:${rarityColor}33">
+        ${r.image
+          ? `<img class="chest-result-img" src="${esc(r.image)}" alt="${esc(r.label)}" style="border:2px solid ${rarityColor}44" onerror="this.outerHTML='<span class=\'chest-result-icon\'>🎁</span>'">`
+          : `<span class="chest-result-icon">${r.type==='money'?'💰':'🎁'}</span>`
+        }
+        <div class="chest-result-rarity" style="color:${rarityColor}">${rarityLabel}</div>
+        <div class="chest-result-name" style="color:${rarityColor}">${esc(r.label)}</div>
+        <div class="chest-result-type">${typeLabel}</div>
+        <button class="chest-result-close" onclick="this.closest('.chest-result-overlay').remove();loadMissions()">Super !</button>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); loadMissions(); } });
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('show'), 10);
+
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
 }
 
 // ===========================
