@@ -777,6 +777,16 @@ async function initDb() {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS daily_chest_claimed (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      date_key TEXT NOT NULL,
+      reward_type TEXT NOT NULL,
+      reward_detail TEXT NOT NULL,
+      claimed_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, date_key)
+    )
+  `);
   await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';`);
   await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1;`);
   await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS talent_points INTEGER NOT NULL DEFAULT 0;`);
@@ -4780,6 +4790,117 @@ app.get("/api/clan/missions", auth, async (req, res) => {
   });
 
   res.json({ missions, dateKey: dk });
+});
+
+// GET /api/clan/missions/chest-status
+app.get("/api/clan/missions/chest-status", auth, async (req, res) => {
+  try {
+    const dk = todayKey();
+    const q = await pool.query(
+      `SELECT reward_type, reward_detail FROM daily_chest_claimed WHERE user_id=$1 AND date_key=$2`,
+      [req.user.id, dk]
+    );
+    res.json({ claimed: q.rows.length > 0, reward: q.rows[0] || null });
+  } catch(e) {
+    res.json({ claimed: false, reward: null });
+  }
+});
+
+// POST /api/clan/missions/claim-chest
+app.post("/api/clan/missions/claim-chest", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.status(403).json({ error: "Non membre" });
+
+    const dk = todayKey();
+    const userId = req.user.id;
+
+    // Déjà réclamé ?
+    const alreadyQ = await pool.query(
+      `SELECT 1 FROM daily_chest_claimed WHERE user_id=$1 AND date_key=$2`,
+      [userId, dk]
+    );
+    if (alreadyQ.rows.length) {
+      return res.status(400).json({ error: "Coffre déjà réclamé aujourd'hui !" });
+    }
+
+    // Toutes les missions complétées ?
+    const missQ = await pool.query(
+      `SELECT COUNT(*) as total, SUM(completed) as done FROM clan_missions WHERE clan_id=$1 AND user_id=$2 AND date_key=$3`,
+      [m.clan_id, userId, dk]
+    );
+    const total = parseInt(missQ.rows[0]?.total || 0);
+    const done  = parseInt(missQ.rows[0]?.done  || 0);
+    if (total < 8 || done < 8) {
+      return res.status(400).json({ error: "Toutes les missions doivent être complétées !" });
+    }
+
+    // Loot table (poids sur 100)
+    const LOOT_TABLE = [
+      { id:'d500',  weight:20, type:'money',     detail:'500',       label:'500 Dollax'            },
+      { id:'d1000', weight:15, type:'money',     detail:'1000',      label:'1 000 Dollax'           },
+      { id:'cardC', weight:20, type:'card',      detail:'common',    label:'Carte Commune'          },
+      { id:'cardR', weight:14, type:'card',      detail:'rare',      label:'Carte Rare'             },
+      { id:'cardE', weight:10, type:'card',      detail:'epic',      label:'Carte Épique'           },
+      { id:'cardL', weight:3,  type:'card',      detail:'legendary', label:'Carte Légendaire'       },
+      { id:'eqC',   weight:10, type:'equipment', detail:'common',    label:'Équipement Commun'      },
+      { id:'eqR',   weight:7,  type:'equipment', detail:'rare',      label:'Équipement Rare'        },
+      { id:'eqE',   weight:4,  type:'equipment', detail:'epic',      label:'Équipement Épique'      },
+      { id:'eqL',   weight:2,  type:'equipment', detail:'legendary', label:'Équipement Légendaire'  },
+    ];
+
+    const totalWeight = LOOT_TABLE.reduce((a, l) => a + l.weight, 0);
+    let rand = Math.random() * totalWeight;
+    let loot = LOOT_TABLE[0];
+    for (const l of LOOT_TABLE) { rand -= l.weight; if (rand <= 0) { loot = l; break; } }
+
+    let rewardLabel = loot.label;
+    let rewardImage = null;
+    let rewardRarity = loot.detail;
+
+    if (loot.type === 'money') {
+      const amount = parseInt(loot.detail);
+      await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [amount, userId]);
+      rewardLabel = `+${amount} Dollax`;
+
+    } else if (loot.type === 'card') {
+      const allCards = Object.values(RAID_CARDS).filter(c => c.rarity === loot.detail);
+      if (allCards.length) {
+        const card = allCards[Math.floor(Math.random() * allCards.length)];
+        await pool.query(
+          `INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`,
+          [userId, card.key, Date.now()]
+        );
+        rewardLabel = card.name;
+        rewardImage = card.image;
+        rewardRarity = card.rarity;
+      }
+
+    } else if (loot.type === 'equipment') {
+      const allEq = Object.values(EQUIPMENT).filter(e => e.rarity === loot.detail);
+      if (allEq.length) {
+        const eq = allEq[Math.floor(Math.random() * allEq.length)];
+        await pool.query(
+          `INSERT INTO player_equipment(user_id, equip_key, obtained_at) VALUES($1,$2,$3)`,
+          [userId, eq.key, Date.now()]
+        );
+        rewardLabel = eq.name;
+        rewardImage = eq.image;
+        rewardRarity = eq.rarity;
+      }
+    }
+
+    await pool.query(
+      `INSERT INTO daily_chest_claimed(user_id, date_key, reward_type, reward_detail, claimed_at) VALUES($1,$2,$3,$4,$5)`,
+      [userId, dk, loot.type, loot.detail, Date.now()]
+    );
+
+    res.json({ ok: true, reward: { type: loot.type, label: rewardLabel, image: rewardImage, rarity: rewardRarity } });
+
+  } catch(e) {
+    console.error("claim-chest error:", e);
+    res.status(500).json({ error: "Erreur serveur : " + e.message });
+  }
 });
 
 // GET /api/clan/boss — état du raid en cours
