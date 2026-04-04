@@ -1632,12 +1632,20 @@ function renderMemberCard(m, isOfficer, isLeader, leaderName) {
     `;
   }
 
+  const CLASS_DEF_M = {
+    slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464' },
+    assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff' },
+    soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff' },
+  };
+  const cls = CLASS_DEF_M[m.char_class] || null;
+
   return `
     <div class="member-card" ${isMe?'style="border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.08)"':''}>
       <div class="member-avatar" style="${avatarStyle}">${avatarStyle?'':initials}</div>
       <div style="min-width:0;flex:1">
         <div class="member-name">${esc(m.name)} ${isMe?'<span style="font-size:10px;color:var(--accent)">(toi)</span>':''}</div>
         <div class="member-role ${m.role==='leader'?'role-leader':m.role==='officer'?'role-officer':''}">${m.role==='leader'?'👑 Meneur':m.role==='officer'?'⭐ Officier':'Membre'}</div>
+        ${cls ? `<div style="font-size:10px;font-weight:800;color:${cls.color};margin-top:2px">${cls.icon} ${cls.label}</div>` : ''}
         <div class="member-dmg">⚔️ ${fmtNum(m.damage_total)} dmg total</div>
         ${actions}
       </div>
