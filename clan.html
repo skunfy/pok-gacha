@@ -1685,7 +1685,7 @@ const CLASS_IMAGES = {
 const CLASS_DEF = {
   slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464', desc:'Maître du combat direct.', passives:'+10% DMG permanent' },
   assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff', desc:'Frappe vite et fort.',      passives:'+8% Crit · +15% 1ère frappe' },
-  soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff', desc:'Explosif en fin de combat.',passives:'+12% DMG quand boss <50% HP' },
+  soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff', desc:'Maître du soutien clan.',  passives:'+12% DMG clan permanents' },
 };
 
 let _deckBonusData = null;
@@ -1816,9 +1816,9 @@ function renderCharacter(c) {
     },
     {
       key:'stat_intelligence', cls2:'intel', icon:'🔮', label:'Intelligence',
-      val: c.stat_intelligence, desc:'Bonus DMG quand boss < 50% PV.',
+      val: c.stat_intelligence, desc:'Augmente les dégâts du clan.',
       rate: c.stat_rates?.intelligence ?? 0.6, statName:'intelligence', color:'#4da6ff',
-      passive: c.class_passive?.intel_bonus > 0 ? `+${c.class_passive.intel_bonus}% DMG <50% passif (${cls?.label})` : null,
+      passive: (c.class_passive?.clan_dmg || c.class_passive?.intel_bonus) > 0 ? `+${c.class_passive?.clan_dmg || c.class_passive?.intel_bonus}% DMG clan passif (${cls?.label})` : null,
     },
     {
       key:'stat_dexterite', cls2:'dex', icon:'⚡', label:'Dextérité',
@@ -1939,7 +1939,7 @@ function renderCharacter(c) {
             const bonusVal    = (s.val * s.rate).toFixed(1);
             const bonusLabel  = s.cls2==='force' ? `+${bonusVal}% DMG`
                               : s.cls2==='agilite' ? `+${bonusVal}% Crit`
-                              : s.cls2==='intel' ? `+${bonusVal}% DMG <50%`
+                              : s.cls2==='intel' ? `+${bonusVal}% DMG clan`
                               : `+${bonusVal}% 1ère frappe`;
             const tierBadge = isPrimary
               ? `<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:${clsColor}33;color:${clsColor};border:1px solid ${clsColor}55">PRI</span>`

@@ -1086,7 +1086,7 @@ const CHAR_CLASSES = {
     passive_intel_bonus: 12,
     passive_first_attack: 0,
     color: '#4da6ff',
-    desc: 'Explosif en fin de combat. +12% DMG quand boss < 50% HP.',
+    desc: 'Maître du soutien clan. +12% DMG clan permanents.',
     scale: { force: 0.5, agilite: 1.2, intelligence: 2.5, dexterite: 0.8 },
     primary: ['intelligence'],
     secondary: ['agilite'],
@@ -1094,7 +1094,7 @@ const CHAR_CLASSES = {
 };
 
 // Base rate par stat (sans classe)
-const STAT_BASE_RATE = { force: 0.5, agilite: 0.4, intelligence: 0.6, dexterite: 0.5 };
+const STAT_BASE_RATE = { force: 0.6, agilite: 0.4, intelligence: 0.3, dexterite: 0.5 };
 
 // Calcule le multiplicateur effectif d'une stat pour une classe
 function statEffectiveRate(statName, charClass) {
@@ -1120,9 +1120,8 @@ function charStatBonus(char, bossHpPct) {
   return {
     dmg_bonus:    force        * statEffectiveRate('force',        charClass) + passive_dmg,
     crit:         agilite      * statEffectiveRate('agilite',      charClass) + passive_crit,
-    intel_bonus:  bossHpPct < 50
-                    ? intelligence * statEffectiveRate('intelligence', charClass) + passive_intel
-                    : 0,
+    intel_bonus:  0,
+    clan_dmg:     intelligence * statEffectiveRate('intelligence', charClass) + passive_intel,
     first_attack: dexterite    * statEffectiveRate('dexterite',   charClass) + passive_first,
   };
 }
@@ -5133,7 +5132,7 @@ app.get("/api/character", auth, async (req, res) => {
     const rates = {
       force:        statEffectiveRate('force',        charClass),
       agilite:      statEffectiveRate('agilite',      charClass),
-      intelligence: statEffectiveRate('intelligence', charClass),
+      intelligence: statEffectiveRate('intelligence', charClass), // clan_dmg
       dexterite:    statEffectiveRate('dexterite',    charClass),
     };
 
@@ -5150,7 +5149,7 @@ app.get("/api/character", auth, async (req, res) => {
     const totalBonus = {
       dmg_bonus:    Math.round((statDmg    + (cls?.passive_dmg_bonus   || 0) + eqBonus.dmg_bonus)    * 10) / 10,
       crit:         Math.round((statCrit   + (cls?.passive_crit        || 0) + eqBonus.crit)          * 10) / 10,
-      intel_bonus:  Math.round((statIntel  + (cls?.passive_intel_bonus || 0))                         * 10) / 10,
+      clan_dmg:     Math.round((statIntel  + (cls?.passive_intel_bonus || 0))                         * 10) / 10,
       first_attack: Math.round((statFirstAtk + (cls?.passive_first_attack || 0) + eqBonus.first_attack) * 10) / 10,
       clan_dmg:     eqBonus.clan_dmg,
       clan_crit:    eqBonus.clan_crit,
@@ -5178,7 +5177,7 @@ app.get("/api/character", auth, async (req, res) => {
       class_passive: cls ? {
         dmg_bonus:    cls.passive_dmg_bonus,
         crit:         cls.passive_crit,
-        intel_bonus:  cls.passive_intel_bonus,
+        clan_dmg:     cls.passive_intel_bonus,
         first_attack: cls.passive_first_attack,
       } : null,
       classes_def: CHAR_CLASSES,
@@ -5187,7 +5186,7 @@ app.get("/api/character", auth, async (req, res) => {
       bonus_preview: {
         dmg_bonus:    statDmg    + (cls?.passive_dmg_bonus   || 0),
         crit:         statCrit   + (cls?.passive_crit        || 0),
-        intel_bonus:  statIntel  + (cls?.passive_intel_bonus || 0),
+        clan_dmg:     statIntel  + (cls?.passive_intel_bonus || 0),
         first_attack: statFirstAtk + (cls?.passive_first_attack || 0),
       }
     });
@@ -5516,7 +5515,8 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
   const charQ = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
   const char = charQ.rows[0] || null;
   const statBonus = charStatBonus(char, bossHpPct);
-  dmg_bonus    += statBonus.dmg_bonus + statBonus.intel_bonus;
+  dmg_bonus    += statBonus.dmg_bonus;
+  clan_dmg     += statBonus.clan_dmg || 0;
   crit         += statBonus.crit;
   first_attack += statBonus.first_attack;
 
