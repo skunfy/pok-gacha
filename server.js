@@ -862,6 +862,10 @@ async function initDb() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_player_equipment_user ON player_equipment(user_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pulls_user_game    ON pulls(user_id, game)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pulls_user_at      ON pulls(user_id, at DESC)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_collection_user_game  ON collection(user_id, game)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_collection_user_idkey ON collection(user_id, idKey)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS raid_drops_recap (
       id SERIAL PRIMARY KEY,
@@ -2522,6 +2526,7 @@ app.get("/api/me", auth, async (req, res) => {
   const clanBonus = await getClanBonusForUser(req.user.id).catch(() => null);
   const payRate = PAY_AMOUNT + (clanBonus?.dollaxBonus || 0);
 
+  res.setHeader('Cache-Control', 'private, max-age=10');
   res.json({
     name: u?.name,
     money: u?.money || 0,
@@ -3328,6 +3333,7 @@ app.get("/api/pulls", auth, async (req, res) => {
     [req.user.id, game]
   );
 
+  res.setHeader('Cache-Control', 'private, max-age=15');
   res.json({
     pulls: rows.rows.map((r) => {
       const itemGame = r.game || game;
@@ -3930,7 +3936,7 @@ app.post("/api/market/buy", auth, async (req, res) => {
 
     // ✅ On récupère aussi binder ids + imageHigh
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, price, qty
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, grade, mint, price, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -4095,7 +4101,7 @@ app.post("/api/market/cancel", auth, async (req, res) => {
     await client.query("BEGIN");
 
     const lQ = await client.query(
-      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, qty
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, grade, mint, qty
        FROM market_listings
        WHERE id=$1
        FOR UPDATE`,
@@ -4200,6 +4206,7 @@ app.get("/api/notifications", auth, async (req, res) => {
     [req.user.id]
   );
 
+  res.setHeader('Cache-Control', 'private, max-age=10');
   res.json({
     unread: unreadQ.rows[0]?.c || 0,
     notifications: rows.map(r => ({
@@ -4417,6 +4424,7 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
     clanName: u.clan_name || ""
 }));
 
+  res.setHeader('Cache-Control', 'private, max-age=60');
   res.setHeader('Cache-Control', 'private, max-age=60');
   res.json({
     top,
@@ -6058,6 +6066,7 @@ app.get("/api/equipment", auth, async (req, res) => {
     if (item.equipped_slot) equipped[item.equipped_slot] = item;
   }
 
+  res.setHeader('Cache-Control', 'private, max-age=15');
   res.json({ inventory, equipped, catalogue: Object.values(EQUIPMENT) });
 });
 
