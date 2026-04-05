@@ -5898,17 +5898,20 @@ const MATERIALS = {
 // Matériau requis selon rareté de l'item + coût dollax + taux réussite par forge level
 function forgeRequirements(rarity, forgeLevel) {
   const next = forgeLevel + 1;
-  let matKey, matQty, cost, successRate;
 
-  if (next <= 5) {
-    matKey = 'fer'; matQty = next; cost = 200 * next; successRate = 100;
-  } else if (next <= 9) {
-    matKey = 'azurite'; matQty = next - 4; cost = 1250 + 500 * (next - 5); successRate = 75;
-  } else if (next <= 12) {
-    matKey = 'quartz'; matQty = next - 8; cost = 5000 + 1250 * (next - 10); successRate = 50;
-  } else {
-    matKey = 'topaze'; matQty = next - 11; cost = 10000 + 2000 * (next - 13); successRate = 25;
-  }
+  // Matériau = rareté de l'item
+  const matKey = { common:'fer', rare:'azurite', epic:'quartz', legendary:'topaze' }[rarity] || 'fer';
+
+  // Quantité croissante avec le niveau (1-5 → 1-5 mat, 6-10 → 2-6 mat, 11-15 → 3-7 mat)
+  const matQty = Math.ceil(next / 3);
+
+  // Coût et taux de réussite selon le palier de forge
+  let cost, successRate;
+  if (next <= 5)       { cost = 200 * next;               successRate = 100; }
+  else if (next <= 9)  { cost = 1250 + 500 * (next - 5);  successRate = 75;  }
+  else if (next <= 12) { cost = 5000 + 1250 * (next - 10);successRate = 50;  }
+  else                 { cost = 10000 + 2000 * (next - 13);successRate = 25;  }
+
   return { matKey, matQty, cost, successRate };
 }
 
