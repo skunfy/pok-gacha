@@ -353,6 +353,101 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 .section-hidden{display:none}
 
+/* ── FORGE ── */
+.forge-wrap{display:flex;flex-direction:column;gap:20px}
+.forge-main{
+  display:grid;grid-template-columns:1fr 200px 1fr;
+  gap:0;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;
+}
+.forge-col-left,.forge-col-right{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:14px;padding:20px 14px;
+}
+.forge-col-left{border-right:1px solid rgba(255,255,255,.06)}
+.forge-col-right{border-left:1px solid rgba(255,255,255,.06)}
+.forge-col-center{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.2);padding:20px 10px;gap:10px;
+}
+.forge-anvil{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(127,92,255,.4));transition:transform .3s}
+.forge-anvil:hover{transform:scale(1.05)}
+.forge-cost{font-size:13px;font-weight:900;color:#ffd84d;text-align:center}
+.forge-rate{font-size:12px;font-weight:800;text-align:center}
+.forge-btn{
+  padding:12px 28px;border-radius:14px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;width:100%;
+  background:linear-gradient(135deg,#7f5cff,#f053c5);
+  transition:all .2s;
+}
+.forge-btn:hover:not(:disabled){opacity:.85;transform:translateY(-1px)}
+.forge-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.forge-btn-destroy{
+  padding:8px 16px;border-radius:10px;border:none;cursor:pointer;
+  font-weight:800;font-size:12px;color:#ff8888;background:rgba(255,68,68,.12);
+  border:1px solid rgba(255,68,68,.25);transition:all .2s;width:100%;margin-top:4px;
+}
+.forge-btn-destroy:hover:not(:disabled){background:rgba(255,68,68,.22)}
+
+/* Item slot forge */
+.forge-item-slot{
+  width:100px;height:100px;border-radius:14px;
+  border:2px dashed rgba(255,255,255,.2);
+  background:rgba(255,255,255,.04);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;position:relative;overflow:visible;
+}
+.forge-item-slot:hover{border-color:rgba(127,92,255,.5);background:rgba(127,92,255,.08)}
+.forge-item-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);padding:0}
+.forge-item-slot img{width:100%;height:100%;object-fit:contain;border-radius:12px}
+.forge-item-slot .forge-item-level{
+  position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+  font-size:11px;font-weight:900;padding:2px 8px;border-radius:999px;
+  background:#0d0e1c;border:1px solid rgba(255,255,255,.2);white-space:nowrap;
+}
+
+/* Matériaux slot */
+.forge-mat-slot{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:10px 14px;width:100%;
+}
+.forge-mat-img{width:36px;height:36px;object-fit:contain}
+.forge-mat-info{flex:1;min-width:0}
+.forge-mat-name{font-size:12px;font-weight:900}
+.forge-mat-qty{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+.forge-mat-need{font-size:11px;font-weight:800;margin-left:auto}
+
+/* Inventaire forge */
+.forge-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+.forge-inv-item{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:7px 5px;text-align:center;cursor:pointer;
+  transition:all .15s;position:relative;
+}
+.forge-inv-item:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
+.forge-inv-item.selected{border-color:rgba(127,92,255,.8);background:rgba(127,92,255,.2);box-shadow:0 0 12px rgba(127,92,255,.3)}
+.forge-inv-item.legendary{border-color:rgba(255,184,0,.35)}
+.forge-inv-item.epic{border-color:rgba(192,132,255,.3)}
+.forge-inv-item.rare{border-color:rgba(77,166,255,.3)}
+.forge-inv-img{width:48px;height:48px;object-fit:contain}
+.forge-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.forge-inv-lvl{font-size:9px;font-weight:900;margin-top:2px}
+.forge-alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;margin-top:10px}
+
+/* Animations forge level */
+@keyframes forgeGlow3{0%,100%{box-shadow:0 0 6px rgba(255,255,255,.4)}50%{box-shadow:0 0 14px rgba(255,255,255,.8)}}
+@keyframes forgeGlow6{0%,100%{box-shadow:0 0 8px rgba(77,166,255,.6)}50%{box-shadow:0 0 20px rgba(77,166,255,1)}}
+@keyframes forgeGlow9{0%,100%{box-shadow:0 0 10px rgba(192,132,255,.7)}50%{box-shadow:0 0 24px rgba(192,132,255,1)}}
+@keyframes forgeGlow12{0%,100%{box-shadow:0 0 12px rgba(255,184,0,.8)}50%{box-shadow:0 0 28px rgba(255,184,0,1)}}
+@keyframes forgeRainbow{0%{border-color:#ff0000}16%{border-color:#ff8800}33%{border-color:#ffff00}50%{border-color:#00ff88}66%{border-color:#0088ff}83%{border-color:#ff00ff}100%{border-color:#ff0000}}
+@keyframes forgeParticle{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(0)}}
+.forge-lv3{border-color:rgba(255,255,255,.7)!important;animation:forgeGlow3 2s ease-in-out infinite}
+.forge-lv6{border-color:rgba(77,166,255,.9)!important;animation:forgeGlow6 1.8s ease-in-out infinite}
+.forge-lv9{border-color:rgba(192,132,255,.9)!important;animation:forgeGlow9 1.6s ease-in-out infinite}
+.forge-lv12{border-color:rgba(255,184,0,.9)!important;animation:forgeGlow12 1.4s ease-in-out infinite}
+.forge-lv15{border-width:3px!important;animation:forgeRainbow .8s linear infinite}
+
 /* ── BARRE PROGRESSION MISSIONS ── */
 .mission-prog-wrap{
   background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
@@ -1403,6 +1498,7 @@ function renderMyClan(data) {
       <div class="tab" onclick="switchTab('deck',this)">🃏 Deck</div>
       <div class="tab" onclick="switchTab('character',this)">🧬 Personnage</div>
       <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
+      <div class="tab" onclick="switchTab('forge',this)">⚒️ Forge</div>
       ${isLeader
         ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>`
         : `<div class="tab" style="background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.3);color:#ff8888" onclick="leaveClan()">🚪 Quitter</div>`
@@ -1485,6 +1581,11 @@ function renderMyClan(data) {
     <!-- PERSONNAGE TAB -->
     <div id="tab-character" class="section-hidden">
       <div id="characterContent"><div class="loading">Chargement du personnage...</div></div>
+    </div>
+
+    <!-- FORGE TAB -->
+    <div id="tab-forge" class="section-hidden">
+      <div id="forgeContent"><div class="loading">Chargement de la forge...</div></div>
     </div>
 
     <!-- MANAGE TAB -->
@@ -1661,7 +1762,7 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 
-  ['boss','missions','members','chat','talents','deck','character','leaderboard','manage'].forEach(t => {
+  ['boss','missions','members','chat','talents','deck','character','leaderboard','forge','manage'].forEach(t => {
     const tabEl = document.getElementById('tab-'+t);
     if (tabEl) tabEl.classList.toggle('section-hidden', t !== name);
   });
@@ -1674,6 +1775,7 @@ function switchTab(name, el) {
   if (name === 'talents') loadTalents();
   if (name === 'deck') loadDeck();
   if (name === 'character') loadCharacter();
+  if (name === 'forge') loadForge();
 }
 
 // ===========================
@@ -3085,6 +3187,241 @@ async function dissolveClan() {
     setTimeout(() => location.reload(), 1500);
   } catch(e) {
     alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ===========================
+// FORGE
+// ===========================
+const FORGE_IMG   = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/enclume.png';
+const MAT_IMAGES  = {
+  fer:     'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/fer.png',
+  azurite: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/azurite.png',
+  quartz:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/quartz.png',
+  topaze:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/topaze.png',
+};
+const MAT_NAMES   = { fer:'Fer', azurite:'Azurite', quartz:'Quartz', topaze:'Topaze' };
+const MAT_COLORS  = { fer:'#aaa', azurite:'#4da6ff', quartz:'#c084ff', topaze:'#ffd84d' };
+const FORGE_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+
+let _forgeData    = null;
+let _forgeSelItem = null;
+
+function forgeLevelClass(lvl) {
+  if (lvl >= 15) return 'forge-lv15';
+  if (lvl >= 12) return 'forge-lv12';
+  if (lvl >= 9)  return 'forge-lv9';
+  if (lvl >= 6)  return 'forge-lv6';
+  if (lvl >= 3)  return 'forge-lv3';
+  return '';
+}
+
+function forgeLevelColor(lvl) {
+  if (lvl >= 15) return '#ff4488';
+  if (lvl >= 12) return '#ffd84d';
+  if (lvl >= 9)  return '#c084ff';
+  if (lvl >= 6)  return '#4da6ff';
+  if (lvl >= 3)  return '#fff';
+  return 'rgba(255,255,255,.4)';
+}
+
+function forgeReqClient(rarity, forgeLevel) {
+  const next = forgeLevel + 1;
+  let matKey, matQty, cost, successRate;
+  if (next <= 5)       { matKey='fer';     matQty=next;      cost=500*next;              successRate=100; }
+  else if (next <= 9)  { matKey='azurite'; matQty=next-4;    cost=2000+1500*(next-5);    successRate=75;  }
+  else if (next <= 12) { matKey='quartz';  matQty=next-8;    cost=10000+3000*(next-10);  successRate=50;  }
+  else                 { matKey='topaze';  matQty=next-11;   cost=30000+10000*(next-13); successRate=25;  }
+  return { matKey, matQty, cost, successRate };
+}
+
+async function loadForge() {
+  const el = document.getElementById('forgeContent');
+  if (!el) return;
+  try {
+    _forgeData = await api('/api/forge');
+    renderForge();
+  } catch(e) { el.innerHTML = '<div class="alert alert-error">Erreur chargement forge</div>'; }
+}
+
+function renderForge() {
+  const el = document.getElementById('forgeContent');
+  if (!el || !_forgeData) return;
+  const { inventory, materials } = _forgeData;
+  const item = _forgeSelItem ? inventory.find(i => i.id === _forgeSelItem) : null;
+
+  let req = null;
+  if (item && item.forge_level < 15) req = forgeReqClient(item.rarity, item.forge_level);
+
+  const matOwned = (key) => materials[key] || 0;
+  const canForge = !!(item && req && matOwned(req.matKey) >= req.matQty);
+
+  // ── SLOT ITEM ──
+  let itemSlotHtml = '';
+  if (item) {
+    const col = forgeLevelColor(item.forge_level);
+    const statsLines = [
+      ['dmg_bonus','% DMG'],['crit','% Crit'],['first_attack','% 1ère'],['clan_dmg','% DMG clan'],['clan_crit','% Crit clan']
+    ].filter(([k]) => item[k] > 0).map(([k, lbl]) => {
+      const after = req ? Math.round(item[k] * (1 + (item.forge_level+1)*0.1) * 10)/10 : null;
+      return '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+        + '<span style="opacity:.6">' + item[k] + lbl + '</span>'
+        + (after && item.forge_level < 15 ? '<span style="color:#33ff99">→ ' + after + lbl + '</span>' : '')
+        + '</div>';
+    }).join('');
+
+    itemSlotHtml = '<div class="forge-item-slot filled ' + (item.rarity||'') + ' ' + forgeLevelClass(item.forge_level) + '" onclick="openForgeItemPicker()">'
+      + '<img src="' + esc(item.image||'') + '" alt="' + esc(item.name||'') + '" onerror="this.style.display=\'none\'">'
+      + '<div class="forge-item-level" style="color:' + col + ';border-color:' + col + '40">'
+      + (item.forge_level > 0 ? '+'+item.forge_level : 'Sélectionné') + '</div>'
+      + '</div>'
+      + '<div style="text-align:center;max-width:110px">'
+      + '<div style="font-size:11px;font-weight:900;color:' + (FORGE_RARITY_COLOR[item.rarity]||'#aaa') + '">' + esc(item.name||'') + '</div>'
+      + '<div style="font-size:10px;opacity:.45;margin-top:2px">' + (item.forge_level >= 15 ? '✨ MAX' : '+'+item.forge_level+' → +'+( item.forge_level+1)) + '</div>'
+      + '</div>'
+      + '<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;width:100%;font-size:10px">'
+      + statsLines
+      + '</div>';
+  } else {
+    itemSlotHtml = '<div class="forge-item-slot" onclick="openForgeItemPicker()">'
+      + '<div style="font-size:28px;opacity:.25">⚔️</div>'
+      + '<div style="font-size:9px;opacity:.4;margin-top:4px">Choisir</div>'
+      + '</div>'
+      + '<div style="font-size:12px;opacity:.4;text-align:center">Sélectionne un équipement</div>';
+  }
+
+  // ── COL CENTRE ──
+  let centerHtml = '<img class="forge-anvil" src="' + FORGE_IMG + '" alt="Forge" onerror="this.style.fontSize=\'64px\';this.outerHTML=\'<span>⚒️</span>\'">';
+  if (req) {
+    const rateColor = req.successRate === 100 ? '#33ff99' : req.successRate >= 75 ? '#ffd84d' : req.successRate >= 50 ? '#ff8844' : '#ff4444';
+    centerHtml += '<div class="forge-cost">💰 ' + fmtNum(req.cost) + ' dollax</div>'
+      + '<div class="forge-rate" style="color:' + rateColor + '">' + req.successRate + '% de réussite</div>';
+  } else if (item && item.forge_level >= 15) {
+    centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
+  } else {
+    centerHtml += '<div style="font-size:12px;opacity:.35;text-align:center">Sélectionne<br>un item</div>';
+  }
+  let btnLabel = !item ? 'Choisir un item' : item.forge_level >= 15 ? '✨ MAX' : canForge ? '⚒️ Forger +' + (item.forge_level+1) : 'Matériaux insuffisants';
+  centerHtml += '<button class="forge-btn" onclick="doForge()" ' + (!canForge || !req ? 'disabled' : '') + '>' + btnLabel + '</button>';
+  if (item && item.forge_level < 15 && !item.equipped_slot) {
+    centerHtml += '<button class="forge-btn-destroy" onclick="doDestroy(' + item.id + ')">🔥 Détruire pour matériaux</button>';
+  }
+
+  // ── MATÉRIAUX ──
+  let matsHtml = '';
+  for (const [key, img] of Object.entries(MAT_IMAGES)) {
+    const owned = matOwned(key);
+    const needed = req && req.matKey === key ? req.matQty : 0;
+    const enough = owned >= needed;
+    const borderStyle = needed > 0 ? 'border-color:' + (enough ? 'rgba(51,255,153,.3)' : 'rgba(255,68,68,.3)') : '';
+    matsHtml += '<div class="forge-mat-slot" style="' + borderStyle + '">'
+      + '<img class="forge-mat-img" src="' + img + '" alt="' + MAT_NAMES[key] + '" onerror="this.style.display=\'none\'">'
+      + '<div class="forge-mat-info">'
+      + '<div class="forge-mat-name" style="color:' + MAT_COLORS[key] + '">' + MAT_NAMES[key] + '</div>'
+      + '<div class="forge-mat-qty">Possédé : ' + owned + '</div>'
+      + '</div>'
+      + (needed > 0 ? '<div class="forge-mat-need" style="color:' + (enough?'#33ff99':'#ff4444') + '">' + owned + '/' + needed + '</div>' : '')
+      + '</div>';
+  }
+
+  // ── INVENTAIRE ──
+  let invHtml = '';
+  if (inventory.length === 0) {
+    invHtml = '<div style="opacity:.35;font-size:13px;grid-column:1/-1;padding:16px 0;text-align:center">Aucun équipement dans l\'inventaire</div>';
+  } else {
+    for (const i of inventory) {
+      const sel = i.id === _forgeSelItem ? 'selected' : '';
+      const col = FORGE_RARITY_COLOR[i.rarity] || '#aaa';
+      const lvlCol = forgeLevelColor(i.forge_level);
+      invHtml += '<div class="forge-inv-item ' + (i.rarity||'') + ' ' + forgeLevelClass(i.forge_level) + ' ' + sel + '" onclick="selectForgeItem(' + i.id + ')">'
+        + '<img class="forge-inv-img" src="' + esc(i.image||'') + '" alt="' + esc(i.name||'') + '" onerror="this.style.display=\'none\'">'
+        + '<div class="forge-inv-name" style="color:' + col + '">' + esc(i.name||'') + '</div>'
+        + '<div class="forge-inv-lvl" style="color:' + lvlCol + '">' + (i.forge_level > 0 ? '+'+i.forge_level : '') + (i.equipped_slot ? ' 📌' : '') + '</div>'
+        + '</div>';
+    }
+  }
+
+  // ── GUIDE MATÉRIAUX ──
+  let guideHtml = '';
+  for (const [key, img] of Object.entries(MAT_IMAGES)) {
+    const rarLabel = key==='fer'?'Commun':key==='azurite'?'Rare':key==='quartz'?'Épique':'Légendaire';
+    guideHtml += '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px">'
+      + '<img src="' + img + '" style="width:32px;height:32px;object-fit:contain" onerror="this.style.display=\'none\'">'
+      + '<div><div style="font-size:12px;font-weight:900;color:' + MAT_COLORS[key] + '">' + MAT_NAMES[key] + '</div>'
+      + '<div style="font-size:10px;opacity:.5;margin-top:2px">Détruis un équipement ' + rarLabel + '</div></div>'
+      + '<div style="margin-left:auto;font-size:13px;font-weight:900;color:' + MAT_COLORS[key] + '">' + matOwned(key) + '</div>'
+      + '</div>';
+  }
+
+  // ── ASSEMBLAGE ──
+  el.innerHTML = '<div class="forge-wrap">'
+    + '<div class="card">'
+    +   '<div class="card-title" style="margin-bottom:16px">⚒️ Forge d\'équipement</div>'
+    +   '<div class="forge-main">'
+    +     '<div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
+    +     itemSlotHtml + '</div>'
+    +     '<div class="forge-col-center">' + centerHtml + '</div>'
+    +     '<div class="forge-col-right"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Matériaux</div>'
+    +     matsHtml + '</div>'
+    +   '</div>'
+    +   '<div id="forgeAlert" style="margin-top:10px"></div>'
+    + '</div>'
+    + '<div class="card">'
+    +   '<div class="card-title">🎒 Inventaire — choisir un équipement à forger</div>'
+    +   '<div class="forge-inv-grid">' + invHtml + '</div>'
+    + '</div>'
+    + '<div class="card">'
+    +   '<div class="card-title" style="margin-bottom:12px">📖 Comment obtenir des matériaux</div>'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'
+    +   guideHtml + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function selectForgeItem(id) {
+  _forgeSelItem = (_forgeSelItem === id) ? null : id;
+  renderForge();
+}
+
+function openForgeItemPicker() {
+  // Scroll vers l'inventaire
+  document.querySelector('.forge-inv-grid')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+async function doForge() {
+  if (!_forgeSelItem) return;
+  const alertEl = document.getElementById('forgeAlert');
+  try {
+    const data = await api('/api/forge/upgrade', { method:'POST', body: JSON.stringify({ id: _forgeSelItem }) });
+    _forgeData = await api('/api/forge');
+
+    if (data.success) {
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Succès ! Équipement amélioré à +${data.newLevel} !</div>`;
+      // Petite animation sur l'item
+      const item = document.querySelector('.forge-item-slot.filled');
+      if (item) { item.style.transform = 'scale(1.15)'; setTimeout(()=>item.style.transform='', 400); }
+    } else {
+      if (alertEl) alertEl.innerHTML = `<div class="alert" style="background:rgba(255,100,0,.15);border:1px solid rgba(255,100,0,.3);color:#ff8844">💨 Échec ! Les matériaux sont perdus mais l'équipement reste à +${data.newLevel}.</div>`;
+    }
+    setTimeout(() => { if (alertEl) alertEl.innerHTML = ''; }, 4000);
+    renderForge();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+async function doDestroy(id) {
+  if (!confirm('Détruire cet équipement pour obtenir des matériaux ?')) return;
+  const alertEl = document.getElementById('forgeAlert');
+  try {
+    const data = await api('/api/forge/destroy', { method:'POST', body: JSON.stringify({ id }) });
+    _forgeSelItem = null;
+    _forgeData = await api('/api/forge');
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">🔥 Équipement détruit ! +${data.qty} ${data.matName}</div>`;
+    setTimeout(() => { if(alertEl) alertEl.innerHTML=''; }, 3000);
+    renderForge();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
   }
 }
 

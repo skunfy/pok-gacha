@@ -862,6 +862,15 @@ async function initDb() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_player_equipment_user ON player_equipment(user_id)`);
+  await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_materials (
+      user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mat_key  TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, mat_key)
+    )
+  `);
 
   console.log("✅ Postgres DB ready");
 }
@@ -5745,10 +5754,156 @@ async function dropRaidCards(userId) {
 // ÉQUIPEMENT — ROUTES
 // =========================
 
+// ===================================================
+// FORGE
+// ===================================================
+const FORGE_GITHUB = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge';
+
+const MATERIALS = {
+  fer:     { key:'fer',    name:'Fer',            rarity:'common',    image:`${FORGE_GITHUB}/fer.png`,     desc:'Obtenu en détruisant un équipement Commun' },
+  azurite: { key:'azurite',name:'Azurite',        rarity:'rare',      image:`${FORGE_GITHUB}/azurite.png`, desc:'Obtenu en détruisant un équipement Rare' },
+  quartz:  { key:'quartz', name:'Quartz',         rarity:'epic',      image:`${FORGE_GITHUB}/quartz.png`,  desc:'Obtenu en détruisant un équipement Épique' },
+  topaze:  { key:'topaze', name:'Topaze',         rarity:'legendary', image:`${FORGE_GITHUB}/topaze.png`,  desc:'Obtenu en détruisant un équipement Légendaire' },
+};
+
+// Matériau requis selon rareté de l'item + coût dollax + taux réussite par forge level
+function forgeRequirements(rarity, forgeLevel) {
+  const next = forgeLevel + 1;
+  let matKey, matQty, cost, successRate;
+
+  if (next <= 5) {
+    matKey = 'fer'; matQty = next; cost = 500 * next; successRate = 100;
+  } else if (next <= 9) {
+    matKey = 'azurite'; matQty = next - 4; cost = 2000 + 1500 * (next - 5); successRate = 75;
+  } else if (next <= 12) {
+    matKey = 'quartz'; matQty = next - 8; cost = 10000 + 3000 * (next - 10); successRate = 50;
+  } else {
+    matKey = 'topaze'; matQty = next - 11; cost = 30000 + 10000 * (next - 13); successRate = 25;
+  }
+  return { matKey, matQty, cost, successRate };
+}
+
+// Destruction : matériaux obtenus selon rareté
+function destroyYield(rarity) {
+  const map = { common:'fer', rare:'azurite', epic:'quartz', legendary:'topaze' };
+  const qty = rarity === 'legendary' ? 1 : rarity === 'epic' ? 1 : rarity === 'rare' ? 2 : 2;
+  return { matKey: map[rarity] || 'fer', qty };
+}
+
+// Calcul des stats forgées (+10% des stats de base par niveau, ×2.5 à +15)
+function forgedStats(def, forgeLevel) {
+  const mult = 1 + (forgeLevel * 0.10);
+  return {
+    dmg_bonus:    Math.round(def.dmg_bonus    * mult * 10) / 10,
+    crit:         Math.round(def.crit         * mult * 10) / 10,
+    first_attack: Math.round(def.first_attack * mult * 10) / 10,
+    clan_dmg:     Math.round(def.clan_dmg     * mult * 10) / 10,
+    clan_crit:    Math.round(def.clan_crit    * mult * 10) / 10,
+  };
+}
+
+// GET /api/forge — inventaire + matériaux
+app.get("/api/forge", auth, async (req, res) => {
+  try {
+    const [eqQ, matQ] = await Promise.all([
+      pool.query(`SELECT id, equip_key, forge_level, equipped_slot FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`, [req.user.id]),
+      pool.query(`SELECT mat_key, quantity FROM player_materials WHERE user_id=$1`, [req.user.id]),
+    ]);
+    const inventory = eqQ.rows.map(r => {
+      const def = EQUIPMENT[r.equip_key] || {};
+      return { id: r.id, equip_key: r.equip_key, forge_level: r.forge_level || 0, equipped_slot: r.equipped_slot, ...def, ...forgedStats(def, r.forge_level || 0) };
+    });
+    const materials = {};
+    for (const m of matQ.rows) materials[m.mat_key] = parseInt(m.quantity);
+    res.json({ inventory, materials, materialDefs: Object.values(MATERIALS) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/forge/upgrade — améliorer un item
+app.post("/api/forge/upgrade", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const itemId = parseInt(req.body?.id) || 0;
+    const userId = req.user.id;
+
+    const itemQ = await client.query(`SELECT id, equip_key, forge_level FROM player_equipment WHERE id=$1 AND user_id=$2`, [itemId, userId]);
+    const item = itemQ.rows[0];
+    if (!item) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+
+    const forgeLevel = item.forge_level || 0;
+    if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau maximum atteint !" }); }
+
+    const def = EQUIPMENT[item.equip_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+
+    const { matKey, matQty, cost, successRate } = forgeRequirements(def.rarity, forgeLevel);
+
+    // Vérifier matériaux
+    const matQ = await client.query(`SELECT quantity FROM player_materials WHERE user_id=$1 AND mat_key=$2`, [userId, matKey]);
+    const owned = parseInt(matQ.rows[0]?.quantity || 0);
+    if (owned < matQty) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Il te faut ${matQty} ${MATERIALS[matKey]?.name} (tu en as ${owned})` }); }
+
+    // Vérifier dollax
+    const userQ = await client.query(`SELECT money FROM users WHERE id=$1`, [userId]);
+    if (Number(userQ.rows[0]?.money || 0) < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Il te faut ${cost} dollax` }); }
+
+    // Déduire matériaux + dollax
+    await client.query(`UPDATE player_materials SET quantity = quantity - $1 WHERE user_id=$2 AND mat_key=$3`, [matQty, userId, matKey]);
+    await client.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [cost, userId]);
+
+    // Jet de chance
+    const success = Math.random() * 100 < successRate;
+    if (success) {
+      await client.query(`UPDATE player_equipment SET forge_level = forge_level + 1 WHERE id=$1`, [itemId]);
+    }
+
+    await client.query('COMMIT');
+    const newLevel = success ? forgeLevel + 1 : forgeLevel;
+    res.json({ ok: true, success, newLevel, itemId });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// POST /api/forge/destroy — détruire un item pour matériaux
+app.post("/api/forge/destroy", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const itemId = parseInt(req.body?.id) || 0;
+    const userId = req.user.id;
+
+    const itemQ = await client.query(`SELECT id, equip_key, equipped_slot FROM player_equipment WHERE id=$1 AND user_id=$2`, [itemId, userId]);
+    const item = itemQ.rows[0];
+    if (!item) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+    if (item.equipped_slot) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Déséquipe l'item avant de le détruire !" }); }
+
+    const def = EQUIPMENT[item.equip_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+
+    const { matKey, qty } = destroyYield(def.rarity);
+
+    await client.query(`DELETE FROM player_equipment WHERE id=$1`, [itemId]);
+    await client.query(`
+      INSERT INTO player_materials(user_id, mat_key, quantity) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, mat_key) DO UPDATE SET quantity = player_materials.quantity + $3
+    `, [userId, matKey, qty]);
+
+    await client.query('COMMIT');
+    res.json({ ok: true, matKey, qty, matName: MATERIALS[matKey]?.name });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// ===================================================
 // GET /api/equipment — inventaire + équipés
 app.get("/api/equipment", auth, async (req, res) => {
   const { rows } = await pool.query(
-    `SELECT id, equip_key, obtained_at, equipped_slot FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
+    `SELECT id, equip_key, obtained_at, equipped_slot, forge_level FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
     [req.user.id]
   );
 
@@ -5759,6 +5914,7 @@ app.get("/api/equipment", auth, async (req, res) => {
     equipped_slot: r.equipped_slot,
     obtained_at: Number(r.obtained_at),
     ...(EQUIPMENT[r.equip_key] || { name: r.equip_key, rarity: 'common', slot: 'weapon' }),
+    forge_level: r.forge_level || 0,
   }));
 
   // Slots équipés
