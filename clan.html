@@ -1989,7 +1989,7 @@ function renderCharacter(c) {
       key:'stat_intelligence', cls2:'intel', icon:'🔮', label:'Intelligence',
       val: c.stat_intelligence, desc:'Augmente les dégâts du clan.',
       rate: c.stat_rates?.intelligence ?? 0.6, statName:'intelligence', color:'#4da6ff',
-      passive: (c.class_passive?.clan_dmg || c.class_passive?.intel_bonus) > 0 ? `+${c.class_passive?.clan_dmg || c.class_passive?.intel_bonus}% DMG clan passif (${cls?.label})` : null,
+      passive: (c.class_passive?.clan_dmg || 0) > 0 ? `+${c.class_passive?.clan_dmg}% DMG clan passif (${cls?.label})` : null,
     },
     {
       key:'stat_dexterite', cls2:'dex', icon:'⚡', label:'Dextérité',

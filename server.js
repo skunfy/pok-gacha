@@ -5428,10 +5428,9 @@ app.get("/api/character", auth, async (req, res) => {
     const totalBonus = {
       dmg_bonus:    Math.round((statDmg    + (cls?.passive_dmg_bonus   || 0) + eqBonus.dmg_bonus)    * 10) / 10,
       crit:         Math.round((statCrit   + (cls?.passive_crit        || 0) + eqBonus.crit)          * 10) / 10,
-      intel_bonus:  Math.round((statIntel  + (cls?.passive_intel_bonus || 0))                         * 10) / 10,
+      clan_dmg:     Math.round((statIntel  + (cls?.passive_intel_bonus || 0) + eqBonus.clan_dmg)      * 10) / 10,
       first_attack: Math.round((statFirstAtk + (cls?.passive_first_attack || 0) + eqBonus.first_attack) * 10) / 10,
-      clan_dmg:     eqBonus.clan_dmg,
-      clan_crit:    eqBonus.clan_crit,
+      clan_crit:    Math.round(eqBonus.clan_crit * 10) / 10,
     };
 
     res.json({
@@ -5456,7 +5455,7 @@ app.get("/api/character", auth, async (req, res) => {
       class_passive: cls ? {
         dmg_bonus:    cls.passive_dmg_bonus,
         crit:         cls.passive_crit,
-        intel_bonus:  cls.passive_intel_bonus,
+        clan_dmg:     cls.passive_intel_bonus,
         first_attack: cls.passive_first_attack,
       } : null,
       classes_def: CHAR_CLASSES,
@@ -5465,7 +5464,7 @@ app.get("/api/character", auth, async (req, res) => {
       bonus_preview: {
         dmg_bonus:    statDmg    + (cls?.passive_dmg_bonus   || 0),
         crit:         statCrit   + (cls?.passive_crit        || 0),
-        intel_bonus:  statIntel  + (cls?.passive_intel_bonus || 0),
+        clan_dmg:     statIntel  + (cls?.passive_intel_bonus || 0),
         first_attack: statFirstAtk + (cls?.passive_first_attack || 0),
       }
     });
