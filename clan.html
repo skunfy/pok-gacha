@@ -2134,17 +2134,24 @@ function renderSlot(slot, equipped) {
     if (item.clan_dmg)     statLines.push(`<div class="eq-tooltip-stat"><span>🛡️</span><span style="color:#4da6ff">+${fs(item.clan_dmg)}% DMG clan${fl>0?' ⚒️':''}</span></div>`);
     if (item.clan_crit)    statLines.push(`<div class="eq-tooltip-stat"><span>💫</span><span style="color:#c084ff">+${fs(item.clan_crit)}% Crit clan${fl>0?' ⚒️':''}</span></div>`);
 
-    return `
-      <div class="eq-slot filled ${item.rarity} ${forgeCls}" onclick="openEquipInventory('${slot}')" style="position:relative">
-        <img class="eq-slot-img" src="${esc(item.image)}" alt="" onerror="this.style.display='none'">
-        ${fl > 0 ? `<div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;padding:1px 7px;border-radius:999px;background:#0d0e1c;border:1px solid ${forgeLvlColor};color:${forgeLvlColor};white-space:nowrap;z-index:4">+${fl}</div>` : ''}
-        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">✕</span>
-        <div class="eq-slot-tooltip">
-          <div class="eq-tooltip-name">${esc(item.name)} ${fl > 0 ? `<span style="color:${forgeLvlColor}">+${fl}</span>` : ''}</div>
-          <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
-          ${statLines.length ? statLines.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
-        </div>
-      </div>`;
+    const forgeBadge = fl > 0
+      ? '<div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:900;padding:1px 7px;border-radius:999px;background:#0d0e1c;border:1px solid ' + forgeLvlColor + ';color:' + forgeLvlColor + ';white-space:nowrap;z-index:4">+' + fl + '</div>'
+      : '';
+    const forgeName = fl > 0
+      ? esc(item.name) + ' <span style="color:' + forgeLvlColor + '">+' + fl + '</span>'
+      : esc(item.name);
+    const statsHtml = statLines.length ? statLines.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>';
+
+    return '<div class="eq-slot filled ' + item.rarity + ' ' + forgeCls + '" onclick="openEquipInventory(\'' + slot + '\')" style="position:relative">'
+      + '<img class="eq-slot-img" src="' + esc(item.image) + '" alt="" onerror="this.style.display=\'none\'">'
+      + forgeBadge
+      + '<span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(' + item.id + ')">✕</span>'
+      + '<div class="eq-slot-tooltip">'
+      + '<div class="eq-tooltip-name">' + forgeName + '</div>'
+      + '<div class="eq-tooltip-rarity" style="color:' + col + '">' + def.icon + ' ' + def.label + ' · ' + (rarityNames[item.rarity]||item.rarity) + '</div>'
+      + statsHtml
+      + '</div>'
+      + '</div>';
   }
 
   return `
