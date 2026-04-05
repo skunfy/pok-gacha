@@ -862,6 +862,22 @@ async function initDb() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_player_equipment_user ON player_equipment(user_id)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS raid_drops_recap (
+      id SERIAL PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      boss_id    INTEGER NOT NULL,
+      boss_name  TEXT NOT NULL DEFAULT '',
+      boss_key   TEXT NOT NULL DEFAULT '',
+      victory    INTEGER NOT NULL DEFAULT 1,
+      cards      JSONB NOT NULL DEFAULT '[]',
+      equipment  JSONB NOT NULL DEFAULT '[]',
+      materials  JSONB NOT NULL DEFAULT '[]',
+      char_level_up JSONB DEFAULT NULL,
+      seen       INTEGER NOT NULL DEFAULT 0,
+      created_at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
   await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS player_materials (
@@ -5000,6 +5016,30 @@ app.post("/api/clan/missions/claim-chest", auth, async (req, res) => {
   }
 });
 
+// GET /api/clan/raid/mydrops — récap drops non vus
+app.get("/api/clan/raid/mydrops", auth, async (req, res) => {
+  try {
+    const q = await pool.query(
+      `SELECT * FROM raid_drops_recap WHERE user_id=$1 AND seen=0 ORDER BY created_at DESC LIMIT 1`,
+      [req.user.id]
+    );
+    if (!q.rows.length) return res.json({ recap: null });
+    const row = q.rows[0];
+    await pool.query(`UPDATE raid_drops_recap SET seen=1 WHERE id=$1`, [row.id]);
+    res.json({
+      recap: {
+        victory: row.victory === 1,
+        bossName: row.boss_name,
+        bossKey: row.boss_key,
+        cards: row.cards || [],
+        equipment: row.equipment || [],
+        materials: row.materials || [],
+        charLevelUp: row.char_level_up || null,
+      }
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // GET /api/clan/boss — état du raid en cours
 app.get("/api/clan/boss", auth, async (req, res) => {
   const m = await getMyMembership(req.user.id);
@@ -5183,37 +5223,47 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
       for (const c of contribs.rows) {
         await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
 
-        // Arakas → cartes de raid + équipements commun/rare | Myntalis → équipements rare/epic/leg | Xenos → les deux
+        // Cartes (arakas + xenos)
+        let cardDrops = [];
         if (def.bossKey === 'arakas' || def.bossKey === 'xenos') {
-          await dropRaidCards(c.user_id).catch(() => {});
+          cardDrops = await dropRaidCards(c.user_id).catch(() => []);
         }
+
+        // Equipements
+        let eqDrops = [];
         if (def.bossKey === 'myntalis' || def.bossKey === 'xenos' || def.bossKey === 'arakas') {
-          const eqDrops = await dropEquipment(c.user_id, def.bossKey, def.difficulty).catch(() => []);
-          if (eqDrops.length) {
-            const eqNames = eqDrops.map(e => e.name).join(', ');
-            await pool.query(
-              `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Équipement obtenu !',$2,NULL,0,$3)`,
-              [c.user_id, `Tu as obtenu : ${eqNames} !`, Date.now()]
-            );
-          }
+          eqDrops = await dropEquipment(c.user_id, def.bossKey, def.difficulty).catch(() => []);
         }
-        // Matériaux de forge (100% garanti, quantité variable)
-        const matDrops = await dropMaterials(c.user_id, def.bossKey, def.difficulty).catch(() => []);
-        if (matDrops.length) {
-          const matSummary = matDrops.map(d => `${d.qty}x ${d.matKey}`).join(', ');
-          await pool.query(
-            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚒️ Matériaux obtenus !',$2,NULL,0,$3)`,
-            [c.user_id, `Matériaux de forge : ${matSummary}`, Date.now()]
-          );
-        }
+
+        // Materiaux (100% garanti)
+        const matDropsRaw = await dropMaterials(c.user_id, def.bossKey, def.difficulty).catch(() => []);
+        const matDropsFmt = matDropsRaw.map(d => ({
+          matKey: d.matKey, qty: d.qty,
+          name: { fer:'Fer', azurite:'Azurite', quartz:'Quartz', topaze:'Topaze' }[d.matKey] || d.matKey,
+          image: `https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/${d.matKey}.png`,
+        }));
+
         // XP personnage
         const charResult = await addCharXp(c.user_id, charXpGain).catch(() => null);
+        let charLevelUp = null;
         if (charResult?.levelsGained > 0) {
+          charLevelUp = { level: charResult.char_level, points: charResult.levelsGained };
           await pool.query(
             `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⬆️ Niveau atteint !',$2,NULL,0,$3)`,
-            [c.user_id, `Ton personnage passe au niveau ${charResult.char_level} ! +${charResult.levelsGained} point${charResult.levelsGained > 1 ? 's' : ''} de stat à distribuer.`, Date.now()]
+            [c.user_id, `Ton personnage passe au niveau ${charResult.char_level} !`, Date.now()]
           );
         }
+
+        // Stocker le recap pour chaque participant (vu au prochain polling)
+        await pool.query(`
+          INSERT INTO raid_drops_recap(user_id, boss_id, boss_name, boss_key, victory, cards, equipment, materials, char_level_up, seen, created_at)
+          VALUES($1,$2,$3,$4,1,$5,$6,$7,$8,0,$9)
+        `, [
+          c.user_id, boss.id, def.name || boss.name, def.bossKey || boss.boss_key,
+          JSON.stringify(cardDrops), JSON.stringify(eqDrops), JSON.stringify(matDropsFmt),
+          charLevelUp ? JSON.stringify(charLevelUp) : null,
+          Date.now(),
+        ]).catch(() => {});
       }
     }
 

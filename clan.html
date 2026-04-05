@@ -353,6 +353,67 @@ label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
 
 .section-hidden{display:none}
 
+/* ── MODAL RÉSULTAT RAID ── */
+.raid-result-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.raid-result-overlay.show{opacity:1;pointer-events:all}
+.raid-result-modal{
+  background:#0a0b18;border-radius:24px;padding:28px 24px;
+  max-width:520px;width:100%;max-height:90vh;overflow-y:auto;
+  transform:scale(.88) translateY(24px);
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;
+}
+.raid-result-overlay.show .raid-result-modal{transform:scale(1) translateY(0)}
+
+/* Victoire */
+.raid-result-modal.victory{border:2px solid rgba(255,216,77,.5);box-shadow:0 0 60px rgba(255,184,0,.2)}
+.raid-result-modal.defeat {border:2px solid rgba(255,68,68,.4); box-shadow:0 0 40px rgba(255,50,50,.15)}
+
+.raid-result-title{font-size:26px;font-weight:900;text-align:center;margin-bottom:4px}
+.raid-result-sub{font-size:13px;opacity:.5;text-align:center;margin-bottom:20px}
+.raid-result-sep{height:1px;background:rgba(255,255,255,.07);margin:16px 0}
+
+/* Sections drops */
+.raid-drop-section{margin-bottom:16px}
+.raid-drop-section-title{font-size:11px;font-weight:900;letter-spacing:.07em;text-transform:uppercase;opacity:.45;margin-bottom:10px}
+.raid-drop-grid{display:flex;flex-wrap:wrap;gap:10px}
+.raid-drop-item{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:10px 12px;min-width:80px;text-align:center;
+  transition:transform .15s;
+}
+.raid-drop-item:hover{transform:translateY(-2px)}
+.raid-drop-item.legendary{border-color:rgba(255,184,0,.4);background:rgba(255,184,0,.06)}
+.raid-drop-item.epic     {border-color:rgba(192,132,255,.35);background:rgba(192,132,255,.05)}
+.raid-drop-item.rare     {border-color:rgba(77,166,255,.35);background:rgba(77,166,255,.05)}
+.raid-drop-item img{width:52px;height:52px;object-fit:contain;border-radius:8px}
+.raid-drop-item-name{font-size:10px;font-weight:800;line-height:1.3;max-width:80px}
+.raid-drop-item-rarity{font-size:9px;opacity:.55;margin-top:1px}
+.raid-drop-item-qty{font-size:13px;font-weight:900;color:#ffd84d}
+
+.raid-result-close{
+  width:100%;padding:13px;border-radius:14px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;margin-top:6px;
+  background:linear-gradient(135deg,#7f5cff,#f053c5);
+  transition:opacity .15s;
+}
+.raid-result-close:hover{opacity:.85}
+
+@keyframes victoryShine{
+  0%{background-position:0% 50%}100%{background-position:200% 50%}
+}
+.raid-result-title.victory-text{
+  background:linear-gradient(90deg,#ffd84d,#ff8800,#ffd84d,#ffcc00);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:victoryShine 2s linear infinite;
+}
+
 /* ── FORGE ── */
 .forge-wrap{display:flex;flex-direction:column;gap:20px}
 .forge-main{
@@ -2410,7 +2471,8 @@ function startRaidTimer() {
 
     if (left <= 0) {
       clearInterval(_raidTimer);
-      loadBossData(); // Recharger pour afficher état expiré
+      showRaidResult(false, null); // Modal défaite
+      setTimeout(() => loadBossData(), 1500);
     }
   }
   updateTimer();
@@ -2498,6 +2560,108 @@ async function startRaid(bossKey) {
   }
 }
 
+const RARITY_COLOR_RAID = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+const RARITY_LABEL_RAID = { common:'Commune', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+
+function showRaidResult(victory, data) {
+  document.querySelector('.raid-result-overlay')?.remove();
+
+  const drops = data?.drops || null;
+  let dropsHtml = '';
+
+  if (victory && drops) {
+    const RC = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+    const RL = { common:'Commune', rare:'Rare', epic:'&Eacute;pique', legendary:'L&eacute;gendaire' };
+
+    if (drops.cards && drops.cards.length) {
+      dropsHtml += '<div class="raid-drop-section">'
+        + '<div class="raid-drop-section-title">&#x1F0CF; Cartes de raid obtenues</div>'
+        + '<div class="raid-drop-grid">'
+        + drops.cards.map(function(c) {
+            return '<div class="raid-drop-item ' + (c.rarity||'') + '">'
+              + '<img src="' + (c.image||'') + '" alt="" onerror="this.style.display=\'none\'">'
+              + '<div class="raid-drop-item-name" style="color:' + (RC[c.rarity]||'#aaa') + '">' + (c.name||'') + '</div>'
+              + '<div class="raid-drop-item-rarity">' + (RL[c.rarity]||'') + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    }
+
+    if (drops.equipment && drops.equipment.length) {
+      dropsHtml += '<div class="raid-drop-section">'
+        + '<div class="raid-drop-section-title">&#x2694;&#xFE0F; &Eacute;quipements obtenus</div>'
+        + '<div class="raid-drop-grid">'
+        + drops.equipment.map(function(e) {
+            return '<div class="raid-drop-item ' + (e.rarity||'') + '">'
+              + '<img src="' + (e.image||'') + '" alt="" onerror="this.style.display=\'none\'">'
+              + '<div class="raid-drop-item-name" style="color:' + (RC[e.rarity]||'#aaa') + '">' + (e.name||'') + '</div>'
+              + '<div class="raid-drop-item-rarity">' + (RL[e.rarity]||'') + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    }
+
+    if (drops.materials && drops.materials.length) {
+      dropsHtml += '<div class="raid-drop-section">'
+        + '<div class="raid-drop-section-title">&#x2692;&#xFE0F; Mat&eacute;riaux de forge</div>'
+        + '<div class="raid-drop-grid">'
+        + drops.materials.map(function(m) {
+            return '<div class="raid-drop-item">'
+              + '<img src="' + (m.image||'') + '" alt="" onerror="this.style.display=\'none\'">'
+              + '<div class="raid-drop-item-qty">&times;' + m.qty + '</div>'
+              + '<div class="raid-drop-item-name">' + (m.name||'') + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    }
+
+    if (drops.charLevelUp) {
+      dropsHtml += '<div style="text-align:center;padding:10px;background:rgba(127,92,255,.1);border-radius:10px;margin-top:8px">'
+        + '<div style="font-size:15px;font-weight:900;color:#c084ff">&#x2B06;&#xFE0F; Niveau ' + drops.charLevelUp.level + ' atteint !</div>'
+        + '<div style="font-size:12px;opacity:.6;margin-top:3px">+' + drops.charLevelUp.points + ' point' + (drops.charLevelUp.points > 1 ? 's' : '') + ' de stat &agrave; distribuer</div>'
+        + '</div>';
+    }
+
+    if (!dropsHtml) {
+      dropsHtml = '<div style="opacity:.4;font-size:13px;text-align:center;padding:8px">Aucun drop cette fois...</div>';
+    }
+  }
+
+  const bossName = (data && data.bossName) ? data.bossName : 'Boss';
+
+  const closeAction = victory ? 'location.reload()' : 'loadBossData()';
+  const closeLabel  = victory ? '&#x1F389; Super !' : '&#x1F44A; Fermer';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'raid-result-overlay';
+  overlay.innerHTML = '<div class="raid-result-modal ' + (victory ? 'victory' : 'defeat') + '">'
+    + '<div class="raid-result-title ' + (victory ? 'victory-text' : '') + '">'
+    + (victory ? '&#x1F3C6; VICTOIRE !' : '&#x1F480; D&Eacute;FAITE')
+    + '</div>'
+    + '<div class="raid-result-sub">'
+    + (victory
+        ? 'Tu as vaincu ' + bossName + '&nbsp;!'
+        : 'Le clan n\'a pas r&eacute;ussi &agrave; vaincre ' + bossName + ' &agrave; temps.')
+    + '</div>'
+    + (victory && dropsHtml ? '<div class="raid-result-sep"></div>' + dropsHtml : '')
+    + (!victory
+        ? '<div style="text-align:center;font-size:40px;margin:16px 0">&#x1F614;</div>'
+          + '<div style="text-align:center;opacity:.5;font-size:13px">Les mat&eacute;riaux et dollax ne sont pas perdus.<br>R&eacute;essaie lors du prochain raid&nbsp;!</div>'
+        : '')
+    + '<div class="raid-result-sep"></div>'
+    + '<button class="raid-result-close" onclick="this.closest(\'.raid-result-overlay\').remove();' + closeAction + '">'
+    + closeLabel
+    + '</button>'
+    + '</div>';
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) { overlay.remove(); if (victory) location.reload(); else loadBossData(); }
+  });
+  document.body.appendChild(overlay);
+  setTimeout(function() { overlay.classList.add('show'); }, 10);
+}
+
+
 async function attackBoss() {
   const btn = document.getElementById("attackBtn");
   if (btn) btn.disabled = true;
@@ -2537,10 +2701,7 @@ async function attackBoss() {
     }
 
     if (data.defeated) {
-      setTimeout(() => {
-        showAlert('🏆 Boss vaincu ! Récompenses distribuées !', 'success');
-        setTimeout(() => location.reload(), 2000);
-      }, 800);
+      setTimeout(() => checkMyDrops(), 1200);
     } else {
       if (btn) { btn.disabled = false; btn.textContent = '⚔️ Ouvre des cartes...'; }
     }
@@ -2766,9 +2927,25 @@ async function sendChat() {
 }
 
 let _bossPolling = null;
+let _dropCheckDone = false;
+
 function startBossPolling() {
   stopBossPolling();
-  _bossPolling = setInterval(() => { if (currentTab === 'boss') loadBossData(); }, 15000);
+  _dropCheckDone = false;
+  _bossPolling = setInterval(() => {
+    if (currentTab === 'boss') loadBossData();
+    if (!_dropCheckDone) checkMyDrops();
+  }, 5000);
+}
+
+async function checkMyDrops() {
+  try {
+    const data = await api('/api/clan/raid/mydrops');
+    if (data.recap) {
+      _dropCheckDone = true;
+      showRaidResult(data.recap.victory, { drops: data.recap, bossName: data.recap.bossName });
+    }
+  } catch(e) {}
 }
 function stopBossPolling() {
   if (_bossPolling) { clearInterval(_bossPolling); _bossPolling = null; }
