@@ -3456,7 +3456,6 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     }))
     .filter(x => x.idKey);
 
-  console.log("[sell_bulk] user:", req.user.id, "items:", items.length, "clean:", clean.length);
   if (!clean.length) return res.status(400).json({ error: "Empty selection" });
   if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
 
@@ -3474,10 +3473,6 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
       [req.user.id, keys]
     );
 
-    console.log("[sell_bulk] DB rows found:", q.rows.length, "sur", keys.length, "keys");
-    if (q.rows.length > 0) console.log("[sell_bulk] first DB row idKey:", JSON.stringify(q.rows[0].idkey || q.rows[0].idKey));
-    if (clean.length > 0) console.log("[sell_bulk] first clean idKey:", JSON.stringify(clean[0].idKey));
-
     const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
 
     let total = 0;
@@ -3486,18 +3481,12 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     // 1) check + compute totals avec les vrais grades
     for (const it of clean) {
       const row = byKey.get(it.idKey);
-      if (!row) {
-        console.log("[sell_bulk] NOT FOUND:", JSON.stringify(it.idKey), "byKey keys:", [...byKey.keys()].slice(0,3));
-        await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Not owned: " + it.idKey });
-      }
+      if (!row) continue; // Carte pas en DB → ignorer silencieusement
 
       const owned = Number(row.count) || 0;
-      if (owned < it.qty) {
-        console.log("[sell_bulk] INSUFFICIENT:", it.idKey, "owned:", owned, "wanted:", it.qty);
-        await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Quantité insuffisante: " + it.idKey });
-      }
+      // Adapter qty au stock réel (évite erreur si désync client/serveur)
+      it.qty = Math.min(it.qty, owned);
+      if (it.qty <= 0) continue;
 
       const gradesArr = parseGrades(row.grades_json, owned);
       const isMint = Number(row.mint) === 1;
@@ -3506,8 +3495,15 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
       xpTotal += xpForSell(Math.round(itemTotal / it.qty), it.qty);
     }
 
+    // Filtrer les items avec qty > 0 après ajustement
+    const cleanFinal = clean.filter(it => it.qty > 0 && byKey.has(it.idKey));
+    if (!cleanFinal.length) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Aucune carte valide à vendre" });
+    }
+
     // 2) update/remove cards avec mise à jour des grades
-    for (const it of clean) {
+    for (const it of cleanFinal) {
       const row = byKey.get(it.idKey);
       const owned = Number(row.count) || 0;
       const gradesArr = parseGrades(row.grades_json, owned);
@@ -3543,7 +3539,7 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     await client.query("COMMIT");
 
     // Clan hook vente
-    const totalQty = clean.reduce((s, it) => s + it.qty, 0);
+    const totalQty = cleanFinal.reduce((s, it) => s + it.qty, 0);
     clanHookSell(req.user.id, totalQty).catch(() => {});
 
     const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
