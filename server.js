@@ -1331,7 +1331,11 @@ const EQUIPMENT = {
 };
 
 // Drop équipement — uniquement sur Myntalis
-async function dropEquipment(userId) {
+function randBetween(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+async function dropEquipment(userId, bossKey, difficulty) {
   const allKeys = Object.keys(EQUIPMENT);
 
   function pickRarity(rarity) {
@@ -1342,24 +1346,33 @@ async function dropEquipment(userId) {
 
   const drops = [];
 
-  // 1 commun garanti
-  const common = pickRarity('common');
-  if (common) drops.push(common);
-
-  // 40% rare
-  if (Math.random() < 0.40) {
+  if (bossKey === 'arakas') {
+    // Arakas : commun garanti + rare 40%
+    const common = pickRarity('common');
+    if (common) drops.push(common);
+    if (Math.random() < 0.40) {
+      const rare = pickRarity('rare');
+      if (rare) drops.push(rare);
+    }
+  } else if (bossKey === 'myntalis') {
+    // Myntalis : rare garanti + epic 40% + legendary 10%
     const rare = pickRarity('rare');
     if (rare) drops.push(rare);
-  }
-  // 15% épique
-  if (Math.random() < 0.15) {
-    const epic = pickRarity('epic');
-    if (epic) drops.push(epic);
-  }
-  // 3% légendaire
-  if (Math.random() < 0.03) {
-    const leg = pickRarity('legendary');
-    if (leg) drops.push(leg);
+    if (Math.random() < 0.40) {
+      const epic = pickRarity('epic');
+      if (epic) drops.push(epic);
+    }
+    if (Math.random() < 0.10) {
+      const leg = pickRarity('legendary');
+      if (leg) drops.push(leg);
+    }
+  } else {
+    // Xenos ou autre : tous rarities
+    const common = pickRarity('common');
+    if (common) drops.push(common);
+    if (Math.random() < 0.60) { const rare = pickRarity('rare'); if (rare) drops.push(rare); }
+    if (Math.random() < 0.25) { const epic = pickRarity('epic'); if (epic) drops.push(epic); }
+    if (Math.random() < 0.08) { const leg  = pickRarity('legendary'); if (leg) drops.push(leg); }
   }
 
   const now = Date.now();
@@ -1370,6 +1383,59 @@ async function dropEquipment(userId) {
     );
   }
   return drops.map(k => EQUIPMENT[k]);
+}
+
+async function dropMaterials(userId, bossKey, difficulty) {
+  // Quantités selon boss + difficulté (100% de drop garanti, seule la quantité varie)
+  let drops = []; // [{ matKey, qty }]
+
+  if (bossKey === 'arakas') {
+    if (difficulty === 'easy') {
+      // 1-10 fer, 1-5 azurite
+      drops = [
+        { matKey: 'fer',     qty: randBetween(1, 10) },
+        { matKey: 'azurite', qty: randBetween(1, 5)  },
+      ];
+    } else { // hard
+      // 1-15 fer, 1-10 azurite
+      drops = [
+        { matKey: 'fer',     qty: randBetween(1, 15) },
+        { matKey: 'azurite', qty: randBetween(1, 10) },
+      ];
+    }
+  } else if (bossKey === 'myntalis') {
+    if (difficulty === 'easy') {
+      // 1-15 azurite, 1-10 quartz, 1-5 topaze
+      drops = [
+        { matKey: 'azurite', qty: randBetween(1, 15) },
+        { matKey: 'quartz',  qty: randBetween(1, 10) },
+        { matKey: 'topaze',  qty: randBetween(1, 5)  },
+      ];
+    } else { // hard
+      // 1-20 azurite, 1-15 quartz, 1-10 topaze
+      drops = [
+        { matKey: 'azurite', qty: randBetween(1, 20) },
+        { matKey: 'quartz',  qty: randBetween(1, 15) },
+        { matKey: 'topaze',  qty: randBetween(1, 10) },
+      ];
+    }
+  } else if (bossKey === 'xenos') {
+    // Xenos : toutes rarités en grandes quantités
+    drops = [
+      { matKey: 'fer',     qty: randBetween(5, 20)  },
+      { matKey: 'azurite', qty: randBetween(5, 20)  },
+      { matKey: 'quartz',  qty: randBetween(3, 15)  },
+      { matKey: 'topaze',  qty: randBetween(1, 10)  },
+    ];
+  }
+
+  for (const { matKey, qty } of drops) {
+    await pool.query(`
+      INSERT INTO player_materials(user_id, mat_key, quantity) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, mat_key) DO UPDATE SET quantity = player_materials.quantity + $3
+    `, [userId, matKey, qty]);
+  }
+  return drops;
 }
 
 
@@ -5117,12 +5183,12 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
       for (const c of contribs.rows) {
         await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
 
-        // Arakas → cartes de raid | Myntalis → équipements | Xenos → les deux
+        // Arakas → cartes de raid + équipements commun/rare | Myntalis → équipements rare/epic/leg | Xenos → les deux
         if (def.bossKey === 'arakas' || def.bossKey === 'xenos') {
           await dropRaidCards(c.user_id).catch(() => {});
         }
-        if (def.bossKey === 'myntalis' || def.bossKey === 'xenos') {
-          const eqDrops = await dropEquipment(c.user_id).catch(() => []);
+        if (def.bossKey === 'myntalis' || def.bossKey === 'xenos' || def.bossKey === 'arakas') {
+          const eqDrops = await dropEquipment(c.user_id, def.bossKey, def.difficulty).catch(() => []);
           if (eqDrops.length) {
             const eqNames = eqDrops.map(e => e.name).join(', ');
             await pool.query(
@@ -5130,6 +5196,15 @@ app.post("/api/clan/raid/attack", auth, async (req, res) => {
               [c.user_id, `Tu as obtenu : ${eqNames} !`, Date.now()]
             );
           }
+        }
+        // Matériaux de forge (100% garanti, quantité variable)
+        const matDrops = await dropMaterials(c.user_id, def.bossKey, def.difficulty).catch(() => []);
+        if (matDrops.length) {
+          const matSummary = matDrops.map(d => `${d.qty}x ${d.matKey}`).join(', ');
+          await pool.query(
+            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚒️ Matériaux obtenus !',$2,NULL,0,$3)`,
+            [c.user_id, `Matériaux de forge : ${matSummary}`, Date.now()]
+          );
         }
         // XP personnage
         const charResult = await addCharXp(c.user_id, charXpGain).catch(() => null);
