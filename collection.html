@@ -1667,7 +1667,9 @@ clearSelBtn.addEventListener("click", () => {
 
 sellSelectedBtn.addEventListener("click", async () => {
   if (!selected.size) return;
-  sellSelectedBtn.disabled = true; // Eviter double-clic
+  // Désactiver immédiatement pour éviter double-clic
+  sellSelectedBtn.disabled = true;
+  clearSelBtn.disabled = true;
 
   const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
 
@@ -1694,7 +1696,10 @@ sellSelectedBtn.addEventListener("click", async () => {
     }
 
     refreshSelUI();
-  }catch(e){}
+  }catch(e){
+    alert('Erreur vente : ' + (e.message || e));
+    refreshSelUI(); // Réactiver le bouton
+  }
 });
 
 async function loadCollection(){

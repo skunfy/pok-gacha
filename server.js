@@ -9,7 +9,6 @@ const { Pool } = pg;
 
 const app = express();
 app.use(express.json());
-app.set('trust proxy', 1); // Pour Render/Railway
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -3447,10 +3446,9 @@ app.post("/api/sell", auth, async (req, res) => {
   }
 });
 // SELL BULK//
-app.get("/api/sell_bulk", (req, res) => res.status(405).json({ error: "Method Not Allowed - use POST" }));
+
 app.post("/api/sell_bulk", auth, async (req, res) => {
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
-  console.log("sell_bulk received:", items.length, "items, first:", JSON.stringify(items[0]));
   const clean = items
     .map(x => ({
       idKey: String(x?.idKey || ""),
@@ -3458,7 +3456,6 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     }))
     .filter(x => x.idKey);
 
-  console.log("sell_bulk clean:", clean.length, "items");
   if (!clean.length) return res.status(400).json({ error: "Empty selection" });
   if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
 
