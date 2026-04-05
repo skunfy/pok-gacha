@@ -252,10 +252,6 @@
     "name": "Promo BW"
   },
   {
-    "id": "2011bw",
-    "name": "Promo McDonald's 2012"
-  },
-  {
     "id": "bw2",
     "name": "Pouvoirs Émergents"
   },
@@ -308,10 +304,6 @@
     "name": "Promo XY"
   },
   {
-    "id": "2013bw",
-    "name": "Promo McDonald's 2013"
-  },
-  {
     "id": "rc",
     "name": "Radiant Collection"
   },
@@ -338,10 +330,6 @@
   {
     "id": "xy2",
     "name": "Étincelles"
-  },
-  {
-    "id": "2014xy",
-    "name": "Promo McDonald's 2014"
   },
   {
     "id": "xy3",
@@ -388,10 +376,6 @@
     "name": "Impulsion Turbo"
   },
   {
-    "id": "2015xy",
-    "name": "Promo McDonald's 2015"
-  },
-  {
     "id": "xy9",
     "name": "Rupture Turbo"
   },
@@ -414,10 +398,6 @@
   {
     "id": "xy11",
     "name": "Offensive Vapeur"
-  },
-  {
-    "id": "2016xy",
-    "name": "Promo McDonald's 2016"
   },
   {
     "id": "xy12",
@@ -444,10 +424,6 @@
     "name": "Gardiens Ascendants"
   },
   {
-    "id": "2017sm",
-    "name": "Promo McDonald's 2017"
-  },
-  {
     "id": "sm3",
     "name": "Ombres Ardentes"
   },
@@ -466,10 +442,6 @@
   {
     "id": "sm6",
     "name": "Lumière Interdite"
-  },
-  {
-    "id": "2018sm-fr",
-    "name": "Promo McDonald's 2018"
   },
   {
     "id": "sm7",
@@ -508,10 +480,6 @@
     "name": "Carte Alternative A Jaune"
   },
   {
-    "id": "2019sm-fr",
-    "name": "Promo McDonald's 2019"
-  },
-  {
     "id": "sm12",
     "name": "Éclipse Cosmique"
   },
@@ -538,10 +506,6 @@
   {
     "id": "swsh4",
     "name": "Voltage Éclatant"
-  },
-  {
-    "id": "2021swsh",
-    "name": "Promo McDonald's 2021"
   },
   {
     "id": "swsh4.5",
