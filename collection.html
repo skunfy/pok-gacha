@@ -1301,6 +1301,7 @@ async function api(path, opts = {}){
   const url = path + sep + "game=" + g;
 
   const r = await fetch(url, {
+    cache: opts.cache || "default",
     ...opts,
     headers: {
       ...(opts.headers || {}),
@@ -1715,9 +1716,10 @@ sellSelectedBtn.addEventListener("click", async () => {
   }
 });
 
-async function loadCollection(){
+async function loadCollection(force = false){
   try{
-    const data = await api("/api/collection");
+    const fetchOpts = force ? { cache: "no-store" } : {};
+    const data = await api("/api/collection", fetchOpts);
 
     allItems = (data.items || []).map(x => ({
       ...x,
