@@ -2878,8 +2878,8 @@ app.get("/api/collection", auth, async (req, res) => {
   const game = getGame(req);
 
   const items = await pool.query(
-  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json
-   FROM collection 
+  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
+   FROM collection
    WHERE user_id=$1 AND game=$2
    ORDER BY lastAt DESC`,
   [req.user.id, game]
@@ -2887,6 +2887,7 @@ app.get("/api/collection", auth, async (req, res) => {
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
+  res.setHeader('Cache-Control', 'private, max-age=30');
   res.json({
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => {
@@ -3627,6 +3628,7 @@ app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
     FROM collection
     WHERE user_id=$1 AND game=$2
     ORDER BY lastAt DESC
+    LIMIT 200
     `,
     [friend.id, game]
   );
@@ -4415,6 +4417,7 @@ app.get("/api/leaderboard/xp", auth, async (req, res) => {
     clanName: u.clan_name || ""
 }));
 
+  res.setHeader('Cache-Control', 'private, max-age=60');
   res.json({
     top,
     me: {
