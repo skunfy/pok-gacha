@@ -3303,8 +3303,12 @@ function renderForge() {
   }
   let btnLabel = !item ? 'Choisir un item' : item.forge_level >= 15 ? '✨ MAX' : canForge ? '⚒️ Forger +' + (item.forge_level+1) : 'Matériaux insuffisants';
   centerHtml += '<button class="forge-btn" onclick="doForge()" ' + (!canForge || !req ? 'disabled' : '') + '>' + btnLabel + '</button>';
-  if (item && item.forge_level < 15 && !item.equipped_slot) {
-    centerHtml += '<button class="forge-btn-destroy" onclick="doDestroy(' + item.id + ')">🔥 Détruire pour matériaux</button>';
+  if (item) {
+    if (item.equipped_slot) {
+      centerHtml += '<button class="forge-btn-destroy" disabled title="D&eacute;s&eacute;quipe l&#39;item d&#39;abord">🔥 D&eacute;truire (d&eacute;s&eacute;quipe d&#39;abord)</button>';
+    } else {
+      centerHtml += '<button class="forge-btn-destroy" onclick="doDestroy(' + item.id + ')">🔥 Détruire pour matériaux</button>';
+    }
   }
 
   // ── MATÉRIAUX ──
@@ -3388,25 +3392,87 @@ function openForgeItemPicker() {
   document.querySelector('.forge-inv-grid')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
+const FORGE_SFX = new Audio('https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/anvil.wav');
+FORGE_SFX.preload = 'auto';
+
+function playForgeSound() {
+  try { FORGE_SFX.currentTime = 0; FORGE_SFX.play(); } catch(e) {}
+}
+
+function forgeSuccessAnim() {
+  const slot = document.querySelector('.forge-item-slot.filled');
+  if (!slot) return;
+  // Éclairs dorés qui partent du slot
+  slot.style.transition = 'transform .15s';
+  const seq = [1.2, 0.9, 1.15, 0.95, 1.0];
+  seq.forEach((s, i) => setTimeout(() => { slot.style.transform = 'scale('+s+')'; }, i * 80));
+  setTimeout(() => { slot.style.transform = ''; slot.style.transition = ''; }, 500);
+
+  // Particules
+  const rect = slot.getBoundingClientRect();
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    const angle = (i / 12) * Math.PI * 2;
+    const dist = 40 + Math.random() * 30;
+    p.style.cssText = 'position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:99999;'
+      + 'left:' + (rect.left + rect.width/2) + 'px;top:' + (rect.top + rect.height/2) + 'px;'
+      + 'background:' + ['#ffd84d','#ff8800','#fff','#c084ff'][i%4] + ';'
+      + 'transition:all .6s ease-out;opacity:1;';
+    document.body.appendChild(p);
+    setTimeout(() => {
+      p.style.transform = 'translate(' + (Math.cos(angle)*dist) + 'px,' + (Math.sin(angle)*dist) + 'px) scale(0)';
+      p.style.opacity = '0';
+    }, 20);
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+function forgeFailAnim() {
+  const slot = document.querySelector('.forge-item-slot.filled');
+  if (!slot) return;
+  // Shake horizontal
+  slot.style.transition = 'transform .08s';
+  const shakes = [-10, 10, -8, 8, -5, 5, 0];
+  shakes.forEach((x, i) => setTimeout(() => { slot.style.transform = 'translateX('+x+'px)'; }, i * 80));
+  setTimeout(() => { slot.style.transform = ''; slot.style.transition = ''; }, 650);
+
+  // Flash rouge
+  const flash = document.createElement('div');
+  flash.style.cssText = 'position:fixed;inset:0;background:rgba(255,50,50,.15);pointer-events:none;z-index:99998;transition:opacity .4s';
+  document.body.appendChild(flash);
+  setTimeout(() => { flash.style.opacity = '0'; }, 50);
+  setTimeout(() => flash.remove(), 500);
+}
+
 async function doForge() {
   if (!_forgeSelItem) return;
   const alertEl = document.getElementById('forgeAlert');
+  const btn = document.querySelector('.forge-btn:not(.forge-btn-destroy)');
+  if (btn) btn.disabled = true;
+
+  // SFX au clic
+  playForgeSound();
+
+  // Petite animation d'attente sur l'enclume
+  const anvil = document.querySelector('.forge-anvil');
+  if (anvil) { anvil.style.transform = 'scale(1.1) rotate(-5deg)'; setTimeout(()=>{ anvil.style.transform=''; }, 300); }
+
   try {
     const data = await api('/api/forge/upgrade', { method:'POST', body: JSON.stringify({ id: _forgeSelItem }) });
     _forgeData = await api('/api/forge');
 
     if (data.success) {
-      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Succès ! Équipement amélioré à +${data.newLevel} !</div>`;
-      // Petite animation sur l'item
-      const item = document.querySelector('.forge-item-slot.filled');
-      if (item) { item.style.transform = 'scale(1.15)'; setTimeout(()=>item.style.transform='', 400); }
+      forgeSuccessAnim();
+      if (alertEl) alertEl.innerHTML = '<div class="alert alert-success">✅ Succès ! Équipement amélioré à +' + data.newLevel + ' !</div>';
     } else {
-      if (alertEl) alertEl.innerHTML = `<div class="alert" style="background:rgba(255,100,0,.15);border:1px solid rgba(255,100,0,.3);color:#ff8844">💨 Échec ! Les matériaux sont perdus mais l'équipement reste à +${data.newLevel}.</div>`;
+      forgeFailAnim();
+      if (alertEl) alertEl.innerHTML = '<div class="alert" style="background:rgba(255,100,0,.15);border:1px solid rgba(255,100,0,.3);color:#ff8844">' + "💨 Échec ! Les matériaux sont perdus mais l'équipement reste à +" + data.newLevel + '.</div>';
     }
     setTimeout(() => { if (alertEl) alertEl.innerHTML = ''; }, 4000);
     renderForge();
   } catch(e) {
-    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+    if (alertEl) alertEl.innerHTML = '<div class="alert alert-error">' + esc(e.message) + '</div>';
+    if (btn) btn.disabled = false;
   }
 }
 
