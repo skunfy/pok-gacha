@@ -3456,6 +3456,7 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     }))
     .filter(x => x.idKey);
 
+  console.log("[sell_bulk] user:", req.user.id, "items:", items.length, "clean:", clean.length);
   if (!clean.length) return res.status(400).json({ error: "Empty selection" });
   if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
 
@@ -3473,6 +3474,10 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
       [req.user.id, keys]
     );
 
+    console.log("[sell_bulk] DB rows found:", q.rows.length, "sur", keys.length, "keys");
+    if (q.rows.length > 0) console.log("[sell_bulk] first DB row idKey:", JSON.stringify(q.rows[0].idkey || q.rows[0].idKey));
+    if (clean.length > 0) console.log("[sell_bulk] first clean idKey:", JSON.stringify(clean[0].idKey));
+
     const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
 
     let total = 0;
@@ -3482,12 +3487,14 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
     for (const it of clean) {
       const row = byKey.get(it.idKey);
       if (!row) {
+        console.log("[sell_bulk] NOT FOUND:", JSON.stringify(it.idKey), "byKey keys:", [...byKey.keys()].slice(0,3));
         await client.query("ROLLBACK");
         return res.status(404).json({ error: "Not owned: " + it.idKey });
       }
 
       const owned = Number(row.count) || 0;
       if (owned < it.qty) {
+        console.log("[sell_bulk] INSUFFICIENT:", it.idKey, "owned:", owned, "wanted:", it.qty);
         await client.query("ROLLBACK");
         return res.status(400).json({ error: "Quantité insuffisante: " + it.idKey });
       }
