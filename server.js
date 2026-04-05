@@ -1155,9 +1155,7 @@ function charStatBonus(char, bossHpPct) {
   return {
     dmg_bonus:    force        * statEffectiveRate('force',        charClass) + passive_dmg,
     crit:         agilite      * statEffectiveRate('agilite',      charClass) + passive_crit,
-    intel_bonus:  bossHpPct < 50
-                    ? intelligence * statEffectiveRate('intelligence', charClass) + passive_intel
-                    : 0,
+    clan_dmg:     intelligence * statEffectiveRate('intelligence', charClass) + passive_intel,
     first_attack: dexterite    * statEffectiveRate('dexterite',   charClass) + passive_first,
   };
 }
@@ -5795,9 +5793,10 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
   const charQ = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
   const char = charQ.rows[0] || null;
   const statBonus = charStatBonus(char, bossHpPct);
-  dmg_bonus    += statBonus.dmg_bonus + statBonus.intel_bonus;
-  crit         += statBonus.crit;
-  first_attack += statBonus.first_attack;
+  dmg_bonus    += statBonus.dmg_bonus || 0;
+  crit         += statBonus.crit      || 0;
+  first_attack += statBonus.first_attack || 0;
+  clan_dmg     += statBonus.clan_dmg  || 0; // Intelligence → DMG clan
 
   // === BONUS ÉQUIPEMENT ===
   const eqBonus = await getEquipmentBonus(userId);
@@ -5807,6 +5806,9 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
   // clan_dmg et clan_crit s'appliquent comme bonus de soutien
   dmg_bonus    += eqBonus.clan_dmg;
   crit         += eqBonus.clan_crit;
+
+  // Fusionner clan_dmg dans dmg_bonus (les deux augmentent les dégâts perso)
+  dmg_bonus += clan_dmg;
 
   return {
     dmg_bonus: Math.round(dmg_bonus * 10) / 10,
