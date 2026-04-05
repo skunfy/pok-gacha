@@ -1,0 +1,3444 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Clan — Gachax</title>
+<style>
+:root{
+  --bg1:#05060d;--bg2:#090b18;
+  --accent:#7f5cff;--accent2:#f053c5;
+  --gold:#ffd84d;--red:#ff4444;--green:#33ff99;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto;color:#fff;overflow-x:hidden}
+body{
+  background:
+    radial-gradient(900px 520px at 20% 10%,rgba(80,130,255,.22),transparent 60%),
+    radial-gradient(900px 600px at 85% 30%,rgba(255,80,220,.18),transparent 62%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+
+/* TOPBAR */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 18px;
+  background:rgba(5,6,13,.85);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(14px);
+}
+.topbar a{color:#fff;text-decoration:none;font-weight:800;font-size:13px;opacity:.8}
+.topbar a:hover{opacity:1}
+.topNav{display:flex;gap:14px;align-items:center}
+.topLink{
+  padding:8px 10px;border-radius:999px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+  color:#fff;font-size:12px;font-weight:900;text-decoration:none;
+  transition:background .12s;white-space:nowrap;
+}
+.topLink:hover{background:rgba(255,255,255,.14)}
+.cornerLogo{width:70px;flex:0 0 auto}
+.cornerLogo img{width:100%;height:auto;display:block}
+
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:20px}
+
+/* CARDS */
+.card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;padding:20px;
+}
+.card-title{font-size:15px;font-weight:900;letter-spacing:.05em;margin:0 0 16px;opacity:.9}
+
+/* BUTTONS */
+.btn{
+  padding:10px 18px;border-radius:12px;border:none;cursor:pointer;
+  font-weight:800;font-size:13px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  transition:opacity .15s,transform .12s;
+}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-sm{padding:7px 12px;font-size:12px;border-radius:8px}
+.btn-danger{background:linear-gradient(135deg,#ff4444,#ff6b6b)}
+.btn-ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
+.btn-gold{background:linear-gradient(135deg,#ffd84d,#ff8800)}
+
+/* INPUTS */
+input,textarea,select{
+  width:100%;padding:10px 14px;border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:14px;font-weight:600;
+  outline:none;
+}
+input:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+label{font-size:12px;opacity:.7;display:block;margin-bottom:4px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.tab{
+  padding:9px 16px;border-radius:10px;cursor:pointer;font-weight:800;font-size:13px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+  transition:all .15s;
+}
+.tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.tab:hover:not(.active){background:rgba(255,255,255,.12)}
+
+/* CLAN BANNER */
+.clan-banner{
+  border-radius:18px;padding:24px;
+  background:linear-gradient(135deg,var(--bannerColor,#7f5cff)44,rgba(0,0,0,.4));
+  border:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+}
+.clan-logo{
+  width:80px;height:80px;border-radius:16px;
+  background-size:cover;background-position:center;
+  border:2px solid rgba(255,255,255,.2);
+  flex-shrink:0;
+}
+.clan-tag{
+  font-size:28px;font-weight:900;letter-spacing:.1em;
+  background:rgba(0,0,0,.35);border-radius:10px;padding:8px 16px;
+}
+.clan-info{flex:1;min-width:200px}
+.clan-name{font-size:22px;font-weight:900;margin:0 0 4px}
+.clan-desc{opacity:.75;font-size:14px;margin:0 0 10px}
+.clan-stats{display:flex;gap:14px;flex-wrap:wrap}
+.cstat{font-size:13px;opacity:.85}
+.cstat b{color:var(--gold)}
+
+/* BOSS */
+.boss-card{
+  background:linear-gradient(135deg,rgba(255,50,50,.12),rgba(200,0,0,.06));
+  border:1px solid rgba(255,80,80,.25);
+  border-radius:18px;padding:20px;
+}
+.boss-name{font-size:18px;font-weight:900;color:#ff6060;margin:0 0 12px}
+.hp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:14px;overflow:hidden;margin:8px 0}
+.hp-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#ff4444,#ff8800);transition:width .5s ease}
+.hp-text{font-size:13px;opacity:.8;margin-bottom:8px}
+.dmg-leaderboard{margin-top:14px}
+.dmg-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.dmg-row:last-child{border:none}
+.dmg-me{color:var(--gold);font-weight:800}
+
+/* MEMBERS */
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.member-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;
+}
+.member-avatar{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-weight:900;font-size:15px;flex-shrink:0;
+  background-size:cover;background-position:center;
+}
+.member-name{font-weight:800;font-size:13px}
+.member-role{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.05em}
+.member-dmg{font-size:11px;color:var(--gold);margin-top:2px}
+.role-leader{color:#ffd84d}
+.role-officer{color:#a0c4ff}
+
+/* MISSIONS */
+.missions-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mission-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:12px;padding:14px;
+}
+.mission-label{font-size:13px;font-weight:800;margin-bottom:8px}
+.mission-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin:6px 0}
+.mission-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.mission-bar.done{background:linear-gradient(90deg,#33ff99,#00c88c)}
+.mission-prog{font-size:12px;opacity:.7}
+.mission-reward{font-size:11px;color:var(--gold);margin-top:4px}
+.mission-check{font-size:18px;float:right;margin-top:-2px}
+
+/* CHAT */
+.chat-messages{
+  height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+  padding:12px;background:rgba(0,0,0,.25);border-radius:12px;margin-bottom:12px;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;
+}
+.chat-msg{display:flex;gap:8px;align-items:flex-start}
+.chat-avatar{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-weight:900;font-size:12px;
+  background-size:cover;background-position:center;
+}
+.chat-body{min-width:0}
+.chat-author{font-size:12px;font-weight:800;opacity:.85}
+.chat-text{font-size:13px;word-break:break-word;margin-top:2px;opacity:.9}
+.chat-time{font-size:10px;opacity:.45;margin-top:2px}
+.chat-input-row{display:flex;gap:8px}
+.chat-input-row input{flex:1}
+
+/* BANK */
+.bank-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.bank-row input{flex:1;min-width:120px}
+.bank-select{flex:1;min-width:120px}
+
+/* CLAN LIST */
+.clan-list{display:grid;gap:12px}
+.clan-list-item{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px;
+}
+.clan-list-tag{
+  font-size:16px;font-weight:900;letter-spacing:.08em;
+  background:rgba(255,255,255,.08);border-radius:8px;
+  padding:6px 10px;flex-shrink:0;min-width:55px;text-align:center;
+}
+.clan-list-info{flex:1;min-width:0}
+.clan-list-name{font-weight:800;font-size:14px}
+.clan-list-sub{font-size:12px;opacity:.6;margin-top:2px}
+.clan-list-xp{font-size:12px;color:var(--gold);margin-top:2px}
+
+/* CREATE FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:12px}
+.alert-error{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#ff8888}
+.alert-success{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:#33ff99}
+
+/* LEADERBOARD */
+.lb-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:6px;
+}
+.lb-rank{font-size:16px;font-weight:900;min-width:28px;text-align:center}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{flex:1;font-weight:800;font-size:14px}
+.lb-xp{color:var(--gold);font-size:13px;font-weight:800}
+
+/* LOADING */
+.loading{opacity:.5;text-align:center;padding:40px;font-size:14px}
+
+/* COLOR PICKER */
+.color-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.color-opt{
+  width:28px;height:28px;border-radius:999px;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s;
+}
+.color-opt.selected{border-color:#fff}
+
+/* MOBILE */
+@media(max-width:768px){
+  .clan-banner{flex-direction:column;align-items:flex-start}
+  .members-grid{grid-template-columns:1fr 1fr}
+  .missions-grid{grid-template-columns:1fr}
+}
+
+/* DEFEATED BOSS */
+.boss-defeated{
+  text-align:center;padding:30px;
+  color:var(--green);font-weight:900;font-size:18px;
+}
+.no-clan-wrap{text-align:center;padding:60px 20px}
+.no-clan-wrap h2{margin:0 0 10px;font-size:22px}
+.no-clan-wrap p{opacity:.7;margin:0 0 24px}
+
+/* RAID */
+.raid-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:8px}
+@media(max-width:800px){.raid-select-grid{grid-template-columns:1fr}}
+.boss-choice{
+  border:2px solid rgba(255,255,255,.12);border-radius:16px;
+  padding:16px;text-align:center;
+  background:rgba(255,255,255,.04);
+  transition:border-color .2s,background .2s,transform .15s;
+}
+.boss-choice.available:hover{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08);transform:translateY(-2px)}
+.boss-choice.locked{opacity:.5;cursor:not-allowed}
+.boss-choice img{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:10px}
+.boss-choice .boss-choice-name{font-size:16px;font-weight:900;margin-bottom:4px}
+.boss-choice .boss-choice-stats{font-size:12px;opacity:.7;line-height:1.6}
+.diff-btns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+.diff-btn{flex:1;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid;transition:all .15s}
+.diff-btn.easy{border-color:rgba(100,255,150,.4);background:rgba(100,255,150,.08);color:#64ff96}
+.diff-btn.easy:hover{background:rgba(100,255,150,.18)}
+.diff-btn.hard{border-color:rgba(255,80,80,.4);background:rgba(255,80,80,.08);color:#ff5050}
+.diff-btn.hard:hover{background:rgba(255,80,80,.18)}
+.diff-btn:disabled{opacity:.4;cursor:not-allowed}
+.cooldown-badge{margin-top:8px;font-size:11px;color:#ffd84d;opacity:.8}
+
+.stock-bar{
+  background:rgba(255,255,255,.06);border:1px solid rgba(127,92,255,.3);
+  border-radius:12px;padding:14px 16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.stock-val{font-size:22px;font-weight:900;color:var(--accent)}
+.stock-label{font-size:13px;opacity:.7}
+
+/* Animation attaque */
+@keyframes attackShake {
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px) rotate(-2deg)}
+  30%{transform:translateX(8px) rotate(2deg)}
+  45%{transform:translateX(-6px)}
+  60%{transform:translateX(6px)}
+  75%{transform:translateX(-3px)}
+}
+@keyframes attackFlash {
+  0%{opacity:0;transform:scale(.5)}
+  20%{opacity:1;transform:scale(1.2)}
+  100%{opacity:0;transform:scale(2)}
+}
+@keyframes dmgPop {
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}
+  30%{opacity:1;transform:translate(-50%,-120%) scale(1.2)}
+  100%{opacity:0;transform:translate(-50%,-200%) scale(.8)}
+}
+.boss-img-wrap{position:relative;display:inline-block}
+.attack-flash{
+  position:absolute;inset:0;border-radius:14px;
+  background:radial-gradient(circle,rgba(255,80,80,.9),transparent 70%);
+  pointer-events:none;opacity:0;
+}
+.dmg-popup{
+  position:absolute;left:50%;top:50%;
+  font-size:28px;font-weight:900;color:#ff4444;
+  text-shadow:0 0 20px rgba(255,68,68,.8);
+  pointer-events:none;white-space:nowrap;
+  animation:dmgPop .9s ease forwards;
+}
+.timer-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:6px;overflow:hidden;margin:6px 0}
+.timer-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#33ff99,#ffd84d,#ff4444);transition:width 1s linear}
+.talent-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding:14px 18px;
+  background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.25);
+  border-radius:12px;flex-wrap:wrap;gap:10px;
+}
+.talent-points-badge{
+  font-size:20px;font-weight:900;color:var(--gold);
+}
+.clan-xp-bar-wrap{flex:1;min-width:200px}
+.clan-xp-bar-label{font-size:12px;opacity:.7;margin-bottom:4px}
+.clan-xp-bar{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden}
+.clan-xp-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+
+.talents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.talent-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;padding:16px;
+}
+.talent-card.maxed{border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.talent-icon{font-size:28px;margin-bottom:8px}
+.talent-name{font-size:15px;font-weight:900;margin-bottom:4px}
+.talent-desc{font-size:12px;opacity:.65;margin-bottom:12px}
+.talent-levels{display:flex;gap:4px;margin-bottom:10px}
+.talent-dot{
+  width:18px;height:18px;border-radius:999px;
+  border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);
+  transition:background .2s;
+}
+.talent-dot.filled{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.talent-dot.maxed{background:linear-gradient(135deg,#ffd84d,#ff8800);border-color:transparent}
+.talent-current{font-size:12px;color:var(--green);margin-bottom:4px}
+.talent-next{font-size:12px;opacity:.6;margin-bottom:10px}
+.talent-cost{font-size:12px;color:var(--gold);margin-bottom:8px}
+
+.section-hidden{display:none}
+
+/* ── FORGE ── */
+.forge-wrap{display:flex;flex-direction:column;gap:20px}
+.forge-main{
+  display:grid;grid-template-columns:1fr 200px 1fr;
+  gap:0;background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;
+}
+.forge-col-left,.forge-col-right{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:14px;padding:20px 14px;
+}
+.forge-col-left{border-right:1px solid rgba(255,255,255,.06)}
+.forge-col-right{border-left:1px solid rgba(255,255,255,.06)}
+.forge-col-center{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.2);padding:20px 10px;gap:10px;
+}
+.forge-anvil{width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(127,92,255,.4));transition:transform .3s}
+.forge-anvil:hover{transform:scale(1.05)}
+.forge-cost{font-size:13px;font-weight:900;color:#ffd84d;text-align:center}
+.forge-rate{font-size:12px;font-weight:800;text-align:center}
+.forge-btn{
+  padding:12px 28px;border-radius:14px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;width:100%;
+  background:linear-gradient(135deg,#7f5cff,#f053c5);
+  transition:all .2s;
+}
+.forge-btn:hover:not(:disabled){opacity:.85;transform:translateY(-1px)}
+.forge-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.forge-btn-destroy{
+  padding:8px 16px;border-radius:10px;border:none;cursor:pointer;
+  font-weight:800;font-size:12px;color:#ff8888;background:rgba(255,68,68,.12);
+  border:1px solid rgba(255,68,68,.25);transition:all .2s;width:100%;margin-top:4px;
+}
+.forge-btn-destroy:hover:not(:disabled){background:rgba(255,68,68,.22)}
+
+/* Item slot forge */
+.forge-item-slot{
+  width:100px;height:100px;border-radius:14px;
+  border:2px dashed rgba(255,255,255,.2);
+  background:rgba(255,255,255,.04);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;position:relative;overflow:visible;
+}
+.forge-item-slot:hover{border-color:rgba(127,92,255,.5);background:rgba(127,92,255,.08)}
+.forge-item-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);padding:0}
+.forge-item-slot img{width:100%;height:100%;object-fit:contain;border-radius:12px}
+.forge-item-slot .forge-item-level{
+  position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+  font-size:11px;font-weight:900;padding:2px 8px;border-radius:999px;
+  background:#0d0e1c;border:1px solid rgba(255,255,255,.2);white-space:nowrap;
+}
+
+/* Matériaux slot */
+.forge-mat-slot{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:10px 14px;width:100%;
+}
+.forge-mat-img{width:36px;height:36px;object-fit:contain}
+.forge-mat-info{flex:1;min-width:0}
+.forge-mat-name{font-size:12px;font-weight:900}
+.forge-mat-qty{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px}
+.forge-mat-need{font-size:11px;font-weight:800;margin-left:auto}
+
+/* Inventaire forge */
+.forge-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+.forge-inv-item{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:7px 5px;text-align:center;cursor:pointer;
+  transition:all .15s;position:relative;
+}
+.forge-inv-item:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
+.forge-inv-item.selected{border-color:rgba(127,92,255,.8);background:rgba(127,92,255,.2);box-shadow:0 0 12px rgba(127,92,255,.3)}
+.forge-inv-item.legendary{border-color:rgba(255,184,0,.35)}
+.forge-inv-item.epic{border-color:rgba(192,132,255,.3)}
+.forge-inv-item.rare{border-color:rgba(77,166,255,.3)}
+.forge-inv-img{width:48px;height:48px;object-fit:contain}
+.forge-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.forge-inv-lvl{font-size:9px;font-weight:900;margin-top:2px}
+.forge-alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;margin-top:10px}
+
+/* Animations forge level */
+@keyframes forgeGlow3{0%,100%{box-shadow:0 0 6px rgba(255,255,255,.4)}50%{box-shadow:0 0 14px rgba(255,255,255,.8)}}
+@keyframes forgeGlow6{0%,100%{box-shadow:0 0 8px rgba(77,166,255,.6)}50%{box-shadow:0 0 20px rgba(77,166,255,1)}}
+@keyframes forgeGlow9{0%,100%{box-shadow:0 0 10px rgba(192,132,255,.7)}50%{box-shadow:0 0 24px rgba(192,132,255,1)}}
+@keyframes forgeGlow12{0%,100%{box-shadow:0 0 12px rgba(255,184,0,.8)}50%{box-shadow:0 0 28px rgba(255,184,0,1)}}
+@keyframes forgeRainbow{0%{border-color:#ff0000}16%{border-color:#ff8800}33%{border-color:#ffff00}50%{border-color:#00ff88}66%{border-color:#0088ff}83%{border-color:#ff00ff}100%{border-color:#ff0000}}
+@keyframes forgeParticle{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(0)}}
+.forge-lv3{border-color:rgba(255,255,255,.7)!important;animation:forgeGlow3 2s ease-in-out infinite}
+.forge-lv6{border-color:rgba(77,166,255,.9)!important;animation:forgeGlow6 1.8s ease-in-out infinite}
+.forge-lv9{border-color:rgba(192,132,255,.9)!important;animation:forgeGlow9 1.6s ease-in-out infinite}
+.forge-lv12{border-color:rgba(255,184,0,.9)!important;animation:forgeGlow12 1.4s ease-in-out infinite}
+.forge-lv15{border-width:3px!important;animation:forgeRainbow .8s linear infinite}
+
+/* ── BARRE PROGRESSION MISSIONS ── */
+.mission-prog-wrap{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:18px 20px;margin-bottom:16px;
+}
+.mission-prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.mission-prog-title{font-size:13px;font-weight:900;opacity:.7}
+.mission-prog-count{font-size:12px;font-weight:800;color:#c084ff}
+.mission-prog-bar-outer{position:relative;height:20px;background:rgba(255,255,255,.07);border-radius:999px;margin-bottom:6px;overflow:visible}
+.mission-prog-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#7f5cff,#f053c5);transition:width .6s cubic-bezier(.4,0,.2,1);position:relative;min-width:0;}
+.mission-prog-bar-fill::after{content:'';position:absolute;right:-1px;top:50%;transform:translateY(-50%);width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 0 8px rgba(127,92,255,.8);display:var(--dot-display,block)}
+.mission-milestones{display:flex;justify-content:space-between;margin-top:10px;padding:0 2px;position:relative}
+.mission-milestone{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.mission-milestone-dot{width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:#0d0e1c;position:absolute;top:-25px;left:50%;transform:translateX(-50%);transition:all .3s;z-index:2}
+.mission-milestone-dot.reached{background:#7f5cff;border-color:#7f5cff;box-shadow:0 0 10px rgba(127,92,255,.5)}
+.mission-milestone-dot.done{background:#33ff99;border-color:#33ff99;box-shadow:0 0 10px rgba(51,255,153,.4)}
+.mission-milestone-label{font-size:9px;color:rgba(255,255,255,.3);font-weight:800;margin-top:2px}
+.mission-milestone-reward{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.07);white-space:nowrap;margin-top:2px;transition:all .3s}
+.mission-milestone-reward.reached{background:rgba(127,92,255,.2);color:#c084ff;border-color:rgba(127,92,255,.3)}
+.mission-milestone-reward.done{background:rgba(51,255,153,.12);color:#33ff99;border-color:rgba(51,255,153,.25)}
+.mission-prog-next{font-size:11px;color:rgba(255,255,255,.35);margin-top:8px}
+
+/* ── COFFRE ── */
+.chest-section{text-align:center;margin-bottom:16px}
+.chest-btn{
+  display:inline-flex;flex-direction:column;align-items:center;gap:10px;
+  background:rgba(255,184,0,.06);border:2px solid rgba(255,184,0,.3);
+  border-radius:20px;padding:20px 36px;cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.chest-btn:hover:not(:disabled){background:rgba(255,184,0,.12);border-color:rgba(255,184,0,.65);transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,184,0,.15)}
+.chest-btn:active:not(:disabled){transform:scale(.97)}
+.chest-btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}
+.chest-img{width:80px;height:80px;object-fit:contain;transition:transform .2s}
+.chest-btn:hover:not(:disabled) .chest-img{transform:scale(1.08) rotate(-4deg)}
+.chest-label{font-size:14px;font-weight:900;color:#ffd84d}
+.chest-sub{font-size:11px;color:rgba(255,255,255,.35)}
+.chest-claimed{font-size:12px;color:#33ff99;font-weight:800;margin-top:4px}
+@keyframes chestShine{0%{left:-100%}100%{left:200%}}
+.chest-btn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:chestShine 3s infinite}
+
+/* ── MODAL RÉCOMPENSE ── */
+.chest-result-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.chest-result-overlay.show{opacity:1;pointer-events:all}
+.chest-result-card{
+  background:#0e0f1f;border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;padding:28px 24px;max-width:320px;width:100%;text-align:center;
+  transform:scale(.85) translateY(20px);transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.chest-result-overlay.show .chest-result-card{transform:scale(1) translateY(0)}
+.chest-result-img{width:140px;height:140px;object-fit:contain;border-radius:14px;margin:0 auto 14px;display:block}
+.chest-result-icon{font-size:64px;margin-bottom:14px;display:block}
+.chest-result-rarity{font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.chest-result-name{font-size:22px;font-weight:900;margin-bottom:4px}
+.chest-result-type{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:22px}
+.chest-result-close{padding:11px 28px;border-radius:12px;border:none;cursor:pointer;font-weight:900;font-size:14px;color:#fff;background:linear-gradient(135deg,#7f5cff,#f053c5)}
+
+/* PERSONNAGE */
+.char-wrap{display:flex;flex-direction:column;gap:16px}
+
+/* === CARTE HERO === */
+.char-hero-card{
+  border-radius:20px;overflow:hidden;position:relative;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,20,.6);
+  display:flex;flex-direction:column;
+}
+.char-hero-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center top;
+  opacity:.18;filter:blur(2px);transform:scale(1.05);
+  transition:opacity .4s;
+}
+.char-hero-top{
+  position:relative;z-index:1;
+  display:flex;gap:0;min-height:220px;
+}
+.char-hero-img-col{
+  width:180px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 0 16px;
+}
+.char-hero-img{
+  width:160px;height:210px;object-fit:contain;object-position:bottom;
+  filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+  transition:filter .4s,transform .3s;
+}
+.char-hero-img:hover{transform:scale(1.04) translateY(-4px)}
+.char-hero-img-placeholder{
+  width:160px;height:210px;display:flex;align-items:center;justify-content:center;
+  font-size:80px;filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+}
+.char-hero-info-col{
+  flex:1;padding:24px 20px 20px;display:flex;flex-direction:column;justify-content:space-between;
+}
+.char-hero-name{font-size:22px;font-weight:900;margin-bottom:4px}
+.char-class-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:900;padding:4px 12px;border-radius:999px;margin-bottom:14px;
+  border:1px solid;
+}
+.char-class-pill.no-class{
+  background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;opacity:.7;
+}
+.char-level-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.char-level-num{font-size:36px;font-weight:900;line-height:1}
+.char-level-label{font-size:13px;opacity:.6;font-weight:700}
+.char-xp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin-bottom:5px}
+.char-xp-bar{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.char-xp-label{font-size:11px;opacity:.6}
+.char-passive-row{
+  margin-top:14px;padding:10px 14px;border-radius:10px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;line-height:1.7;
+}
+.char-passive-title{font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+
+/* Points badge flottant */
+.char-points-float{
+  position:absolute;top:14px;right:14px;z-index:2;
+  background:linear-gradient(135deg,#ffd84d,#ff8800);
+  border-radius:12px;padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(255,216,77,.35);
+  animation:pointsPulse 2s ease infinite;
+}
+@keyframes pointsPulse{0%,100%{box-shadow:0 4px 20px rgba(255,216,77,.35)}50%{box-shadow:0 4px 32px rgba(255,216,77,.6)}}
+.char-points-float-num{font-size:20px;font-weight:900;color:#000}
+.char-points-float-label{font-size:11px;font-weight:800;color:rgba(0,0,0,.7)}
+
+/* Barre XP bottom */
+.char-hero-xp-bar-full{
+  position:relative;z-index:1;
+  height:6px;background:rgba(255,255,255,.08);
+}
+.char-hero-xp-bar-fill{
+  height:100%;transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+/* === CHOIX DE CLASSE === */
+.class-pick-screen{
+  border-radius:20px;padding:28px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  text-align:center;
+}
+.class-pick-title{font-size:20px;font-weight:900;margin-bottom:6px}
+.class-pick-sub{font-size:13px;opacity:.6;margin-bottom:24px}
+.class-cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:700px){.class-cards-row{grid-template-columns:1fr}}
+.class-pick-card{
+  border-radius:16px;padding:20px 14px;cursor:pointer;
+  border:2px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);
+  transition:all .2s;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.class-pick-card:hover{transform:translateY(-4px);border-color:var(--cls-color)!important;background:rgba(255,255,255,.08)}
+.class-pick-card.selected{border-color:var(--cls-color)!important;background:rgba(255,255,255,.1)}
+.class-pick-img{width:110px;height:145px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 0 16px var(--cls-color))}
+.class-pick-img-ph{font-size:56px;height:110px;display:flex;align-items:flex-end;justify-content:center}
+.class-pick-name{font-size:16px;font-weight:900}
+.class-pick-desc{font-size:11px;opacity:.6;line-height:1.5}
+.class-pick-passives{
+  font-size:11px;padding:8px 10px;border-radius:8px;
+  background:rgba(0,0,0,.25);width:100%;text-align:left;line-height:1.8;
+}
+.class-pick-btn{
+  margin-top:20px;padding:12px 36px;border-radius:12px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  transition:opacity .15s,transform .12s;
+}
+.class-pick-btn:hover{opacity:.85;transform:translateY(-1px)}
+.class-pick-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* === STATS === */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:16px;
+}
+.stat-card.force  {border-color:rgba(255,100,100,.3);background:rgba(255,80,80,.06)}
+.stat-card.agilite{border-color:rgba(100,255,150,.3);background:rgba(51,255,153,.06)}
+.stat-card.intel  {border-color:rgba(100,180,255,.3);background:rgba(77,166,255,.06)}
+.stat-card.dex    {border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.stat-icon{font-size:22px;margin-bottom:4px}
+.stat-name{font-size:13px;font-weight:900;margin-bottom:2px}
+.stat-desc{font-size:11px;opacity:.55;margin-bottom:10px;line-height:1.5}
+.stat-value-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.stat-value{font-size:22px;font-weight:900}
+.stat-bonus{font-size:11px;opacity:.65}
+.stat-passive-line{font-size:10px;opacity:.5;margin-bottom:6px;font-style:italic}
+.stat-dots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px}
+.stat-dot{width:11px;height:11px;border-radius:3px;background:rgba(255,255,255,.12)}
+.stat-dot.filled.force  {background:#ff6464}
+.stat-dot.filled.agilite{background:#33ff99}
+.stat-dot.filled.intel  {background:#4da6ff}
+.stat-dot.filled.dex    {background:#ffd84d}
+.stat-alloc-btn{
+  width:100%;padding:8px;border-radius:10px;border:none;cursor:pointer;
+  font-weight:900;font-size:13px;color:#fff;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  transition:all .15s;
+}
+.stat-alloc-btn:hover:not(:disabled){background:rgba(255,255,255,.2);transform:translateY(-1px)}
+.stat-alloc-btn:disabled{opacity:.35;cursor:not-allowed}
+.stat-alloc-btn.force  {background:rgba(255,80,80,.25);border-color:rgba(255,80,80,.4)}
+.stat-alloc-btn.force:hover:not(:disabled){background:rgba(255,80,80,.4)}
+.stat-alloc-btn.agilite{background:rgba(51,255,153,.2);border-color:rgba(51,255,153,.35)}
+.stat-alloc-btn.agilite:hover:not(:disabled){background:rgba(51,255,153,.35)}
+.stat-alloc-btn.intel  {background:rgba(77,166,255,.2);border-color:rgba(77,166,255,.35)}
+.stat-alloc-btn.intel:hover:not(:disabled){background:rgba(77,166,255,.35)}
+.stat-alloc-btn.dex    {background:rgba(255,216,77,.2);border-color:rgba(255,216,77,.35)}
+.stat-alloc-btn.dex:hover:not(:disabled){background:rgba(255,216,77,.35)}
+.char-xp-table{width:100%;border-collapse:collapse;font-size:13px}
+.char-xp-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.char-xp-table tr:last-child td{border:none}
+.char-xp-table .boss-cell{font-weight:800}
+.char-xp-table .xp-cell{color:var(--gold);font-weight:800;text-align:right}
+
+/* DECK */
+.raid-card{
+  border-radius:12px;border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);cursor:pointer;
+  transition:transform .15s,border-color .15s;
+  overflow:hidden;position:relative;
+}
+.raid-card:hover{transform:translateY(-3px);border-color:rgba(127,92,255,.5)}
+.raid-card.in-deck{border-color:rgba(127,92,255,.8);box-shadow:0 0 12px rgba(127,92,255,.3)}
+.raid-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.raid-card .rc-name{font-size:11px;font-weight:800;padding:5px 6px;text-align:center;line-height:1.3}
+.raid-card .rc-rarity{position:absolute;top:5px;right:5px;font-size:11px;padding:2px 6px;border-radius:999px;font-weight:800}
+.rc-rarity.common{background:rgba(180,180,180,.3);color:#ccc}
+.rc-rarity.rare{background:rgba(77,166,255,.3);color:#4da6ff}
+.rc-rarity.epic{background:rgba(192,132,255,.3);color:#c084ff}
+.rc-rarity.legendary{background:rgba(255,216,77,.3);color:#ffd84d}
+.raid-card .rc-type{position:absolute;top:5px;left:5px;font-size:13px}
+
+.deck-slot{
+  width:100px;height:145px;border-radius:12px;
+  border:2px dashed rgba(255,255,255,.2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden;
+  background:rgba(255,255,255,.03);flex-shrink:0;
+}
+.deck-slot.filled{border-style:solid;border-color:rgba(127,92,255,.6)}
+.deck-slot:hover{border-color:rgba(127,92,255,.5)}
+.deck-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:10px}
+.deck-slot .slot-label{font-size:11px;opacity:.5;z-index:1}
+.deck-slot .slot-name{font-size:9px;font-weight:800;position:absolute;bottom:4px;left:0;right:0;text-align:center;z-index:2;background:rgba(0,0,0,.6);padding:2px}
+.deck-slot .slot-remove{position:absolute;top:3px;right:3px;z-index:3;background:rgba(255,60,60,.8);border-radius:999px;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.bonus-recap{
+  background:rgba(127,92,255,.08);border:1px solid rgba(127,92,255,.2);
+  border-radius:12px;padding:12px 16px;font-size:13px;
+}
+.bonus-recap .bonus-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.bonus-tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:rgba(255,255,255,.08)}
+
+.card-tooltip{
+  position:fixed;z-index:9999;background:#1a1a2e;border:1px solid rgba(127,92,255,.4);
+  border-radius:12px;padding:10px 14px;font-size:12px;max-width:280px;pointer-events:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+
+/* Zoom modal carte de raid */
+.raid-card-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.raid-card-modal-inner{
+  background:#12132a;border:1px solid rgba(127,92,255,.3);
+  border-radius:20px;padding:20px;max-width:340px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  display:flex;gap:16px;align-items:flex-start;
+}
+.raid-card-modal-img{
+  width:140px;flex-shrink:0;border-radius:12px;overflow:hidden;border:2px solid rgba(127,92,255,.3);
+}
+.raid-card-modal-img img{width:100%;display:block;}
+.raid-card-modal-info{flex:1;min-width:0;}
+.raid-card-modal-name{font-size:16px;font-weight:900;margin-bottom:4px;}
+.raid-card-modal-type{font-size:12px;opacity:.7;margin-bottom:10px;}
+.raid-card-modal-stat{font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.raid-card-modal-close{
+  position:absolute;top:12px;right:16px;font-size:20px;cursor:pointer;
+  opacity:.6;transition:opacity .15s;
+}
+.raid-card-modal-close:hover{opacity:1;}
+@media(max-width:500px){
+  .raid-card-modal-inner{flex-direction:column;align-items:center;}
+  .raid-card-modal-img{width:120px;}
+}
+
+/* ── ÉQUIPEMENT RPG ─────────────────────────── */
+/* ── PAGE PERSONNAGE LAYOUT ── */
+.perso-page{ display:flex; flex-direction:column; gap:16px; }
+.perso-main{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  overflow:hidden;
+}
+.perso-col-left{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;
+  padding:16px 12px;border-right:1px solid rgba(255,255,255,.06);
+}
+.perso-col-center{
+  display:flex;flex-direction:column;align-items:center;width:220px;
+  background:rgba(0,0,0,.18);
+}
+.perso-xp-top{
+  width:100%;padding:10px 12px 6px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.perso-xp-level{display:flex;align-items:baseline;gap:6px;margin-bottom:5px;}
+.perso-xp-lvl-num{font-size:22px;font-weight:1000;}
+.perso-xp-lvl-max{font-size:12px;opacity:.5;}
+.perso-xp-bar{height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-bottom:3px;}
+.perso-xp-fill{height:100%;border-radius:999px;}
+.perso-xp-txt{font-size:10px;opacity:.45;text-align:center;}
+.perso-char-img-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:8px 0;}
+.perso-char-img{width:260px;height:380px;object-fit:contain;filter:drop-shadow(0 0 30px var(--cls-color,#7f5cff));}
+.perso-char-ph{width:260px;height:380px;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:.3;}
+.perso-class-badge{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:900;border:1px solid;margin:0 0 10px;}
+.perso-col-right{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;
+  padding:16px 12px;border-left:1px solid rgba(255,255,255,.06);
+}
+.eq-slot{
+  width:88px;height:88px;
+  background:rgba(255,255,255,.04);
+  border:2px dashed rgba(255,255,255,.18);
+  border-radius:14px;
+  cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;position:relative;overflow:visible;flex-shrink:0;
+}
+.eq-slot:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.6);transform:translateY(-2px);box-shadow:0 6px 20px rgba(127,92,255,.25);}
+.eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);padding:0;}
+.eq-slot.filled.legendary{border-color:rgba(255,184,0,.6);background:rgba(255,184,0,.07);box-shadow:0 0 16px rgba(255,184,0,.25);}
+.eq-slot.filled.epic{border-color:rgba(192,132,255,.6);background:rgba(192,132,255,.07);box-shadow:0 0 16px rgba(192,132,255,.25);}
+.eq-slot.filled.rare{border-color:rgba(77,166,255,.6);background:rgba(77,166,255,.07);box-shadow:0 0 12px rgba(77,166,255,.2);}
+.eq-slot.filled:hover{transform:translateY(-3px);}
+.eq-slot-img{width:100%;height:100%;object-fit:contain;border-radius:12px;display:block;}
+.eq-slot-empty-icon{font-size:22px;opacity:.25;}
+.eq-slot-info{display:none;}
+.eq-slot-name{display:none;}
+.eq-slot-stats{display:none;}
+.eq-slot-label{font-size:8px;color:rgba(255,255,255,.3);font-weight:900;letter-spacing:.06em;text-transform:uppercase;}
+.eq-slot-unequip{
+  position:absolute;top:-7px;right:-7px;width:20px;height:20px;
+  background:rgba(255,50,50,.9);border-radius:50%;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;
+  opacity:0;transition:opacity .15s;box-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.eq-slot:hover .eq-slot-unequip{opacity:1;}
+.eq-slot-unequip:hover{background:rgba(255,80,80,1);}
+.eq-slot-tooltip{
+  position:absolute;bottom:calc(100% + 10px);left:50%;
+  transform:translateX(-50%) translateY(6px);
+  background:#0e0f1f;border:1px solid rgba(127,92,255,.45);
+  border-radius:14px;padding:12px 14px;min-width:175px;max-width:220px;
+  pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;
+  z-index:9999;box-shadow:0 12px 40px rgba(0,0,0,.75);white-space:nowrap;
+}
+.eq-slot:hover .eq-slot-tooltip{opacity:1;transform:translateX(-50%) translateY(0);}
+.eq-slot-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#0e0f1f;}
+.eq-tooltip-name{font-size:13px;font-weight:900;margin-bottom:4px;}
+.eq-tooltip-rarity{font-size:10px;font-weight:800;opacity:.7;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;}
+.eq-tooltip-stat{font-size:12px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:6px;}
+.eq-tooltip-empty{font-size:12px;opacity:.4;font-style:italic;}
+.perso-bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.perso-inventory{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;}
+.perso-inv-title{font-size:12px;font-weight:900;opacity:.65;margin-bottom:10px;}
+.eq-inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;max-height:260px;overflow-y:auto;}
+.eq-inv-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:7px 5px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
+.eq-inv-item:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.4);transform:translateY(-2px);}
+.eq-inv-item.equipped{border-color:rgba(51,255,153,.4);background:rgba(51,255,153,.05);}
+.eq-inv-item.legendary{border-color:rgba(255,184,0,.35);}
+.eq-inv-item.epic{border-color:rgba(192,132,255,.3);}
+.eq-inv-item.rare{border-color:rgba(77,166,255,.3);}
+.eq-inv-img{width:44px;height:44px;object-fit:contain;}
+.eq-inv-name{font-size:9px;color:rgba(255,255,255,.65);margin-top:3px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.eq-equipped-badge{position:absolute;top:3px;right:3px;width:7px;height:7px;background:#33ff99;border-radius:50%;}
+.perso-bonus{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;}
+.perso-bonus-title{font-size:12px;font-weight:900;opacity:.65;margin-bottom:2px;}
+.perso-bonus-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,.04);border-radius:10px;}
+.perso-bonus-label{font-size:11px;opacity:.6;}
+.perso-bonus-val{font-size:16px;font-weight:1000;}
+.perso-bonus-detail{font-size:9px;opacity:.4;margin-top:1px;}
+.perso-stats{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;}
+.perso-stats-title{font-size:12px;font-weight:900;opacity:.65;margin-bottom:10px;}
+.perso-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:700px){
+  .perso-main{grid-template-columns:1fr;}
+  .perso-col-center{width:100%;}
+  .perso-bottom{grid-template-columns:1fr;}
+  .perso-stats-grid{grid-template-columns:1fr;}
+}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:12px}
+.alert-error{background:rgba(255,68,68,.15);border:1px solid rgba(255,68,68,.3);color:#ff8888}
+.alert-success{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:#33ff99}
+
+/* LEADERBOARD */
+.lb-row{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:6px;
+}
+.lb-rank{font-size:16px;font-weight:900;min-width:28px;text-align:center}
+.lb-rank.gold{color:var(--gold)}
+.lb-rank.silver{color:#c0c0c0}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{flex:1;font-weight:800;font-size:14px}
+.lb-xp{color:var(--gold);font-size:13px;font-weight:800}
+
+/* LOADING */
+.loading{opacity:.5;text-align:center;padding:40px;font-size:14px}
+
+/* COLOR PICKER */
+.color-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.color-opt{
+  width:28px;height:28px;border-radius:999px;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s;
+}
+.color-opt.selected{border-color:#fff}
+
+/* MOBILE */
+@media(max-width:768px){
+  .clan-banner{flex-direction:column;align-items:flex-start}
+  .members-grid{grid-template-columns:1fr 1fr}
+  .missions-grid{grid-template-columns:1fr}
+}
+
+/* DEFEATED BOSS */
+.boss-defeated{
+  text-align:center;padding:30px;
+  color:var(--green);font-weight:900;font-size:18px;
+}
+.no-clan-wrap{text-align:center;padding:60px 20px}
+.no-clan-wrap h2{margin:0 0 10px;font-size:22px}
+.no-clan-wrap p{opacity:.7;margin:0 0 24px}
+
+/* RAID */
+.raid-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:8px}
+@media(max-width:800px){.raid-select-grid{grid-template-columns:1fr}}
+.boss-choice{
+  border:2px solid rgba(255,255,255,.12);border-radius:16px;
+  padding:16px;text-align:center;
+  background:rgba(255,255,255,.04);
+  transition:border-color .2s,background .2s,transform .15s;
+}
+.boss-choice.available:hover{border-color:rgba(255,80,80,.5);background:rgba(255,80,80,.08);transform:translateY(-2px)}
+.boss-choice.locked{opacity:.5;cursor:not-allowed}
+.boss-choice img{width:100%;max-height:140px;object-fit:contain;border-radius:10px;margin-bottom:10px}
+.boss-choice .boss-choice-name{font-size:16px;font-weight:900;margin-bottom:4px}
+.boss-choice .boss-choice-stats{font-size:12px;opacity:.7;line-height:1.6}
+.diff-btns{display:flex;gap:8px;margin-top:10px;justify-content:center}
+.diff-btn{flex:1;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid;transition:all .15s}
+.diff-btn.easy{border-color:rgba(100,255,150,.4);background:rgba(100,255,150,.08);color:#64ff96}
+.diff-btn.easy:hover{background:rgba(100,255,150,.18)}
+.diff-btn.hard{border-color:rgba(255,80,80,.4);background:rgba(255,80,80,.08);color:#ff5050}
+.diff-btn.hard:hover{background:rgba(255,80,80,.18)}
+.diff-btn:disabled{opacity:.4;cursor:not-allowed}
+.cooldown-badge{margin-top:8px;font-size:11px;color:#ffd84d;opacity:.8}
+
+.stock-bar{
+  background:rgba(255,255,255,.06);border:1px solid rgba(127,92,255,.3);
+  border-radius:12px;padding:14px 16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.stock-val{font-size:22px;font-weight:900;color:var(--accent)}
+.stock-label{font-size:13px;opacity:.7}
+
+/* Animation attaque */
+@keyframes attackShake {
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-8px) rotate(-2deg)}
+  30%{transform:translateX(8px) rotate(2deg)}
+  45%{transform:translateX(-6px)}
+  60%{transform:translateX(6px)}
+  75%{transform:translateX(-3px)}
+}
+@keyframes attackFlash {
+  0%{opacity:0;transform:scale(.5)}
+  20%{opacity:1;transform:scale(1.2)}
+  100%{opacity:0;transform:scale(2)}
+}
+@keyframes dmgPop {
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}
+  30%{opacity:1;transform:translate(-50%,-120%) scale(1.2)}
+  100%{opacity:0;transform:translate(-50%,-200%) scale(.8)}
+}
+.boss-img-wrap{position:relative;display:inline-block}
+.attack-flash{
+  position:absolute;inset:0;border-radius:14px;
+  background:radial-gradient(circle,rgba(255,80,80,.9),transparent 70%);
+  pointer-events:none;opacity:0;
+}
+.dmg-popup{
+  position:absolute;left:50%;top:50%;
+  font-size:28px;font-weight:900;color:#ff4444;
+  text-shadow:0 0 20px rgba(255,68,68,.8);
+  pointer-events:none;white-space:nowrap;
+  animation:dmgPop .9s ease forwards;
+}
+.timer-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:6px;overflow:hidden;margin:6px 0}
+.timer-bar{height:100%;border-radius:999px;background:linear-gradient(90deg,#33ff99,#ffd84d,#ff4444);transition:width 1s linear}
+.talent-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding:14px 18px;
+  background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.25);
+  border-radius:12px;flex-wrap:wrap;gap:10px;
+}
+.talent-points-badge{
+  font-size:20px;font-weight:900;color:var(--gold);
+}
+.clan-xp-bar-wrap{flex:1;min-width:200px}
+.clan-xp-bar-label{font-size:12px;opacity:.7;margin-bottom:4px}
+.clan-xp-bar{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden}
+.clan-xp-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+
+.talents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.talent-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;padding:16px;
+}
+.talent-card.maxed{border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.talent-icon{font-size:28px;margin-bottom:8px}
+.talent-name{font-size:15px;font-weight:900;margin-bottom:4px}
+.talent-desc{font-size:12px;opacity:.65;margin-bottom:12px}
+.talent-levels{display:flex;gap:4px;margin-bottom:10px}
+.talent-dot{
+  width:18px;height:18px;border-radius:999px;
+  border:2px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);
+  transition:background .2s;
+}
+.talent-dot.filled{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.talent-dot.maxed{background:linear-gradient(135deg,#ffd84d,#ff8800);border-color:transparent}
+.talent-current{font-size:12px;color:var(--green);margin-bottom:4px}
+.talent-next{font-size:12px;opacity:.6;margin-bottom:10px}
+.talent-cost{font-size:12px;color:var(--gold);margin-bottom:8px}
+
+.section-hidden{display:none}
+
+/* PERSONNAGE */
+.char-wrap{display:flex;flex-direction:column;gap:16px}
+
+/* === CARTE HERO === */
+.char-hero-card{
+  border-radius:20px;overflow:hidden;position:relative;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,20,.6);
+  display:flex;flex-direction:column;
+}
+.char-hero-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center top;
+  opacity:.18;filter:blur(2px);transform:scale(1.05);
+  transition:opacity .4s;
+}
+.char-hero-top{
+  position:relative;z-index:1;
+  display:flex;gap:0;min-height:220px;
+}
+.char-hero-img-col{
+  width:180px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 0 16px;
+}
+.char-hero-img{
+  width:160px;height:210px;object-fit:contain;object-position:bottom;
+  filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+  transition:filter .4s,transform .3s;
+}
+.char-hero-img:hover{transform:scale(1.04) translateY(-4px)}
+.char-hero-img-placeholder{
+  width:160px;height:210px;display:flex;align-items:center;justify-content:center;
+  font-size:80px;filter:drop-shadow(0 0 24px var(--cls-color,#7f5cff));
+}
+.char-hero-info-col{
+  flex:1;padding:24px 20px 20px;display:flex;flex-direction:column;justify-content:space-between;
+}
+.char-hero-name{font-size:22px;font-weight:900;margin-bottom:4px}
+.char-class-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:900;padding:4px 12px;border-radius:999px;margin-bottom:14px;
+  border:1px solid;
+}
+.char-class-pill.no-class{
+  background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff;opacity:.7;
+}
+.char-level-row{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.char-level-num{font-size:36px;font-weight:900;line-height:1}
+.char-level-label{font-size:13px;opacity:.6;font-weight:700}
+.char-xp-bar-wrap{background:rgba(255,255,255,.1);border-radius:999px;height:8px;overflow:hidden;margin-bottom:5px}
+.char-xp-bar{height:100%;border-radius:999px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.char-xp-label{font-size:11px;opacity:.6}
+.char-passive-row{
+  margin-top:14px;padding:10px 14px;border-radius:10px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;line-height:1.7;
+}
+.char-passive-title{font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+
+/* Points badge flottant */
+.char-points-float{
+  position:absolute;top:14px;right:14px;z-index:2;
+  background:linear-gradient(135deg,#ffd84d,#ff8800);
+  border-radius:12px;padding:8px 14px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(255,216,77,.35);
+  animation:pointsPulse 2s ease infinite;
+}
+@keyframes pointsPulse{0%,100%{box-shadow:0 4px 20px rgba(255,216,77,.35)}50%{box-shadow:0 4px 32px rgba(255,216,77,.6)}}
+.char-points-float-num{font-size:20px;font-weight:900;color:#000}
+.char-points-float-label{font-size:11px;font-weight:800;color:rgba(0,0,0,.7)}
+
+/* Barre XP bottom */
+.char-hero-xp-bar-full{
+  position:relative;z-index:1;
+  height:6px;background:rgba(255,255,255,.08);
+}
+.char-hero-xp-bar-fill{
+  height:100%;transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+/* === CHOIX DE CLASSE === */
+.class-pick-screen{
+  border-radius:20px;padding:28px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  text-align:center;
+}
+.class-pick-title{font-size:20px;font-weight:900;margin-bottom:6px}
+.class-pick-sub{font-size:13px;opacity:.6;margin-bottom:24px}
+.class-cards-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:700px){.class-cards-row{grid-template-columns:1fr}}
+.class-pick-card{
+  border-radius:16px;padding:20px 14px;cursor:pointer;
+  border:2px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);
+  transition:all .2s;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.class-pick-card:hover{transform:translateY(-4px);border-color:var(--cls-color)!important;background:rgba(255,255,255,.08)}
+.class-pick-card.selected{border-color:var(--cls-color)!important;background:rgba(255,255,255,.1)}
+.class-pick-img{width:110px;height:145px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 0 16px var(--cls-color))}
+.class-pick-img-ph{font-size:56px;height:110px;display:flex;align-items:flex-end;justify-content:center}
+.class-pick-name{font-size:16px;font-weight:900}
+.class-pick-desc{font-size:11px;opacity:.6;line-height:1.5}
+.class-pick-passives{
+  font-size:11px;padding:8px 10px;border-radius:8px;
+  background:rgba(0,0,0,.25);width:100%;text-align:left;line-height:1.8;
+}
+.class-pick-btn{
+  margin-top:20px;padding:12px 36px;border-radius:12px;border:none;cursor:pointer;
+  font-weight:900;font-size:14px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  transition:opacity .15s,transform .12s;
+}
+.class-pick-btn:hover{opacity:.85;transform:translateY(-1px)}
+.class-pick-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* === STATS === */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr}}
+.stat-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:16px;
+}
+.stat-card.force  {border-color:rgba(255,100,100,.3);background:rgba(255,80,80,.06)}
+.stat-card.agilite{border-color:rgba(100,255,150,.3);background:rgba(51,255,153,.06)}
+.stat-card.intel  {border-color:rgba(100,180,255,.3);background:rgba(77,166,255,.06)}
+.stat-card.dex    {border-color:rgba(255,216,77,.3);background:rgba(255,216,77,.06)}
+.stat-icon{font-size:22px;margin-bottom:4px}
+.stat-name{font-size:13px;font-weight:900;margin-bottom:2px}
+.stat-desc{font-size:11px;opacity:.55;margin-bottom:10px;line-height:1.5}
+.stat-value-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.stat-value{font-size:22px;font-weight:900}
+.stat-bonus{font-size:11px;opacity:.65}
+.stat-passive-line{font-size:10px;opacity:.5;margin-bottom:6px;font-style:italic}
+.stat-dots{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px}
+.stat-dot{width:11px;height:11px;border-radius:3px;background:rgba(255,255,255,.12)}
+.stat-dot.filled.force  {background:#ff6464}
+.stat-dot.filled.agilite{background:#33ff99}
+.stat-dot.filled.intel  {background:#4da6ff}
+.stat-dot.filled.dex    {background:#ffd84d}
+.stat-alloc-btn{
+  width:100%;padding:8px;border-radius:10px;border:none;cursor:pointer;
+  font-weight:900;font-size:13px;color:#fff;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  transition:all .15s;
+}
+.stat-alloc-btn:hover:not(:disabled){background:rgba(255,255,255,.2);transform:translateY(-1px)}
+.stat-alloc-btn:disabled{opacity:.35;cursor:not-allowed}
+.stat-alloc-btn.force  {background:rgba(255,80,80,.25);border-color:rgba(255,80,80,.4)}
+.stat-alloc-btn.force:hover:not(:disabled){background:rgba(255,80,80,.4)}
+.stat-alloc-btn.agilite{background:rgba(51,255,153,.2);border-color:rgba(51,255,153,.35)}
+.stat-alloc-btn.agilite:hover:not(:disabled){background:rgba(51,255,153,.35)}
+.stat-alloc-btn.intel  {background:rgba(77,166,255,.2);border-color:rgba(77,166,255,.35)}
+.stat-alloc-btn.intel:hover:not(:disabled){background:rgba(77,166,255,.35)}
+.stat-alloc-btn.dex    {background:rgba(255,216,77,.2);border-color:rgba(255,216,77,.35)}
+.stat-alloc-btn.dex:hover:not(:disabled){background:rgba(255,216,77,.35)}
+.char-xp-table{width:100%;border-collapse:collapse;font-size:13px}
+.char-xp-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.char-xp-table tr:last-child td{border:none}
+.char-xp-table .boss-cell{font-weight:800}
+.char-xp-table .xp-cell{color:var(--gold);font-weight:800;text-align:right}
+
+/* DECK */
+.raid-card{
+  border-radius:12px;border:2px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);cursor:pointer;
+  transition:transform .15s,border-color .15s;
+  overflow:hidden;position:relative;
+}
+.raid-card:hover{transform:translateY(-3px);border-color:rgba(127,92,255,.5)}
+.raid-card.in-deck{border-color:rgba(127,92,255,.8);box-shadow:0 0 12px rgba(127,92,255,.3)}
+.raid-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
+.raid-card .rc-name{font-size:11px;font-weight:800;padding:5px 6px;text-align:center;line-height:1.3}
+.raid-card .rc-rarity{position:absolute;top:5px;right:5px;font-size:11px;padding:2px 6px;border-radius:999px;font-weight:800}
+.rc-rarity.common{background:rgba(180,180,180,.3);color:#ccc}
+.rc-rarity.rare{background:rgba(77,166,255,.3);color:#4da6ff}
+.rc-rarity.epic{background:rgba(192,132,255,.3);color:#c084ff}
+.rc-rarity.legendary{background:rgba(255,216,77,.3);color:#ffd84d}
+.raid-card .rc-type{position:absolute;top:5px;left:5px;font-size:13px}
+
+.deck-slot{
+  width:100px;height:145px;border-radius:12px;
+  border:2px dashed rgba(255,255,255,.2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .15s;position:relative;overflow:hidden;
+  background:rgba(255,255,255,.03);flex-shrink:0;
+}
+.deck-slot.filled{border-style:solid;border-color:rgba(127,92,255,.6)}
+.deck-slot:hover{border-color:rgba(127,92,255,.5)}
+.deck-slot img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:10px}
+.deck-slot .slot-label{font-size:11px;opacity:.5;z-index:1}
+.deck-slot .slot-name{font-size:9px;font-weight:800;position:absolute;bottom:4px;left:0;right:0;text-align:center;z-index:2;background:rgba(0,0,0,.6);padding:2px}
+.deck-slot .slot-remove{position:absolute;top:3px;right:3px;z-index:3;background:rgba(255,60,60,.8);border-radius:999px;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.bonus-recap{
+  background:rgba(127,92,255,.08);border:1px solid rgba(127,92,255,.2);
+  border-radius:12px;padding:12px 16px;font-size:13px;
+}
+.bonus-recap .bonus-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.bonus-tag{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;background:rgba(255,255,255,.08)}
+
+.card-tooltip{
+  position:fixed;z-index:9999;background:#1a1a2e;border:1px solid rgba(127,92,255,.4);
+  border-radius:12px;padding:10px 14px;font-size:12px;max-width:220px;pointer-events:none;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+
+/* Zoom modal carte de raid */
+.raid-card-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.raid-card-modal-inner{
+  background:#12132a;border:1px solid rgba(127,92,255,.3);
+  border-radius:20px;padding:20px;max-width:340px;width:100%;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  display:flex;gap:16px;align-items:flex-start;
+}
+.raid-card-modal-img{
+  width:140px;flex-shrink:0;border-radius:12px;overflow:hidden;border:2px solid rgba(127,92,255,.3);
+}
+.raid-card-modal-img img{width:100%;display:block;}
+.raid-card-modal-info{flex:1;min-width:0;}
+.raid-card-modal-name{font-size:16px;font-weight:900;margin-bottom:4px;}
+.raid-card-modal-type{font-size:12px;opacity:.7;margin-bottom:10px;}
+.raid-card-modal-stat{font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.raid-card-modal-close{
+  position:absolute;top:12px;right:16px;font-size:20px;cursor:pointer;
+  opacity:.6;transition:opacity .15s;
+}
+.raid-card-modal-close:hover{opacity:1;}
+@media(max-width:500px){
+  .raid-card-modal-inner{flex-direction:column;align-items:center;}
+  .raid-card-modal-img{width:120px;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a class="cornerLogo" href="/"><img src="poke.png" alt="Logo"/></a>
+  <nav class="topNav">
+    <a class="topLink" href="/">GACHA</a>
+    <a class="topLink" href="/collection.html">COLLECTION</a>
+    <a class="topLink" href="/market.html">MARKET</a>
+    <a class="topLink" href="/leaderboard.html">LEADERBOARD</a>
+    <a class="topLink" href="/friends.html">FRIENDS</a>
+    <a class="topLink" style="background:linear-gradient(135deg,rgba(127,92,255,.4),rgba(240,83,197,.4));border-color:rgba(127,92,255,.5)" href="/clan.html">CLAN</a>
+  </nav>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="font-size:12px;opacity:.6" id="topUsername"></span>
+    <a class="topLink" href="/profile.html">PROFIL</a>
+  </div>
+</div>
+
+<div class="wrap" id="mainWrap">
+  <div class="loading" id="loadingMsg">Chargement...</div>
+</div>
+
+<script>
+const TOKEN_KEY = "gacha_token_v1";
+const token = localStorage.getItem(TOKEN_KEY);
+if (!token) location.href = "/login.html";
+
+async function api(path, opts={}) {
+  const r = await fetch(path, {
+    ...opts,
+    headers: { ...(opts.headers||{}), "Authorization": "Bearer "+token, "Content-Type":"application/json" }
+  });
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(data.error || "Erreur");
+  return data;
+}
+
+function esc(s){ return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;") }
+function fmtNum(n){ return Number(n||0).toLocaleString("fr-FR") }
+function timeAgo(ts){
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<60) return "à l'instant";
+  if(s<3600) return Math.floor(s/60)+"min";
+  if(s<86400) return Math.floor(s/3600)+"h";
+  return Math.floor(s/86400)+"j";
+}
+
+const COLORS = ["#7f5cff","#f053c5","#ff4444","#ff8800","#ffd84d","#33ff99","#33cfff","#a855f7","#ec4899"];
+
+let myData = null;
+let clanData = null;
+let chatPolling = null;
+let myUserId = null;
+
+async function init() {
+  try {
+    myData = await api("/api/me");
+    myUserId = myData.id;
+    document.getElementById("topUsername").textContent = myData.name || "";
+  } catch(e) { location.href="/login.html"; return; }
+
+  try {
+    const data = await api("/api/clan/me");
+    clanData = data;
+    if (data.clan) {
+      renderMyClan(data);
+    } else {
+      renderNoClan();
+    }
+  } catch(e) {
+    renderNoClan();
+  }
+}
+
+// ===========================
+// NO CLAN VIEW
+// ===========================
+function renderNoClan() {
+  const wrap = document.getElementById("mainWrap");
+  wrap.innerHTML = `
+    <div class="no-clan-wrap">
+      <div style="font-size:48px;margin-bottom:12px">⚔️</div>
+      <h2>Tu n'es dans aucun clan</h2>
+      <p>Rejoins un clan existant ou crée le tien pour participer aux raids, missions et bien plus !</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" onclick="showSection('browse')">Parcourir les clans</button>
+        <button class="btn btn-ghost" onclick="showSection('create')">Créer un clan</button>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <div id="section-browse" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🔍 Clans disponibles</div>
+        <div id="clanList" class="clan-list"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div id="section-create" class="section-hidden">
+      <div class="card">
+        <div class="card-title">✨ Créer un clan</div>
+        <div id="createAlert"></div>
+        <div class="form-grid">
+          <div>
+            <label>Nom du clan *</label>
+            <input id="cName" maxlength="30" placeholder="Mon Super Clan"/>
+          </div>
+          <div>
+            <label>Tag (2-5 lettres) *</label>
+            <input id="cTag" maxlength="5" placeholder="MSC" style="text-transform:uppercase"/>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label>Description</label>
+          <textarea id="cDesc" maxlength="200" placeholder="Présente ton clan..."></textarea>
+        </div>
+        <div style="margin-top:12px">
+          <label>Image du clan (URL)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input id="cLogo" placeholder="https://..." oninput="previewLogo(this.value)"/>
+            <div id="logoPreview" style="width:48px;height:48px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);flex-shrink:0;background-size:cover;background-position:center;"></div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <label>Couleur du clan</label>
+          <div class="color-options" id="colorPicker"></div>
+        </div>
+        <div style="margin-top:16px;padding:12px;background:rgba(255,216,77,.08);border:1px solid rgba(255,216,77,.25);border-radius:10px;font-size:13px;">
+          💰 Créer un clan coûte <b style="color:var(--gold)">1 000 dollax</b>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn" onclick="createClan()">Créer le clan</button>
+          <button class="btn btn-ghost" onclick="showSection(null)">Annuler</button>
+        </div>
+      </div>
+    </div>
+  `;
+  initColorPicker();
+  loadClanList();
+}
+
+let selectedColor = COLORS[0];
+function initColorPicker() {
+  const el = document.getElementById("colorPicker");
+  if (!el) return;
+  el.innerHTML = COLORS.map(c =>
+    `<div class="color-opt ${c===selectedColor?'selected':''}" style="background:${c}" onclick="selectColor('${c}',this)"></div>`
+  ).join("");
+}
+function selectColor(c, el) {
+  selectedColor = c;
+  document.querySelectorAll(".color-opt").forEach(e => e.classList.remove("selected"));
+  el.classList.add("selected");
+}
+
+function showSection(name) {
+  ["browse","create"].forEach(s => {
+    const el = document.getElementById("section-"+s);
+    if (el) el.classList.toggle("section-hidden", s !== name);
+  });
+}
+
+async function loadClanList() {
+  const el = document.getElementById("clanList");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/list");
+    if (!data.clans.length) { el.innerHTML = '<div class="loading">Aucun clan pour l\'instant.</div>'; return; }
+    el.innerHTML = data.clans.map(c => `
+      <div class="clan-list-item">
+        <div class="clan-list-tag" style="color:${esc(c.banner_color)}">[${esc(c.tag)}]</div>
+        <div class="clan-list-info">
+          <div class="clan-list-name">${esc(c.name)}</div>
+          <div class="clan-list-sub">Chef: ${esc(c.leader_name)} · ${c.members} membre${c.members>1?'s':''}</div>
+          <div class="clan-list-xp">⚡ ${fmtNum(c.xp)} XP</div>
+        </div>
+        <button class="btn btn-sm" onclick="joinClan(${c.id})">Rejoindre</button>
+      </div>
+    `).join("");
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur de chargement</div>'; }
+}
+
+async function joinClan(id) {
+  try {
+    await api("/api/clan/join", { method:"POST", body: JSON.stringify({ clanId: id }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function createClan() {
+  const name  = document.getElementById("cName").value.trim();
+  const tag   = document.getElementById("cTag").value.trim().toUpperCase();
+  const desc  = document.getElementById("cDesc").value.trim();
+  const logo  = document.getElementById("cLogo").value.trim();
+  const alertEl = document.getElementById("createAlert");
+
+  if (!name || !tag) { alertEl.innerHTML = '<div class="alert alert-error">Nom et tag requis.</div>'; return; }
+
+  try {
+    await api("/api/clan/create", { method:"POST", body: JSON.stringify({ name, tag, description: desc, logo, banner_color: selectedColor }) });
+    location.reload();
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+function previewLogo(url) {
+  const el = document.getElementById("logoPreview");
+  if (!el) return;
+  el.style.backgroundImage = url ? `url('${url}')` : '';
+}
+
+// ===========================
+// MY CLAN VIEW
+// ===========================
+function renderMyClan(data) {
+  const { clan, myRole, members, boss, availableBosses } = data;
+  const isLeader = myRole === 'leader';
+  const isOfficer = myRole === 'officer' || isLeader;
+
+  // Stocker les données du boss pour usage immédiat
+  window._initialBossData = { boss, availableBosses };
+
+  const wrap = document.getElementById("mainWrap");
+  wrap.innerHTML = `
+    <!-- BANNER -->
+    <div class="clan-banner" style="--bannerColor:${esc(clan.banner_color)}">
+      ${clan.logo
+        ? `<div class="clan-logo" style="background-image:url('${esc(clan.logo)}')"></div>`
+        : `<div class="clan-tag" style="color:${esc(clan.banner_color)}">[${esc(clan.tag)}]</div>`
+      }
+      <div class="clan-info">
+        <div class="clan-name">${esc(clan.name)} <span style="font-size:14px;opacity:.6;font-weight:600">[${esc(clan.tag)}]</span></div>
+        <div class="clan-desc">${esc(clan.description||"Aucune description")}</div>
+        <div class="clan-stats">
+          <span class="cstat">⚡ <b>${fmtNum(clan.xp)}</b> XP</span>
+          <span class="cstat">🏅 <b>Niv. ${clan.level||1}</b></span>
+          <span class="cstat">🏦 <b>${fmtNum(clan.bank)}</b> dollax</span>
+          <span class="cstat">👥 <b>${members.length}</b> membres</span>
+          <span class="cstat">👑 Chef: <b>${esc(clan.leader_name)}</b></span>
+        </div>
+      </div>
+      ${!isLeader ? '' : ''}
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('boss',this)">⚔️ Boss Raid</div>
+      <div class="tab" onclick="switchTab('missions',this)">📋 Missions</div>
+      <div class="tab" onclick="switchTab('members',this)">👥 Membres</div>
+      <div class="tab" onclick="switchTab('chat',this)">💬 Chat</div>
+      <div class="tab" onclick="switchTab('talents',this)">🌳 Talents</div>
+      <div class="tab" onclick="switchTab('deck',this)">🃏 Deck</div>
+      <div class="tab" onclick="switchTab('character',this)">🧬 Personnage</div>
+      <div class="tab" onclick="switchTab('leaderboard',this)">🏆 Classement</div>
+      <div class="tab" onclick="switchTab('forge',this)">⚒️ Forge</div>
+      ${isLeader
+        ? `<div class="tab" onclick="switchTab('manage',this)">⚙️ Gestion</div>`
+        : `<div class="tab" style="background:rgba(255,68,68,.15);border-color:rgba(255,68,68,.3);color:#ff8888" onclick="leaveClan()">🚪 Quitter</div>`
+      }
+    </div>
+
+    <!-- BOSS TAB -->
+    <div id="tab-boss">
+      ${renderBossTab(boss, clan)}
+    </div>
+
+    <!-- MISSIONS TAB -->
+    <div id="tab-missions" class="section-hidden">
+      <div class="card">
+        <div class="card-title">📋 Missions quotidiennes</div>
+        <div id="missionsContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- MEMBERS TAB -->
+    <div id="tab-members" class="section-hidden">
+      <div class="card">
+        <div class="card-title">👥 Membres (${members.length}/4)</div>
+        <div class="members-grid">
+          ${members.map(m => renderMemberCard(m, isOfficer, isLeader, clan.leader_name)).join("")}
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div id="tab-chat" class="section-hidden">
+      <div class="card">
+        <div class="card-title">💬 Chat du clan</div>
+        <div class="chat-messages" id="chatMessages"><div class="loading">Chargement...</div></div>
+        <div class="chat-input-row">
+          <input id="chatInput" placeholder="Envoie un message..." maxlength="300" onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-sm" onclick="sendChat()">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TALENTS TAB -->
+    <div id="tab-talents" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🌳 Arbre de Talents</div>
+        <div id="talentsContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- DECK TAB -->
+    <div id="tab-deck" class="section-hidden">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🃏 Mon Deck de Raid</div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 14px">Équipe jusqu'à 5 cartes (1 légendaire max). Clique sur une carte de ton inventaire pour l'équiper dans un slot.</p>
+        <div id="deckSlots" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
+        <div id="deckBonusRecap" style="margin-bottom:14px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📦 Mon Inventaire</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn btn-sm btn-ghost" onclick="filterCards('all')" id="filterAll">Toutes</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterCards('slayer')" id="filterSlayer">⚔️ Slayer</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterCards('soutien')" id="filterSoutien">🛡️ Soutien</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterCards('assassin')" id="filterAssassin">🗡️ Assassin</button>
+        </div>
+        <div id="cardInventory" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+          <div class="loading">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div id="tab-leaderboard" class="section-hidden">
+      <div class="card">
+        <div class="card-title">🏆 Classement des clans</div>
+        <div id="lbContent"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- PERSONNAGE TAB -->
+    <div id="tab-character" class="section-hidden">
+      <div id="characterContent"><div class="loading">Chargement du personnage...</div></div>
+    </div>
+
+    <!-- FORGE TAB -->
+    <div id="tab-forge" class="section-hidden">
+      <div id="forgeContent"><div class="loading">Chargement de la forge...</div></div>
+    </div>
+
+    <!-- MANAGE TAB -->
+    ${isLeader ? `
+    <div id="tab-manage" class="section-hidden">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">🏦 Banque du clan — <span style="color:var(--gold)">${fmtNum(clan.bank)} dollax</span></div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 12px">Distribue des dollax aux membres depuis la banque du clan.</p>
+        <div class="bank-row">
+          <div style="flex:1;min-width:150px">
+            <label>Membre</label>
+            <select class="bank-select" id="bankTarget">
+              ${members.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("")}
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <label>Montant</label>
+            <input type="number" id="bankAmount" min="1" placeholder="500"/>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="distributeBank()">Distribuer</button>
+        </div>
+        <div id="bankAlert" style="margin-top:10px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚙️ Paramètres du clan</div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 14px">Transfère la direction ou gère les membres depuis l'onglet Membres.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-danger btn-sm" onclick="disbandConfirm()">Dissoudre le clan</button>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(255,60,60,.35);background:rgba(255,30,30,.06)">
+        <div class="card-title" style="color:#ff4444">⚠️ Zone de danger</div>
+        <p style="font-size:13px;opacity:.8;margin:0 0 14px">
+          La dissolution est <b>irréversible</b>. Tous les membres seront exclus, la banque, l'XP, les talents et l'historique seront perdus définitivement.
+        </p>
+        <div id="dissolveConfirmBox" style="display:none;margin-bottom:12px;padding:12px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);border-radius:10px;">
+          <p style="font-size:13px;margin:0 0 10px;color:#ff8080">Tape <b>DISSOUDRE</b> pour confirmer :</p>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="dissolveInput" placeholder="DISSOUDRE" style="flex:1;min-width:140px;border-color:rgba(255,60,60,.4)"/>
+            <button class="btn btn-danger btn-sm" onclick="dissolveClan()">Confirmer la dissolution</button>
+            <button class="btn btn-sm" onclick="document.getElementById('dissolveConfirmBox').style.display='none'">Annuler</button>
+          </div>
+          <div id="dissolveAlert" style="margin-top:8px"></div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('dissolveConfirmBox').style.display='block'">
+          💀 Dissoudre le clan
+        </button>
+      </div>
+    </div>` : ''}
+  `;
+
+  // Store members for later use
+  window._clanMembers = members;
+  window._clanData = data;
+
+  loadMissions();
+}
+
+function renderBossTab(boss, clan) {
+  if (!boss) {
+    return `
+      <div class="card">
+        <div class="card-title">⚔️ Lancer un Raid</div>
+        <p style="font-size:13px;opacity:.7;margin:0 0 16px">Choisis un boss et une difficulté. Cooldowns : Arakas 1j · Myntalis 3j · Xenos 7j.</p>
+        <div class="raid-select-grid" id="bossChoices">
+          <div class="loading">Chargement des boss...</div>
+        </div>
+        <div id="raidAlert"></div>
+        <div id="lastRaidRecap"></div>
+      </div>
+    `;
+  }
+
+  const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
+  const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
+  const bossKey = boss.boss_key || 'arakas_easy';
+  const imgSrc = bossKey.startsWith('xenos') ? '/Boss3.gif' : bossKey.startsWith('myntalis') ? '/Boss2.gif' : '/Boss1.gif';
+  const diffLabel = bossKey.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
+
+  return `
+    <div class="boss-card">
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <div class="boss-name">👹 ${esc(boss.name)}</div>
+          <span style="font-size:12px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800">${diffLabel}</span>
+        </div>
+        <div class="hp-text">${fmtNum(boss.hp_current)} / ${fmtNum(boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(boss.reward)} dollax</span></div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="bossHpBar" style="width:${pct}%;background:${barColor}"></div></div>
+        <div style="font-size:12px;opacity:.6;margin-top:4px">${pct}% restants</div>
+        <div id="timerDisplay" style="font-size:12px;margin-top:6px;color:#ffd84d"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+      </div>
+
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="boss-img-wrap" id="bossImgWrap" style="display:inline-block">
+          <img src="${imgSrc}" id="bossImg" alt="${esc(boss.name)}"
+            style="max-width:280px;width:100%;border-radius:16px;border:2px solid rgba(255,80,80,.35);mix-blend-mode:screen;"
+            onerror="this.style.display='none'">
+          <div class="attack-flash" id="attackFlash"></div>
+        </div>
+      </div>
+
+      <div class="stock-bar">
+        <div>
+          <div class="stock-label">⚔️ Dégâts stockés</div>
+          <div class="stock-val" id="stockVal">0</div>
+        </div>
+        <div style="flex:1;font-size:12px;opacity:.6">
+          Ouvre des cartes pour accumuler des dégâts,<br>puis frappe le boss !
+        </div>
+        <button class="btn btn-danger" id="attackBtn" onclick="attackBoss()" style="min-width:130px">
+          ⚔️ ATTAQUER !
+        </button>
+      </div>
+
+      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 12px;font-size:12px;opacity:.75;margin-bottom:14px;line-height:1.7">
+        🎯 Common: 5 · G5+: 20 · G7+: 40 · G10: 100 · MINT: ×2
+      </div>
+
+      <div id="deckBonusRaidRecap" style="margin-bottom:14px"></div>
+
+      <div class="dmg-leaderboard">
+        <div style="font-size:13px;font-weight:800;opacity:.8;margin-bottom:8px">🏹 Top dégâts du raid</div>
+        <div id="bossLeaderboard"><div class="loading">Chargement...</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMemberCard(m, isOfficer, isLeader, leaderName) {
+  const isMe = m.name === (myData?.name);
+  const avatarStyle = m.avatar ? `background-image:url('${esc(m.avatar)}')` : '';
+  const initials = (m.name||"?").slice(0,2).toUpperCase();
+
+  let actions = '';
+  if (isLeader && m.name !== leaderName) {
+    actions = `
+      <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">
+        ${m.role==='member'?`<button class="btn btn-sm" style="font-size:10px;padding:4px 8px" onclick="promoteUser('${esc(m.name)}','officer')">→ Officier</button>`:''}
+        ${m.role==='officer'?`<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:4px 8px" onclick="promoteUser('${esc(m.name)}','member')">→ Membre</button>`:''}
+        <button class="btn btn-danger btn-sm" style="font-size:10px;padding:4px 8px" onclick="kickUser('${esc(m.name)}')">Exclure</button>
+      </div>
+    `;
+  }
+
+  const CLASS_DEF_M = {
+    slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464' },
+    assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff' },
+    soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff' },
+  };
+  const cls = CLASS_DEF_M[m.char_class] || null;
+
+  return `
+    <div class="member-card" ${isMe?'style="border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.08)"':''}>
+      <div class="member-avatar" style="${avatarStyle}">${avatarStyle?'':initials}</div>
+      <div style="min-width:0;flex:1">
+        <div class="member-name">${esc(m.name)} ${isMe?'<span style="font-size:10px;color:var(--accent)">(toi)</span>':''}</div>
+        <div class="member-role ${m.role==='leader'?'role-leader':m.role==='officer'?'role-officer':''}">${m.role==='leader'?'👑 Meneur':m.role==='officer'?'⭐ Officier':'Membre'}</div>
+        ${cls ? `<div style="font-size:10px;font-weight:800;color:${cls.color};margin-top:2px">${cls.icon} ${cls.label}</div>` : ''}
+        <div class="member-dmg">⚔️ ${fmtNum(m.damage_total)} dmg total</div>
+        ${actions}
+      </div>
+    </div>
+  `;
+}
+
+// ===========================
+// TABS
+// ===========================
+let currentTab = 'boss';
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  ['boss','missions','members','chat','talents','deck','character','leaderboard','forge','manage'].forEach(t => {
+    const tabEl = document.getElementById('tab-'+t);
+    if (tabEl) tabEl.classList.toggle('section-hidden', t !== name);
+  });
+
+  currentTab = name;
+
+  if (name === 'chat') { loadChat(); startChatPolling(); } else { stopChatPolling(); }
+  if (name === 'leaderboard') loadLeaderboard();
+  if (name === 'boss') { _bossFirstLoad = true; loadBossData(); startBossPolling(); loadDeckBonusRecap(); } else { stopBossPolling(); }
+  if (name === 'talents') loadTalents();
+  if (name === 'deck') loadDeck();
+  if (name === 'character') loadCharacter();
+  if (name === 'forge') loadForge();
+}
+
+// ===========================
+// PERSONNAGE
+// ===========================
+let _charData = null;
+
+let _selectedClass = null;
+
+// ⚠️ URLs GitHub de tes images de classe
+const CLASS_IMAGES = {
+  slayer:   'https://raw.githubusercontent.com/skunfy/pok-gacha/main/slayer.png',
+  assassin: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/assassin.png',
+  soutien:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/soutient.png',
+};
+
+const CLASS_DEF = {
+  slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464', desc:'Maître du combat direct.', passives:'+10% DMG permanent' },
+  assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff', desc:'Frappe vite et fort.',      passives:'+8% Crit · +15% 1ère frappe' },
+  soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff', desc:'Maître du soutien clan.',  passives:'+12% DMG clan permanents' },
+};
+
+let _deckBonusData = null;
+
+async function loadCharacter() {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+  try {
+    const [c] = await Promise.all([
+      api('/api/character'),
+      loadEquipment(),
+      api('/api/raid/bonus').then(d => { _deckBonusData = d; }).catch(() => {}),
+    ]);
+    _charData = c;
+    if (!c.char_class) {
+      renderClassPicker(c);
+    } else {
+      renderCharacter(c);
+    }
+  } catch(e) {
+    el.innerHTML = `<div class="alert alert-error">Erreur chargement personnage</div>`;
+  }
+}
+
+// === ÉCRAN CHOIX DE CLASSE ===
+function renderClassPicker(c, isChange = false) {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+  _selectedClass = null;
+
+  const cost = isChange ? 1000 : 0;
+
+  el.innerHTML = `
+    <div class="char-wrap">
+      <div class="class-pick-screen">
+        <div class="class-pick-title">${isChange ? '🔄 Changer de classe' : '⚔️ Choisis ta classe'}</div>
+        <div class="class-pick-sub">
+          ${isChange
+            ? `Changer de classe coûte <b style="color:var(--gold)">1 000 dollax</b>. Tes stats restent acquises.`
+            : 'Ton choix définit ton bonus passif permanent en raid. Tu pourras en changer pour 1 000 dollax.'}
+        </div>
+        <div class="class-cards-row" id="classCardsRow">
+          ${Object.entries(CLASS_DEF).map(([key, cls]) => `
+            <div class="class-pick-card" id="classpick-${key}"
+                 style="--cls-color:${cls.color}"
+                 onclick="selectClassCard('${key}')">
+              <img src="${CLASS_IMAGES[key]}" alt="${cls.label}"
+                   class="class-pick-img"
+                   onerror="this.outerHTML='<div class=\\'class-pick-img-ph\\'>${cls.icon}</div>'">
+              <div class="class-pick-name" style="color:${cls.color}">${cls.icon} ${cls.label}</div>
+              <div class="class-pick-desc">${cls.desc}</div>
+              <div class="class-pick-passives">${cls.passives}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="class-pick-btn" id="confirmClassBtn" disabled onclick="confirmClass(${isChange})">
+            ${isChange ? `Changer (1 000 💰)` : 'Choisir cette classe'}
+          </button>
+          ${isChange ? `<button class="btn btn-ghost btn-sm" onclick="renderCharacter(_charData)">Annuler</button>` : ''}
+        </div>
+        <div id="classPickAlert" style="margin-top:12px"></div>
+      </div>
+    </div>
+  `;
+}
+
+function selectClassCard(key) {
+  _selectedClass = key;
+  document.querySelectorAll('.class-pick-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('classpick-' + key);
+  if (card) card.classList.add('selected');
+  const btn = document.getElementById('confirmClassBtn');
+  if (btn) btn.disabled = false;
+}
+
+async function confirmClass(isChange) {
+  if (!_selectedClass) return;
+  const alertEl = document.getElementById('classPickAlert');
+  try {
+    const data = await api('/api/character/class', {
+      method: 'POST',
+      body: JSON.stringify({ char_class: _selectedClass })
+    });
+    if (data.ok) {
+      const fresh = await api('/api/character');
+      _charData = fresh;
+      renderCharacter(fresh);
+    }
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// === VUE PRINCIPALE PERSONNAGE ===
+function renderCharacter(c) {
+  const el = document.getElementById('characterContent');
+  if (!el) return;
+
+  const name     = myData?.name || 'Inconnu';
+  const isMax    = c.char_level >= c.max_level;
+  const hasPoints= c.points_available > 0;
+  const cls      = CLASS_DEF[c.char_class] || null;
+  const clsColor = cls?.color || '#7f5cff';
+  const imgSrc   = c.char_class ? CLASS_IMAGES[c.char_class] : null;
+
+  // Gradient couleur de classe pour la XP bar
+  const xpGradient = c.char_class === 'slayer'
+    ? 'linear-gradient(90deg,#ff4444,#ff8800)'
+    : c.char_class === 'assassin'
+    ? 'linear-gradient(90deg,#9b59b6,#e040fb)'
+    : c.char_class === 'soutien'
+    ? 'linear-gradient(90deg,#1a78ff,#33c6ff)'
+    : 'linear-gradient(90deg,#ffd84d,#ff8800)';
+
+  const stats = [
+    {
+      key:'stat_force', cls2:'force', icon:'⚔️', label:'Force',
+      val: c.stat_force, desc:'Augmente les dégâts de base.',
+      rate: c.stat_rates?.force ?? 0.5, statName:'force', color:'#ff6464',
+      passive: c.class_passive?.dmg_bonus > 0 ? `+${c.class_passive.dmg_bonus}% DMG passif (${cls?.label})` : null,
+    },
+    {
+      key:'stat_agilite', cls2:'agilite', icon:'🌪️', label:'Agilité',
+      val: c.stat_agilite, desc:'Augmente la chance de crit.',
+      rate: c.stat_rates?.agilite ?? 0.4, statName:'agilite', color:'#33ff99',
+      passive: c.class_passive?.crit > 0 ? `+${c.class_passive.crit}% Crit passif (${cls?.label})` : null,
+    },
+    {
+      key:'stat_intelligence', cls2:'intel', icon:'🔮', label:'Intelligence',
+      val: c.stat_intelligence, desc:'Augmente les dégâts du clan.',
+      rate: c.stat_rates?.intelligence ?? 0.6, statName:'intelligence', color:'#4da6ff',
+      passive: (c.class_passive?.clan_dmg || c.class_passive?.intel_bonus) > 0 ? `+${c.class_passive?.clan_dmg || c.class_passive?.intel_bonus}% DMG clan passif (${cls?.label})` : null,
+    },
+    {
+      key:'stat_dexterite', cls2:'dex', icon:'⚡', label:'Dextérité',
+      val: c.stat_dexterite, desc:'Bonus sur la première frappe du raid.',
+      rate: c.stat_rates?.dexterite ?? 0.5, statName:'dexterite', color:'#ffd84d',
+      passive: c.class_passive?.first_attack > 0 ? `+${c.class_passive.first_attack}% 1ère frappe passif (${cls?.label})` : null,
+    },
+  ];
+
+  const DOT_MAX = 30;
+
+  // Données équipement
+  const equipped   = _equipData?.equipped   || {};
+  const inventory  = _equipData?.inventory  || [];
+  const equippedIds = new Set(Object.values(equipped).map(e=>e?.id).filter(Boolean));
+  const tb = c.total_bonus     || {};
+  const eb = c.equipment_bonus || {};
+
+  el.innerHTML = `
+    <div class="perso-page" style="--cls-color:${clsColor}">
+
+      <!-- BLOC PRINCIPAL : slots + perso -->
+      <div class="perso-main">
+
+        <!-- COL GAUCHE : Arme + Bottes -->
+        <div class="perso-col-left">
+          ${renderSlot('weapon', equipped)}
+          ${renderSlot('boots',  equipped)}
+        </div>
+
+        <!-- COL CENTRE -->
+        <div class="perso-col-center">
+          <div class="perso-xp-top">
+            <div class="perso-xp-level">
+              <span class="perso-xp-lvl-num" style="color:${clsColor}">${c.char_level}</span>
+              <span class="perso-xp-lvl-max">${isMax ? 'MAX' : '/ ' + c.max_level}</span>
+              ${hasPoints ? `<span style="margin-left:auto;font-size:11px;font-weight:900;color:${clsColor};background:${clsColor}22;padding:2px 8px;border-radius:999px">+${c.points_available}pt</span>` : ''}
+            </div>
+            <div class="perso-xp-bar">
+              <div class="perso-xp-fill" style="width:${isMax?100:c.xp_pct}%;background:${xpGradient}"></div>
+            </div>
+            <div class="perso-xp-txt">${isMax ? '⭐ MAX' : fmtNum(c.xp_current_level)+' / '+fmtNum(c.xp_for_next)+' XP'}</div>
+          </div>
+          <div class="perso-char-img-wrap">
+            ${imgSrc
+              ? `<img class="perso-char-img" src="${esc(imgSrc)}" alt="${cls?.label||''}"
+                      onerror="this.outerHTML='<div class=\'perso-char-ph\'>${cls?.icon||'🧬'}</div>'">`
+              : `<div class="perso-char-ph">🧬</div>`
+            }
+          </div>
+          ${cls ? `<div class="perso-class-badge" style="color:${clsColor};border-color:${clsColor};background:${clsColor}18">${cls.icon} ${esc(name)} · ${cls.label}</div>` : ''}
+        </div>
+
+        <!-- COL DROITE : Casque + Armure + Anneau -->
+        <div class="perso-col-right">
+          ${renderSlot('head',  equipped)}
+          ${renderSlot('armor', equipped)}
+          ${renderSlot('ring',  equipped)}
+        </div>
+      </div>
+
+      <!-- BOTTOM : Inventaire + Bonus total -->
+      <div class="perso-bottom">
+
+        <div class="perso-inventory">
+          <div class="perso-inv-title">⚔️ Inventaire · ${inventory.length} item${inventory.length>1?'s':''} <span style="font-size:10px;opacity:.4">· Drops sur Myntalis</span></div>
+          ${inventory.length === 0
+            ? `<div style="text-align:center;padding:24px 0;opacity:.35;font-size:13px">Vaincs Myntalis pour obtenir du stuff !</div>`
+            : `<div class="eq-inventory-grid">
+                ${inventory.map(item => `
+                  <div class="eq-inv-item ${item.rarity} ${equippedIds.has(item.id)?'equipped':''}"
+                       onclick="equipItem(${item.id},'${item.slot}')"
+                       title="${esc(item.name)}">
+                    ${equippedIds.has(item.id)?'<div class="eq-equipped-badge"></div>':''}
+                    <img class="eq-inv-img" src="${esc(item.image)}" alt="" onerror="this.style.display='none'">
+                    <div class="eq-inv-name" style="color:${EQ_RARITY_COLOR[item.rarity]||'#aaa'}">${esc(item.name)}</div>
+                  </div>
+                `).join('')}
+               </div>`
+          }
+        </div>
+
+        <div class="perso-bonus">
+          <div class="perso-bonus-title">📊 Bonus total · stats + classe + deck + équipement</div>
+          ${(() => {
+            const db = _deckBonusData?.bonus || {};
+            const rows = [
+              { label:'⚔️ DMG perso',   val: (tb.dmg_bonus    || 0) + (db.dmg_bonus    || 0), color:'#ff6464', eq: eb.dmg_bonus    || 0, deck: db.dmg_bonus    || 0 },
+              { label:'🌪️ Crit',        val: (tb.crit         || 0) + (db.crit         || 0), color:'#33ff99', eq: eb.crit         || 0, deck: db.crit         || 0 },
+              { label:'⚡ 1ère frappe', val: (tb.first_attack || 0) + (db.first_attack || 0), color:'#ffd84d', eq: eb.first_attack || 0, deck: db.first_attack || 0 },
+              { label:'🛡️ DMG clan',   val: tb.clan_dmg     || 0, color:'#4da6ff', eq: eb.clan_dmg  || 0, deck: 0 },
+              { label:'💫 Crit clan',   val: tb.clan_crit    || 0, color:'#c084ff', eq: eb.clan_crit || 0, deck: 0 },
+            ].filter(r=>r.val>0);
+            if (!rows.length) return '<div style="opacity:.35;font-size:12px;text-align:center;padding:8px">Aucun bonus actif</div>';
+            return rows.map(r=>`
+              <div class="perso-bonus-row">
+                <div>
+                  <div class="perso-bonus-label">${r.label}</div>
+                  <div class="perso-bonus-detail">
+                    ${r.deck>0?`deck +${r.deck}%`:''} ${r.eq>0?`· équip +${r.eq}%`:''}
+                  </div>
+                </div>
+                <div class="perso-bonus-val" style="color:${r.color}">+${Number(r.val).toFixed(1)}%</div>
+              </div>
+            `).join('');
+          })()}
+        </div>
+      </div>
+
+      <!-- CARACTÉRISTIQUES -->
+      <div class="perso-stats">
+        <div class="perso-stats-title">🧬 Caractéristiques${hasPoints ? ` · <span style="color:${clsColor}">${c.points_available} point${c.points_available>1?'s':''} à distribuer !</span>` : ''}</div>
+        <div class="perso-stats-grid">
+          ${stats.map(s => {
+            const isPrimary   = (c.class_primary   || []).includes(s.statName);
+            const isSecondary = (c.class_secondary || []).includes(s.statName);
+            const isWeak      = c.char_class && !isPrimary && !isSecondary;
+            const bonusVal    = (s.val * s.rate).toFixed(1);
+            const bonusLabel  = s.cls2==='force' ? `+${bonusVal}% DMG`
+                              : s.cls2==='agilite' ? `+${bonusVal}% Crit`
+                              : s.cls2==='intel' ? `+${bonusVal}% DMG clan`
+                              : `+${bonusVal}% 1ère frappe`;
+            const tierBadge = isPrimary
+              ? `<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:${clsColor}33;color:${clsColor};border:1px solid ${clsColor}55">PRI</span>`
+              : isSecondary
+              ? `<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.12)">SEC</span>`
+              : isWeak
+              ? `<span style="font-size:9px;padding:1px 6px;border-radius:999px;background:rgba(255,80,80,.08);color:rgba(255,120,120,.45);border:1px solid rgba(255,80,80,.12)">FAI</span>`
+              : '';
+            const dots = Array.from({length:DOT_MAX},(_,i)=>`<div class="stat-dot ${i<s.val?'filled '+s.cls2:''}"></div>`).join('');
+            return `
+              <div class="stat-card ${s.cls2}" style="${isWeak?'opacity:.75':''}">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                  <span style="font-size:16px">${s.icon}</span>
+                  <span class="stat-name" style="margin-bottom:0">${s.label}</span>
+                  ${tierBadge}
+                </div>
+                <div class="stat-desc">${s.desc}</div>
+                <div class="stat-value-row">
+                  <span class="stat-value" style="color:${s.color}">${s.val}</span>
+                  <span class="stat-bonus" style="color:${isPrimary?s.color:'rgba(255,255,255,.4)'}">${bonusLabel}</span>
+                </div>
+                ${s.passive?`<div class="stat-passive-line" style="color:${clsColor}">✦ ${s.passive}</div>`:''}
+                <div class="stat-dots">${dots}</div>
+                <button class="stat-alloc-btn ${s.cls2}" onclick="allocateStat('${s.key}')" ${!hasPoints?'disabled':''}>
+                  ${hasPoints?`+ Allouer (${c.points_available} pt${c.points_available>1?'s':''})` : 'Aucun point disponible'}
+                </button>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">📊 XP par Raid</div>
+        <table class="char-xp-table">
+          <tr><td class="boss-cell">👹 Arakas Facile</td><td class="xp-cell">+400 XP</td></tr>
+          <tr><td class="boss-cell">💀 Arakas Hardcore</td><td class="xp-cell">+1000 XP</td></tr>
+          <tr><td class="boss-cell">👹 Myntalis Facile</td><td class="xp-cell">+2500 XP · équipements</td></tr>
+          <tr><td class="boss-cell">💀 Myntalis Hardcore</td><td class="xp-cell">+6000 XP · équipements</td></tr>
+          <tr><td class="boss-cell">👹 Xenos Facile</td><td class="xp-cell">+15000 XP</td></tr>
+          <tr><td class="boss-cell">💀 Xenos Hardcore</td><td class="xp-cell">+35000 XP</td></tr>
+        </table>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="resetStats()">🔄 Reset stats (500 💰)</button>
+          <button class="btn btn-ghost btn-sm" onclick="renderClassPicker(_charData,true)">⚔️ Changer de classe (1 000 💰)</button>
+        </div>
+        <div id="charAlert" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+  `;
+}
+
+function buildStatLine(item) {
+  const parts = [];
+  if (item.dmg_bonus)    parts.push(`<span style="color:#ff8844">⚔️ +${item.dmg_bonus}% DMG</span>`);
+  if (item.crit)         parts.push(`<span style="color:#ffd84d">💥 +${item.crit}% Crit</span>`);
+  if (item.first_attack) parts.push(`<span style="color:#44aaff">⚡ +${item.first_attack}% 1ère frappe</span>`);
+  if (item.clan_dmg)     parts.push(`<span style="color:#4da6ff">🛡️ +${item.clan_dmg}% DMG clan</span>`);
+  if (item.clan_crit)    parts.push(`<span style="color:#c084ff">💫 +${item.clan_crit}% Crit clan</span>`);
+  return parts.join(' · ') || '<span style="opacity:.4">—</span>';
+}
+
+function renderSlot(slot, equipped) {
+  const def  = SLOT_DEF[slot];
+  const item = equipped[slot];
+  const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+
+  if (item) {
+    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const statLines = [];
+    if (item.dmg_bonus)    statLines.push(`<div class="eq-tooltip-stat"><span>⚔️</span><span style="color:#ff8844">+${item.dmg_bonus}% DMG</span></div>`);
+    if (item.crit)         statLines.push(`<div class="eq-tooltip-stat"><span>💥</span><span style="color:#ffd84d">+${item.crit}% Crit</span></div>`);
+    if (item.first_attack) statLines.push(`<div class="eq-tooltip-stat"><span>⚡</span><span style="color:#44aaff">+${item.first_attack}% 1ère frappe</span></div>`);
+    if (item.clan_dmg)     statLines.push(`<div class="eq-tooltip-stat"><span>🛡️</span><span style="color:#4da6ff">+${item.clan_dmg}% DMG clan</span></div>`);
+    if (item.clan_crit)    statLines.push(`<div class="eq-tooltip-stat"><span>💫</span><span style="color:#c084ff">+${item.clan_crit}% Crit clan</span></div>`);
+
+    return `
+      <div class="eq-slot filled ${item.rarity}" onclick="openEquipInventory('${slot}')">
+        <img class="eq-slot-img" src="${esc(item.image)}" alt="" onerror="this.style.display='none'">
+        <span class="eq-slot-unequip" onclick="event.stopPropagation();unequipItem(${item.id})">✕</span>
+        <div class="eq-slot-tooltip">
+          <div class="eq-tooltip-name">${esc(item.name)}</div>
+          <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
+          ${statLines.length ? statLines.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="eq-slot" onclick="openEquipInventory('${slot}')">
+      <div class="eq-slot-empty-icon">${def.icon}</div>
+      <div class="eq-slot-label">${def.label}</div>
+      <div class="eq-slot-tooltip">
+        <div class="eq-tooltip-empty">${def.icon} ${def.label} — vide</div>
+        <div style="font-size:11px;opacity:.4;margin-top:4px">Clique pour équiper</div>
+      </div>
+    </div>`;
+}
+
+// ── ÉQUIPEMENT ────────────────────────────────────────────
+let _equipData = null;
+
+const SLOT_DEF = {
+  weapon: { label:'Arme',    icon:'⚔️' },
+  armor:  { label:'Armure',  icon:'🛡️' },
+  boots:  { label:'Bottes',  icon:'👢' },
+  head:   { label:'Casque',  icon:'🪖' },
+  ring:   { label:'Anneau',  icon:'💍' },
+};
+
+const EQ_RARITY_COLOR = {
+  common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d'
+};
+const EQ_RARITY_LABEL = {
+  common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'
+};
+
+async function loadEquipment() {
+  try {
+    _equipData = await api('/api/equipment');
+  } catch(e) {
+    _equipData = { inventory:[], equipped:{} };
+  }
+}
+
+function openEquipInventory(slot) {
+  const inventory = (_equipData?.inventory || []).filter(i => i.slot === slot);
+  if (!inventory.length) {
+    showAlert(`Aucun équipement de type "${SLOT_DEF[slot]?.label}" dans ton inventaire.`, 'info');
+    return;
+  }
+  // Équiper le premier non-équipé de ce slot, ou ouvrir une confirmation
+  const unequipped = inventory.find(i => !i.equipped_slot);
+  if (unequipped) equipItem(unequipped.id, slot);
+  else showAlert('Tous tes items de ce type sont déjà équipés.', 'info');
+}
+
+async function equipItem(id, slot) {
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id }) });
+    await loadEquipment();
+    const fresh = await api('/api/character');
+    _charData = fresh;
+    renderCharacter(fresh);
+  } catch(e) { showAlert(e.message, 'error'); }
+}
+
+async function unequipItem(id) {
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
+    await loadEquipment();
+    const fresh = await api('/api/character');
+    _charData = fresh;
+    renderCharacter(fresh);
+  } catch(e) { showAlert(e.message, 'error'); }
+}
+
+async function allocateStat(statKey) {
+  try {
+    const data = await api('/api/character/allocate', {
+      method: 'POST',
+      body: JSON.stringify({ stat: statKey })
+    });
+    if (data.ok) {
+      _charData.stat_force        = statKey === 'stat_force'        ? data.new_value : _charData.stat_force;
+      _charData.stat_agilite      = statKey === 'stat_agilite'      ? data.new_value : _charData.stat_agilite;
+      _charData.stat_intelligence = statKey === 'stat_intelligence'  ? data.new_value : _charData.stat_intelligence;
+      _charData.stat_dexterite    = statKey === 'stat_dexterite'    ? data.new_value : _charData.stat_dexterite;
+      _charData.points_available  = data.points_available;
+      renderCharacter(_charData);
+    }
+  } catch(e) {
+    showAlert(e.message || 'Erreur', 'error');
+  }
+}
+
+async function resetStats() {
+  if (!confirm('Réinitialiser toutes tes stats pour 500 dollax ?')) return;
+  const alertEl = document.getElementById('charAlert');
+  try {
+    const data = await api('/api/character/reset', { method: 'POST' });
+    if (data.ok) {
+      _charData.stat_force = 0;
+      _charData.stat_agilite = 0;
+      _charData.stat_intelligence = 0;
+      _charData.stat_dexterite = 0;
+      _charData.points_available = data.points_available;
+      renderCharacter(_charData);
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Stats reset ! ${data.points_available} points récupérés.</div>`;
+      setTimeout(() => { if(alertEl) alertEl.innerHTML = ''; }, 3000);
+    }
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ===========================
+// BOSS
+// ===========================
+let _raidTimer = null;
+let _raidExpiresAt = null;
+let _raidBossId = null;
+let _bossFirstLoad = true;
+
+async function loadBossData() {
+  try {
+    let data;
+
+    // Premier chargement : utiliser les données déjà dans la réponse /api/clan/me
+    if (_bossFirstLoad && window._initialBossData) {
+      _bossFirstLoad = false;
+      data = window._initialBossData;
+      // Compléter avec myStock/leaderboard si manquants → appel API léger
+      if (data.boss && (data.boss.myStock === undefined || !data.boss.leaderboard)) {
+        const fresh = await api("/api/clan/boss");
+        data = fresh;
+      }
+    } else {
+      data = await api("/api/clan/boss");
+    }
+
+    // Pas de raid actif → afficher sélection
+    if (!data.boss) {
+      const choicesEl = document.getElementById("bossChoices");
+      if (!choicesEl) return;
+
+      const canStart = ['leader','officer'].includes(window._clanData?.myRole);
+      const bosses = data.availableBosses || [];
+      const cooldowns = data.cooldowns || {};
+
+      // Grouper par boss (arakas, myntalis, xenos)
+      const groups = {};
+      for (const b of bosses) {
+        if (!groups[b.bossKey]) groups[b.bossKey] = { easy: null, hard: null };
+        groups[b.bossKey][b.difficulty] = b;
+      }
+
+      const cooldownLabel = { arakas: '1 jour', myntalis: '3 jours', xenos: '7 jours' };
+      const bossOrder = ['arakas', 'myntalis', 'xenos'];
+
+      choicesEl.innerHTML = bossOrder.map(bk => {
+        const easy = groups[bk]?.easy;
+        const hard = groups[bk]?.hard;
+        if (!easy) return '';
+        const cd = cooldowns[bk] || { available: true, daysLeft: 0 };
+        const locked = !cd.available;
+
+        return `
+          <div class="boss-choice ${locked ? 'locked' : 'available'}">
+            <img src="${esc(easy.image)}" alt="${esc(easy.name)}" style="mix-blend-mode:screen" onerror="this.style.display='none'">
+            <div class="boss-choice-name">👹 ${esc(easy.name)}</div>
+            <div class="boss-choice-stats">
+              ❤️ ${fmtNum(easy.hp_max)} PV<br>
+              🕒 Cooldown : ${cooldownLabel[bk]||'?'}
+            </div>
+            ${locked
+              ? `<div class="cooldown-badge">⏳ Disponible dans ${cd.daysLeft} jour${cd.daysLeft>1?'s':''}</div>`
+              : canStart ? `
+                <div style="margin-top:8px;font-size:11px;opacity:.6;margin-bottom:6px">Choisir la difficulté :</div>
+                <div class="diff-btns">
+                  <button class="diff-btn easy" onclick="startRaid('${easy.key}')">
+                    🟢 Facile<br>
+                    <span style="font-size:10px;opacity:.8">${fmtNum(easy.reward)}💰 · ${easy.duration>=4*3600000?'4h':'1h'}</span>
+                  </button>
+                  ${hard ? `<button class="diff-btn hard" onclick="startRaid('${hard.key}')">
+                    🔴 Hardcore<br>
+                    <span style="font-size:10px;opacity:.8">${fmtNum(hard.reward)}💰 · ${hard.duration>=4*3600000?'4h':'1h'}</span>
+                  </button>` : ''}
+                </div>`
+              : `<div style="font-size:11px;opacity:.5;margin-top:8px">Meneur/Officier seulement</div>`
+            }
+          </div>
+        `;
+      }).join('');
+      loadLastRaid();
+      return;
+    }
+
+    // Raid actif → mettre à jour l'UI
+    const boss = data.boss;
+    _raidBossId = boss.id;
+    _raidExpiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+
+    // Stock
+    const myStock = boss.myStock ?? data.myStock ?? 0;
+    const stockEl = document.getElementById("stockVal");
+    if (stockEl) stockEl.textContent = fmtNum(myStock);
+
+    const attackBtn = document.getElementById("attackBtn");
+    if (attackBtn) {
+      attackBtn.disabled = myStock <= 0;
+      attackBtn.textContent = myStock > 0 ? `⚔️ ATTAQUER ! (${fmtNum(myStock)} dmg)` : '⚔️ Ouvre des cartes...';
+    }
+
+    // HP bar
+    const pct = Math.max(0, Math.round((boss.hp_current / boss.hp_max) * 100));
+    const hpBar = document.getElementById("bossHpBar");
+    if (hpBar) hpBar.style.width = pct + '%';
+
+    // Leaderboard
+    const leaderboard = boss.leaderboard ?? data.leaderboard ?? [];
+    const lbEl = document.getElementById("bossLeaderboard");
+    if (lbEl && leaderboard.length >= 0) {
+      lbEl.innerHTML = leaderboard.map((r,i) =>
+        `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
+          <span>#${i+1} ${esc(r.name)}</span>
+          <span>⚔️ ${fmtNum(r.total)}</span>
+        </div>`
+      ).join('') || '<div style="opacity:.5;font-size:13px">Aucun dégât encore</div>';
+    }
+
+    // Timer
+    startRaidTimer();
+  } catch(e) {}
+}
+
+function startRaidTimer() {
+  if (_raidTimer) clearInterval(_raidTimer);
+  if (!_raidExpiresAt) return;
+
+  function updateTimer() {
+    const left = Math.max(0, _raidExpiresAt - Date.now());
+    const h = Math.floor(left / 3600000);
+    const m = Math.floor((left % 3600000) / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    const txt = left > 0
+      ? `⏱️ ${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s restantes`
+      : '⏰ Temps écoulé !';
+
+    const timerEl = document.getElementById("timerDisplay");
+    if (timerEl) timerEl.textContent = txt;
+
+    // Barre timer
+    const bossQ = window._lastBossData;
+    if (bossQ?.started_at && _raidExpiresAt) {
+      const total = _raidExpiresAt - bossQ.started_at;
+      const elapsed = Date.now() - bossQ.started_at;
+      const pct = Math.max(0, 100 - Math.round((elapsed / total) * 100));
+      const bar = document.getElementById("timerBar");
+      if (bar) bar.style.width = pct + '%';
+    }
+
+    if (left <= 0) {
+      clearInterval(_raidTimer);
+      loadBossData(); // Recharger pour afficher état expiré
+    }
+  }
+  updateTimer();
+  _raidTimer = setInterval(updateTimer, 1000);
+}
+
+async function loadLastRaid() {
+  const el = document.getElementById('lastRaidRecap');
+  if (!el) return;
+  try {
+    const data = await api('/api/clan/raid/last');
+    if (!data.raid) { el.innerHTML = ''; return; }
+    const r = data.raid;
+
+    // Durée formatée
+    let durationStr = '—';
+    if (r.durationMs !== null) {
+      const totalSec = Math.floor(r.durationMs / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      durationStr = h > 0
+        ? `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`
+        : m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
+    }
+
+    const diffLabel = r.bossKey?.endsWith('_hard') ? '🔴 Hardcore' : '🟢 Facile';
+    const badgeClass = r.defeated ? 'win' : 'fail';
+    const badgeText  = r.defeated ? '✅ Vaincu' : '💀 Échoué';
+    const maxDmg = r.players?.length ? r.players[0].total : 1;
+    const rankIcons = ['🥇','🥈','🥉'];
+
+    el.innerHTML = `
+      <div style="margin-top:20px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:900;opacity:.9">📜 Dernier Raid — ${esc(r.bossName)} <span style="font-size:11px;opacity:.5">${diffLabel}</span></span>
+          <span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;${r.defeated
+            ? 'background:rgba(51,255,153,.15);color:#33ff99;border:1px solid rgba(51,255,153,.3)'
+            : 'background:rgba(255,68,68,.15);color:#ff6868;border:1px solid rgba(255,68,68,.3)'
+          }">${badgeText}</span>
+        </div>
+        <div style="font-size:12px;opacity:.6;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px">
+          <span>⏱️ Durée : <b>${durationStr}</b></span>
+          <span>⚔️ Total : <b>${fmtNum(r.totalDmg)}</b></span>
+          ${r.mvp ? `<span>🏅 MVP : <b style="color:var(--gold)">${esc(r.mvp)}</b></span>` : ''}
+          ${r.defeated ? `<span>💰 Récompense : <b style="color:var(--gold)">${fmtNum(r.reward)}</b> dollax</span>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          ${(r.players || []).map((p, i) => {
+            const barW = maxDmg > 0 ? Math.round((p.total / maxDmg) * 100) : 0;
+            const isMvp = p.name === r.mvp;
+            const avatarStyle = p.avatar ? `background-image:url('${esc(p.avatar)}');background-color:transparent` : '';
+            const initials = (p.name||'?').slice(0,2).toUpperCase();
+            return `
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:13px;font-weight:900;min-width:22px;text-align:center">${rankIcons[i] || '#'+(i+1)}</span>
+                <div style="width:30px;height:30px;border-radius:8px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900;font-size:11px;background-size:cover;background-position:center;${avatarStyle}">${avatarStyle?'':initials}</div>
+                <span style="flex:1;font-size:13px;font-weight:700">${esc(p.name)}</span>
+                ${isMvp ? `<span style="font-size:10px;font-weight:900;color:#ffd84d;background:rgba(255,216,77,.12);border:1px solid rgba(255,216,77,.25);border-radius:999px;padding:2px 7px;flex-shrink:0">MVP</span>` : ''}
+                <div style="flex:1;min-width:60px;background:rgba(255,255,255,.08);border-radius:999px;height:5px;overflow:hidden">
+                  <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:${barW}%"></div>
+                </div>
+                <span style="font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap">${fmtNum(p.total)}</span>
+                <span style="font-size:11px;opacity:.5;min-width:34px;text-align:right">${p.pct}%</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    console.warn('loadLastRaid:', e);
+  }
+}
+
+async function startRaid(bossKey) {
+  const alertEl = document.getElementById("raidAlert");
+  try {
+    await api("/api/clan/raid/start", { method:"POST", body: JSON.stringify({ bossKey }) });
+    // Recharger la page du clan pour afficher le raid
+    location.reload();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error" style="margin-top:12px">${esc(e.message)}</div>`;
+    else alert(e.message);
+  }
+}
+
+async function attackBoss() {
+  const btn = document.getElementById("attackBtn");
+  if (btn) btn.disabled = true;
+
+  try {
+    const data = await api("/api/clan/raid/attack", { method:"POST" });
+
+    // Animation d'attaque
+    playAttackAnimation(data.damage, data.isCrit);
+
+    // ✅ Mise à jour immédiate des HP dans l'UI
+    if (data.boss) {
+      const pct = Math.max(0, Math.round((data.newHp / data.boss.hp_max) * 100));
+      const hpBar = document.getElementById("bossHpBar");
+      const hpText = document.querySelector(".hp-text");
+      if (hpBar) {
+        hpBar.style.width = pct + '%';
+        const barColor = pct > 50 ? '#ff4444' : pct > 20 ? '#ff8800' : '#33ff99';
+        hpBar.style.background = barColor;
+      }
+      if (hpText) hpText.innerHTML = `${fmtNum(data.newHp)} / ${fmtNum(data.boss.hp_max)} PV · <span style="color:var(--gold)">🏆 ${fmtNum(data.boss.reward)} dollax</span>`;
+      const pctText = document.querySelector('.boss-card [style*="opacity:.6"]');
+      if (pctText) pctText.textContent = pct + '% restants';
+    }
+
+    // ✅ Mise à jour immédiate du leaderboard
+    if (data.leaderboard) {
+      const lbEl = document.getElementById("bossLeaderboard");
+      if (lbEl) {
+        lbEl.innerHTML = data.leaderboard.map((r,i) =>
+          `<div class="dmg-row ${r.name===myData?.name?'dmg-me':''}">
+            <span>#${i+1} ${esc(r.name)}</span>
+            <span>⚔️ ${fmtNum(r.total)}</span>
+          </div>`
+        ).join('') || '<div style="opacity:.5;font-size:13px">Aucun dégât encore</div>';
+      }
+    }
+
+    if (data.defeated) {
+      setTimeout(() => {
+        showAlert('🏆 Boss vaincu ! Récompenses distribuées !', 'success');
+        setTimeout(() => location.reload(), 2000);
+      }, 800);
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = '⚔️ Ouvre des cartes...'; }
+    }
+  } catch(e) {
+    alert(e.message);
+    if (btn) btn.disabled = false;
+  }
+}
+
+function playAttackAnimation(dmg, isCrit = false) {
+  // Shake le boss
+  const img = document.getElementById("bossImg");
+  const wrap = document.getElementById("bossImgWrap");
+  const flash = document.getElementById("attackFlash");
+
+  if (wrap) {
+    wrap.style.animation = 'none';
+    void wrap.offsetWidth;
+    wrap.style.animation = 'attackShake .5s ease';
+    setTimeout(() => { wrap.style.animation = ''; }, 500);
+  }
+
+  if (flash) {
+    flash.style.animation = 'none';
+    void flash.offsetWidth;
+    flash.style.opacity = '1';
+    flash.style.animation = 'attackFlash .6s ease forwards';
+    setTimeout(() => { flash.style.opacity = '0'; }, 600);
+  }
+
+  // Popup dégâts
+  if (wrap) {
+    const popup = document.createElement('div');
+    popup.className = 'dmg-popup';
+    popup.innerHTML = `-${fmtNum(dmg)}${isCrit ? ' <span style="font-size:18px;color:#ffd84d">CRIT!</span>' : ''}`;
+    wrap.appendChild(popup);
+    setTimeout(() => popup.remove(), 900);
+  }
+
+  // Vider le stock dans l'UI
+  const stockEl = document.getElementById("stockVal");
+  if (stockEl) stockEl.textContent = '0';
+  const attackBtn = document.getElementById("attackBtn");
+  if (attackBtn) attackBtn.textContent = '⚔️ Ouvre des cartes...';
+}
+
+function showAlert(msg, type='success') {
+  const div = document.createElement('div');
+  div.className = `alert alert-${type}`;
+  div.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;min-width:300px;text-align:center';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
+
+// ===========================
+// MISSIONS
+// ===========================
+// ── COFFRE IMAGE ──
+const CHEST_IMG = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/coffre.png';
+
+const CHEST_MILESTONES = [
+  { need:2,  label:'2/8', reward:'+100 XP' },
+  { need:4,  label:'4/8', reward:'+200 XP' },
+  { need:6,  label:'6/8', reward:'+100 💰' },
+  { need:8,  label:'8/8', reward:'Coffre 📦' },
+];
+
+
+
+let _chestClaimed = false;
+
+async function loadMissions() {
+  const el = document.getElementById("missionsContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/missions");
+    const missions = data.missions;
+    const done = missions.filter(m => m.completed).length;
+    const total = missions.length;
+    const pctBar = Math.round((done / total) * 100);
+
+    // Vérifier si le coffre est déjà réclamé aujourd'hui
+    let chestClaimedToday = _chestClaimed;
+    try {
+      const chestInfo = await api("/api/clan/missions/chest-status");
+      chestClaimedToday = chestInfo.claimed;
+      _chestClaimed = chestClaimedToday;
+    } catch(e) {}
+
+    const allDone = done >= total;
+
+    // Barre de progression
+    const milestonesHtml = CHEST_MILESTONES.map(ms => {
+      const cls = done >= ms.need ? 'done' : (done >= ms.need - 1 ? 'reached' : '');
+      return `<div class="mission-milestone" style="position:relative">
+        <div class="mission-milestone-dot ${cls}"></div>
+        <div style="height:8px"></div>
+        <div class="mission-milestone-label">${ms.label}</div>
+        <div class="mission-milestone-reward ${cls}">${ms.reward}</div>
+      </div>`;
+    }).join('');
+
+    const nextMs = CHEST_MILESTONES.find(ms => done < ms.need);
+    const nextText = nextMs ? `Prochain palier : ${nextMs.label} — ${nextMs.reward}` : 'Toutes les récompenses débloquées !';
+
+    el.innerHTML = `
+      <!-- BARRE DE PROGRESSION -->
+      <div class="mission-prog-wrap">
+        <div class="mission-prog-header">
+          <div class="mission-prog-title">📅 Progression quotidienne</div>
+          <div class="mission-prog-count">${done} / ${total} missions</div>
+        </div>
+        <div class="mission-prog-bar-outer">
+          <div class="mission-prog-bar-fill" style="width:${pctBar}%;--dot-display:${pctBar===0?'none':'block'}"></div>
+          ${CHEST_MILESTONES.map(ms => `<div style="position:absolute;top:50%;left:${Math.round((ms.need/total)*100)}%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:${done>=ms.need?'#33ff99':'rgba(255,255,255,.2)'};z-index:3;border:2px solid ${done>=ms.need?'#33ff99':'rgba(255,255,255,.15)'}"></div>`).join('')}
+        </div>
+        <div class="mission-milestones">${milestonesHtml}</div>
+        <div class="mission-prog-next">${nextText}</div>
+      </div>
+
+      <!-- COFFRE -->
+      <div class="chest-section">
+        <div class="chest-btn" onclick="claimChest()" ${!allDone || chestClaimedToday ? 'disabled' : ''}>
+          <img class="chest-img" src="${CHEST_IMG}" alt="Coffre" onerror="this.style.fontSize='52px';this.outerHTML='<span style=\'font-size:52px\'>📦</span>'">
+          <span class="chest-label">${chestClaimedToday ? '✅ Coffre réclamé' : allDone ? '🎁 Ouvrir le coffre !' : 'Coffre journalier'}</span>
+          <span class="chest-sub">${chestClaimedToday ? 'Reviens demain !' : allDone ? 'Toutes les missions accomplies !' : `Complète toutes les missions pour l'ouvrir`}</span>
+        </div>
+      </div>
+
+      <!-- MISSIONS GRID -->
+      <div class="missions-grid">
+        ${missions.map(m => {
+          const pct = m.goal > 0 ? Math.min(100, Math.round((m.progress/m.goal)*100)) : 0;
+          return `
+            <div class="mission-card" ${m.completed?'style="border-color:rgba(51,255,153,.3);background:rgba(51,255,153,.05)"':''}>
+              <div class="mission-label">
+                ${esc(m.label)}
+                ${m.completed?'<span class="mission-check">✅</span>':''}
+              </div>
+              <div class="mission-bar-wrap">
+                <div class="mission-bar ${m.completed?'done':''}" style="width:${pct}%"></div>
+              </div>
+              <div class="mission-prog">${m.progress}/${m.goal}</div>
+              <div class="mission-reward">🏅 +${m.xpClan} XP clan · +${m.bankReward} dollax banque</div>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
+
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur</div>'; }
+}
+
+async function claimChest() {
+  try {
+    const data = await api("/api/clan/missions/claim-chest", { method: 'POST' });
+    if (!data.ok) { showAlert(data.error || 'Erreur', 'error'); return; }
+    _chestClaimed = true;
+
+    const r = data.reward;
+    const CHEST_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+    const CHEST_RARITY_LABEL = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+    const rarityColor = CHEST_RARITY_COLOR[r.rarity] || '#ffd84d';
+    const rarityLabel = CHEST_RARITY_LABEL[r.rarity] || r.rarity || '';
+    const typeLabel = r.type === 'money' ? 'Monnaie' : r.type === 'card' ? 'Carte de raid' : 'Équipement';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'chest-result-overlay';
+    overlay.innerHTML = `
+      <div class="chest-result-card" style="border-color:${rarityColor}33">
+        ${r.image
+          ? `<img class="chest-result-img" src="${esc(r.image)}" alt="${esc(r.label)}" style="border:2px solid ${rarityColor}44" onerror="this.outerHTML='<span class=\'chest-result-icon\'>🎁</span>'">`
+          : `<span class="chest-result-icon">${r.type==='money'?'💰':'🎁'}</span>`
+        }
+        <div class="chest-result-rarity" style="color:${rarityColor}">${rarityLabel}</div>
+        <div class="chest-result-name" style="color:${rarityColor}">${esc(r.label)}</div>
+        <div class="chest-result-type">${typeLabel}</div>
+        <button class="chest-result-close" onclick="this.closest('.chest-result-overlay').remove();loadMissions()">Super !</button>
+      </div>
+    `;
+    overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); loadMissions(); } });
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.classList.add('show'), 10);
+
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
+}
+
+// ===========================
+// CHAT
+// ===========================
+async function loadChat() {
+  const el = document.getElementById("chatMessages");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/chat");
+    const wasAtBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40;
+    el.innerHTML = data.messages.map(m => {
+      const avatarStyle = m.avatar ? `style="background-image:url('${esc(m.avatar)}')"` : '';
+      const initials = (m.username||"?").slice(0,2).toUpperCase();
+      return `
+        <div class="chat-msg">
+          <div class="chat-avatar" ${avatarStyle}>${m.avatar?'':initials}</div>
+          <div class="chat-body">
+            <div class="chat-author">${esc(m.username)} <span class="chat-time">${timeAgo(m.createdat||m.createdAt)}</span></div>
+            <div class="chat-text">${esc(m.message)}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    if (wasAtBottom || data.messages.length < 5) el.scrollTop = el.scrollHeight;
+  } catch(e) {}
+}
+
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = "";
+  try {
+    await api("/api/clan/chat", { method:"POST", body: JSON.stringify({ message: msg }) });
+    await loadChat();
+  } catch(e) { alert(e.message); }
+}
+
+let _bossPolling = null;
+function startBossPolling() {
+  stopBossPolling();
+  _bossPolling = setInterval(() => { if (currentTab === 'boss') loadBossData(); }, 15000);
+}
+function stopBossPolling() {
+  if (_bossPolling) { clearInterval(_bossPolling); _bossPolling = null; }
+}
+
+function startChatPolling() {
+  stopChatPolling();
+  chatPolling = setInterval(() => { if (currentTab==='chat') loadChat(); }, 5000);
+}
+function stopChatPolling() {
+  if (chatPolling) { clearInterval(chatPolling); chatPolling=null; }
+}
+
+// ===========================
+// LEADERBOARD
+// ===========================
+async function loadLeaderboard() {
+  const el = document.getElementById("lbContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/leaderboard");
+    const rankClass = (i) => i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    el.innerHTML = data.clans.map((c,i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass(i)}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+        <div style="flex:1">
+          <span style="color:${esc(c.banner_color)};font-weight:900">[${esc(c.tag)}]</span>
+          <span class="lb-name"> ${esc(c.name)}</span>
+          <span style="font-size:11px;opacity:.5;margin-left:6px">Niv.${c.level||1}</span>
+        </div>
+        <div style="font-size:12px;opacity:.6;margin-right:12px">${c.members} mbr</div>
+        <div class="lb-xp">⚡ ${fmtNum(c.xp)}</div>
+      </div>
+    `).join("");
+  } catch(e) { el.innerHTML='<div class="loading">Erreur</div>'; }
+}
+
+// ===========================
+// TALENTS
+// ===========================
+let _talentData = null;
+
+async function loadTalents() {
+  const el = document.getElementById("talentsContent");
+  if (!el) return;
+  try {
+    const data = await api("/api/clan/talents");
+    _talentData = data;
+    const canUpgrade = ['leader','officer'].includes(data.myRole);
+    const xpPct = data.nextLevelXp > 0 ? Math.min(100, Math.round((data.xpIntoLevel / data.nextLevelXp) * 100)) : 100;
+
+    el.innerHTML = `
+      <div class="talent-header">
+        <div>
+          <div style="font-size:13px;opacity:.7;margin-bottom:2px">Niveau du clan</div>
+          <div style="font-size:22px;font-weight:900">🏰 Niveau ${data.clanLevel}</div>
+        </div>
+        <div class="clan-xp-bar-wrap">
+          <div class="clan-xp-bar-label">${fmtNum(data.xpIntoLevel)} / ${fmtNum(data.nextLevelXp)} XP → Niveau ${data.clanLevel+1}</div>
+          <div class="clan-xp-bar"><div class="clan-xp-bar-fill" style="width:${xpPct}%"></div></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px;opacity:.7">Points disponibles</div>
+          <div class="talent-points-badge">✨ ${data.talentPoints} pt${data.talentPoints>1?'s':''}</div>
+        </div>
+      </div>
+
+      ${data.talentPoints === 0 && data.clanLevel === 1 ? `
+        <div style="text-align:center;padding:20px;opacity:.6;font-size:13px">
+          Complète des missions et vaincs des boss pour gagner de l'XP et monter de niveau !<br>
+          Chaque level up donne <b>1 point de talent</b> à distribuer.
+        </div>` : ''}
+
+      <div class="talents-grid">
+        ${data.talents.map(t => {
+          const dots = Array.from({length: t.maxLevel}, (_,i) =>
+            `<div class="talent-dot ${i < t.currentLevel ? (t.maxReached ? 'maxed' : 'filled') : ''}"></div>`
+          ).join('');
+          return `
+            <div class="talent-card ${t.maxReached ? 'maxed' : ''}">
+              <div class="talent-icon">${t.icon}</div>
+              <div class="talent-name">${esc(t.label)}</div>
+              <div class="talent-desc">${esc(t.description)}</div>
+              <div class="talent-levels">${dots}</div>
+              <div class="talent-current">✅ Actuel : ${esc(t.currentBonus)}</div>
+              ${t.nextBonus ? `<div class="talent-next">➡️ Niveau suivant : ${esc(t.nextBonus)}</div>` : ''}
+              ${t.maxReached
+                ? `<div style="font-size:12px;color:var(--gold);font-weight:800">🏆 Maximum atteint !</div>`
+                : canUpgrade && data.talentPoints >= (t.costNext||99)
+                  ? `<div class="talent-cost">Coût : ${t.costNext} point${t.costNext>1?'s':''}</div>
+                     <button class="btn btn-sm" onclick="upgradeTalent('${t.key}')">Améliorer ✨</button>`
+                  : `<div class="talent-cost" style="opacity:.5">Coût : ${t.costNext||'?'} point${(t.costNext||1)>1?'s':''}</div>
+                     <button class="btn btn-sm btn-ghost" disabled>${!canUpgrade ? 'Meneur/Officier seulement' : 'Pas assez de points'}</button>`
+              }
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  } catch(e) { el.innerHTML = '<div class="loading">Erreur de chargement</div>'; }
+}
+
+async function upgradeTalent(key) {
+  try {
+    await api("/api/clan/talents/upgrade", { method:"POST", body: JSON.stringify({ key }) });
+    await loadTalents();
+  } catch(e) { alert(e.message); }
+}
+
+// ===========================
+// DECK DE RAID
+// ===========================
+let _deckData = null;
+let _currentFilter = 'all';
+let _selectedSlot = null;
+const RARITY_LABEL = { common:'⚪', rare:'🔵', epic:'🟣', legendary:'🟡' };
+const RARITY_COLOR = { common:'common', rare:'rare', epic:'epic', legendary:'legendary' };
+const TYPE_ICON = { slayer:'⚔️', soutien:'🛡️', assassin:'🗡️' };
+
+async function loadDeck() {
+  try {
+    _deckData = await api("/api/raid/cards");
+    renderDeckSlots();
+    renderInventory();
+    await loadDeckBonusRecap();
+  } catch(e) { console.error("loadDeck error:", e); }
+}
+
+async function loadDeckBonusRecap() {
+  try {
+    const bonusData = await api("/api/raid/bonus");
+    const el1 = document.getElementById("deckBonusRecap");
+    const el2 = document.getElementById("deckBonusRaidRecap");
+    const html = renderBonusRecap(bonusData);
+    if (el1) el1.innerHTML = html;
+    if (el2) el2.innerHTML = html;
+  } catch(e) {}
+}
+
+function renderBonusRecap(data) {
+  if (!data || data.noClan) return '';
+  const b = data.bonus;
+  if (!b) return '';
+
+  const tags = [];
+  if (b.dmg_bonus > 0) tags.push(`<span class="bonus-tag" style="color:#ff8844">⚔️ +${b.dmg_bonus}% DMG</span>`);
+  if (b.crit > 0) tags.push(`<span class="bonus-tag" style="color:#ffd84d">💥 +${b.crit}% CRIT</span>`);
+  if (b.first_attack > 0) tags.push(`<span class="bonus-tag" style="color:#44aaff">⚡ +${b.first_attack}% 1ère frappe</span>`);
+
+  // Bonus conditionnels inactifs (condition HP non remplie)
+  const conditionalTags = [];
+  if (b.cards && _deckData?.catalogue) {
+    for (const card of b.cards) {
+      const full = _deckData.catalogue.find(c => c.key === card.key);
+      if (!full || full.hp_threshold === null) continue;
+
+      // Vérifier si la condition n'est PAS remplie actuellement
+      const conditionActive = full.hp_above
+        ? data.hpPct > full.hp_threshold
+        : data.hpPct < full.hp_threshold;
+
+      if (!conditionActive) {
+        const condText = full.hp_above ? `boss > ${full.hp_threshold}% HP` : `boss < ${full.hp_threshold}% HP`;
+        if (full.dmg_bonus) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">⚔️ +${full.dmg_bonus}% DMG</span>`);
+        if (full.crit) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">💥 +${full.crit}% CRIT</span>`);
+        if (full.first_attack) conditionalTags.push(`<span class="bonus-tag" style="color:#888;text-decoration:line-through" title="Actif quand ${condText}">⚡ +${full.first_attack}% 1ère frappe</span>`);
+        conditionalTags.push(`<span style="font-size:10px;opacity:.5;align-self:center">(${condText})</span>`);
+      }
+    }
+  }
+
+  if (!tags.length && !conditionalTags.length) {
+    return `<div class="bonus-recap"><div style="opacity:.6;font-size:13px">🃏 Aucun bonus actif — équipe des cartes dans ton deck !</div></div>`;
+  }
+
+  return `
+    <div class="bonus-recap">
+      <div style="font-size:12px;opacity:.7;margin-bottom:6px">🃏 Bonus deck actifs (${data.hpPct}% HP boss)</div>
+      <div class="bonus-row">${tags.join('') || '<span style="opacity:.5;font-size:12px">Aucun bonus actif pour le HP actuel</span>'}</div>
+      ${conditionalTags.length ? `
+        <div style="font-size:11px;opacity:.6;margin-top:8px;margin-bottom:4px">⏳ Bonus conditionnels (inactifs) :</div>
+        <div class="bonus-row">${conditionalTags.join('')}</div>
+      ` : ''}
+      ${b.cards?.length ? `<div style="font-size:11px;opacity:.5;margin-top:6px">${b.cards.map(c=>c.name).join(' · ')}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderDeckSlots() {
+  const el = document.getElementById("deckSlots");
+  if (!el || !_deckData) return;
+  const deck = _deckData.deck || Array(5).fill(null);
+
+  el.innerHTML = deck.map((card, i) => {
+    const slot = i + 1;
+    if (card) {
+      return `
+        <div class="deck-slot filled" onclick="selectSlot(${slot})" title="Cliquer pour changer">
+          <img src="${esc(card.image)}" alt="${esc(card.name)}" onerror="this.style.display='none'">
+          <div class="slot-name">${esc(card.name)}</div>
+          <div class="slot-remove" onclick="event.stopPropagation();removeFromSlot(${slot})">✕</div>
+        </div>`;
+    } else {
+      return `
+        <div class="deck-slot ${_selectedSlot===slot?'filled':''}" onclick="selectSlot(${slot})" style="${_selectedSlot===slot?'border-color:rgba(255,216,77,.8);':''}">
+          <div class="slot-label">${_selectedSlot===slot?'← Choisis':'Slot '+slot}</div>
+        </div>`;
+    }
+  }).join('');
+}
+
+function selectSlot(slot) {
+  _selectedSlot = (_selectedSlot === slot) ? null : slot;
+  renderDeckSlots();
+  if (_selectedSlot) showAlert(`Slot ${_selectedSlot} sélectionné — clique une carte pour l'équiper`, 'success');
+}
+
+async function removeFromSlot(slot) {
+  try {
+    await api("/api/raid/deck", { method:"POST", body: JSON.stringify({ slot, card_key: "" }) });
+    _deckData = await api("/api/raid/cards");
+    renderDeckSlots();
+    renderInventory();
+    await loadDeckBonusRecap();
+  } catch(e) { alert(e.message); }
+}
+
+async function equipCard(cardKey) {
+  if (!_selectedSlot) {
+    showAlert("Sélectionne d'abord un slot dans ton deck !", 'error');
+    return;
+  }
+  try {
+    await api("/api/raid/deck", { method:"POST", body: JSON.stringify({ slot: _selectedSlot, card_key: cardKey }) });
+    _selectedSlot = null;
+    _deckData = await api("/api/raid/cards");
+    renderDeckSlots();
+    renderInventory();
+    await loadDeckBonusRecap();
+  } catch(e) { alert(e.message); }
+}
+
+function filterCards(type) {
+  _currentFilter = type;
+  ['all','slayer','soutien','assassin'].forEach(t => {
+    const btn = document.getElementById('filter'+t.charAt(0).toUpperCase()+t.slice(1));
+    if (btn) btn.style.opacity = (t === type) ? '1' : '0.5';
+  });
+  renderInventory();
+}
+
+function renderInventory() {
+  const el = document.getElementById("cardInventory");
+  if (!el || !_deckData) return;
+
+  const deckKeys = (_deckData.deck || []).filter(Boolean).map(c => c.key);
+  let cards = _deckData.cards || [];
+  if (_currentFilter !== 'all') cards = cards.filter(c => c.type === _currentFilter);
+
+  if (!cards.length) {
+    el.innerHTML = `<div style="opacity:.5;font-size:13px;grid-column:1/-1">Aucune carte${_currentFilter!=='all'?' dans cette catégorie':''} — vaincs des boss pour en obtenir !</div>`;
+    return;
+  }
+
+  el.innerHTML = cards.map(card => {
+    const inDeck = deckKeys.includes(card.key);
+    return `
+      <div class="raid-card ${inDeck?'in-deck':''}"
+           onclick="openCardZoom('${card.key}')"
+           ondblclick="equipCard('${card.key}')">
+        <div class="rc-type">${TYPE_ICON[card.type]||''}</div>
+        <span class="rc-rarity ${RARITY_COLOR[card.rarity]||''}">${RARITY_LABEL[card.rarity]||''}</span>
+        <img src="${esc(card.image)}" alt="${esc(card.name)}" onerror="this.src=''; this.style.height='80px';">
+        <div class="rc-name">${esc(card.name)}</div>
+        ${inDeck ? '<div style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:9px;color:#7f5cff;font-weight:900;background:rgba(0,0,0,.5);padding:2px">ÉQUIPÉE</div>' : ''}
+      </div>`;
+  }).join('');
+}
+
+function openCardZoom(cardKey) {
+  const card = (_deckData?.catalogue || []).find(c => c.key === cardKey);
+  if (!card) return;
+
+  const deckKeys = (_deckData?.deck || []).filter(Boolean).map(c => c.key);
+  const inDeck = deckKeys.includes(cardKey);
+
+  const lines = [];
+  if (card.dmg_bonus) lines.push({ icon:'⚔️', text:`+${card.dmg_bonus}% DMG`, color:'#ff8844' });
+  if (card.crit) lines.push({ icon:'💥', text:`+${card.crit}% Crit`, color:'#ffd84d' });
+  if (card.first_attack) lines.push({ icon:'⚡', text:`+${card.first_attack}% 1ère frappe`, color:'#44aaff' });
+  if (card.hp_threshold !== null) lines.push({ icon:'📊', text:`Boss ${card.hp_above?'>':'<'}${card.hp_threshold}% HP`, color:'#aaa' });
+  if (card.team_synergy) lines.push({ icon:'🔗', text:'Synergie clan', color:'#c084ff' });
+
+  const rarityColors = { common:'#ccc', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+  const rarityNames = { common:'Commune', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+
+  const modal = document.createElement('div');
+  modal.className = 'raid-card-modal';
+  modal.innerHTML = `
+    <div class="raid-card-modal-inner" style="position:relative">
+      <span class="raid-card-modal-close" onclick="this.closest('.raid-card-modal').remove()">✕</span>
+      <div class="raid-card-modal-img">
+        <img src="${esc(card.image)}" alt="${esc(card.name)}" onerror="this.style.display='none'">
+      </div>
+      <div class="raid-card-modal-info">
+        <div class="raid-card-modal-name">${esc(card.name)}</div>
+        <div class="raid-card-modal-type">
+          <span style="color:${rarityColors[card.rarity]}">${RARITY_LABEL[card.rarity]} ${rarityNames[card.rarity]}</span>
+          &nbsp;·&nbsp; ${TYPE_ICON[card.type]} ${card.type}
+        </div>
+        ${lines.map(l => `<div class="raid-card-modal-stat"><span>${l.icon}</span><span style="color:${l.color}">${esc(l.text)}</span></div>`).join('')}
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          ${_selectedSlot
+            ? `<button class="btn btn-sm" style="background:rgba(127,92,255,.3);border-color:rgba(127,92,255,.5)" onclick="equipCard('${cardKey}');this.closest('.raid-card-modal').remove()">
+                Équiper slot ${_selectedSlot}
+               </button>`
+            : `<button class="btn btn-sm btn-ghost" onclick="this.closest('.raid-card-modal').remove();_selectedSlot=null;renderDeckSlots();showAlert('Sélectionne un slot puis clique Équiper','success')">
+                Équiper...
+               </button>`
+          }
+          ${inDeck ? `<button class="btn btn-sm btn-danger" onclick="removeCardFromDeck('${cardKey}');this.closest('.raid-card-modal').remove()">Retirer</button>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="this.closest('.raid-card-modal').remove()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+async function removeCardFromDeck(cardKey) {
+  // Trouver le slot de la carte
+  const deck = _deckData?.deck || [];
+  const slot = deck.findIndex(c => c?.key === cardKey) + 1;
+  if (slot > 0) await removeFromSlot(slot);
+}
+
+let _tooltip = null;
+function showCardTooltip(e, cardKey) {
+  const card = (_deckData?.catalogue || []).find(c => c.key === cardKey);
+  if (!card) return;
+  hideCardTooltip();
+
+  const lines = [];
+  if (card.dmg_bonus) lines.push(`⚔️ +${card.dmg_bonus}% DMG`);
+  if (card.crit) lines.push(`💥 +${card.crit}% Crit`);
+  if (card.first_attack) lines.push(`⚡ +${card.first_attack}% 1ère frappe`);
+  if (card.hp_threshold) lines.push(`📊 Condition: boss ${card.hp_above?'>':'<'}${card.hp_threshold}% HP`);
+  if (card.team_synergy) lines.push(`🔗 Synergie clan active`);
+
+  _tooltip = document.createElement('div');
+  _tooltip.className = 'card-tooltip';
+  _tooltip.innerHTML = `
+    <div style="font-weight:900;margin-bottom:6px">${esc(card.name)}</div>
+    <div style="color:var(--accent2);font-size:11px;margin-bottom:6px">${TYPE_ICON[card.type]} ${card.type} · ${RARITY_LABEL[card.rarity]} ${card.rarity}</div>
+    ${lines.map(l=>`<div style="margin-bottom:2px">${l}</div>`).join('')}
+  `;
+  document.body.appendChild(_tooltip);
+  _tooltip.style.left = Math.min(e.clientX + 12, window.innerWidth - 240) + 'px';
+  _tooltip.style.top = Math.min(e.clientY + 12, window.innerHeight - 150) + 'px';
+}
+
+function hideCardTooltip() {
+  if (_tooltip) { _tooltip.remove(); _tooltip = null; }
+}
+
+// ===========================
+// MANAGE ACTIONS
+// ===========================
+async function distributeBank() {
+  const target = document.getElementById("bankTarget")?.value;
+  const amount = Number(document.getElementById("bankAmount")?.value)||0;
+  const alertEl = document.getElementById("bankAlert");
+  if (!target || amount < 1) { alertEl.innerHTML='<div class="alert alert-error">Sélectionne un membre et un montant.</div>'; return; }
+
+  const members = window._clanMembers || [];
+  const member = members.find(m => m.name === target);
+  if (!member) { alertEl.innerHTML='<div class="alert alert-error">Membre introuvable.</div>'; return; }
+
+  try {
+    await api("/api/clan/bank/distribute", { method:"POST", body: JSON.stringify({ userId: member.user_id || member.id, amount }) });
+    alertEl.innerHTML=`<div class="alert alert-success">✅ ${fmtNum(amount)} dollax envoyés à ${esc(target)} !</div>`;
+    setTimeout(()=>location.reload(), 1500);
+  } catch(e) { alertEl.innerHTML=`<div class="alert alert-error">${esc(e.message)}</div>`; }
+}
+
+async function leaveClan() {
+  if (!confirm("Quitter le clan ?")) return;
+  try {
+    await api("/api/clan/leave", { method:"POST" });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function kickUser(name) {
+  if (!confirm(`Exclure ${name} ?`)) return;
+  const m = (window._clanMembers||[]).find(m=>m.name===name);
+  if (!m) return;
+  try {
+    await api("/api/clan/kick", { method:"POST", body: JSON.stringify({ userId: m.user_id||m.id }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+async function promoteUser(name, role) {
+  const m = (window._clanMembers||[]).find(m=>m.name===name);
+  if (!m) return;
+  try {
+    await api("/api/clan/promote", { method:"POST", body: JSON.stringify({ userId: m.user_id||m.id, role }) });
+    location.reload();
+  } catch(e) { alert(e.message); }
+}
+
+function disbandConfirm() {
+  document.getElementById('dissolveConfirmBox').style.display = 'block';
+  document.getElementById('dissolveInput').focus();
+}
+
+async function dissolveClan() {
+  const input = document.getElementById("dissolveInput")?.value.trim();
+  const alertEl = document.getElementById("dissolveAlert");
+
+  if (input !== "DISSOUDRE") {
+    alertEl.innerHTML = '<div class="alert alert-error">Tape exactement DISSOUDRE pour confirmer.</div>';
+    return;
+  }
+
+  try {
+    await api("/api/clan/dissolve", { method: "POST", body: JSON.stringify({ confirm: "DISSOUDRE" }) });
+    alertEl.innerHTML = '<div class="alert alert-success">Clan dissous. Redirection...</div>';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ===========================
+// FORGE
+// ===========================
+const FORGE_IMG   = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/enclume.png';
+const MAT_IMAGES  = {
+  fer:     'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/fer.png',
+  azurite: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/azurite.png',
+  quartz:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/quartz.png',
+  topaze:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/topaze.png',
+};
+const MAT_NAMES   = { fer:'Fer', azurite:'Azurite', quartz:'Quartz', topaze:'Topaze' };
+const MAT_COLORS  = { fer:'#aaa', azurite:'#4da6ff', quartz:'#c084ff', topaze:'#ffd84d' };
+const FORGE_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+
+let _forgeData    = null;
+let _forgeSelItem = null;
+
+function forgeLevelClass(lvl) {
+  if (lvl >= 15) return 'forge-lv15';
+  if (lvl >= 12) return 'forge-lv12';
+  if (lvl >= 9)  return 'forge-lv9';
+  if (lvl >= 6)  return 'forge-lv6';
+  if (lvl >= 3)  return 'forge-lv3';
+  return '';
+}
+
+function forgeLevelColor(lvl) {
+  if (lvl >= 15) return '#ff4488';
+  if (lvl >= 12) return '#ffd84d';
+  if (lvl >= 9)  return '#c084ff';
+  if (lvl >= 6)  return '#4da6ff';
+  if (lvl >= 3)  return '#fff';
+  return 'rgba(255,255,255,.4)';
+}
+
+function forgeReqClient(rarity, forgeLevel) {
+  const next = forgeLevel + 1;
+  let matKey, matQty, cost, successRate;
+  if (next <= 5)       { matKey='fer';     matQty=next;      cost=500*next;              successRate=100; }
+  else if (next <= 9)  { matKey='azurite'; matQty=next-4;    cost=2000+1500*(next-5);    successRate=75;  }
+  else if (next <= 12) { matKey='quartz';  matQty=next-8;    cost=10000+3000*(next-10);  successRate=50;  }
+  else                 { matKey='topaze';  matQty=next-11;   cost=30000+10000*(next-13); successRate=25;  }
+  return { matKey, matQty, cost, successRate };
+}
+
+async function loadForge() {
+  const el = document.getElementById('forgeContent');
+  if (!el) return;
+  try {
+    _forgeData = await api('/api/forge');
+    renderForge();
+  } catch(e) { el.innerHTML = '<div class="alert alert-error">Erreur chargement forge</div>'; }
+}
+
+function renderForge() {
+  const el = document.getElementById('forgeContent');
+  if (!el || !_forgeData) return;
+  const { inventory, materials } = _forgeData;
+  const item = _forgeSelItem ? inventory.find(i => i.id === _forgeSelItem) : null;
+
+  let req = null;
+  if (item && item.forge_level < 15) req = forgeReqClient(item.rarity, item.forge_level);
+
+  const matOwned = (key) => materials[key] || 0;
+  const canForge = !!(item && req && matOwned(req.matKey) >= req.matQty);
+
+  // ── SLOT ITEM ──
+  let itemSlotHtml = '';
+  if (item) {
+    const col = forgeLevelColor(item.forge_level);
+    const statsLines = [
+      ['dmg_bonus','% DMG'],['crit','% Crit'],['first_attack','% 1ère'],['clan_dmg','% DMG clan'],['clan_crit','% Crit clan']
+    ].filter(([k]) => item[k] > 0).map(([k, lbl]) => {
+      const after = req ? Math.round(item[k] * (1 + (item.forge_level+1)*0.1) * 10)/10 : null;
+      return '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+        + '<span style="opacity:.6">' + item[k] + lbl + '</span>'
+        + (after && item.forge_level < 15 ? '<span style="color:#33ff99">→ ' + after + lbl + '</span>' : '')
+        + '</div>';
+    }).join('');
+
+    itemSlotHtml = '<div class="forge-item-slot filled ' + (item.rarity||'') + ' ' + forgeLevelClass(item.forge_level) + '" onclick="openForgeItemPicker()">'
+      + '<img src="' + esc(item.image||'') + '" alt="' + esc(item.name||'') + '" onerror="this.style.display=\'none\'">'
+      + '<div class="forge-item-level" style="color:' + col + ';border-color:' + col + '40">'
+      + (item.forge_level > 0 ? '+'+item.forge_level : 'Sélectionné') + '</div>'
+      + '</div>'
+      + '<div style="text-align:center;max-width:110px">'
+      + '<div style="font-size:11px;font-weight:900;color:' + (FORGE_RARITY_COLOR[item.rarity]||'#aaa') + '">' + esc(item.name||'') + '</div>'
+      + '<div style="font-size:10px;opacity:.45;margin-top:2px">' + (item.forge_level >= 15 ? '✨ MAX' : '+'+item.forge_level+' → +'+( item.forge_level+1)) + '</div>'
+      + '</div>'
+      + '<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;width:100%;font-size:10px">'
+      + statsLines
+      + '</div>';
+  } else {
+    itemSlotHtml = '<div class="forge-item-slot" onclick="openForgeItemPicker()">'
+      + '<div style="font-size:28px;opacity:.25">⚔️</div>'
+      + '<div style="font-size:9px;opacity:.4;margin-top:4px">Choisir</div>'
+      + '</div>'
+      + '<div style="font-size:12px;opacity:.4;text-align:center">Sélectionne un équipement</div>';
+  }
+
+  // ── COL CENTRE ──
+  let centerHtml = '<img class="forge-anvil" src="' + FORGE_IMG + '" alt="Forge" onerror="this.style.fontSize=\'64px\';this.outerHTML=\'<span>⚒️</span>\'">';
+  if (req) {
+    const rateColor = req.successRate === 100 ? '#33ff99' : req.successRate >= 75 ? '#ffd84d' : req.successRate >= 50 ? '#ff8844' : '#ff4444';
+    centerHtml += '<div class="forge-cost">💰 ' + fmtNum(req.cost) + ' dollax</div>'
+      + '<div class="forge-rate" style="color:' + rateColor + '">' + req.successRate + '% de réussite</div>';
+  } else if (item && item.forge_level >= 15) {
+    centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
+  } else {
+    centerHtml += '<div style="font-size:12px;opacity:.35;text-align:center">Sélectionne<br>un item</div>';
+  }
+  let btnLabel = !item ? 'Choisir un item' : item.forge_level >= 15 ? '✨ MAX' : canForge ? '⚒️ Forger +' + (item.forge_level+1) : 'Matériaux insuffisants';
+  centerHtml += '<button class="forge-btn" onclick="doForge()" ' + (!canForge || !req ? 'disabled' : '') + '>' + btnLabel + '</button>';
+  if (item && item.forge_level < 15 && !item.equipped_slot) {
+    centerHtml += '<button class="forge-btn-destroy" onclick="doDestroy(' + item.id + ')">🔥 Détruire pour matériaux</button>';
+  }
+
+  // ── MATÉRIAUX ──
+  let matsHtml = '';
+  for (const [key, img] of Object.entries(MAT_IMAGES)) {
+    const owned = matOwned(key);
+    const needed = req && req.matKey === key ? req.matQty : 0;
+    const enough = owned >= needed;
+    const borderStyle = needed > 0 ? 'border-color:' + (enough ? 'rgba(51,255,153,.3)' : 'rgba(255,68,68,.3)') : '';
+    matsHtml += '<div class="forge-mat-slot" style="' + borderStyle + '">'
+      + '<img class="forge-mat-img" src="' + img + '" alt="' + MAT_NAMES[key] + '" onerror="this.style.display=\'none\'">'
+      + '<div class="forge-mat-info">'
+      + '<div class="forge-mat-name" style="color:' + MAT_COLORS[key] + '">' + MAT_NAMES[key] + '</div>'
+      + '<div class="forge-mat-qty">Possédé : ' + owned + '</div>'
+      + '</div>'
+      + (needed > 0 ? '<div class="forge-mat-need" style="color:' + (enough?'#33ff99':'#ff4444') + '">' + owned + '/' + needed + '</div>' : '')
+      + '</div>';
+  }
+
+  // ── INVENTAIRE ──
+  let invHtml = '';
+  if (inventory.length === 0) {
+    invHtml = '<div style="opacity:.35;font-size:13px;grid-column:1/-1;padding:16px 0;text-align:center">Aucun équipement dans l\'inventaire</div>';
+  } else {
+    for (const i of inventory) {
+      const sel = i.id === _forgeSelItem ? 'selected' : '';
+      const col = FORGE_RARITY_COLOR[i.rarity] || '#aaa';
+      const lvlCol = forgeLevelColor(i.forge_level);
+      invHtml += '<div class="forge-inv-item ' + (i.rarity||'') + ' ' + forgeLevelClass(i.forge_level) + ' ' + sel + '" onclick="selectForgeItem(' + i.id + ')">'
+        + '<img class="forge-inv-img" src="' + esc(i.image||'') + '" alt="' + esc(i.name||'') + '" onerror="this.style.display=\'none\'">'
+        + '<div class="forge-inv-name" style="color:' + col + '">' + esc(i.name||'') + '</div>'
+        + '<div class="forge-inv-lvl" style="color:' + lvlCol + '">' + (i.forge_level > 0 ? '+'+i.forge_level : '') + (i.equipped_slot ? ' 📌' : '') + '</div>'
+        + '</div>';
+    }
+  }
+
+  // ── GUIDE MATÉRIAUX ──
+  let guideHtml = '';
+  for (const [key, img] of Object.entries(MAT_IMAGES)) {
+    const rarLabel = key==='fer'?'Commun':key==='azurite'?'Rare':key==='quartz'?'Épique':'Légendaire';
+    guideHtml += '<div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px">'
+      + '<img src="' + img + '" style="width:32px;height:32px;object-fit:contain" onerror="this.style.display=\'none\'">'
+      + '<div><div style="font-size:12px;font-weight:900;color:' + MAT_COLORS[key] + '">' + MAT_NAMES[key] + '</div>'
+      + '<div style="font-size:10px;opacity:.5;margin-top:2px">Détruis un équipement ' + rarLabel + '</div></div>'
+      + '<div style="margin-left:auto;font-size:13px;font-weight:900;color:' + MAT_COLORS[key] + '">' + matOwned(key) + '</div>'
+      + '</div>';
+  }
+
+  // ── ASSEMBLAGE ──
+  el.innerHTML = '<div class="forge-wrap">'
+    + '<div class="card">'
+    +   '<div class="card-title" style="margin-bottom:16px">⚒️ Forge d\'équipement</div>'
+    +   '<div class="forge-main">'
+    +     '<div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
+    +     itemSlotHtml + '</div>'
+    +     '<div class="forge-col-center">' + centerHtml + '</div>'
+    +     '<div class="forge-col-right"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Matériaux</div>'
+    +     matsHtml + '</div>'
+    +   '</div>'
+    +   '<div id="forgeAlert" style="margin-top:10px"></div>'
+    + '</div>'
+    + '<div class="card">'
+    +   '<div class="card-title">🎒 Inventaire — choisir un équipement à forger</div>'
+    +   '<div class="forge-inv-grid">' + invHtml + '</div>'
+    + '</div>'
+    + '<div class="card">'
+    +   '<div class="card-title" style="margin-bottom:12px">📖 Comment obtenir des matériaux</div>'
+    +   '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'
+    +   guideHtml + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+function selectForgeItem(id) {
+  _forgeSelItem = (_forgeSelItem === id) ? null : id;
+  renderForge();
+}
+
+function openForgeItemPicker() {
+  // Scroll vers l'inventaire
+  document.querySelector('.forge-inv-grid')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+async function doForge() {
+  if (!_forgeSelItem) return;
+  const alertEl = document.getElementById('forgeAlert');
+  try {
+    const data = await api('/api/forge/upgrade', { method:'POST', body: JSON.stringify({ id: _forgeSelItem }) });
+    _forgeData = await api('/api/forge');
+
+    if (data.success) {
+      if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">✅ Succès ! Équipement amélioré à +${data.newLevel} !</div>`;
+      // Petite animation sur l'item
+      const item = document.querySelector('.forge-item-slot.filled');
+      if (item) { item.style.transform = 'scale(1.15)'; setTimeout(()=>item.style.transform='', 400); }
+    } else {
+      if (alertEl) alertEl.innerHTML = `<div class="alert" style="background:rgba(255,100,0,.15);border:1px solid rgba(255,100,0,.3);color:#ff8844">💨 Échec ! Les matériaux sont perdus mais l'équipement reste à +${data.newLevel}.</div>`;
+    }
+    setTimeout(() => { if (alertEl) alertEl.innerHTML = ''; }, 4000);
+    renderForge();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+async function doDestroy(id) {
+  if (!confirm('Détruire cet équipement pour obtenir des matériaux ?')) return;
+  const alertEl = document.getElementById('forgeAlert');
+  try {
+    const data = await api('/api/forge/destroy', { method:'POST', body: JSON.stringify({ id }) });
+    _forgeSelItem = null;
+    _forgeData = await api('/api/forge');
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-success">🔥 Équipement détruit ! +${data.qty} ${data.matName}</div>`;
+    setTimeout(() => { if(alertEl) alertEl.innerHTML=''; }, 3000);
+    renderForge();
+  } catch(e) {
+    if (alertEl) alertEl.innerHTML = `<div class="alert alert-error">${esc(e.message)}</div>`;
+  }
+}
+
+// ===========================
+// INIT
+// ===========================
+init().finally(() => {
+  document.getElementById("loadingMsg")?.remove();
+});
+
+// Load boss data on start if clan exists
+setTimeout(() => {
+  if (document.getElementById("bossLeaderboard") || document.getElementById("bossChoices") || document.getElementById("raidAlert")) {
+    loadBossData();
+    startBossPolling();
+  }
+}, 500);
+</script>
+</body>
+</html>
