@@ -2892,7 +2892,7 @@ app.get("/api/collection", auth, async (req, res) => {
 
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-  res.setHeader('Cache-Control', 'private, max-age=30');
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => {
