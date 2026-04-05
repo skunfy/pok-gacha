@@ -5903,7 +5903,7 @@ function forgeRequirements(rarity, forgeLevel) {
   if (next <= 5) {
     matKey = 'fer'; matQty = next; cost = 250 * next; successRate = 100;
   } else if (next <= 9) {
-    matKey = 'azurite'; matQty = next - 4; cost = 1000 + 250 * (next - 5); successRate = 75;
+    matKey = 'azurite'; matQty = next - 4; cost = 1250 + 500 * (next - 5); successRate = 75;
   } else if (next <= 12) {
     matKey = 'quartz'; matQty = next - 8; cost = 5000 + 1250 * (next - 10); successRate = 50;
   } else {
