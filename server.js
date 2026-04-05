@@ -5730,7 +5730,7 @@ async function calcDeckBonus(userId, bossHpPct, clanId) {
   const soutienCount = allClanCards.filter(c => c.type === 'soutien').length;
   const hasSoutienInClan = clanTypes.has('soutien');
 
-  let dmg_bonus = 0, crit = 0, first_attack = 0;
+  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0;
 
   for (const card of cards) {
     // Vérif condition HP
