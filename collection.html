@@ -1392,11 +1392,12 @@ viewSel.value = currentView();
 
 gameSel.addEventListener("change", async () => {
   localStorage.setItem(GAME_KEY, gameSel.value);
-  selected.clear();
+  selected.clear();         // Vider la sélection
+  allItems = [];            // Vider l'ancienne collection
   refreshSelUI();
   localStorage.setItem(SET_KEY, "");
   binderPage = 0;
-  await boot();
+  await boot(true);         // Forcer reload
 });
 
 viewSel.addEventListener("change", async () => {
@@ -1667,11 +1668,23 @@ clearSelBtn.addEventListener("click", () => {
 
 sellSelectedBtn.addEventListener("click", async () => {
   if (!selected.size) return;
-  // Désactiver immédiatement pour éviter double-clic
   sellSelectedBtn.disabled = true;
   clearSelBtn.disabled = true;
 
-  const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
+  const currentG = currentGame();
+  // Filtrer: garder uniquement les idKeys du jeu courant
+  const payload = Array.from(selected.entries())
+    .filter(([idKey]) => idKey.startsWith(currentG + '__'))
+    .map(([idKey, qty]) => ({ idKey, qty }));
+
+  if (!payload.length) {
+    alert('Sélection invalide - rechargement en cours...');
+    selected.clear();
+    refreshSelUI();
+    await loadCollection();
+    applyFilters();
+    return;
+  }
 
   try{
     await api("/api/sell_bulk",{
