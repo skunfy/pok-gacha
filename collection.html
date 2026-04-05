@@ -1678,7 +1678,7 @@ sellSelectedBtn.addEventListener("click", async () => {
 
     selected.clear();
 
-    await loadCollection();
+    await loadCollection(true);
 
     if (currentView() === "grid"){
       applyFilters();
@@ -1696,27 +1696,15 @@ sellSelectedBtn.addEventListener("click", async () => {
   }catch(e){}
 });
 
-let _collectionCache = null;
-let _collectionCacheAt = 0;
-const COLL_CACHE_TTL = 20000; // 20s
-
-async function loadCollection(force = false){
+async function loadCollection(){
   try{
-    const now = Date.now();
-    // Utiliser le cache si données fraîches et non forcé
-    if (!force && _collectionCache && (now - _collectionCacheAt) < COLL_CACHE_TTL) {
-      allItems = _collectionCache;
-      return;
-    }
     const data = await api("/api/collection");
 
     allItems = (data.items || []).map(x => ({
       ...x,
+      imageHigh: x.imageHigh ?? x.imagehigh ?? null,
       image: x.image ?? null,
     }));
-
-    _collectionCache = allItems;
-    _collectionCacheAt = Date.now();
 
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
@@ -1937,7 +1925,7 @@ function render(items){
           selected.set(x.idKey, next);
         }
 
-        await loadCollection();
+        await loadCollection(true);
 
         if (currentView() === "grid"){
           applyFilters();
@@ -2246,14 +2234,14 @@ function updateProgress(cards, label = "Set"){
   progFill.style.width = pct + "%";
 }
 
-async function boot(){
+async function boot(force = false){
   gameSel.value = currentGame();
   viewSel.value = currentView();
 
   const isGrid = currentView() === "grid";
   setGridMode(isGrid);
 
-  await loadCollection();
+  await loadCollection(force);
 
   if (!isGrid){
     await loadSetsForGame();
@@ -2531,7 +2519,7 @@ sellModalBtn.onclick = async () => {
     sellModalMsg.style.color = "#6affb4";
     setTimeout(() => {
       closeSellModal();
-      loadCollection(true).then(() => applyFilters());
+      loadCollection().then(() => applyFilters());
     }, 900);
   } catch(e){
     sellModalMsg.textContent = "❌ " + (e.message || "Erreur");
