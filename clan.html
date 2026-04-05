@@ -3420,8 +3420,8 @@ function forgeLevelColor(lvl) {
 function forgeReqClient(rarity, forgeLevel) {
   const next = forgeLevel + 1;
   let matKey, matQty, cost, successRate;
-  if (next <= 5)       { matKey='fer';     matQty=next;      cost=250*next;              successRate=100; }
-  else if (next <= 9)  { matKey='azurite'; matQty=next-4;    cost=1000+250*(next-5);    successRate=75;  }
+  if (next <= 5)       { matKey='fer';     matQty=next;      cost=200*next;              successRate=100; }
+  else if (next <= 9)  { matKey='azurite'; matQty=next-4;    cost=1250+500*(next-5);    successRate=75;  }
   else if (next <= 12) { matKey='quartz';  matQty=next-8;    cost=5000+1250*(next-10);  successRate=50;  }
   else                 { matKey='topaze';  matQty=next-11;   cost=10000+2000*(next-13); successRate=25;  }
   return { matKey, matQty, cost, successRate };

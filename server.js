@@ -5901,7 +5901,7 @@ function forgeRequirements(rarity, forgeLevel) {
   let matKey, matQty, cost, successRate;
 
   if (next <= 5) {
-    matKey = 'fer'; matQty = next; cost = 250 * next; successRate = 100;
+    matKey = 'fer'; matQty = next; cost = 200 * next; successRate = 100;
   } else if (next <= 9) {
     matKey = 'azurite'; matQty = next - 4; cost = 1250 + 500 * (next - 5); successRate = 75;
   } else if (next <= 12) {
