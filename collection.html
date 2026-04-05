@@ -1666,11 +1666,10 @@ clearSelBtn.addEventListener("click", () => {
 });
 
 sellSelectedBtn.addEventListener("click", async () => {
-  console.log('selected size:', selected.size, 'entries:', [...selected.entries()]);
   if (!selected.size) return;
+  sellSelectedBtn.disabled = true; // Eviter double-clic
 
   const payload = Array.from(selected.entries()).map(([idKey, qty]) => ({ idKey, qty }));
-  console.log('payload:', payload);
 
   try{
     await api("/api/sell_bulk",{
@@ -1695,9 +1694,7 @@ sellSelectedBtn.addEventListener("click", async () => {
     }
 
     refreshSelUI();
-  }catch(e){
-    alert('Erreur vente : ' + (e.message || e));
-  }
+  }catch(e){}
 });
 
 async function loadCollection(){
