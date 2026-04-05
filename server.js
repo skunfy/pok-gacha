@@ -5901,13 +5901,13 @@ function forgeRequirements(rarity, forgeLevel) {
   let matKey, matQty, cost, successRate;
 
   if (next <= 5) {
-    matKey = 'fer'; matQty = next; cost = 500 * next; successRate = 100;
+    matKey = 'fer'; matQty = next; cost = 250 * next; successRate = 100;
   } else if (next <= 9) {
-    matKey = 'azurite'; matQty = next - 4; cost = 2000 + 1500 * (next - 5); successRate = 75;
+    matKey = 'azurite'; matQty = next - 4; cost = 1000 + 250 * (next - 5); successRate = 75;
   } else if (next <= 12) {
-    matKey = 'quartz'; matQty = next - 8; cost = 10000 + 3000 * (next - 10); successRate = 50;
+    matKey = 'quartz'; matQty = next - 8; cost = 5000 + 1250 * (next - 10); successRate = 50;
   } else {
-    matKey = 'topaze'; matQty = next - 11; cost = 30000 + 10000 * (next - 13); successRate = 25;
+    matKey = 'topaze'; matQty = next - 11; cost = 10000 + 2000 * (next - 13); successRate = 25;
   }
   return { matKey, matQty, cost, successRate };
 }
