@@ -5253,7 +5253,7 @@ app.get("/api/clan/raid/last", auth, async (req, res) => {
 
 async function getEquipmentBonus(userId) {
   const { rows } = await pool.query(
-    `SELECT equip_key FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    `SELECT equip_key, forge_level FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
     [userId]
   );
 
@@ -5261,11 +5261,13 @@ async function getEquipmentBonus(userId) {
   for (const r of rows) {
     const eq = EQUIPMENT[r.equip_key];
     if (!eq) continue;
-    dmg_bonus    += eq.dmg_bonus    || 0;
-    crit         += eq.crit         || 0;
-    first_attack += eq.first_attack || 0;
-    clan_dmg     += eq.clan_dmg     || 0;
-    clan_crit    += eq.clan_crit    || 0;
+    // Appliquer le multiplicateur de forge (+10% par niveau)
+    const forgeMult = 1 + ((r.forge_level || 0) * 0.10);
+    dmg_bonus    += Math.round((eq.dmg_bonus    || 0) * forgeMult * 10) / 10;
+    crit         += Math.round((eq.crit         || 0) * forgeMult * 10) / 10;
+    first_attack += Math.round((eq.first_attack || 0) * forgeMult * 10) / 10;
+    clan_dmg     += Math.round((eq.clan_dmg     || 0) * forgeMult * 10) / 10;
+    clan_crit    += Math.round((eq.clan_crit    || 0) * forgeMult * 10) / 10;
   }
   return { dmg_bonus, crit, first_attack, clan_dmg, clan_crit };
 }
