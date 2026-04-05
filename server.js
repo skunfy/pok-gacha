@@ -870,14 +870,15 @@ async function initDb() {
       boss_name  TEXT NOT NULL DEFAULT '',
       boss_key   TEXT NOT NULL DEFAULT '',
       victory    INTEGER NOT NULL DEFAULT 1,
-      cards      JSONB NOT NULL DEFAULT '[]',
-      equipment  JSONB NOT NULL DEFAULT '[]',
-      materials  JSONB NOT NULL DEFAULT '[]',
+      cards      JSONB NOT NULL DEFAULT '[]'::jsonb,
+      equipment  JSONB NOT NULL DEFAULT '[]'::jsonb,
+      materials  JSONB NOT NULL DEFAULT '[]'::jsonb,
       char_level_up JSONB DEFAULT NULL,
       seen       INTEGER NOT NULL DEFAULT 0,
       created_at BIGINT NOT NULL DEFAULT 0
     )
   `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_raid_drops_recap_user ON raid_drops_recap(user_id, seen)`);
   await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS player_materials (
