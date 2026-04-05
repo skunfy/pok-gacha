@@ -3475,6 +3475,14 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
 
     const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
 
+    // Debug temporaire
+    if (clean.length > 0) {
+      console.log("[sb] clean[0]:", JSON.stringify(clean[0].idKey));
+      console.log("[sb] byKey size:", byKey.size);
+      if (byKey.size > 0) console.log("[sb] byKey[0]:", JSON.stringify([...byKey.keys()][0]));
+      else console.log("[sb] DB found 0 rows - user_id:", req.user.id, "first key:", clean[0].idKey);
+    }
+
     let total = 0;
     let xpTotal = 0;
 
