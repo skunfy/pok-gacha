@@ -137,6 +137,11 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pvp-char-img{width:250px;height:340px;object-fit:contain;filter:drop-shadow(0 0 24px var(--pvp-cls-color,#7f5cff))}
 .pvp-char-ph{width:250px;height:340px;display:flex;align-items:center;justify-content:center;font-size:70px;opacity:.3}
 .pvp-class-badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid;margin:0 0 10px}
+.pvp-rank-showcase{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0 8px;margin-top:4px}
+.pvp-rank-showcase-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(255,255,255,.15));transition:transform .3s}
+.pvp-rank-showcase-img:hover{transform:scale(1.05)}
+.pvp-rank-showcase-label{font-size:20px;font-weight:900;letter-spacing:.04em}
+.pvp-rank-showcase-pts{font-size:13px;opacity:.5}
 .pvp-rank-big{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
 .pvp-rank-big img{width:84px;height:84px;object-fit:contain}
 .pvp-rank-big-label{font-size:14px;font-weight:900;margin-top:4px}
@@ -795,12 +800,7 @@ function renderProfilPvp(f) {
           <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#c084ff">${f.crit}%</div><div class="pvp-stat-mini-lbl">Crit</div></div>
           <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#4da6ff">${f.dodge}%</div><div class="pvp-stat-mini-lbl">Esquive</div></div>
         </div>
-        <!-- Rang en grand -->
-        <div class="pvp-rank-big">
-          ${RANK_ICONS[rankName] ? `<img src="${RANK_ICONS[rankName]}" alt="${rankName}">` : ''}
-          <div class="pvp-rank-big-label" style="color:${rankCol}">${rankName}</div>
-          <div class="pvp-rank-big-pts">${fmtPts(f.rank)} pts</div>
-        </div>
+
       </div>
 
       <!-- COL CENTRE : personnage + slots latéraux intégrés -->
@@ -824,6 +824,11 @@ function renderProfilPvp(f) {
       </div>
     </div>
     <div style="margin-top:10px;font-size:11px;opacity:.3;text-align:center">Stats calculées depuis ton personnage, ta classe et ton équipement forgé</div>
+    <div class="pvp-rank-showcase">
+      ${RANK_ICONS[rankName] ? '<img src="' + RANK_ICONS[rankName] + '" class="pvp-rank-showcase-img" alt="' + rankName + '">' : ''}
+      <div class="pvp-rank-showcase-label" style="color:${rankCol}">${rankName}</div>
+      <div class="pvp-rank-showcase-pts">${fmtPts(f.rank)} pts</div>
+    </div>
   ${buildRankProgressHtml(f.rank)}`;
 }
 
