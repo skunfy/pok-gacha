@@ -37,6 +37,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* PROFILE */
 .fighter-profile{display:flex;align-items:center;gap:16px;margin-bottom:16px}
 .fighter-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.fighter-avatar-wrap{position:relative;width:80px;height:80px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.fighter-avatar-wrap .fighter-avatar{width:60px;height:60px;border:none;background:var(--bg3);position:relative;z-index:1}
+.fighter-avatar-wrap .rank-frame-img{position:absolute;inset:0;width:80px;height:80px;object-fit:contain;pointer-events:none;z-index:2}
 .fighter-info{flex:1}
 .fighter-name{font-size:18px;font-weight:900;margin-bottom:2px}
 .fighter-meta{font-size:12px;opacity:.5;margin-bottom:6px}
@@ -116,7 +119,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* MODAL REPLAY */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:860px;width:100%;max-height:92vh;overflow-y:auto;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .modal-overlay.show .modal{transform:scale(1)}
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px}
 .modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
@@ -131,7 +134,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .arena-hp-bar{height:6px;border-radius:4px;transition:width .35s ease}
 .arena-hp-val{font-size:10px;opacity:.45;margin-top:3px}
 .arena-vs{font-size:14px;font-weight:900;opacity:.25;text-align:center}
-.arena-stage{position:relative; height:260px;background-image:url('/spritesheet/background/forest.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.arena-stage{position:relative; height:300px;background-image:url('/spritesheet/background/forest.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
 .arena-ground{position:absolute;bottom:0;left:0;right:0;height:30px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
 .arena-canvas{position:absolute;bottom:30px;image-rendering:pixelated;image-rendering:crisp-edges}
 .dmg-float{position:absolute;font-size:13px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none}
@@ -254,7 +257,6 @@ const CLASS_SPRITES = {
     run:     { file:'slayer/Run.png',      frames:7,  fw:128, fps:12 },
     attack1: { file:'slayer/Attack_1.png', frames:5,  fw:128, fps:10 },
     attack2: { file:'slayer/Attack_2.png', frames:4,  fw:128, fps:10 },
-    hurt:    { file:'slayer/Hurt.png',     frames:2,  fw:128, fps:10 },
     dead:    { file:'slayer/Dead.png',     frames:6,  fw:128, fps:7  },
     walk:    { file:'slayer/Walk.png',     frames:8,  fw:128, fps:10 },
   },
@@ -263,7 +265,6 @@ const CLASS_SPRITES = {
     run:     { file:'soutien/Run.png',      frames:8,  fw:128, fps:13 },
     attack1: { file:'soutien/Attack_1.png', frames:7,  fw:128, fps:10 },
     attack2: { file:'soutien/Attack_2.png', frames:9,  fw:128, fps:10 },
-    hurt:    { file:'soutien/Hurt.png',     frames:4,  fw:128, fps:10 },
     dead:    { file:'soutien/Dead.png',     frames:4,  fw:128, fps:7  },
     walk:    { file:'soutien/Walk.png',     frames:7,  fw:128, fps:10 },
   },
@@ -356,8 +357,9 @@ function arenaLoop(ts) {
 }
 
 function getAnimDef(f) {
-  return (CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS])[f.anim]
-      || (CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS]).idle;
+  const sprites = CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS];
+  // hurt supprimé : fallback vers idle si anim inconnue
+  return sprites[f.anim] || sprites.idle;
 }
 
 function tickAndDraw(id, f, dt) {
@@ -417,6 +419,8 @@ function placeCanvas(id, x) {
 function setAnim(fid, anim) {
   if (!arenaState) return;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
+  // hurt supprimé : on utilise idle à la place
+  if (anim === 'hurt') anim = 'idle';
   if (f.anim === anim && anim !== 'dead') return;
   f.anim = anim; f.frame = 0; f.tick = 0;
   f.freezeOnEnd = (anim === 'dead');
@@ -447,6 +451,15 @@ function spawnDmg(fid, dmg, isCrit) {
   void el.offsetWidth;
   el.classList.add('anim');
   setTimeout(() => { el.className = 'dmg-float'; }, 800);
+}
+
+function flashHit(fid) {
+  const id = fid === 1 ? 'rc1' : 'rc2';
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.transition = 'none';
+  el.style.filter = 'brightness(3) saturate(0)';
+  setTimeout(() => { el.style.transition = 'filter .25s ease'; el.style.filter = ''; }, 80);
 }
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -566,9 +579,9 @@ async function loadProfil() {
     const f = d.fighter;
     document.getElementById('profil-content').innerHTML = `
       <div class="fighter-profile">
-        <div class="fighter-avatar" style="position:relative;overflow:visible">
-          <span style="font-size:28px;line-height:64px">${CLASS_EMOJI[f.charClass]||'🧑'}</span>
-          ${RANK_FRAMES[f.rankInfo?.name] ? `<img src="${RANK_FRAMES[f.rankInfo.name]}" style="position:absolute;inset:-6px;width:calc(100%+12px);height:calc(100%+12px);pointer-events:none;object-fit:contain">` : ''}
+        <div class="fighter-avatar-wrap">
+          <div class="fighter-avatar">${CLASS_EMOJI[f.charClass]||'🧑'}</div>
+          ${RANK_FRAMES[f.rankInfo?.name] ? `<img class="rank-frame-img" src="${RANK_FRAMES[f.rankInfo.name]}">` : ''}
         </div>
         <div class="fighter-info">
           <div class="fighter-name">${esc(f.name)}</div>
@@ -817,8 +830,8 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
       setAnim(attId, ev.type === 'crit' ? 'attack2' : 'attack1');
       await wait(200);
 
-      // Défenseur : hurt + dégâts flottants
-      setAnim(defId, 'hurt');
+      // Défenseur : flash de dégâts (pas d'anim hurt) + chiffre flottant
+      flashHit(defId);
       spawnDmg(defId, ev.dmg, ev.type === 'crit');
 
       // Mise à jour HP bars
