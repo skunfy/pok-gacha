@@ -2249,6 +2249,7 @@ const CLAN_MISSIONS_DEF = [
   { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 50,  bankReward: 10  },
   { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 100,  bankReward: 25  },
   { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 1000, bankReward: 500 },
+  { key: "list_market",  label: "Mettre une carte en vente",  goal: 1,  xpClan: 100,  bankReward: 30  },
 ];
 
 function todayKey() {
@@ -3916,6 +3917,11 @@ app.post("/api/market/list", auth, async (req, res) => {
     );
 
     await client.query("COMMIT");
+
+    // Mission clan : mettre une carte en vente
+    const mListing = await getMyMembership(req.user.id).catch(() => null);
+    if (mListing) progressMission(mListing.clan_id, req.user.id, 'list_market').catch(() => {});
+
     res.json({ ok: true, listingId: ins.rows[0].id });
   } catch (e) {
     await client.query("ROLLBACK");
