@@ -18,7 +18,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* NAV */
 .nav{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
 .nav-title{font-size:17px;font-weight:900;background:linear-gradient(135deg,#7f5cff,#f053c5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.nav-back{font-size:13px;color:var(--muted);cursor:pointer;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text)}
+.nav-back{font-size:13px;cursor:pointer;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text)}
 .nav-back:hover{background:var(--bg3)}
 .tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
 .tab-btn{font-size:12px;font-weight:700;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:.15s}
@@ -34,7 +34,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .card+.card{margin-top:12px}
 .card-title{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;opacity:.4;margin-bottom:14px}
 
-/* MY PROFILE */
+/* PROFILE */
 .fighter-profile{display:flex;align-items:center;gap:16px;margin-bottom:16px}
 .fighter-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
 .fighter-info{flex:1}
@@ -42,7 +42,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .fighter-meta{font-size:12px;opacity:.5;margin-bottom:6px}
 .rank-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
 .rank-pts{font-size:11px;opacity:.6;margin-left:4px}
-
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 @media(min-width:500px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
 .stat-box{background:var(--bg3);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)}
@@ -65,7 +64,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .challenge-btn:hover{opacity:.85}
 .challenge-btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* PENDING CHALLENGES */
+/* PENDING */
 .challenge-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:var(--bg3);border:1px solid rgba(255,184,0,.2);margin-bottom:10px}
 .challenge-card-info{flex:1}
 .challenge-card-name{font-size:14px;font-weight:700}
@@ -73,56 +72,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .challenge-actions{display:flex;gap:8px}
 .btn-accept{padding:7px 14px;background:#1D9E75;border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;cursor:pointer}
 .btn-decline{padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:700;font-size:12px;cursor:pointer}
-
-/* ARENA */
-.arena{background:var(--bg3);border-radius:16px;border:1px solid var(--border);padding:20px;margin-bottom:14px}
-.fighters-row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;margin-bottom:16px}
-.arena-fighter{background:var(--bg2);border-radius:12px;padding:14px;border:1px solid var(--border)}
-.arena-fighter.right{text-align:right}
-.arena-fighter-name{font-size:14px;font-weight:900;margin-bottom:2px}
-.arena-fighter-class{font-size:11px;opacity:.5;margin-bottom:8px}
-.hp-wrap{margin-bottom:8px}
-.hp-text{font-size:11px;opacity:.5;margin-bottom:3px}
-.hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden}
-.hp-bar{height:8px;border-radius:4px;transition:width .4s ease}
-.arena-stats{display:flex;gap:5px;flex-wrap:wrap}
-.arena-fighter.right .arena-stats{justify-content:flex-end}
-.stat-tag{font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--border);opacity:.7}
-.vs-mid{font-size:20px;font-weight:900;opacity:.3;align-self:center;text-align:center}
-
-/* SPRITES */
-.sprite-wrap{position:relative;height:80px;display:flex;align-items:flex-end;justify-content:center;margin:8px 0}
-.sprite{font-size:48px;line-height:1;display:block;transition:.15s}
-.sprite.flip{transform:scaleX(-1)}
-.sprite.anim-idle{animation:idleBob .8s ease-in-out infinite}
-.sprite.anim-attack{animation:doAttack .35s ease forwards}
-.sprite.anim-attack-r{animation:doAttackR .35s ease forwards}
-.sprite.anim-hit{animation:gotHit .3s ease forwards}
-.sprite.anim-dead{animation:fallDown .5s ease forwards;opacity:.3}
-@keyframes idleBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes doAttack{0%{transform:translateX(0)}40%{transform:translateX(30px) scale(1.1)}100%{transform:translateX(0)}}
-@keyframes doAttackR{0%{transform:scaleX(-1) translateX(0)}40%{transform:scaleX(-1) translateX(30px) scale(1.1)}100%{transform:scaleX(-1) translateX(0)}}
-@keyframes gotHit{0%{filter:brightness(1)}30%{filter:brightness(4);transform:translateX(-10px)}100%{filter:brightness(1);transform:translateX(0)}}
-@keyframes fallDown{0%{opacity:1;transform:rotate(0)}100%{opacity:.2;transform:rotate(-90deg) translateY(10px)}}
-
-.dmg-number{position:absolute;top:0;font-size:14px;font-weight:900;pointer-events:none;opacity:0;color:#ff6464}
-.dmg-number.crit{color:var(--gold);font-size:17px}
-.dmg-number.anim{animation:dmgPop .7s ease-out forwards}
-@keyframes dmgPop{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
-
-/* BATTLE LOG */
-.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;max-height:220px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
-.log-line{font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
-.log-line:last-child{border-bottom:none}
-.log-line.crit{color:var(--gold);font-weight:700}
-.log-line.win{color:var(--green);font-weight:700;font-size:13px}
-.log-line.lose{color:var(--red);font-weight:700;font-size:13px}
-.log-line.turn{color:rgba(255,255,255,.2);font-size:10px;padding-top:6px;letter-spacing:.05em;text-transform:uppercase}
-
-.result-banner{text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:900;margin-bottom:12px;display:none}
-.result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green)}
-.result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
-.rank-change{font-size:13px;margin-top:4px;opacity:.7}
 
 /* LEADERBOARD */
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);transition:.15s}
@@ -150,13 +99,45 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .loading{text-align:center;padding:30px;opacity:.4;font-size:13px}
 .empty{text-align:center;padding:24px;opacity:.35;font-size:13px}
 
-/* REPLAY MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+/* BATTLE LOG */
+.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;max-height:180px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.log-line{font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
+.log-line:last-child{border-bottom:none}
+.log-line.crit{color:var(--gold);font-weight:700}
+.log-line.win{color:var(--green);font-weight:700;font-size:13px}
+.log-line.lose{color:var(--red);font-weight:700;font-size:13px}
+.log-line.turn{color:rgba(255,255,255,.2);font-size:10px;padding-top:6px;letter-spacing:.05em;text-transform:uppercase}
+
+.result-banner{text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:900;margin-bottom:12px;display:none}
+.result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green)}
+.result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
+.rank-change{font-size:13px;margin-top:4px;opacity:.7}
+
+/* MODAL REPLAY */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
 .modal-overlay.show .modal{transform:scale(1)}
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px}
 .modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
+
+/* ── ARENA SPRITES ── */
+.arena-stage-wrap{position:relative;margin-bottom:12px}
+.arena-hp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}
+.arena-hp-block{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+.arena-hp-block.right{text-align:right}
+.arena-hp-name{font-size:12px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arena-hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden}
+.arena-hp-bar{height:6px;border-radius:4px;transition:width .35s ease}
+.arena-hp-val{font-size:10px;opacity:.45;margin-top:3px}
+.arena-vs{font-size:14px;font-weight:900;opacity:.25;text-align:center}
+.arena-stage{position:relative;height:200px;background:linear-gradient(180deg,#06070f 0%,#0a0b18 55%,#0f1020 100%);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.arena-ground{position:absolute;bottom:0;left:0;right:0;height:30px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
+.arena-canvas{position:absolute;bottom:30px;image-rendering:pixelated;image-rendering:crisp-edges}
+.dmg-float{position:absolute;font-size:13px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none}
+.dmg-float.crit{color:var(--gold);font-size:17px}
+.dmg-float.anim{animation:dmgPop .75s ease-out forwards}
+@keyframes dmgPop{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-55px)}}
 </style>
 </head>
 <body>
@@ -165,25 +146,23 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <button class="nav-back" onclick="location.href='/'">← Retour</button>
   <span class="nav-title">⚔️ PVP</span>
   <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('profil')">Mon profil</button>
-    <button class="tab-btn" onclick="showTab('defier')">Défier</button>
-    <button class="tab-btn" onclick="showTab('defis')" id="defis-tab">Défis <span id="defis-count"></span></button>
-    <button class="tab-btn" onclick="showTab('classement')">Classement</button>
-    <button class="tab-btn" onclick="showTab('historique')">Historique</button>
+    <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
+    <button class="tab-btn" onclick="showTab('defier',event)">Défier</button>
+    <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">Défis <span id="defis-count"></span></button>
+    <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
+    <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
   </div>
 </nav>
 
 <div class="page">
   <div id="alert-box" class="alert"></div>
 
-  <!-- PROFIL -->
   <div id="sec-profil" class="section active">
     <div class="card">
       <div id="profil-content"><div class="loading">Chargement...</div></div>
     </div>
   </div>
 
-  <!-- DÉFIER -->
   <div id="sec-defier" class="section">
     <div class="card">
       <div class="card-title">Rechercher un joueur</div>
@@ -195,7 +174,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
   </div>
 
-  <!-- DÉFIS REÇUS -->
   <div id="sec-defis" class="section">
     <div class="card">
       <div class="card-title">Défis en attente</div>
@@ -203,7 +181,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
   </div>
 
-  <!-- CLASSEMENT -->
   <div id="sec-classement" class="section">
     <div class="card">
       <div class="card-title">Top joueurs</div>
@@ -211,7 +188,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
   </div>
 
-  <!-- HISTORIQUE -->
   <div id="sec-historique" class="section">
     <div class="card">
       <div class="card-title">Mes combats récents</div>
@@ -224,8 +200,32 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 <div class="modal-overlay" id="replay-modal" onclick="if(event.target===this) closeReplay()">
   <div class="modal">
     <button class="modal-close" onclick="closeReplay()">✕</button>
-    <div class="modal-title" id="replay-title">Replay du combat</div>
-    <div id="replay-arena"></div>
+    <div class="modal-title" id="replay-title">⚔️ Replay du combat</div>
+
+    <!-- HP bars -->
+    <div class="arena-hp-row">
+      <div class="arena-hp-block">
+        <div class="arena-hp-name" id="rn1">Joueur</div>
+        <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp1" style="width:100%;background:#1D9E75"></div></div>
+        <div class="arena-hp-val" id="rhpv1">-</div>
+      </div>
+      <div class="arena-vs">VS</div>
+      <div class="arena-hp-block right">
+        <div class="arena-hp-name" id="rn2">Ennemi</div>
+        <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp2" style="width:100%;background:#D85A30"></div></div>
+        <div class="arena-hp-val" id="rhpv2">-</div>
+      </div>
+    </div>
+
+    <!-- Stage -->
+    <div class="arena-stage" id="replay-stage">
+      <div class="arena-ground"></div>
+      <canvas class="arena-canvas" id="rc1"></canvas>
+      <canvas class="arena-canvas" id="rc2"></canvas>
+      <div class="dmg-float" id="rdmg1"></div>
+      <div class="dmg-float" id="rdmg2"></div>
+    </div>
+
     <div class="battle-log" id="replay-log"></div>
     <div class="result-banner" id="replay-result"></div>
     <button style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:14px" onclick="closeReplay()">Fermer</button>
@@ -233,18 +233,238 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 </div>
 
 <script>
+// ═══════════════════════════════════════════════
+// CONFIG SPRITES — chemin à adapter selon ton serveur
+// ═══════════════════════════════════════════════
+const SPRITE_PATH = '/spritesheet/'; // <-- mets ici le dossier public de tes sprites
+
+// Chaque classe a ses propres fichiers et frame counts
+const CLASS_SPRITES = {
+  assassin: {
+    idle:    { file:'assassin/Idle.png',     frames:6,  fw:128, fps:8  },
+    run:     { file:'assassin/Run.png',      frames:12, fw:128, fps:14 },
+    attack1: { file:'assassin/Attack_1.png', frames:4,  fw:128, fps:10 },
+    attack2: { file:'assassin/Attack_2.png', frames:3,  fw:128, fps:10 },
+    hurt:    { file:'assassin/Hurt.png',     frames:4,  fw:128, fps:10 },
+    dead:    { file:'assassin/Dead.png',     frames:4,  fw:128, fps:7  },
+    walk:    { file:'assassin/Walk.png',     frames:12, fw:128, fps:12 },
+  },
+  slayer: {
+    idle:    { file:'slayer/Idle.png',     frames:4,  fw:128, fps:7  },
+    run:     { file:'slayer/Run.png',      frames:7,  fw:128, fps:12 },
+    attack1: { file:'slayer/Attack_1.png', frames:5,  fw:128, fps:10 },
+    attack2: { file:'slayer/Attack_2.png', frames:4,  fw:128, fps:10 },
+    hurt:    { file:'slayer/Hurt.png',     frames:2,  fw:128, fps:10 },
+    dead:    { file:'slayer/Dead.png',     frames:6,  fw:128, fps:7  },
+    walk:    { file:'slayer/Walk.png',     frames:8,  fw:128, fps:10 },
+  },
+  soutien: {
+    idle:    { file:'soutien/Idle.png',     frames:8,  fw:128, fps:8  },
+    run:     { file:'soutien/Run.png',      frames:8,  fw:128, fps:13 },
+    attack1: { file:'soutien/Attack_1.png', frames:7,  fw:128, fps:10 },
+    attack2: { file:'soutien/Attack_2.png', frames:9,  fw:128, fps:10 },
+    hurt:    { file:'soutien/Hurt.png',     frames:4,  fw:128, fps:10 },
+    dead:    { file:'soutien/Dead.png',     frames:4,  fw:128, fps:7  },
+    walk:    { file:'soutien/Walk.png',     frames:7,  fw:128, fps:10 },
+  },
+};
+
+// Fallback si classe inconnue
+const DEFAULT_CLASS = 'assassin';
+
+// Cache d'images partagé
+const IMG_CACHE = {};
+function getImg(src) {
+  if (!IMG_CACHE[src]) {
+    const img = new Image();
+    img.src = SPRITE_PATH + src;
+    IMG_CACHE[src] = img;
+  }
+  return IMG_CACHE[src];
+}
+// Précharger toutes les classes au démarrage
+Object.values(CLASS_SPRITES).forEach(cls => {
+  Object.values(cls).forEach(a => getImg(a.file));
+});
+
+// ═══════════════════════════════════════════════
+// MOTEUR D'ANIMATION ARENA
+// ═══════════════════════════════════════════════
+const SCALE = 2;
+const CW = 128 * SCALE;  // 256px
+const CH = 128 * SCALE;  // 256px
+const STAGE_W = 640;     // largeur logique de la scène
+const P1_HOME = 30;
+const P2_HOME = STAGE_W - 30 - CW;
+
+let arenaState = null;  // état courant du combat animé
+let arenaRaf = null;
+let arenaLastT = 0;
+
+function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
+  if (arenaRaf) cancelAnimationFrame(arenaRaf);
+  const c1 = document.getElementById('rc1');
+  const c2 = document.getElementById('rc2');
+  c1.width = CW; c1.height = CH;
+  c2.width = CW; c2.height = CH;
+  c1.style.width = CW+'px'; c1.style.height = CH+'px';
+  c2.style.width = CW+'px'; c2.style.height = CH+'px';
+
+  arenaState = {
+    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME, anim:'idle', frame:0, tick:0, flip:false },
+    f2: { cls: cls2||DEFAULT_CLASS, x: P2_HOME, anim:'idle', frame:0, tick:0, flip:true  },
+    hp1: maxHp1, maxHp1,
+    hp2: maxHp2, maxHp2,
+    name1, name2,
+  };
+  updateArenaHp(1, maxHp1, maxHp1);
+  updateArenaHp(2, maxHp2, maxHp2);
+  document.getElementById('rn1').textContent = name1;
+  document.getElementById('rn2').textContent = name2;
+  arenaLastT = 0;
+  arenaRaf = requestAnimationFrame(arenaLoop);
+}
+
+function stopArena() {
+  if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
+}
+
+function arenaLoop(ts) {
+  if (!arenaState) return;
+  const dt = arenaLastT ? ts - arenaLastT : 16;
+  arenaLastT = ts;
+  drawFighter('rc1', arenaState.f1, dt);
+  drawFighter('rc2', arenaState.f2, dt);
+  positionCanvas('rc1', arenaState.f1, false);
+  positionCanvas('rc2', arenaState.f2, true);
+  arenaRaf = requestAnimationFrame(arenaLoop);
+}
+
+function getAnim(f) {
+  const sprites = CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS];
+  return sprites[f.anim] || sprites.idle;
+}
+
+function drawFighter(canvasId, f, dt) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const a = getAnim(f);
+  const img = getImg(a.file);
+  if (!img.complete || !img.naturalWidth) { ctx.clearRect(0,0,CW,CH); return; }
+  f.tick += dt;
+  const interval = 1000 / a.fps;
+  if (f.tick >= interval) { f.tick -= interval; f.frame = (f.frame + 1) % a.frames; }
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.save();
+  if (f.flip) {
+    ctx.translate(CW, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(img, f.frame * a.fw, 0, a.fw, 128, 0, 0, CW, CH);
+  ctx.restore();
+}
+
+function positionCanvas(canvasId, f, isRight) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  const stage = document.getElementById('replay-stage');
+  const sw = stage ? stage.offsetWidth : STAGE_W;
+  const ratio = sw / STAGE_W;
+  const px = Math.round(f.x * ratio);
+  if (!isRight) {
+    el.style.left = px + 'px';
+    el.style.right = 'auto';
+  } else {
+    el.style.right = px + 'px';
+    el.style.left = 'auto';
+  }
+  el.style.width = Math.round(CW * ratio) + 'px';
+  el.style.height = Math.round(CH * ratio) + 'px';
+}
+
+function setFighterAnim(fid, anim) {
+  if (!arenaState) return;
+  const f = fid === 1 ? arenaState.f1 : arenaState.f2;
+  f.anim = anim;
+  f.frame = 0;
+  f.tick = 0;
+}
+
+function updateArenaHp(fid, hp, maxHp) {
+  const pct = Math.max(0, Math.round(hp / maxHp * 100));
+  const bar = document.getElementById('rhp' + fid);
+  const val = document.getElementById('rhpv' + fid);
+  if (!bar || !val) return;
+  const col = pct < 25 ? '#E24B4A' : pct < 50 ? '#EF9F27' : (fid === 1 ? '#1D9E75' : '#D85A30');
+  bar.style.width = pct + '%';
+  bar.style.background = col;
+  val.textContent = Math.max(0, hp) + ' / ' + maxHp;
+}
+
+function spawnDmg(fid, dmg, isCrit) {
+  const el = document.getElementById('rdmg' + fid);
+  if (!el) return;
+  const stage = document.getElementById('replay-stage');
+  const sw = stage ? stage.offsetWidth : STAGE_W;
+  const ratio = sw / STAGE_W;
+  const f = fid === 1 ? arenaState.f1 : arenaState.f2;
+  const isRight = fid === 2;
+  const baseX = isRight ? (STAGE_W - f.x - CW/2) * ratio : (f.x + CW/2) * ratio;
+
+  el.textContent = (isCrit ? 'CRIT ' : '') + '-' + dmg;
+  el.className = 'dmg-float' + (isCrit ? ' crit' : '');
+  el.style.bottom = '80px';
+  el.style.opacity = '1';
+  if (isRight) { el.style.right = Math.round(baseX - 20) + 'px'; el.style.left = 'auto'; }
+  else { el.style.left = Math.round(baseX - 20) + 'px'; el.style.right = 'auto'; }
+  el.style.transform = 'translateY(0)';
+  el.style.transition = 'none';
+  void el.offsetWidth;
+  el.classList.add('anim');
+  setTimeout(() => { el.className = 'dmg-float'; }, 800);
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Déplacer un combattant vers une cible X (logique)
+function moveFighter(fid, targetX, speed, animName) {
+  return new Promise(resolve => {
+    if (!arenaState) { resolve(); return; }
+    const f = fid === 1 ? arenaState.f1 : arenaState.f2;
+    f.anim = animName;
+    f.frame = 0; f.tick = 0;
+    const isRight = fid === 2;
+    let last = performance.now();
+    function step(ts) {
+      const dt = ts - last; last = ts;
+      if (!arenaState) { resolve(); return; }
+      if (isRight) {
+        // P2 se déplace à droite : x décroît pour aller vers P1
+        f.x = f.anim === 'run' || f.anim === 'walk' ? Math.max(targetX, f.x - speed * dt / 1000) : f.x;
+        if (f.x <= targetX) { f.x = targetX; resolve(); return; }
+      } else {
+        f.x = Math.min(targetX, f.x + speed * dt / 1000);
+        if (f.x >= targetX) { f.x = targetX; resolve(); return; }
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════════
 const TOKEN_KEY = 'gacha_token_v1';
 const TOKEN = localStorage.getItem(TOKEN_KEY);
 if (!TOKEN) location.href = '/login.html';
 
 const RANK_COLORS = { Bronze:'#cd7f32', Argent:'#aaa', Or:'#ffd84d', Platine:'#4da6ff', Diamant:'#c084ff', Maître:'#ff6464' };
-const CLASS_EMOJI = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
+const CLASS_EMOJI  = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
 
 let myData = null;
 let searchTimer = null;
-let replaySteps = [];
-let replayIdx = 0;
-let replayFighters = null;
 let replayBusy = false;
 
 async function api(path, opts={}) {
@@ -270,13 +490,13 @@ function showAlert(msg, type='error') {
   setTimeout(() => el.style.display='none', 4000);
 }
 
-function showTab(name) {
+function showTab(name, ev) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
-  event.target.classList.add('active');
+  if (ev && ev.target) ev.target.classList.add('active');
   if (name==='profil') loadProfil();
-  if (name==='defier') { document.getElementById('search-input').focus(); }
+  if (name==='defier') document.getElementById('search-input').focus();
   if (name==='defis') loadDefis();
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
@@ -293,7 +513,6 @@ async function loadProfil() {
     const d = await api('/api/pvp/me');
     myData = d.fighter;
     const f = d.fighter;
-    const col = RANK_COLORS[f.rankInfo?.name] || '#aaa';
     document.getElementById('profil-content').innerHTML = `
       <div class="fighter-profile">
         <div class="fighter-avatar">${CLASS_EMOJI[f.charClass]||'🧑'}</div>
@@ -331,7 +550,7 @@ async function searchPlayer() {
     if (!d.users.length) { el.innerHTML = '<div class="empty">Aucun joueur trouvé</div>'; return; }
     el.innerHTML = d.users.map(u => `
       <div class="user-row">
-        <div class="user-row-avatar">${CLASS_EMOJI['']||'🧑'}</div>
+        <div class="user-row-avatar">${CLASS_EMOJI[u.charClass]||'🧑'}</div>
         <div class="user-row-info">
           <div class="user-row-name">${esc(u.name)}</div>
           <div class="user-row-rank" style="color:${RANK_COLORS[u.rankInfo?.name]||'#aaa'}">${u.rankInfo?.icon||''} ${esc(u.rankInfo?.name||'')} · ${fmtPts(u.pts)} pts</div>
@@ -359,8 +578,7 @@ async function loadDefis() {
   try {
     const d = await api('/api/pvp/pending');
     const count = d.challenges.length;
-    const countEl = document.getElementById('defis-count');
-    countEl.textContent = count > 0 ? `(${count})` : '';
+    document.getElementById('defis-count').textContent = count > 0 ? `(${count})` : '';
     if (!count) { el.innerHTML = '<div class="empty">Aucun défi en attente</div>'; return; }
     el.innerHTML = d.challenges.map(c => `
       <div class="challenge-card">
@@ -382,8 +600,7 @@ async function acceptChallenge(battleId, btn) {
   try {
     const d = await api('/api/pvp/accept', { method:'POST', body: JSON.stringify({ battleId }) });
     await loadDefis();
-    // Ouvrir le replay immédiatement
-    openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId);
+    openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
   } catch(e) {
     btn.disabled = false; btn.textContent = '⚔️ Accepter';
     showAlert(e.message, 'error');
@@ -404,13 +621,12 @@ async function loadClassement() {
   try {
     const d = await api('/api/pvp/leaderboard');
     if (!d.top.length) { el.innerHTML = '<div class="empty">Aucun classement disponible</div>'; return; }
-    const myId = myData?.userId;
     el.innerHTML = d.top.map(u => {
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
       const isMe = myData && u.name === myData.name;
       return `<div class="lb-row ${isMe?'me':''}">
         <div class="lb-rank-num" style="color:${u.rank<=3?'#ffd84d':''}">${u.rank<=3?['🥇','🥈','🥉'][u.rank-1]:u.rank}</div>
-        <div class="lb-avatar">🧑</div>
+        <div class="lb-avatar">${CLASS_EMOJI[u.charClass]||'🧑'}</div>
         <div style="flex:1">
           <div class="lb-name">${esc(u.name)}</div>
           <div class="lb-stats">${u.wins}V ${u.losses}D</div>
@@ -446,174 +662,155 @@ async function loadReplay(battleId) {
   try {
     const d = await api('/api/pvp/result/'+battleId);
     const b = d.battle;
-    // Reconstruire les fighters depuis le log pour l'animation
-    const f1 = { name: b.challengerName, hp: getMaxHp(b.log, b.challengerName), atq:0, crit:0, dodge:0 };
-    const f2 = { name: b.opponentName,   hp: getMaxHp(b.log, b.opponentName),   atq:0, crit:0, dodge:0 };
-    openReplay(b.log, f1, f2, b.winnerId);
+    const f1 = { name: b.challengerName, charClass: b.challengerClass||'assassin', hp: getMaxHp(b.log, b.challengerName) };
+    const f2 = { name: b.opponentName,   charClass: b.opponentClass||'assassin',   hp: getMaxHp(b.log, b.opponentName)   };
+    openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
   } catch(e) { showAlert(e.message); }
 }
 
 function getMaxHp(log, name) {
-  // Retrouver le hp max depuis le log
   for (const e of log) {
     if ((e.type==='hit'||e.type==='crit') && e.defender===name) return e.hpMax;
   }
   return 300;
 }
 
-// ── REPLAY ──
-function openReplay(log, f1, f2, winnerId) {
-  replaySteps = log;
-  replayIdx = 0;
-  replayBusy = false;
-  replayFighters = { f1, f2, winnerId };
+// ═══════════════════════════════════════════════
+// REPLAY ANIMÉ
+// ═══════════════════════════════════════════════
+function openReplay(log, f1, f2, winnerId, rankChange) {
+  if (replayBusy) return;
+  replayBusy = true;
 
   const modal = document.getElementById('replay-modal');
   document.getElementById('replay-title').textContent = `⚔️ ${f1.name} vs ${f2.name}`;
   document.getElementById('replay-log').innerHTML = '';
   document.getElementById('replay-result').style.display = 'none';
-
-  // Construire l'arène
-  document.getElementById('replay-arena').innerHTML = `
-    <div class="arena" style="margin-bottom:10px">
-      <div class="fighters-row">
-        <div class="arena-fighter" id="rf1card">
-          <div class="arena-fighter-name">${esc(f1.name)}</div>
-          <div class="hp-wrap">
-            <div class="hp-text" id="rf1hptxt">HP : ${f1.hp} / ${f1.hp}</div>
-            <div class="hp-bar-bg"><div class="hp-bar" id="rf1bar" style="width:100%;background:#1D9E75"></div></div>
-          </div>
-          <div class="sprite-wrap">
-            <span class="sprite anim-idle" id="rs1">${CLASS_EMOJI[myData?.charClass]||'🥷'}</span>
-            <div class="dmg-number" id="rdmg1"></div>
-          </div>
-        </div>
-        <div class="vs-mid">VS</div>
-        <div class="arena-fighter right" id="rf2card">
-          <div class="arena-fighter-name">${esc(f2.name)}</div>
-          <div class="hp-wrap">
-            <div class="hp-text" id="rf2hptxt">HP : ${f2.hp} / ${f2.hp}</div>
-            <div class="hp-bar-bg"><div class="hp-bar" id="rf2bar" style="width:100%;background:#D85A30"></div></div>
-          </div>
-          <div class="sprite-wrap">
-            <span class="sprite anim-idle flip" id="rs2">🧙</span>
-            <div class="dmg-number" id="rdmg2" style="right:8px"></div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-
   modal.classList.add('show');
-  setTimeout(() => playReplayStep(), 600);
+
+  // Attendre que le modal soit visible pour mesurer le stage
+  setTimeout(() => {
+    initArena(
+      f1.charClass, f2.charClass,
+      f1.hp, f2.hp,
+      f1.name, f2.name
+    );
+    playReplay(log, f1, f2, winnerId, rankChange);
+  }, 350);
 }
 
 function closeReplay() {
   document.getElementById('replay-modal').classList.remove('show');
+  stopArena();
   replayBusy = false;
 }
 
-function playReplayStep() {
-  if (replayBusy) return;
-  if (replayIdx >= replaySteps.length) return;
-  replayBusy = true;
-  const ev = replaySteps[replayIdx++];
-  const log = document.getElementById('replay-log');
+async function playReplay(log, f1, f2, winnerId, rankChange) {
+  const logEl = document.getElementById('replay-log');
 
-  if (ev.type === 'turn') {
+  function addLog(text, cls='') {
     const d = document.createElement('div');
-    d.className = 'log-line turn'; d.textContent = '— Tour '+ev.turn+' —';
-    log.appendChild(d); log.scrollTop = log.scrollHeight;
-    replayBusy = false;
-    setTimeout(playReplayStep, 120);
-    return;
+    d.className = 'log-line ' + cls;
+    d.textContent = text;
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
   }
 
-  const isF1attacker = ev.attacker === replayFighters.f1.name;
-  const as = document.getElementById(isF1attacker ? 'rs1' : 'rs2');
-  const ds = document.getElementById(isF1attacker ? 'rs2' : 'rs1');
-  const dmgEl = document.getElementById(isF1attacker ? 'rdmg2' : 'rdmg1');
+  // Distance d'attaque : P1 s'arrête à gauche de P2, P2 s'arrête à droite de P1
+  const ATTACK_DIST = 80;
+  const P1_ATTACK_X = P2_HOME - ATTACK_DIST;  // x logique où P1 s'arrête
+  const P2_ATTACK_X = P1_HOME + CW/SCALE + ATTACK_DIST; // x logique où P2 s'arrête (en miroir)
 
-  if (ev.type === 'dodge') {
-    const d = document.createElement('div');
-    d.className = 'log-line'; d.textContent = ev.defender+' esquive !';
-    log.appendChild(d); log.scrollTop = log.scrollHeight;
-    replayBusy = false;
-    setTimeout(playReplayStep, 400);
-    return;
+  await wait(300);
+
+  for (let i = 0; i < log.length; i++) {
+    const ev = log[i];
+    if (!arenaState) break;
+
+    if (ev.type === 'turn') {
+      if (ev.turn > 1) addLog('— Tour ' + ev.turn + ' —', 'turn');
+      continue;
+    }
+
+    if (ev.type === 'dodge') {
+      addLog((ev.defender === f1.name ? f1.name : f2.name) + ' esquive !');
+      await wait(350);
+      continue;
+    }
+
+    if (ev.type === 'hit' || ev.type === 'crit') {
+      const isF1att = ev.attacker === f1.name;
+      const attId = isF1att ? 1 : 2;
+      const defId = isF1att ? 2 : 1;
+
+      // Courir vers l'ennemi
+      if (isF1att) {
+        await moveFighter(1, P1_ATTACK_X, 420, 'run');
+      } else {
+        await moveFighter(2, P2_ATTACK_X, 420, 'run');
+      }
+
+      // Attaque
+      setFighterAnim(attId, ev.type === 'crit' ? 'attack2' : 'attack1');
+      await wait(160);
+
+      // Défenseur prend le coup
+      setFighterAnim(defId, 'hurt');
+      spawnDmg(defId, ev.dmg, ev.type === 'crit');
+
+      // Mise à jour HP
+      if (isF1att) {
+        arenaState.hp2 = ev.hpLeft;
+        updateArenaHp(2, ev.hpLeft, ev.hpMax);
+      } else {
+        arenaState.hp1 = ev.hpLeft;
+        updateArenaHp(1, ev.hpLeft, ev.hpMax);
+      }
+
+      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type==='crit' ? ' (CRITIQUE!)' : ''), ev.type==='crit'?'crit':'');
+      await wait(320);
+
+      // Retour en position idle
+      setFighterAnim(defId, 'idle');
+      if (isF1att) {
+        await moveFighter(1, P1_HOME, 300, 'walk');
+      } else {
+        await moveFighter(2, P2_HOME, 300, 'walk');
+      }
+      setFighterAnim(attId, 'idle');
+      await wait(150);
+    }
+
+    if (ev.type === 'end') {
+      const playerWon = myData && (
+        (ev.winner === f1.name && f1.name === myData.name) ||
+        (ev.winner === f2.name && f2.name === myData.name)
+      );
+      const loserId = ev.winner === f1.name ? 2 : 1;
+      setFighterAnim(loserId, 'dead');
+      await wait(700);
+
+      addLog(ev.winner + ' remporte le combat !', playerWon ? 'win' : 'lose');
+      const banner = document.getElementById('replay-result');
+      banner.className = 'result-banner ' + (playerWon ? 'victory' : 'defeat');
+      banner.style.display = 'block';
+      if (playerWon) {
+        banner.innerHTML = `🏆 Victoire !<div class="rank-change">+${rankChange||'?'} pts de rang</div>`;
+      } else {
+        banner.innerHTML = `💀 Défaite<div class="rank-change">${rankChange ? '-'+rankChange : ''} pts de rang</div>`;
+      }
+    }
   }
-
-  if (ev.type === 'hit' || ev.type === 'crit') {
-    // Animer attaquant
-    as.className = 'sprite '+(isF1attacker ? 'anim-attack' : 'anim-attack-r');
-    setTimeout(() => {
-      // Animer défenseur
-      ds.className = 'sprite '+(isF1attacker ? 'flip anim-hit' : 'anim-hit');
-
-      // Dégâts
-      dmgEl.textContent = (ev.type==='crit'?'CRIT ':'') + '-'+ev.dmg;
-      dmgEl.className = 'dmg-number'+(ev.type==='crit'?' crit':'');
-      void dmgEl.offsetWidth;
-      dmgEl.classList.add('anim');
-      setTimeout(() => dmgEl.className='dmg-number', 800);
-
-      // HP bar
-      const barId = isF1attacker ? 'rf2bar' : 'rf1bar';
-      const txtId = isF1attacker ? 'rf2hptxt' : 'rf1hptxt';
-      const bar = document.getElementById(barId);
-      const pct = Math.max(0, Math.round((ev.hpLeft/ev.hpMax)*100));
-      bar.style.width = pct+'%';
-      bar.style.background = pct<25?'#E24B4A':pct<50?'#EF9F27':(isF1attacker?'#D85A30':'#1D9E75');
-      document.getElementById(txtId).textContent = 'HP : '+ev.hpLeft+' / '+ev.hpMax;
-
-      // Log
-      const d = document.createElement('div');
-      d.className = 'log-line'+(ev.type==='crit'?' crit':'');
-      d.textContent = ev.attacker+' → '+ev.dmg+' dégâts'+(ev.type==='crit'?' (CRITIQUE!)':'');
-      log.appendChild(d); log.scrollTop = log.scrollHeight;
-
-      setTimeout(() => {
-        as.className = 'sprite '+(isF1attacker ? 'anim-idle' : 'anim-idle flip');
-        ds.className = 'sprite '+(isF1attacker ? 'flip anim-idle' : 'anim-idle');
-        replayBusy = false;
-        setTimeout(playReplayStep, 100);
-      }, 320);
-    }, 260);
-    return;
-  }
-
-  if (ev.type === 'end') {
-    const isMyWin = myData && ev.winner === myData.name;
-    const loserSprite = ev.winner === replayFighters.f1.name ? 'rs2' : 'rs1';
-    document.getElementById(loserSprite).className = 'sprite anim-dead'+(loserSprite==='rs2'?' flip':'');
-
-    const d = document.createElement('div');
-    d.className = 'log-line '+(isMyWin?'win':'lose');
-    d.textContent = ev.winner+' remporte le combat !';
-    log.appendChild(d); log.scrollTop = log.scrollHeight;
-
-    const banner = document.getElementById('replay-result');
-    banner.className = 'result-banner '+(isMyWin?'victory':'defeat');
-    banner.style.display = 'block';
-    banner.innerHTML = isMyWin ? '🏆 Victoire !' : '💀 Défaite';
-    replayBusy = false;
-    return;
-  }
-
   replayBusy = false;
-  setTimeout(playReplayStep, 200);
 }
 
 // ── INIT ──
 loadProfil();
-
-// Vérifier défis en attente au chargement
 (async () => {
   try {
     const d = await api('/api/pvp/pending');
     const count = d.challenges.length;
-    if (count > 0) {
-      document.getElementById('defis-count').textContent = `(${count})`;
-    }
+    if (count > 0) document.getElementById('defis-count').textContent = `(${count})`;
   } catch {}
 })();
 </script>
