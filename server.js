@@ -6526,7 +6526,22 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
     `, [battleId, req.user.id]);
     if (!q.rows.length) return res.status(404).json({ error: "Combat introuvable" });
     const r = q.rows[0];
-    res.json({ battle: { id: r.id, challengerName: r.cname, opponentName: r.oname, winnerId: r.winner_id, rankChange: r.rank_change, log: r.log, at: r.accepted_at } });
+    // Récupérer la classe des deux joueurs pour le replay animé
+    const [c1char, c2char] = await Promise.all([
+      pool.query('SELECT char_class FROM characters WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
+      pool.query('SELECT char_class FROM characters WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
+    ]);
+    res.json({ battle: {
+      id: r.id,
+      challengerName: r.cname,
+      opponentName:   r.oname,
+      challengerClass: c1char.rows[0]?.char_class || null,
+      opponentClass:   c2char.rows[0]?.char_class || null,
+      winnerId:   r.winner_id,
+      rankChange: r.rank_change,
+      log:        r.log,
+      at:         r.accepted_at,
+    }});
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 

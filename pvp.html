@@ -294,7 +294,8 @@ Object.values(CLASS_SPRITES).forEach(cls => {
 // Le canvas interne = 128x128 (1 frame source).
 // On le scale via CSS width/height pour l'afficher plus grand.
 // f.x = position left CSS du canvas dans le stage (pixels réels).
-const SPRITE_PX = 160;   // taille affichée d'un sprite (px CSS, carré)
+const SPRITE_PX = 160;   // hauteur affichée d'un sprite en px CSS
+const SPRITE_PX_W = Math.round(SPRITE_PX * (128 + 64) / 128); // largeur CSS du canvas = 240px
 const P1_HOME_PX = 20;   // départ P1
 
 let arenaState = null;
@@ -305,25 +306,25 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
   if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
   arenaState = null;
 
-  // Canvas source = 128x128, affiché en SPRITE_PX×SPRITE_PX via CSS
-  const FRAME_W = 128;
-  const FRAME_H = 128;
-  const CANVAS_PAD = 32; // marge anti-coupe
-  const CANVAS_W = FRAME_W + CANVAS_PAD * 2;
-  const CANVAS_H = FRAME_H + CANVAS_PAD * 2;
+  // Canvas interne : padding horizontal pour éviter la coupure des armes/bras
+  // Canvas 192×128 = 32px de marge de chaque côté, hauteur exacte de la frame
+  const FRAME_W = 128, FRAME_H = 128, CANVAS_PAD = 32;
+  const CANVAS_W = FRAME_W + CANVAS_PAD * 2; // 192
+  const CANVAS_H = FRAME_H;                   // 128
 
   ['rc1','rc2'].forEach(id => {
     const c = document.getElementById(id);
     if (!c) return;
-    c.width  = CANVAS_W;
-    c.height = CANVAS_H;
-    c.style.width  = SPRITE_PX + 'px';
+    c.width  = CANVAS_W; // 192
+    c.height = CANVAS_H; // 128
+    // CSS : on scale proportionnellement — hauteur = SPRITE_PX, largeur proportionnelle
     c.style.height = SPRITE_PX + 'px';
+    c.style.width  = Math.round(SPRITE_PX * CANVAS_W / CANVAS_H) + 'px'; // 240px
     c.style.imageRendering = 'pixelated';
   });
 
   const sw = (document.getElementById('replay-stage')||{offsetWidth:640}).offsetWidth;
-  const p2Home = sw - P1_HOME_PX - SPRITE_PX;
+  const p2Home = sw - P1_HOME_PX - SPRITE_PX_W;
 
   arenaState = {
     f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME_PX, anim:'idle', frame:0, tick:0, flip:false, freezeOnEnd:false },
@@ -439,7 +440,7 @@ function spawnDmg(fid, dmg, isCrit) {
   if (!el || !arenaState) return;
   const f   = fid === 1 ? arenaState.f1 : arenaState.f2;
   // Centre du sprite en pixels CSS dans le stage
-  const cx  = Math.round(f.x + SPRITE_PX / 2) - 26;
+  const cx  = Math.round(f.x + SPRITE_PX_W / 2) - 26;
   el.textContent = (isCrit ? 'CRIT ' : '') + '-' + dmg;
   el.className   = 'dmg-float' + (isCrit ? ' crit' : '');
   el.style.cssText = 'left:'+cx+'px;right:auto;bottom:80px;opacity:0;transform:translateY(0);transition:none';
@@ -460,7 +461,7 @@ function approachCenter(speed) {
     const cx = sw / 2;
     // P1 s'arrête à gauche du centre, P2 à droite — gap de 6px entre les deux
     const GAP = 6;
-    const t1  = Math.floor(cx - SPRITE_PX - GAP / 2);
+    const t1  = Math.floor(cx - SPRITE_PX_W - GAP / 2);
     const t2  = Math.ceil(cx + GAP / 2);
     arenaState.f1FightX = t1;
     arenaState.f2FightX = t2;
@@ -492,6 +493,23 @@ const TOKEN = localStorage.getItem(TOKEN_KEY);
 if (!TOKEN) location.href = '/login.html';
 
 const RANK_COLORS = { Bronze:'#cd7f32', Argent:'#aaa', Or:'#ffd84d', Platine:'#4da6ff', Diamant:'#c084ff', Maître:'#ff6464' };
+const RANK_IMG_PATH = '/ranking/'; // chemin vers tes images de rang (ex: /ranking/bronze.png)
+const RANK_ICONS = {
+  Bronze:  RANK_IMG_PATH + 'bronze.png',
+  Argent:  RANK_IMG_PATH + 'silver.png',
+  Or:      RANK_IMG_PATH + 'gold.png',
+  Platine: RANK_IMG_PATH + 'platine.png',
+  Diamant: RANK_IMG_PATH + 'diamant.png',
+  Maître:  RANK_IMG_PATH + 'master.png',
+};
+const RANK_FRAMES = {
+  Bronze:  RANK_IMG_PATH + 'cadrebronze.png',
+  Argent:  RANK_IMG_PATH + 'cadresilver.png',
+  Or:      RANK_IMG_PATH + 'cadregold.png',
+  Platine: RANK_IMG_PATH + 'cadreplatine.png',
+  Diamant: RANK_IMG_PATH + 'cadrediamant.png',
+  Maître:  RANK_IMG_PATH + 'cadremaster.png',
+};
 const CLASS_EMOJI  = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
 
 let myData = null;
@@ -534,8 +552,10 @@ function showTab(name, ev) {
 }
 
 function rankBadgeHtml(rankInfo, pts) {
-  const col = RANK_COLORS[rankInfo?.name] || '#aaa';
-  return `<span class="rank-badge" style="border-color:${col}33;color:${col}">${rankInfo?.icon||''} ${esc(rankInfo?.name||'Bronze')}<span class="rank-pts">${fmtPts(pts)} pts</span></span>`;
+  const name = rankInfo?.name || 'Bronze';
+  const col  = RANK_COLORS[name] || '#aaa';
+  const icon = RANK_ICONS[name] ? `<img src="${RANK_ICONS[name]}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px">` : (rankInfo?.icon||'');
+  return `<span class="rank-badge" style="border-color:${col}33;color:${col}">${icon}${esc(name)}<span class="rank-pts">${fmtPts(pts)} pts</span></span>`;
 }
 
 // ── PROFIL ──
@@ -546,7 +566,10 @@ async function loadProfil() {
     const f = d.fighter;
     document.getElementById('profil-content').innerHTML = `
       <div class="fighter-profile">
-        <div class="fighter-avatar">${CLASS_EMOJI[f.charClass]||'🧑'}</div>
+        <div class="fighter-avatar" style="position:relative;overflow:visible">
+          <span style="font-size:28px;line-height:64px">${CLASS_EMOJI[f.charClass]||'🧑'}</span>
+          ${RANK_FRAMES[f.rankInfo?.name] ? `<img src="${RANK_FRAMES[f.rankInfo.name]}" style="position:absolute;inset:-6px;width:calc(100%+12px);height:calc(100%+12px);pointer-events:none;object-fit:contain">` : ''}
+        </div>
         <div class="fighter-info">
           <div class="fighter-name">${esc(f.name)}</div>
           <div class="fighter-meta">Niv. ${f.level} · ${esc(f.classLabel)} · ${f.wins}V ${f.losses}D</div>
@@ -616,7 +639,10 @@ async function loadDefis() {
         <div class="user-row-avatar">⚔️</div>
         <div class="challenge-card-info">
           <div class="challenge-card-name">${esc(c.challengerName)}</div>
-          <div class="challenge-card-sub" style="color:${RANK_COLORS[c.rankInfo?.name]||'#aaa'}">${c.rankInfo?.icon||''} ${esc(c.rankInfo?.name||'')} · il y a ${timeAgo(c.createdAt)}</div>
+          <div class="challenge-card-sub" style="color:${RANK_COLORS[c.rankInfo?.name]||'#aaa'}">
+            ${RANK_ICONS[c.rankInfo?.name] ? `<img src="${RANK_ICONS[c.rankInfo.name]}" style="width:12px;height:12px;object-fit:contain;vertical-align:middle">` : (c.rankInfo?.icon||'')}
+            ${esc(c.rankInfo?.name||'')} · il y a ${timeAgo(c.createdAt)}
+          </div>
         </div>
         <div class="challenge-actions">
           <button class="btn-accept" onclick="acceptChallenge(${c.battleId},this)">⚔️ Accepter</button>
@@ -631,6 +657,7 @@ async function acceptChallenge(battleId, btn) {
   try {
     const d = await api('/api/pvp/accept', { method:'POST', body: JSON.stringify({ battleId }) });
     await loadDefis();
+    // d.fighters.f1 et f2 contiennent charClass depuis buildPvpFighter()
     openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
   } catch(e) {
     btn.disabled = false; btn.textContent = '⚔️ Accepter';
@@ -664,7 +691,10 @@ async function loadClassement() {
         </div>
         <div>
           <div class="lb-pts" style="color:${col}">${fmtPts(u.pts)}</div>
-          <div class="lb-rank-badge" style="color:${col}">${u.rankInfo?.icon||''} ${esc(u.rankInfo?.name||'')}</div>
+          <div class="lb-rank-badge" style="color:${col};display:flex;align-items:center;gap:3px;justify-content:flex-end">
+            ${RANK_ICONS[u.rankInfo?.name] ? `<img src="${RANK_ICONS[u.rankInfo.name]}" style="width:14px;height:14px;object-fit:contain">` : (u.rankInfo?.icon||'')}
+            ${esc(u.rankInfo?.name||'')}
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -693,10 +723,19 @@ async function loadReplay(battleId) {
   try {
     const d = await api('/api/pvp/result/'+battleId);
     const b = d.battle;
-    const f1 = { name: b.challengerName, charClass: b.challengerClass||'assassin', hp: getMaxHp(b.log, b.challengerName) };
-    const f2 = { name: b.opponentName,   charClass: b.opponentClass||'assassin',   hp: getMaxHp(b.log, b.opponentName)   };
+    // challengerClass / opponentClass sont renvoyés par le server si disponibles
+    const f1 = { name: b.challengerName, charClass: b.challengerClass || guessClassFromLog(b.log, b.challengerName) || 'assassin', hp: getMaxHp(b.log, b.challengerName) };
+    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || guessClassFromLog(b.log, b.opponentName)   || 'assassin', hp: getMaxHp(b.log, b.opponentName)   };
     openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
   } catch(e) { showAlert(e.message); }
+}
+
+function guessClassFromLog(log, name) {
+  // Si le log contient une propriété charClass (ajoutée par une version future du serveur)
+  for (const ev of (log||[])) {
+    if (ev.charClass && ev.name === name) return ev.charClass;
+  }
+  return null;
 }
 
 function getMaxHp(log, name) {
