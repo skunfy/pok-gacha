@@ -306,10 +306,17 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
   arenaState = null;
 
   // Canvas source = 128x128, affiché en SPRITE_PX×SPRITE_PX via CSS
+  const FRAME_W = 128;
+  const FRAME_H = 128;
+  const CANVAS_PAD = 32; // marge anti-coupe
+  const CANVAS_W = FRAME_W + CANVAS_PAD * 2;
+  const CANVAS_H = FRAME_H + CANVAS_PAD * 2;
+
   ['rc1','rc2'].forEach(id => {
     const c = document.getElementById(id);
     if (!c) return;
-    c.width  = 128; c.height = 128;
+    c.width  = CANVAS_W;
+    c.height = CANVAS_H;
     c.style.width  = SPRITE_PX + 'px';
     c.style.height = SPRITE_PX + 'px';
     c.style.imageRendering = 'pixelated';
@@ -355,27 +362,47 @@ function getAnimDef(f) {
 function tickAndDraw(id, f, dt) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
+
   const ctx = canvas.getContext('2d');
   const a   = getAnimDef(f);
   const img = getImg(a.file);
-  if (!img.complete || !img.naturalWidth) { ctx.clearRect(0,0,128,128); return; }
+  if (!img.complete || !img.naturalWidth) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
 
   f.tick += dt;
   const ms = 1000 / a.fps;
   if (f.tick >= ms) {
     f.tick -= ms;
     if (f.freezeOnEnd && f.frame >= a.frames - 1) {
-      f.frame = a.frames - 1;           // mort : rester sur dernière frame
+      f.frame = a.frames - 1;
     } else {
       f.frame = (f.frame + 1) % a.frames;
     }
   }
 
-  ctx.clearRect(0, 0, 128, 128);
+  const FRAME_W = a.fw || 128;
+  const FRAME_H = a.fh || 128;
+  const dx = Math.floor((canvas.width - FRAME_W) / 2);
+  const dy = Math.floor((canvas.height - FRAME_H) / 2);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  if (f.flip) { ctx.translate(128, 0); ctx.scale(-1, 1); }
-  // Extraire exactement une frame de la spritesheet
-  ctx.drawImage(img, f.frame * a.fw, 0, a.fw, 128, 0, 0, 128, 128);
+
+  if (f.flip) {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+
+  ctx.drawImage(
+    img,
+    f.frame * FRAME_W, 0,
+    FRAME_W, FRAME_H,
+    dx, dy,
+    FRAME_W, FRAME_H
+  );
+
   ctx.restore();
 }
 
