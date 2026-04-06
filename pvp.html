@@ -51,6 +51,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .stat-box-val{font-size:20px;font-weight:900;margin-bottom:2px}
 .stat-box-label{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
 
+/* ══ ÉNERGIE ══ */
+.energy-bar-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(255,184,0,.05);border:1px solid rgba(255,184,0,.15);border-radius:14px;margin-bottom:14px}
+.energy-icon{font-size:20px;flex-shrink:0}
+.energy-info{flex:1;min-width:0}
+.energy-label{font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.energy-pips{display:flex;gap:4px;flex-wrap:wrap}
+.energy-pip{width:22px;height:22px;border-radius:6px;border:2px solid rgba(255,184,0,.25);background:rgba(255,184,0,.06);transition:all .3s;position:relative;overflow:hidden}
+.energy-pip.filled{background:linear-gradient(135deg,#ffb300,#ffd84d);border-color:#ffd84d;box-shadow:0 0 8px rgba(255,211,77,.4)}
+.energy-pip.filled::after{content:'⚡';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.energy-timer{font-size:11px;opacity:.5;margin-top:4px;white-space:nowrap}
+.energy-cost{font-size:12px;font-weight:900;color:#ffd84d;white-space:nowrap;flex-shrink:0}
+
 /* SEARCH */
 .search-wrap{display:flex;gap:8px;margin-bottom:14px}
 .search-wrap input{flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px}
@@ -59,7 +71,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .search-wrap button:hover{opacity:.85}
 .user-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:8px;transition:.15s}
 .user-row:hover{border-color:var(--border2)}
-.user-row-avatar{width:40px;height:40px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.user-row-avatar{width:40px;height:40px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background-size:cover;background-position:center}
 .user-row-info{flex:1}
 .user-row-name{font-size:14px;font-weight:700}
 .user-row-rank{font-size:11px;opacity:.5;margin-top:2px}
@@ -76,11 +88,29 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .btn-accept{padding:7px 14px;background:#1D9E75;border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;cursor:pointer}
 .btn-decline{padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:700;font-size:12px;cursor:pointer}
 
-/* LEADERBOARD */
+/* ══ LEADERBOARD PODIUM ══ */
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:24px 8px 0;margin-bottom:20px}
+.podium-col{display:flex;flex-direction:column;align-items:center;gap:0}
+.podium-avatar-wrap{position:relative;margin-bottom:6px}
+.podium-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;border:3px solid rgba(255,255,255,.15);background-size:cover;background-position:center}
+.podium-crown{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:22px;filter:drop-shadow(0 0 8px currentColor)}
+.podium-rank-frame{position:absolute;inset:-8px;width:80px;height:80px;object-fit:contain;pointer-events:none}
+.podium-name{font-size:12px;font-weight:900;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.podium-pts{font-size:11px;font-weight:700;opacity:.6;margin-bottom:6px}
+.podium-rank-badge{font-size:10px;display:flex;align-items:center;gap:3px;margin-bottom:8px}
+.podium-block{border-radius:14px 14px 0 0;width:90px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;opacity:.8}
+.podium-1 .podium-avatar{border-color:#ffd84d;box-shadow:0 0 20px rgba(255,216,77,.35)}
+.podium-1 .podium-block{background:linear-gradient(180deg,rgba(255,216,77,.18),rgba(255,216,77,.06));border:1px solid rgba(255,216,77,.25);height:80px;color:#ffd84d}
+.podium-2 .podium-avatar{border-color:#aaa;box-shadow:0 0 14px rgba(170,170,170,.2)}
+.podium-2 .podium-block{background:linear-gradient(180deg,rgba(170,170,170,.12),rgba(170,170,170,.04));border:1px solid rgba(170,170,170,.18);height:55px;color:#aaa}
+.podium-3 .podium-avatar{border-color:#cd7f32;box-shadow:0 0 14px rgba(205,127,50,.2)}
+.podium-3 .podium-block{background:linear-gradient(180deg,rgba(205,127,50,.12),rgba(205,127,50,.04));border:1px solid rgba(205,127,50,.18);height:40px;color:#cd7f32}
+
+/* LEADERBOARD rows (from rank 4) */
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);transition:.15s}
 .lb-row.me{border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.06)}
 .lb-rank-num{font-size:15px;font-weight:900;width:28px;text-align:center;flex-shrink:0}
-.lb-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.lb-avatar{width:40px;height:40px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background-size:cover;background-position:center;overflow:hidden;border:2px solid rgba(255,255,255,.08)}
 .lb-name{flex:1;font-size:13px;font-weight:700}
 .lb-stats{font-size:11px;opacity:.45;margin-top:2px}
 .lb-pts{font-size:14px;font-weight:900;text-align:right}
@@ -102,8 +132,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .loading{text-align:center;padding:30px;opacity:.4;font-size:13px}
 .empty{text-align:center;padding:24px;opacity:.35;font-size:13px}
 
-
-
 /* ── BARRE PROGRESSION RANGS ── */
 .pvp-rank-progress{margin-top:16px;padding:16px 18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px}
 .pvp-rank-progress-title{font-size:11px;font-weight:900;opacity:.4;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
@@ -118,10 +146,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pvp-rank-step-name{font-size:9px;font-weight:900;margin-top:4px;opacity:.4;letter-spacing:.03em}
 .pvp-rank-step.active .pvp-rank-step-name{opacity:1}
 .pvp-rank-step.done .pvp-rank-step-name{opacity:.6}
-/* Ligne entre les steps */
 .pvp-rank-steps::before{content:'';position:absolute;top:18px;left:5%;right:5%;height:3px;background:rgba(255,255,255,.06);border-radius:999px;z-index:0}
 .pvp-rank-line-fill{position:absolute;top:18px;left:5%;height:3px;background:linear-gradient(90deg,#cd7f32,currentColor);border-radius:999px;z-index:0;transition:width .4s ease}
-/* Barre pts dans le rang actuel */
 .pvp-rank-bar-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
 .pvp-rank-bar-bg{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
 .pvp-rank-bar-fill{height:100%;border-radius:999px;transition:width .5s ease}
@@ -185,45 +211,52 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pvp-inv-img{width:44px;height:44px;object-fit:contain}
 .pvp-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* BATTLE LOG */
-.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;height:140px;min-height:140px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
-.log-line{font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
+/* ══ BATTLE LOG & ARENA (AGRANDIE) ══ */
+.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;height:180px;min-height:180px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.log-line{font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
 .log-line:last-child{border-bottom:none}
 .log-line.crit{color:var(--gold);font-weight:700}
-.log-line.win{color:var(--green);font-weight:700;font-size:13px}
-.log-line.lose{color:var(--red);font-weight:700;font-size:13px}
+.log-line.win{color:var(--green);font-weight:700;font-size:14px}
+.log-line.lose{color:var(--red);font-weight:700;font-size:14px}
 .log-line.turn{color:rgba(255,255,255,.2);font-size:10px;padding-top:6px;letter-spacing:.05em;text-transform:uppercase}
+.log-line.dodge{color:#4da6ff;font-style:italic}
 
-.result-banner{text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:900;margin-bottom:12px;display:none}
-.result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green)}
+.result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
+.result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green);animation:victoryPulse 1s ease-out}
 .result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
-.rank-change{font-size:13px;margin-top:4px;opacity:.7}
+@keyframes victoryPulse{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+.rank-change{font-size:14px;margin-top:6px;opacity:.75;font-weight:700}
 
-/* MODAL REPLAY */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+/* MODAL REPLAY — plus grande */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:900px;width:100%;max-height:94vh;overflow-y:hidden;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:22px;padding:22px;max-width:980px;width:100%;max-height:97vh;overflow-y:auto;overflow-x:hidden;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column}
 .modal-overlay.show .modal{transform:scale(1)}
-.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px}
-.modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1}
+.modal-title{font-size:17px;font-weight:900;margin-bottom:16px}
 
-/* ── ARENA SPRITES ── */
-.arena-stage-wrap{position:relative;margin-bottom:12px}
-.arena-hp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}
-.arena-hp-block{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+/* ── ARENA SPRITES — AGRANDIE ── */
+.arena-hp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:12px}
+.arena-hp-block{background:var(--bg3);border-radius:12px;padding:12px 14px;border:1px solid var(--border)}
 .arena-hp-block.right{text-align:right;justify-content:flex-end}
-.arena-hp-name{font-size:13px;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.arena-hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden}
-.arena-hp-bar{height:6px;border-radius:4px;transition:width .35s ease}
-.arena-hp-val{font-size:10px;opacity:.45;margin-top:3px}
-.arena-vs{font-size:14px;font-weight:900;opacity:.25;text-align:center}
-.arena-stage{position:relative; height:300px;background-image:url('/spritesheet/background/forest.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:12px;overflow:hidden;border:1px solid var(--border);}
-.arena-ground{position:absolute;bottom:0;left:0;right:0;height:30px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
-.arena-canvas{position:absolute;bottom:30px;image-rendering:pixelated;image-rendering:crisp-edges}
-.dmg-float{position:absolute;font-size:13px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none}
-.dmg-float.crit{color:var(--gold);font-size:17px}
-.dmg-float.anim{animation:dmgPop .75s ease-out forwards}
-@keyframes dmgPop{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-55px)}}
+.arena-hp-name{font-size:14px;font-weight:900;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arena-hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden}
+.arena-hp-bar{height:8px;border-radius:4px;transition:width .4s ease}
+.arena-hp-val{font-size:11px;opacity:.45;margin-top:4px}
+.arena-vs{font-size:16px;font-weight:900;opacity:.25;text-align:center}
+.arena-stage{position:relative;height:420px;background-image:url('/spritesheet/background/forest.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.arena-ground{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
+.arena-canvas{position:absolute;bottom:36px;image-rendering:pixelated;image-rendering:crisp-edges}
+.dmg-float{position:absolute;font-size:16px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.dmg-float.crit{color:var(--gold);font-size:22px}
+.dmg-float.anim{animation:dmgPop .9s ease-out forwards}
+@keyframes dmgPop{0%{opacity:1;transform:translateY(0) scale(1.2)}30%{transform:translateY(-20px) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(.8)}}
+
+/* ── VS FLASH au début ── */
+.vs-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0}
+.vs-flash.show{animation:vsFlash .8s ease-out forwards}
+@keyframes vsFlash{0%{opacity:0;transform:scale(2)}30%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(.8)}}
+.vs-text{font-size:72px;font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,#ff6464,#ffd84d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(255,100,100,.5))}
 </style>
 </head>
 <body>
@@ -251,6 +284,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div id="sec-defier" class="section">
     <div class="card">
+      <!-- Barre d'énergie affichée dans l'onglet Défier -->
+      <div id="energy-bar-defier"></div>
       <div class="card-title">Rechercher un joueur</div>
       <div class="search-wrap">
         <input type="text" id="search-input" placeholder="Nom du joueur..." maxlength="30" oninput="searchDebounce()">
@@ -269,7 +304,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div id="sec-classement" class="section">
     <div class="card">
-      <div class="card-title">Top joueurs</div>
+      <div class="card-title">Classement</div>
       <div id="lb-content"><div class="loading">Chargement...</div></div>
     </div>
   </div>
@@ -295,8 +330,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="arena-hp-row">
       <div class="arena-hp-block" style="display:flex;gap:10px;align-items:center">
         <div style="position:relative;flex-shrink:0">
-          <div id="rhp-avatar-1" style="width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:2px solid rgba(29,158,117,.5)">🧑</div>
-          <img id="rhp-frame-1" src="" style="position:absolute;inset:-6px;width:54px;height:54px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
+          <div id="rhp-avatar-1" style="width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;border:2px solid rgba(29,158,117,.6);background-size:cover;background-position:center">🧑</div>
+          <img id="rhp-frame-1" src="" style="position:absolute;inset:-7px;width:62px;height:62px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
         </div>
         <div style="flex:1;min-width:0">
           <div class="arena-hp-name" id="rn1">Joueur</div>
@@ -307,8 +342,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div class="arena-vs">VS</div>
       <div class="arena-hp-block right" style="display:flex;gap:10px;align-items:center;flex-direction:row-reverse">
         <div style="position:relative;flex-shrink:0">
-          <div id="rhp-avatar-2" style="width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:2px solid rgba(216,90,48,.5)">🧑</div>
-          <img id="rhp-frame-2" src="" style="position:absolute;inset:-6px;width:54px;height:54px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
+          <div id="rhp-avatar-2" style="width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;border:2px solid rgba(216,90,48,.6);background-size:cover;background-position:center">🧑</div>
+          <img id="rhp-frame-2" src="" style="position:absolute;inset:-7px;width:62px;height:62px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
         </div>
         <div style="flex:1;min-width:0">
           <div class="arena-hp-name" id="rn2" style="text-align:right">Ennemi</div>
@@ -325,28 +360,55 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <canvas class="arena-canvas" id="rc2"></canvas>
       <div class="dmg-float" id="rdmg1"></div>
       <div class="dmg-float" id="rdmg2"></div>
+      <div class="vs-flash" id="vs-flash"><div class="vs-text">VS</div></div>
     </div>
 
-    <div class="battle-log" id="replay-log"></div>
-    <div class="result-banner" id="replay-result"></div>
-    <button style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:14px" onclick="closeReplay()">Fermer</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="battle-log" id="replay-log"></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="result-banner" id="replay-result"></div>
+        <button style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:14px;margin-top:auto" onclick="closeReplay()">Fermer le combat</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// CONFIG SPRITES — chemin à adapter selon ton serveur
-// ═══════════════════════════════════════════════
-const SPRITE_PATH = '/spritesheet/'; // <-- mets ici le dossier public de tes sprites
+// ══════════════════════════════════════════════════
+// SFX — Sons d'attaque par classe
+// ══════════════════════════════════════════════════
+const SFX_PATH = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/sfx/';
+const SFX_MAP = {
+  assassin: SFX_PATH + 'hit.mp3',
+  slayer:   SFX_PATH + 'hit.mp3',
+  soutien:  SFX_PATH + 'hitsoutient.wav',
+};
+const sfxCache = {};
+function playSfx(charClass) {
+  try {
+    const url = SFX_MAP[charClass] || SFX_MAP.assassin;
+    if (!sfxCache[url]) {
+      sfxCache[url] = new Audio(url);
+      sfxCache[url].volume = 0.45;
+    }
+    const snd = sfxCache[url].cloneNode();
+    snd.volume = 0.45;
+    snd.play().catch(() => {});
+  } catch(e) {}
+}
 
-// Chaque classe a ses propres fichiers et frame counts
+// ══════════════════════════════════════════════════
+// CONFIG SPRITES
+// ══════════════════════════════════════════════════
+const SPRITE_PATH = '/spritesheet/';
+
 const CLASS_SPRITES = {
   assassin: {
     idle:    { file:'assassin/Idle.png',     frames:6,  fw:128, fps:8  },
     run:     { file:'assassin/Run.png',      frames:12, fw:128, fps:14 },
     attack1: { file:'assassin/Attack_1.png', frames:4,  fw:128, fps:10 },
     attack2: { file:'assassin/Attack_2.png', frames:3,  fw:128, fps:10 },
-    hurt: { file:'assassin/Hurt.png',frames:4,fw:128, fps:10,offsetX:-50},// ajuste ici
+    hurt:    { file:'assassin/Hurt.png',     frames:4,  fw:128, fps:10 },
     dead:    { file:'assassin/Dead.png',     frames:4,  fw:128, fps:7  },
     walk:    { file:'assassin/Walk.png',     frames:12, fw:128, fps:12 },
   },
@@ -368,61 +430,49 @@ const CLASS_SPRITES = {
   },
 };
 
-// Fallback si classe inconnue
 const DEFAULT_CLASS = 'assassin';
-
-// Cache d'images partagé
 const IMG_CACHE = {};
 function getImg(src) {
-  if (!IMG_CACHE[src]) {
-    const img = new Image();
-    img.src = SPRITE_PATH + src;
-    IMG_CACHE[src] = img;
-  }
+  if (!IMG_CACHE[src]) { const img = new Image(); img.src = SPRITE_PATH + src; IMG_CACHE[src] = img; }
   return IMG_CACHE[src];
 }
-// Précharger toutes les classes au démarrage
-Object.values(CLASS_SPRITES).forEach(cls => {
-  Object.values(cls).forEach(a => getImg(a.file));
-});
+Object.values(CLASS_SPRITES).forEach(cls => Object.values(cls).forEach(a => getImg(a.file)));
 
-// ═══════════════════════════════════════════════
-// MOTEUR D'ANIMATION ARENA
-// ═══════════════════════════════════════════════
-// Principe : tout en pixels CSS réels du stage.
-// Le canvas interne = 128x128 (1 frame source).
-// On le scale via CSS width/height pour l'afficher plus grand.
-// f.x = position left CSS du canvas dans le stage (pixels réels).
-const SPRITE_PX = 160;   // hauteur affichée d'un sprite en px CSS
-const SPRITE_PX_W = Math.round(SPRITE_PX * (128 + 64) / 128); // largeur CSS du canvas = 240px
-const P1_HOME_PX = 20;   // départ P1
+// ══════════════════════════════════════════════════
+// MOTEUR D'ANIMATION ARENA — sprites plus grands
+// ══════════════════════════════════════════════════
+const SPRITE_PX   = 220;  // Plus grand (était 160)
+const SPRITE_PX_W = Math.round(SPRITE_PX * (128 + 64) / 128);
+const P1_HOME_PX  = 20;
 
 let arenaState = null;
 let arenaRaf   = null;
 let arenaLastT = 0;
+// On stocke les classes des fighters pour les SFX
+let f1Class = 'assassin';
+let f2Class = 'assassin';
 
 function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, rankInfo1, rankInfo2) {
   if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
   arenaState = null;
+  f1Class = cls1 || 'assassin';
+  f2Class = cls2 || 'assassin';
 
-  // Canvas interne : padding horizontal pour éviter la coupure des armes/bras
-  // Canvas 192×128 = 32px de marge de chaque côté, hauteur exacte de la frame
   const FRAME_W = 128, FRAME_H = 128, CANVAS_PAD = 32;
-  const CANVAS_W = FRAME_W + CANVAS_PAD * 2; // 192
-  const CANVAS_H = FRAME_H;                   // 128
+  const CANVAS_W = FRAME_W + CANVAS_PAD * 2;
+  const CANVAS_H = FRAME_H;
 
   ['rc1','rc2'].forEach(id => {
     const c = document.getElementById(id);
     if (!c) return;
-    c.width  = CANVAS_W; // 192
-    c.height = CANVAS_H; // 128
-    // CSS : on scale proportionnellement — hauteur = SPRITE_PX, largeur proportionnelle
+    c.width  = CANVAS_W;
+    c.height = CANVAS_H;
     c.style.height = SPRITE_PX + 'px';
-    c.style.width  = Math.round(SPRITE_PX * CANVAS_W / CANVAS_H) + 'px'; // 240px
+    c.style.width  = Math.round(SPRITE_PX * CANVAS_W / CANVAS_H) + 'px';
     c.style.imageRendering = 'pixelated';
   });
 
-  const sw = (document.getElementById('replay-stage')||{offsetWidth:640}).offsetWidth;
+  const sw = (document.getElementById('replay-stage')||{offsetWidth:700}).offsetWidth;
   const p2Home = sw - P1_HOME_PX - SPRITE_PX_W;
 
   arenaState = {
@@ -434,13 +484,18 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, r
   updateArenaHp(2, maxHp2, maxHp2);
   document.getElementById('rn1').textContent = name1;
   document.getElementById('rn2').textContent = name2;
-  // Afficher photo dans les HP bars
+
   ['1','2'].forEach(n => {
     const av = n==='1' ? avatar1 : avatar2;
     const ri = n==='1' ? rankInfo1 : rankInfo2;
     const el = document.getElementById('rhp-avatar-'+n);
     if (!el) return;
-    if (av) { el.style.backgroundImage = `url('${av}')`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.textContent=''; }
+    if (av) {
+      el.style.backgroundImage = `url('${av}')`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.textContent = '';
+    }
     const frameEl = document.getElementById('rhp-frame-'+n);
     if (frameEl && ri && RANK_FRAMES[ri.name]) frameEl.src = RANK_FRAMES[ri.name];
   });
@@ -466,31 +521,23 @@ function arenaLoop(ts) {
 
 function getAnimDef(f) {
   const sprites = CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS];
-  // hurt supprimé : fallback vers idle si anim inconnue
   return sprites[f.anim] || sprites.idle;
 }
 
 function tickAndDraw(id, f, dt) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-
   const ctx = canvas.getContext('2d');
   const a   = getAnimDef(f);
   const img = getImg(a.file);
-  if (!img.complete || !img.naturalWidth) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    return;
-  }
+  if (!img.complete || !img.naturalWidth) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
 
   f.tick += dt;
   const ms = 1000 / a.fps;
   if (f.tick >= ms) {
     f.tick -= ms;
-    if (f.freezeOnEnd && f.frame >= a.frames - 1) {
-      f.frame = a.frames - 1;
-    } else {
-      f.frame = (f.frame + 1) % a.frames;
-    }
+    if (f.freezeOnEnd && f.frame >= a.frames - 1) { f.frame = a.frames - 1; }
+    else { f.frame = (f.frame + 1) % a.frames; }
   }
 
   const FRAME_W = a.fw || 128;
@@ -500,20 +547,8 @@ function tickAndDraw(id, f, dt) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-
-  if (f.flip) {
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-  }
-
-  ctx.drawImage(
-    img,
-    f.frame * FRAME_W, 0,
-    FRAME_W, FRAME_H,
-    dx, dy,
-    FRAME_W, FRAME_H
-  );
-
+  if (f.flip) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(img, f.frame * FRAME_W, 0, FRAME_W, FRAME_H, dx, dy, FRAME_W, FRAME_H);
   ctx.restore();
 }
 
@@ -527,14 +562,11 @@ function placeCanvas(id, x) {
 function setAnim(fid, anim) {
   if (!arenaState) return;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-  // hurt supprimé : on utilise idle à la place
   if (anim === 'hurt') anim = 'idle';
   if (f.anim === anim && anim !== 'dead') return;
   f.anim = anim; f.frame = 0; f.tick = 0;
   f.freezeOnEnd = (anim === 'dead');
 }
-
-// Alias conservé pour compatibilité avec le reste du code
 function setFighterAnim(fid, anim) { setAnim(fid, anim); }
 
 function updateArenaHp(fid, hp, maxHp) {
@@ -551,14 +583,13 @@ function spawnDmg(fid, dmg, isCrit) {
   const el = document.getElementById('rdmg' + fid);
   if (!el || !arenaState) return;
   const f   = fid === 1 ? arenaState.f1 : arenaState.f2;
-  // Centre du sprite en pixels CSS dans le stage
-  const cx  = Math.round(f.x + SPRITE_PX_W / 2) - 26;
-  el.textContent = (isCrit ? 'CRIT ' : '') + '-' + dmg;
+  const cx  = Math.round(f.x + SPRITE_PX_W / 2) - 30;
+  el.textContent = (isCrit ? '💥 CRIT ' : '') + '-' + dmg;
   el.className   = 'dmg-float' + (isCrit ? ' crit' : '');
-  el.style.cssText = 'left:'+cx+'px;right:auto;bottom:80px;opacity:0;transform:translateY(0);transition:none';
+  el.style.cssText = 'left:'+cx+'px;right:auto;bottom:120px;opacity:0;transform:translateY(0);transition:none';
   void el.offsetWidth;
   el.classList.add('anim');
-  setTimeout(() => { el.className = 'dmg-float'; }, 800);
+  setTimeout(() => { el.className = 'dmg-float'; }, 950);
 }
 
 function flashHit(fid) {
@@ -566,21 +597,28 @@ function flashHit(fid) {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.transition = 'none';
-  el.style.filter = 'brightness(3) saturate(0)';
-  setTimeout(() => { el.style.transition = 'filter .25s ease'; el.style.filter = ''; }, 80);
+  el.style.filter = 'brightness(3.5) saturate(0)';
+  setTimeout(() => { el.style.transition = 'filter .3s ease'; el.style.filter = ''; }, 90);
 }
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Phase d'approche : les deux courent vers le centre et s'arrêtent face à face
+function showVsFlash() {
+  const el = document.getElementById('vs-flash');
+  if (!el) return;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 900);
+}
+
 function approachCenter(speed) {
   return new Promise(resolve => {
     if (!arenaState) { resolve(); return; }
     const f1 = arenaState.f1;
     const f2 = arenaState.f2;
-    const sw = (document.getElementById('replay-stage')||{offsetWidth:600}).offsetWidth;
+    const sw = (document.getElementById('replay-stage')||{offsetWidth:700}).offsetWidth;
     const cx = sw / 2;
-    // P1 s'arrête à gauche du centre, P2 à droite — gap de 6px entre les deux
     const GAP = 6;
     const t1  = Math.floor(cx - SPRITE_PX_W - GAP / 2);
     const t2  = Math.ceil(cx + GAP / 2);
@@ -588,7 +626,6 @@ function approachCenter(speed) {
     arenaState.f2FightX = t2;
 
     setAnim(1, 'run'); setAnim(2, 'run');
-    // Forcer reset même si déjà sur run
     f1.anim = 'run'; f1.frame = 0; f1.tick = 0; f1.freezeOnEnd = false;
     f2.anim = 'run'; f2.frame = 0; f2.tick = 0; f2.freezeOnEnd = false;
 
@@ -606,9 +643,9 @@ function approachCenter(speed) {
   });
 }
 
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // APP
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 const TOKEN_KEY = 'gacha_token_v1';
 const TOKEN = localStorage.getItem(TOKEN_KEY);
 if (!TOKEN) location.href = '/login.html';
@@ -623,23 +660,117 @@ const PVP_RANKS_DEF = [
   { name:'Diamant', min:1800, max:1999, color:'#c084ff' },
   { name:'Maître',  min:2000, max:9999, color:'#ff6464' },
 ];
+const RANK_ICONS = {
+  Bronze:  RANK_IMG_PATH + 'bronze.png',
+  Argent:  RANK_IMG_PATH + 'silver.png',
+  Or:      RANK_IMG_PATH + 'gold.png',
+  Platine: RANK_IMG_PATH + 'platine.png',
+  Diamant: RANK_IMG_PATH + 'diamant.png',
+  Maître:  RANK_IMG_PATH + 'master.png',
+};
+const RANK_FRAMES = {
+  Bronze:  RANK_IMG_PATH + 'cadrebronze.png',
+  Argent:  RANK_IMG_PATH + 'cadresilver.png',
+  Or:      RANK_IMG_PATH + 'cadregold.png',
+  Platine: RANK_IMG_PATH + 'cadreplatine.png',
+  Diamant: RANK_IMG_PATH + 'cadrediamant.png',
+  Maître:  RANK_IMG_PATH + 'cadremaster.png',
+};
+const CLASS_EMOJI = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
+
+// ══════════════════════════════════════════════════
+// SYSTÈME D'ÉNERGIE (100 max, -10 par combat, +10/h)
+// ══════════════════════════════════════════════════
+const ENERGY_MAX      = 100;
+const ENERGY_PER_DUEL = 10;
+const ENERGY_REGEN_MS = 60 * 60 * 1000; // 1h par tranche de 10
+
+let energyState = null;  // { current, lastRefill }
+let energyTimerInterval = null;
+
+function computeEnergy(state) {
+  if (!state) return ENERGY_MAX;
+  const elapsed = Date.now() - state.lastRefill;
+  const regenTranches = Math.floor(elapsed / ENERGY_REGEN_MS);
+  return Math.min(ENERGY_MAX, state.current + regenTranches * ENERGY_PER_DUEL);
+}
+
+function energyTimerText(state) {
+  if (!state) return '';
+  const current = computeEnergy(state);
+  if (current >= ENERGY_MAX) return 'Énergie pleine !';
+  const elapsed = Date.now() - state.lastRefill;
+  const nextRegen = ENERGY_REGEN_MS - (elapsed % ENERGY_REGEN_MS);
+  const m = Math.floor(nextRegen / 60000);
+  const s = Math.floor((nextRegen % 60000) / 1000);
+  return `+10 dans ${m}m${s.toString().padStart(2,'0')}s`;
+}
+
+function buildEnergyHtml(state, compact=false) {
+  const current = computeEnergy(state);
+  const pips = Math.round(current / ENERGY_PER_DUEL); // nombre de "pips" pleins sur 10
+  const totalPips = ENERGY_MAX / ENERGY_PER_DUEL;
+
+  let pipsHtml = '';
+  for (let i = 0; i < totalPips; i++) {
+    pipsHtml += `<div class="energy-pip${i < pips ? ' filled' : ''}"></div>`;
+  }
+  const timer = energyTimerText(state);
+
+  return `<div class="energy-bar-wrap">
+    <div class="energy-icon">⚡</div>
+    <div class="energy-info">
+      <div class="energy-label">Énergie PVP</div>
+      <div class="energy-pips">${pipsHtml}</div>
+      <div class="energy-timer">${timer}</div>
+    </div>
+    <div class="energy-cost"><span style="font-size:22px;font-weight:900;color:${current>=ENERGY_PER_DUEL?'#ffd84d':'#ff4444'}">${current}</span><span style="opacity:.5;font-size:11px"> / ${ENERGY_MAX}</span><br><span style="opacity:.5;font-size:10px">−${ENERGY_PER_DUEL} / duel</span></div>
+  </div>`;
+}
+
+async function loadEnergy() {
+  try {
+    const d = await api('/api/pvp/energy');
+    energyState = { current: d.energy, lastRefill: d.lastRefill || Date.now() };
+  } catch(e) {
+    // fallback local
+    const saved = localStorage.getItem('pvp_energy_state');
+    if (saved) { try { energyState = JSON.parse(saved); } catch {} }
+    else energyState = { current: ENERGY_MAX, lastRefill: Date.now() };
+  }
+  refreshEnergyUI();
+  clearInterval(energyTimerInterval);
+  energyTimerInterval = setInterval(refreshEnergyUI, 5000);
+}
+
+function refreshEnergyUI() {
+  const el = document.getElementById('energy-bar-defier');
+  if (el) el.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
+  // Aussi dans le profil si présent
+  const elP = document.getElementById('energy-bar-profil');
+  if (elP) elP.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
+}
+
+function hasEnoughEnergy() {
+  if (!energyState) return true;
+  return computeEnergy(energyState) >= ENERGY_PER_DUEL;
+}
+
+// ══════════════════════════════════════════════════
+
 function getPvpRankInfo(pts) {
   return PVP_RANKS_DEF.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS_DEF[0];
 }
+
 function buildRankProgressHtml(pts) {
   const rankInfo = getPvpRankInfo(pts);
   const rankIdx  = PVP_RANKS_DEF.indexOf(rankInfo);
   const isLast   = rankIdx === PVP_RANKS_DEF.length - 1;
-  const pctDone  = PVP_RANKS_DEF.slice(0, rankIdx).length / (PVP_RANKS_DEF.length - 1) * 100;
-
-  // Barre dans le rang actuel
   const rangeSize  = isLast ? 1000 : (rankInfo.max - rankInfo.min + 1);
   const inRange    = Math.max(0, pts - rankInfo.min);
   const pctInRank  = isLast ? Math.min(100, Math.round(inRange / rangeSize * 100)) : Math.round(inRange / rangeSize * 100);
   const nextRank   = PVP_RANKS_DEF[rankIdx + 1];
   const ptsToNext  = isLast ? null : (rankInfo.max + 1 - pts);
-
-  // Steps
   const stepsHtml = PVP_RANKS_DEF.map((r, i) => {
     const state = i < rankIdx ? 'done' : i === rankIdx ? 'active' : '';
     const icon  = RANK_ICONS[r.name] ? `<img src="${RANK_ICONS[r.name]}" alt="${r.name}">` : '';
@@ -648,11 +779,8 @@ function buildRankProgressHtml(pts) {
       <div class="pvp-rank-step-name">${r.name}</div>
     </div>`;
   }).join('');
-
-  // Calcul largeur de la ligne de remplissage (position du rang actuel + % dans le rang)
-  const stepPct = rankIdx / (PVP_RANKS_DEF.length - 1) * 90 + 5; // 5% offset de chaque côté
+  const stepPct = rankIdx / (PVP_RANKS_DEF.length - 1) * 90 + 5;
   const linePct = stepPct + pctInRank * (90 / (PVP_RANKS_DEF.length - 1)) / 100;
-
   const barLabel = isLast ? 'Rang max !' : (ptsToNext + ' pts pour ' + nextRank.name);
   const maxLabel = isLast ? '∞' : fmtPts(rankInfo.max + 1) + ' pts';
   return '<div class="pvp-rank-progress">'
@@ -670,24 +798,7 @@ function buildRankProgressHtml(pts) {
     + '<div style="font-size:11px;opacity:.5;min-width:54px;text-align:right">' + maxLabel + '</div>'
     + '</div>'
     + '</div>';
-} // fin buildRankProgressHtml
-const RANK_ICONS = {
-  Bronze:  RANK_IMG_PATH + 'bronze.png',
-  Argent:  RANK_IMG_PATH + 'silver.png',
-  Or:      RANK_IMG_PATH + 'gold.png',
-  Platine: RANK_IMG_PATH + 'platine.png',
-  Diamant: RANK_IMG_PATH + 'diamant.png',
-  Maître:  RANK_IMG_PATH + 'master.png',
-};
-const RANK_FRAMES = {
-  Bronze:  RANK_IMG_PATH + 'cadrebronze.png',
-  Argent:  RANK_IMG_PATH + 'cadresilver.png',
-  Or:      RANK_IMG_PATH + 'cadregold.png',
-  Platine: RANK_IMG_PATH + 'cadreplatine.png',
-  Diamant: RANK_IMG_PATH + 'cadrediamant.png',
-  Maître:  RANK_IMG_PATH + 'cadremaster.png',
-};
-const CLASS_EMOJI  = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
+}
 
 let myData = null;
 let searchTimer = null;
@@ -722,7 +833,7 @@ function showTab(name, ev) {
   document.getElementById('sec-'+name).classList.add('active');
   if (ev && ev.target) ev.target.classList.add('active');
   if (name==='profil') loadProfil();
-  if (name==='defier') document.getElementById('search-input').focus();
+  if (name==='defier') { document.getElementById('search-input').focus(); refreshEnergyUI(); }
   if (name==='defis') loadDefis();
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
@@ -776,17 +887,14 @@ function renderProfilPvp(f) {
   const rankName = f.rankInfo?.name || 'Bronze';
   const rankCol  = RANK_COLORS[rankName] || '#aaa';
 
-  // Photo de profil : utiliser l'avatar de l'API ou fallback emoji
   const photoHtml = f.avatar
     ? `<img class="photo" src="${esc(f.avatar)}" onerror="this.src=''" alt="">`
     : `<div class="photo" style="display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--bg3)">${cls?.icon||'🧑'}</div>`;
-  const frameHtml = RANK_FRAMES[rankName]
-    ? `<img class="frame" src="${RANK_FRAMES[rankName]}" alt="">`
-    : '';
+  const frameHtml = RANK_FRAMES[rankName] ? `<img class="frame" src="${RANK_FRAMES[rankName]}" alt="">` : '';
 
   document.getElementById('profil-content').innerHTML = `
+    <div id="energy-bar-profil" style="margin-bottom:14px"></div>
     <div class="pvp-profil-wrap" style="--pvp-cls-color:${clsColor}">
-      <!-- COL GAUCHE : photo + infos + stats mini -->
       <div class="pvp-col-left">
         <div class="pvp-user-photo-wrap">${photoHtml}${frameHtml}</div>
         <div style="text-align:center">
@@ -800,21 +908,15 @@ function renderProfilPvp(f) {
           <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#c084ff">${f.crit}%</div><div class="pvp-stat-mini-lbl">Crit</div></div>
           <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#4da6ff">${f.dodge}%</div><div class="pvp-stat-mini-lbl">Esquive</div></div>
         </div>
-
       </div>
-
-      <!-- COL CENTRE : personnage + slots latéraux intégrés -->
       <div class="pvp-col-center">
         <div class="pvp-char-img-wrap">
           ${imgSrc
             ? `<img class="pvp-char-img" src="${esc(imgSrc)}" alt="${cls?.label||''}" onerror="this.outerHTML='<div class=\'pvp-char-ph\'>${cls?.icon||'🧬'}</div>'">`
-            : `<div class="pvp-char-ph">${cls?.icon||'🧬'}</div>`
-          }
+            : `<div class="pvp-char-ph">${cls?.icon||'🧬'}</div>`}
         </div>
         ${cls ? `<div class="pvp-class-badge" style="color:${clsColor};border-color:${clsColor};background:${clsColor}18">${cls.icon} ${esc(f.name)} · ${cls.label}</div>` : ''}
       </div>
-
-      <!-- COL DROITE : slots équipement -->
       <div class="pvp-col-right">
         ${renderPvpSlot('weapon', equipped)}
         ${renderPvpSlot('head',   equipped)}
@@ -829,7 +931,10 @@ function renderProfilPvp(f) {
       <div class="pvp-rank-showcase-label" style="color:${rankCol}">${rankName}</div>
       <div class="pvp-rank-showcase-pts">${fmtPts(f.rank)} pts</div>
     </div>
-  ${buildRankProgressHtml(f.rank)}`;
+    ${buildRankProgressHtml(f.rank)}`;
+
+  // Injecter l'énergie dans le profil
+  refreshEnergyUI();
 }
 
 function renderPvpSlot(slot, equipped) {
@@ -870,7 +975,6 @@ function renderPvpSlot(slot, equipped) {
 async function pvpOpenEquip(slot) {
   const inv = (_pvpEquipData?.inventory || []).filter(i => i.slot === slot);
   if (!inv.length) { showAlert(`Aucun équipement "${SLOT_DEF[slot]?.label}" dans l'inventaire.`, 'error'); return; }
-  // Afficher modal inventaire
   const equippedIds = new Set(Object.values(_pvpEquipData?.equipped || {}).map(e=>e?.id).filter(Boolean));
   const html = inv.map(item => {
     const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
@@ -892,9 +996,7 @@ async function pvpOpenEquip(slot) {
   document.getElementById('pvp-inv-overlay').classList.add('show');
 }
 
-function pvpCloseInv() {
-  document.getElementById('pvp-inv-overlay').classList.remove('show');
-}
+function pvpCloseInv() { document.getElementById('pvp-inv-overlay').classList.remove('show'); }
 
 async function pvpEquip(id, slot) {
   pvpCloseInv();
@@ -918,10 +1020,7 @@ async function pvpUnequip(id) {
 }
 
 // ── RECHERCHE ──
-function searchDebounce() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(searchPlayer, 400);
-}
+function searchDebounce() { clearTimeout(searchTimer); searchTimer = setTimeout(searchPlayer, 400); }
 
 async function searchPlayer() {
   const q = document.getElementById('search-input').value.trim();
@@ -931,26 +1030,34 @@ async function searchPlayer() {
   try {
     const d = await api('/api/pvp/search?name='+encodeURIComponent(q));
     if (!d.users.length) { el.innerHTML = '<div class="empty">Aucun joueur trouvé</div>'; return; }
-    el.innerHTML = d.users.map(u => `
-      <div class="user-row">
-        <div class="user-row-avatar" style="${u.avatar?'background-image:url('+JSON.stringify(u.avatar)+');background-size:cover;background-color:transparent':''}">
-          ${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}
-        </div>
+    const noEnergy = !hasEnoughEnergy();
+    el.innerHTML = d.users.map(u => {
+      const avatarStyle = u.avatar
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-color:transparent`
+        : '';
+      return `<div class="user-row">
+        <div class="user-row-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
         <div class="user-row-info">
           <div class="user-row-name">${esc(u.name)}</div>
           <div class="user-row-rank" style="color:${RANK_COLORS[u.rankInfo?.name]||'#aaa'}">${u.rankInfo?.icon||''} ${esc(u.rankInfo?.name||'')} · ${fmtPts(u.pts)} pts</div>
         </div>
-        <button class="challenge-btn" onclick="sendChallenge(${u.id},'${esc(u.name)}',this)">⚔️ Défier</button>
-      </div>`).join('');
+        <button class="challenge-btn" onclick="sendChallenge(${u.id},'${esc(u.name)}',this)" ${noEnergy?'disabled title="Pas assez d\'énergie"':''}>⚔️ Défier</button>
+      </div>`;
+    }).join('');
+    if (noEnergy) {
+      el.insertAdjacentHTML('afterbegin', `<div style="text-align:center;padding:10px;color:#ff8888;font-size:12px;font-weight:700">⚡ Tu n'as pas assez d'énergie pour lancer un duel (il te faut ${ENERGY_PER_DUEL})</div>`);
+    }
   } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
 }
 
 async function sendChallenge(opponentId, name, btn) {
+  if (!hasEnoughEnergy()) { showAlert(`⚡ Énergie insuffisante — il te faut ${ENERGY_PER_DUEL} points.`, 'error'); return; }
   btn.disabled = true; btn.textContent = '...';
   try {
     await api('/api/pvp/challenge', { method:'POST', body: JSON.stringify({ opponentId }) });
     btn.textContent = '✅ Envoyé';
     showAlert(`Défi envoyé à ${name} !`, 'success');
+    await loadEnergy();
   } catch(e) {
     btn.disabled = false; btn.textContent = '⚔️ Défier';
     showAlert(e.message, 'error');
@@ -965,11 +1072,12 @@ async function loadDefis() {
     const count = d.challenges.length;
     document.getElementById('defis-count').textContent = count > 0 ? `(${count})` : '';
     if (!count) { el.innerHTML = '<div class="empty">Aucun défi en attente</div>'; return; }
-    el.innerHTML = d.challenges.map(c => `
-      <div class="challenge-card">
-        <div class="user-row-avatar" style="${c.avatar?'background-image:url('+JSON.stringify(c.avatar)+');background-size:cover;background-color:transparent':''}">
-          ${c.avatar?'':'⚔️'}
-        </div>
+    el.innerHTML = d.challenges.map(c => {
+      const avatarStyle = c.avatar
+        ? `background-image:url(${JSON.stringify(c.avatar)});background-size:cover;background-color:transparent`
+        : '';
+      return `<div class="challenge-card">
+        <div class="user-row-avatar" style="${avatarStyle}">${c.avatar?'':'⚔️'}</div>
         <div class="challenge-card-info">
           <div class="challenge-card-name">${esc(c.challengerName)}</div>
           <div class="challenge-card-sub" style="color:${RANK_COLORS[c.rankInfo?.name]||'#aaa'}">
@@ -981,7 +1089,8 @@ async function loadDefis() {
           <button class="btn-accept" onclick="acceptChallenge(${c.battleId},this)">⚔️ Accepter</button>
           <button class="btn-decline" onclick="declineChallenge(${c.battleId},this)">Refuser</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
 }
 
@@ -990,7 +1099,7 @@ async function acceptChallenge(battleId, btn) {
   try {
     const d = await api('/api/pvp/accept', { method:'POST', body: JSON.stringify({ battleId }) });
     await loadDefis();
-    // d.fighters.f1 et f2 contiennent charClass depuis buildPvpFighter()
+    await loadEnergy();
     openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
   } catch(e) {
     btn.disabled = false; btn.textContent = '⚔️ Accepter';
@@ -1006,22 +1115,67 @@ async function declineChallenge(battleId, btn) {
   } catch(e) { btn.disabled = false; showAlert(e.message, 'error'); }
 }
 
-// ── CLASSEMENT ──
+// ── CLASSEMENT avec PODIUM ──
 async function loadClassement() {
   const el = document.getElementById('lb-content');
   try {
     const d = await api('/api/pvp/leaderboard');
     if (!d.top.length) { el.innerHTML = '<div class="empty">Aucun classement disponible</div>'; return; }
-    el.innerHTML = d.top.map(u => {
+
+    const top3 = d.top.slice(0, 3);
+    const rest  = d.top.slice(3);
+
+    // Construire le podium (ordre : 2e, 1er, 3e pour l'effet visuel)
+    const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
+    const podiumClasses = top3[1] ? ['podium-2','podium-1','podium-3'] : ['podium-1','podium-3'];
+
+    function podiumAvatarHtml(u, cls) {
+      if (!u) return '';
+      const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
+      const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
+      const crowns  = { 1:'👑', 2:'🥈', 3:'🥉' };
+      const avatarStyle = u.avatar
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;font-size:0`
+        : '';
+      const rankIcon = RANK_ICONS[u.rankInfo?.name]
+        ? `<img class="podium-rank-frame" src="${RANK_ICONS[u.rankInfo.name]}" style="width:84px;height:84px;inset:-10px;pointer-events:none" onerror="this.style.display='none'">`
+        : '';
+      return `<div class="podium-col ${cls}">
+        <div class="podium-avatar-wrap">
+          <div style="position:relative;width:64px;height:64px">
+            <div class="podium-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
+            ${rankIcon}
+          </div>
+          <div class="podium-crown" style="color:${col}">${crowns[u.rank]||''}</div>
+        </div>
+        <div class="podium-name">${esc(u.name)}</div>
+        <div class="podium-pts" style="color:${col}">${fmtPts(u.pts)} pts</div>
+        <div class="podium-rank-badge" style="color:${col}">
+          ${RANK_ICONS[u.rankInfo?.name]?`<img src="${RANK_ICONS[u.rankInfo.name]}" style="width:14px;height:14px;object-fit:contain">`:''}
+          ${esc(u.rankInfo?.name||'')}
+        </div>
+        <div class="podium-block">${medals[u.rank]||u.rank}</div>
+      </div>`;
+    }
+
+    let podiumHtml = '<div class="podium-wrap">';
+    podiumOrder.forEach((u, i) => {
+      podiumHtml += podiumAvatarHtml(u, podiumClasses[i]);
+    });
+    podiumHtml += '</div>';
+
+    // Rows pour le reste
+    let rowsHtml = rest.map(u => {
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
       const isMe = myData && u.name === myData.name;
+      const avatarStyle = u.avatar
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent`
+        : '';
       return `<div class="lb-row ${isMe?'me':''}">
-        <div class="lb-rank-num" style="color:${u.rank<=3?'#ffd84d':''}">${u.rank<=3?['🥇','🥈','🥉'][u.rank-1]:u.rank}</div>
-        <div class="lb-avatar" style="${u.avatar?'background-image:url('+JSON.stringify(u.avatar)+');background-size:cover;background-color:transparent':''}">
-          ${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}
-        </div>
+        <div class="lb-rank-num">${u.rank}</div>
+        <div class="lb-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
         <div style="flex:1">
-          <div class="lb-name">${esc(u.name)}</div>
+          <div class="lb-name">${esc(u.name)}${isMe?' <span style="font-size:10px;opacity:.5">(toi)</span>':''}</div>
           <div class="lb-stats">${u.wins}V ${u.losses}D</div>
         </div>
         <div>
@@ -1033,6 +1187,21 @@ async function loadClassement() {
         </div>
       </div>`;
     }).join('');
+
+    // Ma position si pas dans les 50
+    if (d.me && (!myData || !d.top.find(u => myData && u.name === myData.name))) {
+      const col = RANK_COLORS[d.me.rankInfo?.name] || '#aaa';
+      rowsHtml += `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="lb-row me">
+          <div class="lb-rank-num">—</div>
+          <div class="lb-avatar">${CLASS_EMOJI[myData?.charClass]||'🧑'}</div>
+          <div style="flex:1"><div class="lb-name">${esc(myData?.name||'Toi')} <span style="font-size:10px;opacity:.5">(toi)</span></div><div class="lb-stats">${d.me.wins}V ${d.me.losses}D</div></div>
+          <div><div class="lb-pts" style="color:${col}">${fmtPts(d.me.pts)}</div></div>
+        </div>
+      </div>`;
+    }
+
+    el.innerHTML = podiumHtml + (rest.length ? `<div style="margin-top:4px">${rowsHtml}</div>` : rowsHtml);
   } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
 }
 
@@ -1058,7 +1227,6 @@ async function loadReplay(battleId) {
   try {
     const d = await api('/api/pvp/result/'+battleId);
     const b = d.battle;
-    // challengerClass / opponentClass sont renvoyés par le server si disponibles
     const f1 = { name: b.challengerName, charClass: b.challengerClass || guessClassFromLog(b.log, b.challengerName) || 'assassin', hp: getMaxHp(b.log, b.challengerName), avatar: b.challengerAvatar||null, rankInfo: b.challengerRankInfo||null };
     const f2 = { name: b.opponentName,   charClass: b.opponentClass   || guessClassFromLog(b.log, b.opponentName)   || 'assassin', hp: getMaxHp(b.log, b.opponentName),   avatar: b.opponentAvatar||null,   rankInfo: b.opponentRankInfo||null };
     openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
@@ -1066,23 +1234,17 @@ async function loadReplay(battleId) {
 }
 
 function guessClassFromLog(log, name) {
-  // Si le log contient une propriété charClass (ajoutée par une version future du serveur)
-  for (const ev of (log||[])) {
-    if (ev.charClass && ev.name === name) return ev.charClass;
-  }
+  for (const ev of (log||[])) { if (ev.charClass && ev.name === name) return ev.charClass; }
   return null;
 }
-
 function getMaxHp(log, name) {
-  for (const e of log) {
-    if ((e.type==='hit'||e.type==='crit') && e.defender===name) return e.hpMax;
-  }
+  for (const e of log) { if ((e.type==='hit'||e.type==='crit') && e.defender===name) return e.hpMax; }
   return 300;
 }
 
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 // REPLAY ANIMÉ
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function openReplay(log, f1, f2, winnerId, rankChange) {
   if (replayBusy) return;
   replayBusy = true;
@@ -1093,7 +1255,6 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
   document.getElementById('replay-result').style.display = 'none';
   modal.classList.add('show');
 
-  // Attendre que le modal soit visible pour mesurer le stage
   setTimeout(() => {
     initArena(
       f1.charClass, f2.charClass,
@@ -1124,13 +1285,16 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
 
   await wait(300);
 
-  // ── PHASE 1 : approche unique ──
-  // Les deux courent l'un vers l'autre, s'arrêtent face à face au centre, ne bougent plus jamais.
-  await approachCenter(380);
-  setAnim(1, 'idle'); setAnim(2, 'idle');
-  await wait(350);
+  // Flash VS avant l'approche
+  showVsFlash();
+  await wait(600);
 
-  // ── PHASE 2 : combat sur place ──
+  // Phase 1 : approche
+  await approachCenter(420);
+  setAnim(1, 'idle'); setAnim(2, 'idle');
+  await wait(500);
+
+  // Phase 2 : combat
   for (const ev of log) {
     if (!arenaState) break;
 
@@ -1140,8 +1304,8 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
     }
 
     if (ev.type === 'dodge') {
-      addLog((ev.defender === f1.name ? f1.name : f2.name) + ' esquive !');
-      await wait(280);
+      addLog('💨 ' + (ev.defender === f1.name ? f1.name : f2.name) + ' esquive !', 'dodge');
+      await wait(350);
       continue;
     }
 
@@ -1149,26 +1313,26 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
       const isF1att = ev.attacker === f1.name;
       const attId   = isF1att ? 1 : 2;
       const defId   = isF1att ? 2 : 1;
+      const attClass = isF1att ? f1Class : f2Class;
 
-      // Attaquant : animation d'attaque — jamais de déplacement
       setAnim(attId, ev.type === 'crit' ? 'attack2' : 'attack1');
-      await wait(200);
+      await wait(250);
 
-      // Défenseur : flash de dégâts (pas d'anim hurt) + chiffre flottant
+      // SFX attaque
+      playSfx(attClass);
+
       flashHit(defId);
       spawnDmg(defId, ev.dmg, ev.type === 'crit');
 
-      // Mise à jour HP bars
       if (isF1att) { updateArenaHp(2, ev.hpLeft, ev.hpMax); }
       else          { updateArenaHp(1, ev.hpLeft, ev.hpMax); }
 
-      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type==='crit'?' (CRITIQUE!)':''),(ev.type==='crit'?'crit':''));
-      await wait(380);
+      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type==='crit' ? ' ⚡ CRITIQUE!' : ''), ev.type==='crit'?'crit':'');
+      await wait(500);
 
-      // Retour idle (sauf si déjà dead)
-      if (arenaState.f1.anim !== 'dead') setAnim(1, 'idle');
-      if (arenaState.f2.anim !== 'dead') setAnim(2, 'idle');
-      await wait(100);
+      if (arenaState && arenaState.f1.anim !== 'dead') setAnim(1, 'idle');
+      if (arenaState && arenaState.f2.anim !== 'dead') setAnim(2, 'idle');
+      await wait(150);
     }
 
     if (ev.type === 'end') {
@@ -1178,7 +1342,7 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
       );
       const loserId = ev.winner === f1.name ? 2 : 1;
       setAnim(loserId, 'dead');
-      await wait(900);
+      await wait(1100);
 
       addLog(ev.winner + ' remporte le combat !', isMyWin ? 'win' : 'lose');
       const banner = document.getElementById('replay-result');
@@ -1194,6 +1358,7 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
 
 // ── INIT ──
 loadProfil();
+loadEnergy();
 (async () => {
   try {
     const d = await api('/api/pvp/pending');

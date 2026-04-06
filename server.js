@@ -905,6 +905,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_rank INTEGER NOT NULL DEFAULT 1000`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins  INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_losses INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy INTEGER DEFAULT 100`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy_last_refill BIGINT DEFAULT 0`);
+  await pool.query(`UPDATE users SET pvp_energy=100, pvp_energy_last_refill=${Date.now()} WHERE pvp_energy IS NULL OR pvp_energy_last_refill=0`);
   await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS player_materials (
@@ -6224,6 +6227,51 @@ app.post("/api/clan/dissolve", auth, async (req, res) => {
 
 
 // =========================
+// PVP — ÉNERGIE
+// =========================
+
+const PVP_ENERGY_MAX      = 100;
+const PVP_ENERGY_PER_DUEL = 10;
+const PVP_ENERGY_REGEN_MS = 60 * 60 * 1000; // +10 par heure
+
+async function getPvpEnergy(userId) {
+  const r = await pool.query(
+    `SELECT pvp_energy, pvp_energy_last_refill FROM users WHERE id=$1`, [userId]
+  );
+  if (!r.rows.length) return { energy: PVP_ENERGY_MAX, lastRefill: Date.now() };
+  let energy     = Number(r.rows[0].pvp_energy ?? PVP_ENERGY_MAX);
+  let lastRefill = Number(r.rows[0].pvp_energy_last_refill ?? Date.now());
+  const tranches = Math.floor((Date.now() - lastRefill) / PVP_ENERGY_REGEN_MS);
+  if (tranches > 0) {
+    energy = Math.min(PVP_ENERGY_MAX, energy + tranches * PVP_ENERGY_PER_DUEL);
+    lastRefill += tranches * PVP_ENERGY_REGEN_MS;
+    await pool.query(
+      `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`,
+      [energy, lastRefill, userId]
+    );
+  }
+  return { energy, lastRefill };
+}
+
+async function consumePvpEnergy(userId) {
+  const { energy, lastRefill } = await getPvpEnergy(userId);
+  if (energy < PVP_ENERGY_PER_DUEL)
+    throw new Error(`⚡ Énergie insuffisante — il te faut ${PVP_ENERGY_PER_DUEL} points (tu en as ${energy}).`);
+  await pool.query(
+    `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`,
+    [energy - PVP_ENERGY_PER_DUEL, lastRefill, userId]
+  );
+}
+
+// GET /api/pvp/energy
+app.get("/api/pvp/energy", auth, async (req, res) => {
+  try {
+    const { energy, lastRefill } = await getPvpEnergy(req.user.id);
+    res.json({ energy, lastRefill, max: PVP_ENERGY_MAX, costPerDuel: PVP_ENERGY_PER_DUEL });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// =========================
 // PVP — SYSTÈME DE RANG
 // =========================
 
@@ -6401,6 +6449,9 @@ app.post("/api/pvp/challenge", auth, async (req, res) => {
   const opponentId = Number(req.body?.opponentId || 0) | 0;
   if (!opponentId || opponentId === req.user.id) return res.status(400).json({ error: "Cible invalide" });
   try {
+    // Vérifier + consommer l'énergie du challenger
+    await consumePvpEnergy(req.user.id);
+
     // Vérifier pas déjà un défi en attente entre ces deux joueurs
     const pending = await pool.query(
       `SELECT id FROM pvp_battles WHERE status='pending' AND ((challenger_id=$1 AND opponent_id=$2) OR (challenger_id=$2 AND opponent_id=$1))`,
