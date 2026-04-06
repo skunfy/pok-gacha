@@ -6530,8 +6530,8 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
     const r = q.rows[0];
     // Récupérer la classe des deux joueurs pour le replay animé
     const [c1char, c2char] = await Promise.all([
-      pool.query('SELECT char_class FROM characters WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
-      pool.query('SELECT char_class FROM characters WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
+      pool.query('SELECT char_class FROM player_character WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
+      pool.query('SELECT char_class FROM player_character WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
     ]);
     res.json({ battle: {
       id: r.id,

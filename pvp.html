@@ -103,28 +103,53 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .empty{text-align:center;padding:24px;opacity:.35;font-size:13px}
 
 
+
+/* ── BARRE PROGRESSION RANGS ── */
+.pvp-rank-progress{margin-top:16px;padding:16px 18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px}
+.pvp-rank-progress-title{font-size:11px;font-weight:900;opacity:.4;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+.pvp-rank-steps{display:flex;align-items:center;gap:0;position:relative;margin-bottom:10px}
+.pvp-rank-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1}
+.pvp-rank-step-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:2px solid rgba(255,255,255,.08);transition:.2s;overflow:hidden}
+.pvp-rank-step-icon img{width:28px;height:28px;object-fit:contain;opacity:.4;transition:.2s}
+.pvp-rank-step.active .pvp-rank-step-icon{border-color:currentColor;background:rgba(255,255,255,.06);box-shadow:0 0 12px currentColor}
+.pvp-rank-step.active .pvp-rank-step-icon img{opacity:1}
+.pvp-rank-step.done .pvp-rank-step-icon img{opacity:.7}
+.pvp-rank-step.done .pvp-rank-step-icon{border-color:rgba(255,255,255,.25)}
+.pvp-rank-step-name{font-size:9px;font-weight:900;margin-top:4px;opacity:.4;letter-spacing:.03em}
+.pvp-rank-step.active .pvp-rank-step-name{opacity:1}
+.pvp-rank-step.done .pvp-rank-step-name{opacity:.6}
+/* Ligne entre les steps */
+.pvp-rank-steps::before{content:'';position:absolute;top:18px;left:5%;right:5%;height:3px;background:rgba(255,255,255,.06);border-radius:999px;z-index:0}
+.pvp-rank-line-fill{position:absolute;top:18px;left:5%;height:3px;background:linear-gradient(90deg,#cd7f32,currentColor);border-radius:999px;z-index:0;transition:width .4s ease}
+/* Barre pts dans le rang actuel */
+.pvp-rank-bar-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
+.pvp-rank-bar-bg{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.pvp-rank-bar-fill{height:100%;border-radius:999px;transition:width .5s ease}
+.pvp-rank-bar-label{font-size:11px;font-weight:900;white-space:nowrap;min-width:80px;text-align:right}
+.pvp-rank-bar-pts{font-size:10px;opacity:.4;margin-top:3px;text-align:center}
+
 /* ── PROFIL PVP ENRICHI ── */
 .pvp-profil-wrap{display:grid;grid-template-columns:1fr auto 1fr;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:visible;gap:0}
-.pvp-col-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 12px;border-right:1px solid rgba(255,255,255,.06)}
-.pvp-col-center{display:flex;flex-direction:column;align-items:center;width:200px;background:rgba(0,0,0,.18);border-radius:0}
-.pvp-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 12px;border-left:1px solid rgba(255,255,255,.06)}
-.pvp-char-img-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:8px 0;min-height:200px}
-.pvp-char-img{width:200px;height:280px;object-fit:contain;filter:drop-shadow(0 0 24px var(--pvp-cls-color,#7f5cff))}
-.pvp-char-ph{width:200px;height:280px;display:flex;align-items:center;justify-content:center;font-size:70px;opacity:.3}
+.pvp-col-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 18px;border-right:1px solid rgba(255,255,255,.06)}
+.pvp-col-center{display:flex;flex-direction:column;align-items:center;width:260px;background:rgba(0,0,0,.18);border-radius:0}
+.pvp-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 18px;border-left:1px solid rgba(255,255,255,.06)}
+.pvp-char-img-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:8px 0;min-height:260px}
+.pvp-char-img{width:250px;height:340px;object-fit:contain;filter:drop-shadow(0 0 24px var(--pvp-cls-color,#7f5cff))}
+.pvp-char-ph{width:250px;height:340px;display:flex;align-items:center;justify-content:center;font-size:70px;opacity:.3}
 .pvp-class-badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid;margin:0 0 10px}
 .pvp-rank-big{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
-.pvp-rank-big img{width:68px;height:68px;object-fit:contain}
-.pvp-rank-big-label{font-size:12px;font-weight:900;margin-top:2px}
-.pvp-rank-big-pts{font-size:11px;opacity:.45}
-.pvp-user-photo-wrap{position:relative;width:76px;height:76px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.pvp-user-photo-wrap .photo{width:60px;height:60px;border-radius:50%;object-fit:cover;background:var(--bg3);display:block}
-.pvp-user-photo-wrap .frame{position:absolute;inset:-8px;width:92px;height:92px;object-fit:contain;pointer-events:none}
+.pvp-rank-big img{width:84px;height:84px;object-fit:contain}
+.pvp-rank-big-label{font-size:14px;font-weight:900;margin-top:4px}
+.pvp-rank-big-pts{font-size:12px;opacity:.5}
+.pvp-user-photo-wrap{position:relative;width:96px;height:96px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.pvp-user-photo-wrap .photo{width:76px;height:76px;border-radius:14px;object-fit:cover;background:var(--bg3);display:block}
+.pvp-user-photo-wrap .frame{position:absolute;inset:-10px;width:116px;height:116px;object-fit:contain;pointer-events:none}
 .pvp-stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
 .pvp-stat-mini{background:var(--bg3);border-radius:8px;padding:7px;text-align:center;border:1px solid var(--border)}
-.pvp-stat-mini-val{font-size:16px;font-weight:900;margin-bottom:1px}
+.pvp-stat-mini-val{font-size:20px;font-weight:900;margin-bottom:2px}
 .pvp-stat-mini-lbl{font-size:8px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
 /* Équipement slots PVP */
-.eq-slot{width:72px;height:72px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.18);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;overflow:visible;flex-shrink:0}
+.eq-slot{width:84px;height:84px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.18);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;overflow:visible;flex-shrink:0}
 .eq-slot:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.6);transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,92,255,.25)}
 .eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);padding:0}
 .eq-slot.filled.legendary{border-color:rgba(255,184,0,.6);background:rgba(255,184,0,.07);box-shadow:0 0 12px rgba(255,184,0,.25)}
@@ -584,7 +609,63 @@ const TOKEN = localStorage.getItem(TOKEN_KEY);
 if (!TOKEN) location.href = '/login.html';
 
 const RANK_COLORS = { Bronze:'#cd7f32', Argent:'#aaa', Or:'#ffd84d', Platine:'#4da6ff', Diamant:'#c084ff', Maître:'#ff6464' };
-const RANK_IMG_PATH = '/ranking/'; // chemin vers tes images de rang (ex: /ranking/bronze.png)
+const RANK_IMG_PATH = '/ranking/';
+const PVP_RANKS_DEF = [
+  { name:'Bronze',  min:0,    max:1199, color:'#cd7f32' },
+  { name:'Argent',  min:1200, max:1399, color:'#aaa'    },
+  { name:'Or',      min:1400, max:1599, color:'#ffd84d' },
+  { name:'Platine', min:1600, max:1799, color:'#4da6ff' },
+  { name:'Diamant', min:1800, max:1999, color:'#c084ff' },
+  { name:'Maître',  min:2000, max:9999, color:'#ff6464' },
+];
+function getPvpRankInfo(pts) {
+  return PVP_RANKS_DEF.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS_DEF[0];
+}
+function buildRankProgressHtml(pts) {
+  const rankInfo = getPvpRankInfo(pts);
+  const rankIdx  = PVP_RANKS_DEF.indexOf(rankInfo);
+  const isLast   = rankIdx === PVP_RANKS_DEF.length - 1;
+  const pctDone  = PVP_RANKS_DEF.slice(0, rankIdx).length / (PVP_RANKS_DEF.length - 1) * 100;
+
+  // Barre dans le rang actuel
+  const rangeSize  = isLast ? 1000 : (rankInfo.max - rankInfo.min + 1);
+  const inRange    = Math.max(0, pts - rankInfo.min);
+  const pctInRank  = isLast ? Math.min(100, Math.round(inRange / rangeSize * 100)) : Math.round(inRange / rangeSize * 100);
+  const nextRank   = PVP_RANKS_DEF[rankIdx + 1];
+  const ptsToNext  = isLast ? null : (rankInfo.max + 1 - pts);
+
+  // Steps
+  const stepsHtml = PVP_RANKS_DEF.map((r, i) => {
+    const state = i < rankIdx ? 'done' : i === rankIdx ? 'active' : '';
+    const icon  = RANK_ICONS[r.name] ? `<img src="${RANK_ICONS[r.name]}" alt="${r.name}">` : '';
+    return `<div class="pvp-rank-step ${state}" style="color:${r.color}">
+      <div class="pvp-rank-step-icon">${icon}</div>
+      <div class="pvp-rank-step-name">${r.name}</div>
+    </div>`;
+  }).join('');
+
+  // Calcul largeur de la ligne de remplissage (position du rang actuel + % dans le rang)
+  const stepPct = rankIdx / (PVP_RANKS_DEF.length - 1) * 90 + 5; // 5% offset de chaque côté
+  const linePct = stepPct + pctInRank * (90 / (PVP_RANKS_DEF.length - 1)) / 100;
+
+  const barLabel = isLast ? 'Rang max !' : (ptsToNext + ' pts pour ' + nextRank.name);
+  const maxLabel = isLast ? '∞' : fmtPts(rankInfo.max + 1) + ' pts';
+  return '<div class="pvp-rank-progress">'
+    + '<div class="pvp-rank-progress-title">Progression de rang</div>'
+    + '<div class="pvp-rank-steps" style="--rank-color:' + rankInfo.color + '">'
+    + stepsHtml
+    + '<div class="pvp-rank-line-fill" style="width:' + Math.min(linePct,95) + '%;color:' + rankInfo.color + '"></div>'
+    + '</div>'
+    + '<div class="pvp-rank-bar-wrap">'
+    + '<div style="font-size:11px;opacity:.5;min-width:54px">' + fmtPts(rankInfo.min) + ' pts</div>'
+    + '<div style="flex:1">'
+    + '<div class="pvp-rank-bar-bg"><div class="pvp-rank-bar-fill" style="width:' + pctInRank + '%;background:' + rankInfo.color + '"></div></div>'
+    + '<div class="pvp-rank-bar-pts">' + fmtPts(pts) + ' pts · ' + barLabel + '</div>'
+    + '</div>'
+    + '<div style="font-size:11px;opacity:.5;min-width:54px;text-align:right">' + maxLabel + '</div>'
+    + '</div>'
+    + '</div>';
+} // fin buildRankProgressHtml
 const RANK_ICONS = {
   Bronze:  RANK_IMG_PATH + 'bronze.png',
   Argent:  RANK_IMG_PATH + 'silver.png',
@@ -742,7 +823,8 @@ function renderProfilPvp(f) {
         ${renderPvpSlot('ring',   equipped)}
       </div>
     </div>
-    <div style="margin-top:10px;font-size:11px;opacity:.3;text-align:center">Stats calculées depuis ton personnage, ta classe et ton équipement forgé</div>`;
+    <div style="margin-top:10px;font-size:11px;opacity:.3;text-align:center">Stats calculées depuis ton personnage, ta classe et ton équipement forgé</div>
+  ${buildRankProgressHtml(f.rank)}`;
 }
 
 function renderPvpSlot(slot, equipped) {
