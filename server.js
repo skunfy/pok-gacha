@@ -883,6 +883,28 @@ async function initDb() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_raid_drops_recap_user ON raid_drops_recap(user_id, seen)`);
+
+  // PVP
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_battles (
+      id           SERIAL PRIMARY KEY,
+      challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      opponent_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status        TEXT NOT NULL DEFAULT 'pending',
+      winner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      log           JSONB NOT NULL DEFAULT '[]'::jsonb,
+      challenger_rank_before INTEGER NOT NULL DEFAULT 1000,
+      opponent_rank_before   INTEGER NOT NULL DEFAULT 1000,
+      rank_change   INTEGER NOT NULL DEFAULT 0,
+      created_at    BIGINT NOT NULL DEFAULT 0,
+      accepted_at   BIGINT DEFAULT NULL
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_challenger ON pvp_battles(challenger_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_opponent   ON pvp_battles(opponent_id)`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_rank INTEGER NOT NULL DEFAULT 1000`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_losses INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS player_materials (
@@ -2249,7 +2271,6 @@ const CLAN_MISSIONS_DEF = [
   { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 50,  bankReward: 10  },
   { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 100,  bankReward: 25  },
   { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 1000, bankReward: 500 },
-  { key: "list_market",  label: "Mettre une carte en vente",  goal: 1,  xpClan: 100,  bankReward: 30  },
 ];
 
 function todayKey() {
@@ -3917,11 +3938,6 @@ app.post("/api/market/list", auth, async (req, res) => {
     );
 
     await client.query("COMMIT");
-
-    // Mission clan : mettre une carte en vente
-    const mListing = await getMyMembership(req.user.id).catch(() => null);
-    if (mListing) progressMission(mListing.clan_id, req.user.id, 'list_market').catch(() => {});
-
     res.json({ ok: true, listingId: ins.rows[0].id });
   } catch (e) {
     await client.query("ROLLBACK");
@@ -6204,6 +6220,314 @@ app.post("/api/clan/dissolve", auth, async (req, res) => {
     console.error("Dissolve clan error:", e);
     res.status(500).json({ error: "Erreur serveur" });
   }
+});
+
+
+// =========================
+// PVP — SYSTÈME DE RANG
+// =========================
+
+const PVP_RANKS = [
+  { name: 'Bronze',   min: 0,    max: 1199, color: '#cd7f32', icon: '🥉' },
+  { name: 'Argent',   min: 1200, max: 1399, color: '#aaa',    icon: '🥈' },
+  { name: 'Or',       min: 1400, max: 1599, color: '#ffd84d', icon: '🥇' },
+  { name: 'Platine',  min: 1600, max: 1799, color: '#4da6ff', icon: '💠' },
+  { name: 'Diamant',  min: 1800, max: 1999, color: '#c084ff', icon: '💎' },
+  { name: 'Maître',   min: 2000, max: 9999, color: '#ff6464', icon: '👑' },
+];
+
+function getRankInfo(pts) {
+  return PVP_RANKS.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS[0];
+}
+
+// Calcul ELO simplifié
+function calcElo(winnerRank, loserRank) {
+  const K = 32;
+  const expected = 1 / (1 + Math.pow(10, (loserRank - winnerRank) / 400));
+  return Math.round(K * (1 - expected));
+}
+
+// Reset mensuel : perd max 2 rangs (200 pts par rang)
+async function monthlyRankReset() {
+  const users = await pool.query(`SELECT id, pvp_rank FROM users WHERE pvp_rank > 1000`);
+  for (const u of users.rows) {
+    const rank = Number(u.pvp_rank);
+    // Trouver le rang actuel et reculer de 2 paliers max
+    const rankIdx = PVP_RANKS.findIndex(r => rank >= r.min && rank <= r.max);
+    const targetIdx = Math.max(0, rankIdx - 2);
+    const newRank = Math.max(PVP_RANKS[targetIdx].min, rank - 400);
+    await pool.query(`UPDATE users SET pvp_rank=$1, pvp_wins=0, pvp_losses=0 WHERE id=$2`, [newRank, u.id]);
+  }
+}
+
+// Construire les stats PVP d'un joueur
+async function buildPvpFighter(userId) {
+  const char = await getOrCreateCharacter(userId);
+  const userQ = await pool.query(`SELECT name, pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [userId]);
+  const u = userQ.rows[0];
+  const statBonus = charStatBonus(char, 100);
+  const eqBonus   = await getEquipmentBonus(userId);
+
+  const lvl    = Number(char.char_level);
+  const cls    = CHAR_CLASSES[char.char_class] || null;
+
+  // HP = base + force × 8 + niveau × 12
+  const hp     = Math.round(200 + (Number(char.stat_force) * 8) + (lvl * 12));
+  // ATQ = base + stat bonus + équipement
+  const atq    = Math.round(20 + statBonus.dmg_bonus + eqBonus.dmg_bonus + eqBonus.clan_dmg);
+  // Crit %
+  const crit   = Math.min(95, Math.round(statBonus.crit + eqBonus.crit + eqBonus.clan_crit));
+  // Esquive % = dextérité / 3
+  const dodge  = Math.min(40, Math.round(Number(char.stat_dexterite) * 0.4));
+  // Vitesse (qui attaque en premier) = dextérité + first_attack bonus
+  const speed  = Math.round(Number(char.stat_dexterite) * statEffectiveRate('dexterite', char.char_class) + statBonus.first_attack + eqBonus.first_attack);
+
+  return {
+    userId,
+    name:       u.name,
+    rank:       Number(u.pvp_rank),
+    wins:       Number(u.pvp_wins),
+    losses:     Number(u.pvp_losses),
+    rankInfo:   getRankInfo(Number(u.pvp_rank)),
+    charClass:  char.char_class,
+    classLabel: cls?.label || 'Aucune',
+    classColor: cls?.color || '#aaa',
+    level:      lvl,
+    hp, atq, crit, dodge, speed,
+  };
+}
+
+// Simuler le combat côté serveur
+function simulatePvpBattle(f1, f2) {
+  let hp1 = f1.hp, hp2 = f2.hp;
+  const log = [];
+
+  // Déterminer qui frappe en premier
+  const [first, second] = f1.speed >= f2.speed ? [f1, f2] : [f2, f1];
+  let hpFirst = first === f1 ? hp1 : hp2;
+  let hpSecond = first === f1 ? hp2 : hp1;
+
+  for (let turn = 1; turn <= 50; turn++) {
+    log.push({ type: 'turn', turn });
+
+    // Attaque du premier
+    const dodge1 = Math.random() * 100 < second.dodge;
+    if (dodge1) {
+      log.push({ type: 'dodge', attacker: first.name, defender: second.name });
+    } else {
+      const crit1 = Math.random() * 100 < first.crit;
+      const dmg1 = Math.round(first.atq * (0.85 + Math.random() * 0.3) * (crit1 ? 2 : 1));
+      hpSecond = Math.max(0, hpSecond - dmg1);
+      log.push({ type: crit1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp });
+    }
+
+    if (hpSecond <= 0) break;
+
+    // Attaque du second
+    const dodge2 = Math.random() * 100 < first.dodge;
+    if (dodge2) {
+      log.push({ type: 'dodge', attacker: second.name, defender: first.name });
+    } else {
+      const crit2 = Math.random() * 100 < second.crit;
+      const dmg2 = Math.round(second.atq * (0.85 + Math.random() * 0.3) * (crit2 ? 2 : 1));
+      hpFirst = Math.max(0, hpFirst - dmg2);
+      log.push({ type: crit2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp });
+    }
+
+    if (hpFirst <= 0) break;
+  }
+
+  // Déterminer le gagnant (celui avec + de HP restants si timeout)
+  let winner;
+  if (hpSecond <= 0 && hpFirst > 0) winner = first;
+  else if (hpFirst <= 0 && hpSecond > 0) winner = second;
+  else winner = hpFirst >= hpSecond ? first : second;
+
+  log.push({ type: 'end', winner: winner.name });
+  return { log, winner };
+}
+
+// GET /api/pvp/me — profil PVP du joueur
+app.get("/api/pvp/me", auth, async (req, res) => {
+  try {
+    const fighter = await buildPvpFighter(req.user.id);
+    res.json({ fighter });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/leaderboard — top joueurs
+app.get("/api/pvp/leaderboard", auth, async (req, res) => {
+  try {
+    const topQ = await pool.query(`
+      SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses
+      FROM users u
+      ORDER BY u.pvp_rank DESC, u.pvp_wins DESC
+      LIMIT 50
+    `);
+    const meQ = await pool.query(`SELECT pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [req.user.id]);
+    const me = meQ.rows[0];
+    res.json({
+      top: topQ.rows.map((u,i) => ({
+        rank: i+1,
+        name: u.name,
+        avatar: u.avatar || '',
+        pts: Number(u.pvp_rank),
+        wins: Number(u.pvp_wins),
+        losses: Number(u.pvp_losses),
+        rankInfo: getRankInfo(Number(u.pvp_rank)),
+      })),
+      me: { pts: Number(me?.pvp_rank||1000), wins: Number(me?.pvp_wins||0), losses: Number(me?.pvp_losses||0), rankInfo: getRankInfo(Number(me?.pvp_rank||1000)) },
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/search?name=... — chercher un joueur à défier
+app.get("/api/pvp/search", auth, async (req, res) => {
+  const q = String(req.query.name || '').trim();
+  if (q.length < 2) return res.json({ users: [] });
+  try {
+    const r = await pool.query(
+      `SELECT id, name, avatar, pvp_rank, pvp_wins, pvp_losses FROM users WHERE name ILIKE $1 AND id != $2 LIMIT 10`,
+      ['%'+q+'%', req.user.id]
+    );
+    res.json({ users: r.rows.map(u => ({ id: u.id, name: u.name, avatar: u.avatar||'', pts: Number(u.pvp_rank), rankInfo: getRankInfo(Number(u.pvp_rank)) })) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/challenge — envoyer un défi
+app.post("/api/pvp/challenge", auth, async (req, res) => {
+  const opponentId = Number(req.body?.opponentId || 0) | 0;
+  if (!opponentId || opponentId === req.user.id) return res.status(400).json({ error: "Cible invalide" });
+  try {
+    // Vérifier pas déjà un défi en attente entre ces deux joueurs
+    const pending = await pool.query(
+      `SELECT id FROM pvp_battles WHERE status='pending' AND ((challenger_id=$1 AND opponent_id=$2) OR (challenger_id=$2 AND opponent_id=$1))`,
+      [req.user.id, opponentId]
+    );
+    if (pending.rows.length) return res.status(400).json({ error: "Un défi est déjà en attente" });
+
+    const opponent = await pool.query(`SELECT id, name, pvp_rank FROM users WHERE id=$1`, [opponentId]);
+    if (!opponent.rows.length) return res.status(404).json({ error: "Joueur introuvable" });
+
+    const me = await pool.query(`SELECT pvp_rank FROM users WHERE id=$1`, [req.user.id]);
+    const battle = await pool.query(
+      `INSERT INTO pvp_battles(challenger_id, opponent_id, status, challenger_rank_before, opponent_rank_before, created_at) VALUES($1,$2,'pending',$3,$4,$5) RETURNING id`,
+      [req.user.id, opponentId, Number(me.rows[0].pvp_rank), Number(opponent.rows[0].pvp_rank), Date.now()]
+    );
+    // Notif pour l'adversaire
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'pvp','⚔️ Défi PVP !',$2,$3,0,$4)`,
+      [opponentId, `${req.user.name} te défie en combat !`, JSON.stringify({ battleId: battle.rows[0].id }), Date.now()]
+    );
+    res.json({ ok: true, battleId: battle.rows[0].id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/accept — accepter et simuler le combat
+app.post("/api/pvp/accept", auth, async (req, res) => {
+  const battleId = Number(req.body?.battleId || 0) | 0;
+  if (!battleId) return res.status(400).json({ error: "Bataille invalide" });
+  try {
+    const bQ = await pool.query(`SELECT * FROM pvp_battles WHERE id=$1 AND opponent_id=$2 AND status='pending'`, [battleId, req.user.id]);
+    if (!bQ.rows.length) return res.status(404).json({ error: "Défi introuvable ou déjà traité" });
+    const battle = bQ.rows[0];
+
+    // Construire les fighters
+    const [f1, f2] = await Promise.all([
+      buildPvpFighter(battle.challenger_id),
+      buildPvpFighter(battle.opponent_id),
+    ]);
+
+    // Simuler
+    const { log, winner } = simulatePvpBattle(f1, f2);
+    const winnerId = winner.name === f1.name ? f1.userId : f2.userId;
+    const loserId  = winnerId === f1.userId ? f2.userId : f1.userId;
+    const winnerRank = winnerId === f1.userId ? f1.rank : f2.rank;
+    const loserRank  = loserId  === f1.userId ? f1.rank : f2.rank;
+    const rankChange = calcElo(winnerRank, loserRank);
+
+    // Mettre à jour les rangs
+    await pool.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank+$1), pvp_wins=pvp_wins+1 WHERE id=$2`, [rankChange, winnerId]);
+    await pool.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [rankChange, loserId]);
+
+    // Sauvegarder le résultat
+    await pool.query(
+      `UPDATE pvp_battles SET status='done', winner_id=$1, log=$2, rank_change=$3, accepted_at=$4 WHERE id=$5`,
+      [winnerId, JSON.stringify(log), rankChange, Date.now(), battleId]
+    );
+
+    // Notif au challenger
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'pvp',$2,$3,$4,0,$5)`,
+      [battle.challenger_id,
+       winnerId === battle.challenger_id ? '🏆 Victoire PVP !' : '💀 Défaite PVP',
+       winnerId === battle.challenger_id ? `Tu as battu ${f2.name} ! +${rankChange} pts` : `${f2.name} t'a battu. -${rankChange} pts`,
+       JSON.stringify({ battleId }), Date.now()]
+    );
+
+    res.json({ ok: true, battleId, winnerId, rankChange, log, fighters: { f1, f2 } });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/decline — refuser un défi
+app.post("/api/pvp/decline", auth, async (req, res) => {
+  const battleId = Number(req.body?.battleId || 0) | 0;
+  try {
+    await pool.query(`UPDATE pvp_battles SET status='declined' WHERE id=$1 AND opponent_id=$2 AND status='pending'`, [battleId, req.user.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/pending — défis en attente pour moi
+app.get("/api/pvp/pending", auth, async (req, res) => {
+  try {
+    const q = await pool.query(`
+      SELECT pb.id, pb.challenger_id, pb.created_at, u.name as challenger_name, u.avatar, u.pvp_rank as challenger_rank
+      FROM pvp_battles pb JOIN users u ON u.id=pb.challenger_id
+      WHERE pb.opponent_id=$1 AND pb.status='pending'
+      ORDER BY pb.created_at DESC LIMIT 10
+    `, [req.user.id]);
+    res.json({ challenges: q.rows.map(r => ({ battleId: r.id, challengerId: r.challenger_id, challengerName: r.challenger_name, avatar: r.avatar||'', rankInfo: getRankInfo(Number(r.challenger_rank)), createdAt: Number(r.created_at) })) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/history — historique des combats
+app.get("/api/pvp/history", auth, async (req, res) => {
+  try {
+    const q = await pool.query(`
+      SELECT pb.id, pb.winner_id, pb.rank_change, pb.accepted_at, pb.log,
+             u1.name as challenger_name, u2.name as opponent_name,
+             pb.challenger_id, pb.opponent_id
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id=pb.challenger_id
+      JOIN users u2 ON u2.id=pb.opponent_id
+      WHERE (pb.challenger_id=$1 OR pb.opponent_id=$1) AND pb.status='done'
+      ORDER BY pb.accepted_at DESC LIMIT 20
+    `, [req.user.id]);
+    res.json({ history: q.rows.map(r => ({
+      battleId: r.id,
+      opponentName: r.challenger_id === req.user.id ? r.opponent_name : r.challenger_name,
+      won: r.winner_id === req.user.id,
+      rankChange: r.winner_id === req.user.id ? +Number(r.rank_change) : -Number(r.rank_change),
+      at: Number(r.accepted_at),
+      log: r.log,
+    })) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/result/:id — récupérer un combat pour replay
+app.get("/api/pvp/result/:id", auth, async (req, res) => {
+  const battleId = Number(req.params.id) | 0;
+  try {
+    const q = await pool.query(`
+      SELECT pb.*, u1.name as cname, u2.name as oname FROM pvp_battles pb
+      JOIN users u1 ON u1.id=pb.challenger_id JOIN users u2 ON u2.id=pb.opponent_id
+      WHERE pb.id=$1 AND (pb.challenger_id=$2 OR pb.opponent_id=$2)
+    `, [battleId, req.user.id]);
+    if (!q.rows.length) return res.status(404).json({ error: "Combat introuvable" });
+    const r = q.rows[0];
+    res.json({ battle: { id: r.id, challengerName: r.cname, opponentName: r.oname, winnerId: r.winner_id, rankChange: r.rank_change, log: r.log, at: r.accepted_at } });
+  } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
 // =========================
