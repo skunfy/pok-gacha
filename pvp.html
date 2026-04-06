@@ -291,12 +291,12 @@ Object.values(CLASS_SPRITES).forEach(cls => {
 // MOTEUR D'ANIMATION ARENA
 // ═══════════════════════════════════════════════
 const SCALE = 2;
-const CW = 128 * SCALE;  // 256px canvas
-const CH = 128 * SCALE;  // 256px canvas
-const SPRITE_W = 128;    // largeur logique d'un sprite (px dans la scène)
-const STAGE_W = 640;     // largeur logique de la scène
-const P1_HOME = 20;
-const P2_HOME = STAGE_W - 20 - SPRITE_W; // 492
+const CW = 128 * SCALE;
+const CH = 128 * SCALE;
+const SPRITE_W = 128;
+const STAGE_W = 640;
+const P1_HOME = 20;                        // left absolu de départ P1
+const P2_HOME = STAGE_W - 20 - SPRITE_W;  // left absolu de départ P2 (492)
 
 let arenaState = null;  // état courant du combat animé
 let arenaRaf = null;
@@ -376,14 +376,9 @@ function positionCanvas(canvasId, f, isRight) {
   const stage = document.getElementById('replay-stage');
   const sw = stage ? stage.offsetWidth : STAGE_W;
   const ratio = sw / STAGE_W;
-  // x logique → pixel écran. P2 a son x depuis la droite, on le convertit en left
-  let leftPx;
-  if (isRight) {
-    // f.x est la distance depuis la droite logique, on retrouve le left réel
-    leftPx = Math.round((STAGE_W - f.x - SPRITE_W) * ratio);
-  } else {
-    leftPx = Math.round(f.x * ratio);
-  }
+  // Les deux fighters utilisent x comme position left depuis le bord gauche
+  // P2 est initialisé à P2_HOME et sa x est aussi un left absolu
+  const leftPx = Math.round(f.x * ratio);
   el.style.left = leftPx + 'px';
   el.style.right = 'auto';
   el.style.width = Math.round(SPRITE_W * ratio * SCALE) + 'px';
@@ -418,14 +413,8 @@ function spawnDmg(fid, dmg, isCrit) {
   const sw = stage ? stage.offsetWidth : STAGE_W;
   const ratio = sw / STAGE_W;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-  const isP2 = fid === 2;
-  // Calculer le left pixel du centre du sprite
-  let leftPx;
-  if (isP2) {
-    leftPx = Math.round((STAGE_W - f.x - SPRITE_W + SPRITE_W/2) * ratio) - 20;
-  } else {
-    leftPx = Math.round((f.x + SPRITE_W/2) * ratio) - 20;
-  }
+  // x est maintenant toujours un left absolu pour les deux fighters
+  const leftPx = Math.round((f.x + SPRITE_W / 2) * ratio) - 24;
   el.textContent = (isCrit ? 'CRIT ' : '') + '-' + dmg;
   el.className = 'dmg-float' + (isCrit ? ' crit' : '');
   el.style.left = leftPx + 'px';
@@ -441,36 +430,42 @@ function spawnDmg(fid, dmg, isCrit) {
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Déplacer un combattant vers une cible X logique
-// Pour P1 (isRight=false) : x augmente pour avancer, diminue pour reculer
-// Pour P2 (isRight=true)  : x augmente pour avancer vers P1 (car sa pos est depuis la droite), diminue pour reculer
-function moveFighter(fid, targetX, speed, animName) {
+// ── Approche initiale : les deux courent l'un vers l'autre jusqu'au centre ──
+// P1 part de P1_HOME vers P1_FIGHT (gauche du centre)
+// P2 part de P2_HOME vers P2_FIGHT (droite du centre)
+// Toutes les positions sont en coordonnées "left depuis le bord gauche du stage"
+// P1: x est son left réel
+// P2: x est aussi son left réel (on abandonne le système "depuis la droite" qui causait des bugs)
+
+function approachCenter(speed) {
   return new Promise(resolve => {
     if (!arenaState) { resolve(); return; }
-    const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-    const isP2 = fid === 2;
-    // Ne pas réinitialiser frame si même anim
-    if (f.anim !== animName) { f.anim = animName; f.frame = 0; f.tick = 0; f.freezeOnEnd = false; }
+    const f1 = arenaState.f1;
+    const f2 = arenaState.f2;
+    // Calculer les positions de combat : centre du stage avec un gap
+    const GAP = 8;
+    const center = STAGE_W / 2;
+    const f1Target = center - SPRITE_W - GAP / 2;  // P1 s'arrête à gauche du centre
+    const f2Target = center + GAP / 2;               // P2 s'arrête à droite du centre
+
+    // Stocker les positions de combat dans arenaState pour les réutiliser
+    arenaState.f1FightX = f1Target;
+    arenaState.f2FightX = f2Target;
+
+    if (f1.anim !== 'run') { f1.anim = 'run'; f1.frame = 0; f1.tick = 0; f1.freezeOnEnd = false; }
+    if (f2.anim !== 'run') { f2.anim = 'run'; f2.frame = 0; f2.tick = 0; f2.freezeOnEnd = false; }
+
     let last = performance.now();
     function step(ts) {
       const dt = Math.min(ts - last, 50); last = ts;
       if (!arenaState) { resolve(); return; }
-      if (!isP2) {
-        // P1 : x croît vers la droite
-        if (targetX > f.x) {
-          f.x = Math.min(targetX, f.x + speed * dt / 1000);
-        } else {
-          f.x = Math.max(targetX, f.x - speed * dt / 1000);
-        }
-      } else {
-        // P2 : x représente la distance depuis la droite, croît pour aller vers P1
-        if (targetX > f.x) {
-          f.x = Math.min(targetX, f.x + speed * dt / 1000);
-        } else {
-          f.x = Math.max(targetX, f.x - speed * dt / 1000);
-        }
+      const dist = speed * dt / 1000;
+      f1.x = Math.min(f1Target, f1.x + dist);
+      f2.x = Math.max(f2Target, f2.x - dist);
+      if (f1.x >= f1Target && f2.x <= f2Target) {
+        f1.x = f1Target; f2.x = f2Target;
+        resolve(); return;
       }
-      if (Math.abs(f.x - targetX) < 1) { f.x = targetX; resolve(); return; }
       requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -740,16 +735,19 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  // Positions logiques
-  // P1 avance vers la droite, s'arrête avant P2
-  // P2 : sa x est sa distance depuis la droite, il avance en augmentant x
-  // Contact = quand P1.left + SPRITE_W == P2.left → P2_HOME - SPRITE_W
-  const GAP = 10; // pixels de gap entre les deux sprites
-  const P1_ATTACK_X = P2_HOME - SPRITE_W - GAP;   // P1 s'arrête juste à gauche de P2
-  const P2_ATTACK_X = P1_HOME + SPRITE_W + GAP;    // P2 s'arrête juste à droite de P1 (en valeur "depuis droite")
-
   await wait(300);
 
+  // ── PHASE 1 : approche unique ──
+  // Les deux courent l'un vers l'autre et s'arrêtent au centre
+  await approachCenter(380);
+
+  // Une fois en place, idle tous les deux
+  setFighterAnim(1, 'idle');
+  setFighterAnim(2, 'idle');
+  await wait(400);
+
+  // ── PHASE 2 : combat sur place ──
+  // À partir d'ici, personne ne bouge. Juste attack / hurt / idle sur place.
   for (let i = 0; i < log.length; i++) {
     const ev = log[i];
     if (!arenaState) break;
@@ -761,7 +759,7 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
 
     if (ev.type === 'dodge') {
       addLog((ev.defender === f1.name ? f1.name : f2.name) + ' esquive !');
-      await wait(350);
+      await wait(300);
       continue;
     }
 
@@ -770,22 +768,15 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
       const attId = isF1att ? 1 : 2;
       const defId = isF1att ? 2 : 1;
 
-      // Courir vers l'ennemi
-      if (isF1att) {
-        await moveFighter(1, P1_ATTACK_X, 420, 'run');
-      } else {
-        await moveFighter(2, P2_ATTACK_X, 420, 'run');
-      }
-
-      // Attaque
+      // Attaquant : animation d'attaque (normale ou critique)
       setFighterAnim(attId, ev.type === 'crit' ? 'attack2' : 'attack1');
-      await wait(160);
+      await wait(180);
 
-      // Défenseur prend le coup
+      // Défenseur : animation hurt + chiffre de dégâts
       setFighterAnim(defId, 'hurt');
       spawnDmg(defId, ev.dmg, ev.type === 'crit');
 
-      // Mise à jour HP
+      // Mise à jour des HP
       if (isF1att) {
         arenaState.hp2 = ev.hpLeft;
         updateArenaHp(2, ev.hpLeft, ev.hpMax);
@@ -794,18 +785,13 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
         updateArenaHp(1, ev.hpLeft, ev.hpMax);
       }
 
-      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type==='crit' ? ' (CRITIQUE!)' : ''), ev.type==='crit'?'crit':'');
-      await wait(320);
+      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type === 'crit' ? ' (CRITIQUE!)' : ''), ev.type === 'crit' ? 'crit' : '');
+      await wait(350);
 
-      // Retour en position idle
-      setFighterAnim(defId, 'idle');
-      if (isF1att) {
-        await moveFighter(1, P1_HOME, 300, 'walk');
-      } else {
-        await moveFighter(2, P2_HOME, 300, 'walk');
-      }
-      setFighterAnim(attId, 'idle');
-      await wait(150);
+      // Retour idle pour les deux (sauf si l'un est déjà dead)
+      if (arenaState.f1.anim !== 'dead') setFighterAnim(1, 'idle');
+      if (arenaState.f2.anim !== 'dead') setFighterAnim(2, 'idle');
+      await wait(120);
     }
 
     if (ev.type === 'end') {
@@ -814,18 +800,18 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
         (ev.winner === f2.name && f2.name === myData.name)
       );
       const loserId = ev.winner === f1.name ? 2 : 1;
+
+      // Le perdant tombe sur place
       setFighterAnim(loserId, 'dead');
-      await wait(700);
+      await wait(900);
 
       addLog(ev.winner + ' remporte le combat !', playerWon ? 'win' : 'lose');
       const banner = document.getElementById('replay-result');
       banner.className = 'result-banner ' + (playerWon ? 'victory' : 'defeat');
       banner.style.display = 'block';
-      if (playerWon) {
-        banner.innerHTML = `🏆 Victoire !<div class="rank-change">+${rankChange||'?'} pts de rang</div>`;
-      } else {
-        banner.innerHTML = `💀 Défaite<div class="rank-change">${rankChange ? '-'+rankChange : ''} pts de rang</div>`;
-      }
+      banner.innerHTML = playerWon
+        ? `🏆 Victoire !<div class="rank-change">+${rankChange||'?'} pts de rang</div>`
+        : `💀 Défaite<div class="rank-change">${rankChange ? '-'+rankChange : ''} pts de rang</div>`;
     }
   }
   replayBusy = false;
