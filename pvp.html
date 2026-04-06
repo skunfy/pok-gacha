@@ -291,11 +291,12 @@ Object.values(CLASS_SPRITES).forEach(cls => {
 // MOTEUR D'ANIMATION ARENA
 // ═══════════════════════════════════════════════
 const SCALE = 2;
-const CW = 128 * SCALE;  // 256px
-const CH = 128 * SCALE;  // 256px
+const CW = 128 * SCALE;  // 256px canvas
+const CH = 128 * SCALE;  // 256px canvas
+const SPRITE_W = 128;    // largeur logique d'un sprite (px dans la scène)
 const STAGE_W = 640;     // largeur logique de la scène
-const P1_HOME = 30;
-const P2_HOME = STAGE_W - 30 - CW;
+const P1_HOME = 20;
+const P2_HOME = STAGE_W - 20 - SPRITE_W; // 492
 
 let arenaState = null;  // état courant du combat animé
 let arenaRaf = null;
@@ -311,8 +312,8 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
   c2.style.width = CW+'px'; c2.style.height = CH+'px';
 
   arenaState = {
-    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME, anim:'idle', frame:0, tick:0, flip:false },
-    f2: { cls: cls2||DEFAULT_CLASS, x: P2_HOME, anim:'idle', frame:0, tick:0, flip:true  },
+    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME, anim:'idle', frame:0, tick:0, flip:false, freezeOnEnd:false },
+    f2: { cls: cls2||DEFAULT_CLASS, x: P2_HOME, anim:'idle', frame:0, tick:0, flip:true,  freezeOnEnd:false },
     hp1: maxHp1, maxHp1,
     hp2: maxHp2, maxHp2,
     name1, name2,
@@ -354,13 +355,17 @@ function drawFighter(canvasId, f, dt) {
   if (!img.complete || !img.naturalWidth) { ctx.clearRect(0,0,CW,CH); return; }
   f.tick += dt;
   const interval = 1000 / a.fps;
-  if (f.tick >= interval) { f.tick -= interval; f.frame = (f.frame + 1) % a.frames; }
+  if (f.tick >= interval) {
+    f.tick -= interval;
+    if (f.freezeOnEnd && f.frame >= a.frames - 1) {
+      f.frame = a.frames - 1; // bloquer sur dernière frame (dead)
+    } else {
+      f.frame = (f.frame + 1) % a.frames;
+    }
+  }
   ctx.clearRect(0, 0, CW, CH);
   ctx.save();
-  if (f.flip) {
-    ctx.translate(CW, 0);
-    ctx.scale(-1, 1);
-  }
+  if (f.flip) { ctx.translate(CW, 0); ctx.scale(-1, 1); }
   ctx.drawImage(img, f.frame * a.fw, 0, a.fw, 128, 0, 0, CW, CH);
   ctx.restore();
 }
@@ -371,24 +376,28 @@ function positionCanvas(canvasId, f, isRight) {
   const stage = document.getElementById('replay-stage');
   const sw = stage ? stage.offsetWidth : STAGE_W;
   const ratio = sw / STAGE_W;
-  const px = Math.round(f.x * ratio);
-  if (!isRight) {
-    el.style.left = px + 'px';
-    el.style.right = 'auto';
+  // x logique → pixel écran. P2 a son x depuis la droite, on le convertit en left
+  let leftPx;
+  if (isRight) {
+    // f.x est la distance depuis la droite logique, on retrouve le left réel
+    leftPx = Math.round((STAGE_W - f.x - SPRITE_W) * ratio);
   } else {
-    el.style.right = px + 'px';
-    el.style.left = 'auto';
+    leftPx = Math.round(f.x * ratio);
   }
-  el.style.width = Math.round(CW * ratio) + 'px';
-  el.style.height = Math.round(CH * ratio) + 'px';
+  el.style.left = leftPx + 'px';
+  el.style.right = 'auto';
+  el.style.width = Math.round(SPRITE_W * ratio * SCALE) + 'px';
+  el.style.height = Math.round(128 * ratio * SCALE) + 'px';
 }
 
 function setFighterAnim(fid, anim) {
   if (!arenaState) return;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
+  if (f.anim === anim) return; // déjà sur cette anim
   f.anim = anim;
   f.frame = 0;
   f.tick = 0;
+  f.freezeOnEnd = (anim === 'dead'); // bloquer sur dernière frame uniquement pour dead
 }
 
 function updateArenaHp(fid, hp, maxHp) {
@@ -404,20 +413,25 @@ function updateArenaHp(fid, hp, maxHp) {
 
 function spawnDmg(fid, dmg, isCrit) {
   const el = document.getElementById('rdmg' + fid);
-  if (!el) return;
+  if (!el || !arenaState) return;
   const stage = document.getElementById('replay-stage');
   const sw = stage ? stage.offsetWidth : STAGE_W;
   const ratio = sw / STAGE_W;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-  const isRight = fid === 2;
-  const baseX = isRight ? (STAGE_W - f.x - CW/2) * ratio : (f.x + CW/2) * ratio;
-
+  const isP2 = fid === 2;
+  // Calculer le left pixel du centre du sprite
+  let leftPx;
+  if (isP2) {
+    leftPx = Math.round((STAGE_W - f.x - SPRITE_W + SPRITE_W/2) * ratio) - 20;
+  } else {
+    leftPx = Math.round((f.x + SPRITE_W/2) * ratio) - 20;
+  }
   el.textContent = (isCrit ? 'CRIT ' : '') + '-' + dmg;
   el.className = 'dmg-float' + (isCrit ? ' crit' : '');
-  el.style.bottom = '80px';
-  el.style.opacity = '1';
-  if (isRight) { el.style.right = Math.round(baseX - 20) + 'px'; el.style.left = 'auto'; }
-  else { el.style.left = Math.round(baseX - 20) + 'px'; el.style.right = 'auto'; }
+  el.style.left = leftPx + 'px';
+  el.style.right = 'auto';
+  el.style.bottom = '70px';
+  el.style.opacity = '0';
   el.style.transform = 'translateY(0)';
   el.style.transition = 'none';
   void el.offsetWidth;
@@ -427,26 +441,36 @@ function spawnDmg(fid, dmg, isCrit) {
 
 function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// Déplacer un combattant vers une cible X (logique)
+// Déplacer un combattant vers une cible X logique
+// Pour P1 (isRight=false) : x augmente pour avancer, diminue pour reculer
+// Pour P2 (isRight=true)  : x augmente pour avancer vers P1 (car sa pos est depuis la droite), diminue pour reculer
 function moveFighter(fid, targetX, speed, animName) {
   return new Promise(resolve => {
     if (!arenaState) { resolve(); return; }
     const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-    f.anim = animName;
-    f.frame = 0; f.tick = 0;
-    const isRight = fid === 2;
+    const isP2 = fid === 2;
+    // Ne pas réinitialiser frame si même anim
+    if (f.anim !== animName) { f.anim = animName; f.frame = 0; f.tick = 0; f.freezeOnEnd = false; }
     let last = performance.now();
     function step(ts) {
-      const dt = ts - last; last = ts;
+      const dt = Math.min(ts - last, 50); last = ts;
       if (!arenaState) { resolve(); return; }
-      if (isRight) {
-        // P2 se déplace à droite : x décroît pour aller vers P1
-        f.x = f.anim === 'run' || f.anim === 'walk' ? Math.max(targetX, f.x - speed * dt / 1000) : f.x;
-        if (f.x <= targetX) { f.x = targetX; resolve(); return; }
+      if (!isP2) {
+        // P1 : x croît vers la droite
+        if (targetX > f.x) {
+          f.x = Math.min(targetX, f.x + speed * dt / 1000);
+        } else {
+          f.x = Math.max(targetX, f.x - speed * dt / 1000);
+        }
       } else {
-        f.x = Math.min(targetX, f.x + speed * dt / 1000);
-        if (f.x >= targetX) { f.x = targetX; resolve(); return; }
+        // P2 : x représente la distance depuis la droite, croît pour aller vers P1
+        if (targetX > f.x) {
+          f.x = Math.min(targetX, f.x + speed * dt / 1000);
+        } else {
+          f.x = Math.max(targetX, f.x - speed * dt / 1000);
+        }
       }
+      if (Math.abs(f.x - targetX) < 1) { f.x = targetX; resolve(); return; }
       requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -716,10 +740,13 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  // Distance d'attaque : P1 s'arrête à gauche de P2, P2 s'arrête à droite de P1
-  const ATTACK_DIST = 80;
-  const P1_ATTACK_X = P2_HOME - ATTACK_DIST;  // x logique où P1 s'arrête
-  const P2_ATTACK_X = P1_HOME + CW/SCALE + ATTACK_DIST; // x logique où P2 s'arrête (en miroir)
+  // Positions logiques
+  // P1 avance vers la droite, s'arrête avant P2
+  // P2 : sa x est sa distance depuis la droite, il avance en augmentant x
+  // Contact = quand P1.left + SPRITE_W == P2.left → P2_HOME - SPRITE_W
+  const GAP = 10; // pixels de gap entre les deux sprites
+  const P1_ATTACK_X = P2_HOME - SPRITE_W - GAP;   // P1 s'arrête juste à gauche de P2
+  const P2_ATTACK_X = P1_HOME + SPRITE_W + GAP;    // P2 s'arrête juste à droite de P1 (en valeur "depuis droite")
 
   await wait(300);
 
