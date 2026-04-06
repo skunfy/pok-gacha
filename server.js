@@ -6263,7 +6263,7 @@ async function monthlyRankReset() {
 // Construire les stats PVP d'un joueur
 async function buildPvpFighter(userId) {
   const char = await getOrCreateCharacter(userId);
-  const userQ = await pool.query(`SELECT name, pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [userId]);
+  const userQ = await pool.query(`SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [userId]);
   const u = userQ.rows[0];
   const statBonus = charStatBonus(char, 100);
   const eqBonus   = await getEquipmentBonus(userId);
@@ -6285,6 +6285,7 @@ async function buildPvpFighter(userId) {
   return {
     userId,
     name:       u.name,
+    avatar:     u.avatar || null,
     rank:       Number(u.pvp_rank),
     wins:       Number(u.pvp_wins),
     losses:     Number(u.pvp_losses),
@@ -6370,7 +6371,8 @@ app.get("/api/pvp/leaderboard", auth, async (req, res) => {
       top: topQ.rows.map((u,i) => ({
         rank: i+1,
         name: u.name,
-        avatar: u.avatar || '',
+        avatar: u.avatar || null,
+        charClass: null,
         pts: Number(u.pvp_rank),
         wins: Number(u.pvp_wins),
         losses: Number(u.pvp_losses),
@@ -6520,7 +6522,7 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
   const battleId = Number(req.params.id) | 0;
   try {
     const q = await pool.query(`
-      SELECT pb.*, u1.name as cname, u2.name as oname FROM pvp_battles pb
+      SELECT pb.*, u1.name as cname, u1.avatar as cavatar, u2.name as oname, u2.avatar as oavatar FROM pvp_battles pb
       JOIN users u1 ON u1.id=pb.challenger_id JOIN users u2 ON u2.id=pb.opponent_id
       WHERE pb.id=$1 AND (pb.challenger_id=$2 OR pb.opponent_id=$2)
     `, [battleId, req.user.id]);
@@ -6533,10 +6535,14 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
     ]);
     res.json({ battle: {
       id: r.id,
-      challengerName: r.cname,
-      opponentName:   r.oname,
-      challengerClass: c1char.rows[0]?.char_class || null,
-      opponentClass:   c2char.rows[0]?.char_class || null,
+      challengerName:     r.cname,
+      opponentName:       r.oname,
+      challengerClass:    c1char.rows[0]?.char_class || null,
+      opponentClass:      c2char.rows[0]?.char_class || null,
+      challengerAvatar:   r.cavatar || null,
+      opponentAvatar:     r.oavatar || null,
+      challengerRankInfo: getRankInfo(Number(r.challenger_rank_before||1000)),
+      opponentRankInfo:   getRankInfo(Number(r.opponent_rank_before||1000)),
       winnerId:   r.winner_id,
       rankChange: r.rank_change,
       log:        r.log,

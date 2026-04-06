@@ -102,8 +102,61 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .loading{text-align:center;padding:30px;opacity:.4;font-size:13px}
 .empty{text-align:center;padding:24px;opacity:.35;font-size:13px}
 
+
+/* ── PROFIL PVP ENRICHI ── */
+.pvp-profil-wrap{display:grid;grid-template-columns:1fr auto 1fr;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:visible;gap:0}
+.pvp-col-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 12px;border-right:1px solid rgba(255,255,255,.06)}
+.pvp-col-center{display:flex;flex-direction:column;align-items:center;width:200px;background:rgba(0,0,0,.18);border-radius:0}
+.pvp-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px 12px;border-left:1px solid rgba(255,255,255,.06)}
+.pvp-char-img-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:8px 0;min-height:200px}
+.pvp-char-img{width:200px;height:280px;object-fit:contain;filter:drop-shadow(0 0 24px var(--pvp-cls-color,#7f5cff))}
+.pvp-char-ph{width:200px;height:280px;display:flex;align-items:center;justify-content:center;font-size:70px;opacity:.3}
+.pvp-class-badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid;margin:0 0 10px}
+.pvp-rank-big{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
+.pvp-rank-big img{width:68px;height:68px;object-fit:contain}
+.pvp-rank-big-label{font-size:12px;font-weight:900;margin-top:2px}
+.pvp-rank-big-pts{font-size:11px;opacity:.45}
+.pvp-user-photo-wrap{position:relative;width:76px;height:76px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.pvp-user-photo-wrap .photo{width:60px;height:60px;border-radius:50%;object-fit:cover;background:var(--bg3);display:block}
+.pvp-user-photo-wrap .frame{position:absolute;inset:-8px;width:92px;height:92px;object-fit:contain;pointer-events:none}
+.pvp-stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+.pvp-stat-mini{background:var(--bg3);border-radius:8px;padding:7px;text-align:center;border:1px solid var(--border)}
+.pvp-stat-mini-val{font-size:16px;font-weight:900;margin-bottom:1px}
+.pvp-stat-mini-lbl{font-size:8px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
+/* Équipement slots PVP */
+.eq-slot{width:72px;height:72px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.18);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;overflow:visible;flex-shrink:0}
+.eq-slot:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.6);transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,92,255,.25)}
+.eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);padding:0}
+.eq-slot.filled.legendary{border-color:rgba(255,184,0,.6);background:rgba(255,184,0,.07);box-shadow:0 0 12px rgba(255,184,0,.25)}
+.eq-slot.filled.epic{border-color:rgba(192,132,255,.6);background:rgba(192,132,255,.07);box-shadow:0 0 12px rgba(192,132,255,.25)}
+.eq-slot.filled.rare{border-color:rgba(77,166,255,.6);background:rgba(77,166,255,.07);box-shadow:0 0 10px rgba(77,166,255,.2)}
+.eq-slot.filled:hover{transform:translateY(-2px)}
+.eq-slot-img{width:100%;height:100%;object-fit:contain;border-radius:10px;display:block}
+.eq-slot-empty-icon{font-size:18px;opacity:.25}
+.eq-slot-label{font-size:7px;color:rgba(255,255,255,.3);font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.eq-slot-unequip{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:rgba(255,50,50,.9);border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;opacity:0;transition:opacity .15s}
+.eq-slot:hover .eq-slot-unequip{opacity:1}
+.eq-slot-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(6px);background:#0e0f1f;border:1px solid rgba(127,92,255,.45);border-radius:12px;padding:10px 12px;min-width:160px;max-width:200px;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.75);white-space:nowrap}
+.eq-slot:hover .eq-slot-tooltip{opacity:1;transform:translateX(-50%) translateY(0)}
+.eq-slot-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0e0f1f}
+.eq-tooltip-name{font-size:12px;font-weight:900;margin-bottom:3px}
+.eq-tooltip-rarity{font-size:9px;font-weight:800;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.eq-tooltip-stat{font-size:11px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:5px}
+.eq-tooltip-empty{font-size:11px;opacity:.4;font-style:italic}
+/* Modal inventaire équipement */
+.pvp-inv-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.pvp-inv-overlay.show{opacity:1;pointer-events:all}
+.pvp-inv-modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:18px;max-width:360px;width:100%;max-height:70vh;overflow-y:auto}
+.pvp-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:12px}
+.pvp-inv-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
+.pvp-inv-item:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
+.pvp-inv-item.equipped{border-color:rgba(51,255,153,.4);background:rgba(51,255,153,.05)}
+.pvp-inv-item.legendary{border-color:rgba(255,184,0,.35)}.pvp-inv-item.epic{border-color:rgba(192,132,255,.3)}.pvp-inv-item.rare{border-color:rgba(77,166,255,.3)}
+.pvp-inv-img{width:44px;height:44px;object-fit:contain}
+.pvp-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* BATTLE LOG */
-.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;max-height:180px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;height:140px;min-height:140px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
 .log-line{font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
 .log-line:last-child{border-bottom:none}
 .log-line.crit{color:var(--gold);font-weight:700}
@@ -119,7 +172,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 /* MODAL REPLAY */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
 .modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:860px;width:100%;max-height:92vh;overflow-y:auto;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:22px;max-width:900px;width:100%;max-height:94vh;overflow-y:hidden;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column}
 .modal-overlay.show .modal{transform:scale(1)}
 .modal-close{float:right;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px}
 .modal-title{font-size:16px;font-weight:900;margin-bottom:16px}
@@ -128,8 +181,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .arena-stage-wrap{position:relative;margin-bottom:12px}
 .arena-hp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}
 .arena-hp-block{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
-.arena-hp-block.right{text-align:right}
-.arena-hp-name{font-size:12px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arena-hp-block.right{text-align:right;justify-content:flex-end}
+.arena-hp-name{font-size:13px;font-weight:900;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .arena-hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:6px;overflow:hidden}
 .arena-hp-bar{height:6px;border-radius:4px;transition:width .35s ease}
 .arena-hp-val{font-size:10px;opacity:.45;margin-top:3px}
@@ -199,6 +252,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 </div>
 
+<!-- MODAL INVENTAIRE EQUIP PVP -->
+<div class="pvp-inv-overlay" id="pvp-inv-overlay" onclick="if(event.target===this)pvpCloseInv()"></div>
+
 <!-- MODAL REPLAY -->
 <div class="modal-overlay" id="replay-modal" onclick="if(event.target===this) closeReplay()">
   <div class="modal">
@@ -207,16 +263,28 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
     <!-- HP bars -->
     <div class="arena-hp-row">
-      <div class="arena-hp-block">
-        <div class="arena-hp-name" id="rn1">Joueur</div>
-        <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp1" style="width:100%;background:#1D9E75"></div></div>
-        <div class="arena-hp-val" id="rhpv1">-</div>
+      <div class="arena-hp-block" style="display:flex;gap:10px;align-items:center">
+        <div style="position:relative;flex-shrink:0">
+          <div id="rhp-avatar-1" style="width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:2px solid rgba(29,158,117,.5)">🧑</div>
+          <img id="rhp-frame-1" src="" style="position:absolute;inset:-6px;width:54px;height:54px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="arena-hp-name" id="rn1">Joueur</div>
+          <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp1" style="width:100%;background:#1D9E75"></div></div>
+          <div class="arena-hp-val" id="rhpv1">-</div>
+        </div>
       </div>
       <div class="arena-vs">VS</div>
-      <div class="arena-hp-block right">
-        <div class="arena-hp-name" id="rn2">Ennemi</div>
-        <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp2" style="width:100%;background:#D85A30"></div></div>
-        <div class="arena-hp-val" id="rhpv2">-</div>
+      <div class="arena-hp-block right" style="display:flex;gap:10px;align-items:center;flex-direction:row-reverse">
+        <div style="position:relative;flex-shrink:0">
+          <div id="rhp-avatar-2" style="width:42px;height:42px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;border:2px solid rgba(216,90,48,.5)">🧑</div>
+          <img id="rhp-frame-2" src="" style="position:absolute;inset:-6px;width:54px;height:54px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="arena-hp-name" id="rn2" style="text-align:right">Ennemi</div>
+          <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp2" style="width:100%;background:#D85A30"></div></div>
+          <div class="arena-hp-val" id="rhpv2" style="text-align:right">-</div>
+        </div>
       </div>
     </div>
 
@@ -303,7 +371,7 @@ let arenaState = null;
 let arenaRaf   = null;
 let arenaLastT = 0;
 
-function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
+function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, rankInfo1, rankInfo2) {
   if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
   arenaState = null;
 
@@ -336,6 +404,16 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2) {
   updateArenaHp(2, maxHp2, maxHp2);
   document.getElementById('rn1').textContent = name1;
   document.getElementById('rn2').textContent = name2;
+  // Afficher photo dans les HP bars
+  ['1','2'].forEach(n => {
+    const av = n==='1' ? avatar1 : avatar2;
+    const ri = n==='1' ? rankInfo1 : rankInfo2;
+    const el = document.getElementById('rhp-avatar-'+n);
+    if (!el) return;
+    if (av) { el.style.backgroundImage = `url('${av}')`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.textContent=''; }
+    const frameEl = document.getElementById('rhp-frame-'+n);
+    if (frameEl && ri && RANK_FRAMES[ri.name]) frameEl.src = RANK_FRAMES[ri.name];
+  });
   arenaLastT = 0;
   arenaRaf = requestAnimationFrame(arenaLoop);
 }
@@ -572,33 +650,184 @@ function rankBadgeHtml(rankInfo, pts) {
 }
 
 // ── PROFIL ──
+const CLASS_IMAGES_PVP = {
+  slayer:   'https://raw.githubusercontent.com/skunfy/pok-gacha/main/slayer.png',
+  assassin: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/assassin.png',
+  soutien:  'https://raw.githubusercontent.com/skunfy/pok-gacha/main/soutient.png',
+};
+const CLASS_DEF_PVP = {
+  slayer:   { label:'Slayer',   icon:'⚔️', color:'#ff6464' },
+  assassin: { label:'Assassin', icon:'🗡️', color:'#c084ff' },
+  soutien:  { label:'Soutien',  icon:'🛡️', color:'#4da6ff' },
+};
+const SLOT_DEF = {
+  weapon:{ label:'Arme',   icon:'⚔️' },
+  armor: { label:'Armure', icon:'🛡️' },
+  boots: { label:'Bottes', icon:'👢' },
+  head:  { label:'Casque', icon:'🪖' },
+  ring:  { label:'Anneau', icon:'💍' },
+};
+const EQ_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+let _pvpEquipData = null;
+
 async function loadProfil() {
+  document.getElementById('profil-content').innerHTML = '<div class="loading">Chargement...</div>';
   try {
-    const d = await api('/api/pvp/me');
-    myData = d.fighter;
-    const f = d.fighter;
-    document.getElementById('profil-content').innerHTML = `
-      <div class="fighter-profile">
-        <div class="fighter-avatar-wrap">
-          <div class="fighter-avatar">${CLASS_EMOJI[f.charClass]||'🧑'}</div>
-          ${RANK_FRAMES[f.rankInfo?.name] ? `<img class="rank-frame-img" src="${RANK_FRAMES[f.rankInfo.name]}">` : ''}
-        </div>
-        <div class="fighter-info">
-          <div class="fighter-name">${esc(f.name)}</div>
-          <div class="fighter-meta">Niv. ${f.level} · ${esc(f.classLabel)} · ${f.wins}V ${f.losses}D</div>
+    const [dPvp] = await Promise.all([
+      api('/api/pvp/me'),
+      api('/api/equipment').then(d => { _pvpEquipData = d; }).catch(() => { _pvpEquipData = { inventory:[], equipped:{} }; }),
+    ]);
+    myData = dPvp.fighter;
+    renderProfilPvp(dPvp.fighter);
+  } catch(e) { document.getElementById('profil-content').innerHTML = '<div class="empty">Erreur chargement profil</div>'; }
+}
+
+function renderProfilPvp(f) {
+  const cls      = CLASS_DEF_PVP[f.charClass] || null;
+  const clsColor = cls?.color || '#7f5cff';
+  const imgSrc   = CLASS_IMAGES_PVP[f.charClass] || null;
+  const equipped = _pvpEquipData?.equipped || {};
+  const rankName = f.rankInfo?.name || 'Bronze';
+  const rankCol  = RANK_COLORS[rankName] || '#aaa';
+
+  // Photo de profil : utiliser l'avatar de l'API ou fallback emoji
+  const photoHtml = f.avatar
+    ? `<img class="photo" src="${esc(f.avatar)}" onerror="this.src=''" alt="">`
+    : `<div class="photo" style="display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--bg3)">${cls?.icon||'🧑'}</div>`;
+  const frameHtml = RANK_FRAMES[rankName]
+    ? `<img class="frame" src="${RANK_FRAMES[rankName]}" alt="">`
+    : '';
+
+  document.getElementById('profil-content').innerHTML = `
+    <div class="pvp-profil-wrap" style="--pvp-cls-color:${clsColor}">
+      <!-- COL GAUCHE : photo + infos + stats mini -->
+      <div class="pvp-col-left">
+        <div class="pvp-user-photo-wrap">${photoHtml}${frameHtml}</div>
+        <div style="text-align:center">
+          <div style="font-size:16px;font-weight:900;margin-bottom:2px">${esc(f.name)}</div>
+          <div style="font-size:11px;opacity:.5;margin-bottom:8px">Niv. ${f.level} · ${f.wins}V ${f.losses}D</div>
           ${rankBadgeHtml(f.rankInfo, f.rank)}
         </div>
+        <div class="pvp-stats-mini" style="margin-top:4px">
+          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ff6464">${f.hp}</div><div class="pvp-stat-mini-lbl">PV</div></div>
+          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ffd84d">${f.atq}</div><div class="pvp-stat-mini-lbl">ATQ</div></div>
+          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#c084ff">${f.crit}%</div><div class="pvp-stat-mini-lbl">Crit</div></div>
+          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#4da6ff">${f.dodge}%</div><div class="pvp-stat-mini-lbl">Esquive</div></div>
+        </div>
+        <!-- Rang en grand -->
+        <div class="pvp-rank-big">
+          ${RANK_ICONS[rankName] ? `<img src="${RANK_ICONS[rankName]}" alt="${rankName}">` : ''}
+          <div class="pvp-rank-big-label" style="color:${rankCol}">${rankName}</div>
+          <div class="pvp-rank-big-pts">${fmtPts(f.rank)} pts</div>
+        </div>
       </div>
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-box-val" style="color:#ff6464">${f.hp}</div><div class="stat-box-label">PV max</div></div>
-        <div class="stat-box"><div class="stat-box-val" style="color:#ffd84d">${f.atq}</div><div class="stat-box-label">Attaque</div></div>
-        <div class="stat-box"><div class="stat-box-val" style="color:#c084ff">${f.crit}%</div><div class="stat-box-label">Critique</div></div>
-        <div class="stat-box"><div class="stat-box-val" style="color:#4da6ff">${f.dodge}%</div><div class="stat-box-label">Esquive</div></div>
+
+      <!-- COL CENTRE : personnage + slots latéraux intégrés -->
+      <div class="pvp-col-center">
+        <div class="pvp-char-img-wrap">
+          ${imgSrc
+            ? `<img class="pvp-char-img" src="${esc(imgSrc)}" alt="${cls?.label||''}" onerror="this.outerHTML='<div class=\'pvp-char-ph\'>${cls?.icon||'🧬'}</div>'">`
+            : `<div class="pvp-char-ph">${cls?.icon||'🧬'}</div>`
+          }
+        </div>
+        ${cls ? `<div class="pvp-class-badge" style="color:${clsColor};border-color:${clsColor};background:${clsColor}18">${cls.icon} ${esc(f.name)} · ${cls.label}</div>` : ''}
       </div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);font-size:11px;opacity:.35;text-align:center">
-        Les stats sont calculées depuis ton personnage, ta classe et ton équipement forgé
-      </div>`;
-  } catch(e) { document.getElementById('profil-content').innerHTML = '<div class="empty">Erreur chargement profil</div>'; }
+
+      <!-- COL DROITE : slots équipement -->
+      <div class="pvp-col-right">
+        ${renderPvpSlot('weapon', equipped)}
+        ${renderPvpSlot('head',   equipped)}
+        ${renderPvpSlot('armor',  equipped)}
+        ${renderPvpSlot('boots',  equipped)}
+        ${renderPvpSlot('ring',   equipped)}
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:11px;opacity:.3;text-align:center">Stats calculées depuis ton personnage, ta classe et ton équipement forgé</div>`;
+}
+
+function renderPvpSlot(slot, equipped) {
+  const def  = SLOT_DEF[slot];
+  const item = equipped[slot];
+  const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+  if (item) {
+    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const fl  = item.forge_level || 0;
+    const fm  = 1 + fl * 0.10;
+    const fs  = v => v ? Math.round(v * fm * 10) / 10 : 0;
+    const flCol = fl>=15?'#ff4488':fl>=12?'#ffd84d':fl>=9?'#c084ff':fl>=6?'#4da6ff':fl>=3?'#fff':null;
+    const stats = [];
+    if (item.dmg_bonus)    stats.push(`<div class="eq-tooltip-stat"><span>⚔️</span><span style="color:#ff8844">+${fs(item.dmg_bonus)}% DMG</span></div>`);
+    if (item.crit)         stats.push(`<div class="eq-tooltip-stat"><span>💥</span><span style="color:#ffd84d">+${fs(item.crit)}% Crit</span></div>`);
+    if (item.first_attack) stats.push(`<div class="eq-tooltip-stat"><span>⚡</span><span style="color:#44aaff">+${fs(item.first_attack)}% 1ère frappe</span></div>`);
+    if (item.clan_dmg)     stats.push(`<div class="eq-tooltip-stat"><span>🛡️</span><span style="color:#4da6ff">+${fs(item.clan_dmg)}% DMG clan</span></div>`);
+    if (item.clan_crit)    stats.push(`<div class="eq-tooltip-stat"><span>💫</span><span style="color:#c084ff">+${fs(item.clan_crit)}% Crit clan</span></div>`);
+    const forgeBadge = fl>0 ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:#0d0e1c;border:1px solid ${flCol};color:${flCol};z-index:4">+${fl}</div>` : '';
+    return `<div class="eq-slot filled ${item.rarity}" onclick="pvpOpenEquip('${slot}')" style="position:relative">
+      <img class="eq-slot-img" src="${esc(item.image)}" onerror="this.style.display='none'">
+      ${forgeBadge}
+      <span class="eq-slot-unequip" onclick="event.stopPropagation();pvpUnequip(${item.id})">✕</span>
+      <div class="eq-slot-tooltip">
+        <div class="eq-tooltip-name">${esc(item.name)}${fl>0?` <span style="color:${flCol}">+${fl}</span>`:''}</div>
+        <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
+        ${stats.length ? stats.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
+      </div>
+    </div>`;
+  }
+  return `<div class="eq-slot" onclick="pvpOpenEquip('${slot}')">
+    <div class="eq-slot-empty-icon">${def.icon}</div>
+    <div class="eq-slot-label">${def.label}</div>
+    <div class="eq-slot-tooltip"><div class="eq-tooltip-empty">${def.icon} ${def.label} — vide</div><div style="font-size:10px;opacity:.4;margin-top:4px">Clique pour équiper</div></div>
+  </div>`;
+}
+
+async function pvpOpenEquip(slot) {
+  const inv = (_pvpEquipData?.inventory || []).filter(i => i.slot === slot);
+  if (!inv.length) { showAlert(`Aucun équipement "${SLOT_DEF[slot]?.label}" dans l'inventaire.`, 'error'); return; }
+  // Afficher modal inventaire
+  const equippedIds = new Set(Object.values(_pvpEquipData?.equipped || {}).map(e=>e?.id).filter(Boolean));
+  const html = inv.map(item => {
+    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const isEq = equippedIds.has(item.id);
+    return `<div class="pvp-inv-item ${item.rarity} ${isEq?'equipped':''}" onclick="pvpEquip(${item.id},'${slot}')">
+      ${isEq?'<div style="position:absolute;top:3px;right:3px;width:7px;height:7px;background:#33ff99;border-radius:50%"></div>':''}
+      <img class="pvp-inv-img" src="${esc(item.image)}" onerror="this.style.display='none'">
+      <div class="pvp-inv-name" style="color:${col}">${esc(item.name)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('pvp-inv-overlay').innerHTML = `
+    <div class="pvp-inv-modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:14px;font-weight:900">${SLOT_DEF[slot].icon} Choisir ${SLOT_DEF[slot].label}</div>
+        <button onclick="pvpCloseInv()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <div class="pvp-inv-grid">${html}</div>
+    </div>`;
+  document.getElementById('pvp-inv-overlay').classList.add('show');
+}
+
+function pvpCloseInv() {
+  document.getElementById('pvp-inv-overlay').classList.remove('show');
+}
+
+async function pvpEquip(id, slot) {
+  pvpCloseInv();
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id }) });
+    _pvpEquipData = await api('/api/equipment');
+    const fresh = await api('/api/pvp/me');
+    myData = fresh.fighter;
+    renderProfilPvp(fresh.fighter);
+  } catch(e) { showAlert(e.message, 'error'); }
+}
+
+async function pvpUnequip(id) {
+  try {
+    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
+    _pvpEquipData = await api('/api/equipment');
+    const fresh = await api('/api/pvp/me');
+    myData = fresh.fighter;
+    renderProfilPvp(fresh.fighter);
+  } catch(e) { showAlert(e.message, 'error'); }
 }
 
 // ── RECHERCHE ──
@@ -617,7 +846,9 @@ async function searchPlayer() {
     if (!d.users.length) { el.innerHTML = '<div class="empty">Aucun joueur trouvé</div>'; return; }
     el.innerHTML = d.users.map(u => `
       <div class="user-row">
-        <div class="user-row-avatar">${CLASS_EMOJI[u.charClass]||'🧑'}</div>
+        <div class="user-row-avatar" style="${u.avatar?'background-image:url('+JSON.stringify(u.avatar)+');background-size:cover;background-color:transparent':''}">
+          ${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}
+        </div>
         <div class="user-row-info">
           <div class="user-row-name">${esc(u.name)}</div>
           <div class="user-row-rank" style="color:${RANK_COLORS[u.rankInfo?.name]||'#aaa'}">${u.rankInfo?.icon||''} ${esc(u.rankInfo?.name||'')} · ${fmtPts(u.pts)} pts</div>
@@ -649,7 +880,9 @@ async function loadDefis() {
     if (!count) { el.innerHTML = '<div class="empty">Aucun défi en attente</div>'; return; }
     el.innerHTML = d.challenges.map(c => `
       <div class="challenge-card">
-        <div class="user-row-avatar">⚔️</div>
+        <div class="user-row-avatar" style="${c.avatar?'background-image:url('+JSON.stringify(c.avatar)+');background-size:cover;background-color:transparent':''}">
+          ${c.avatar?'':'⚔️'}
+        </div>
         <div class="challenge-card-info">
           <div class="challenge-card-name">${esc(c.challengerName)}</div>
           <div class="challenge-card-sub" style="color:${RANK_COLORS[c.rankInfo?.name]||'#aaa'}">
@@ -697,7 +930,9 @@ async function loadClassement() {
       const isMe = myData && u.name === myData.name;
       return `<div class="lb-row ${isMe?'me':''}">
         <div class="lb-rank-num" style="color:${u.rank<=3?'#ffd84d':''}">${u.rank<=3?['🥇','🥈','🥉'][u.rank-1]:u.rank}</div>
-        <div class="lb-avatar">${CLASS_EMOJI[u.charClass]||'🧑'}</div>
+        <div class="lb-avatar" style="${u.avatar?'background-image:url('+JSON.stringify(u.avatar)+');background-size:cover;background-color:transparent':''}">
+          ${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}
+        </div>
         <div style="flex:1">
           <div class="lb-name">${esc(u.name)}</div>
           <div class="lb-stats">${u.wins}V ${u.losses}D</div>
@@ -737,8 +972,8 @@ async function loadReplay(battleId) {
     const d = await api('/api/pvp/result/'+battleId);
     const b = d.battle;
     // challengerClass / opponentClass sont renvoyés par le server si disponibles
-    const f1 = { name: b.challengerName, charClass: b.challengerClass || guessClassFromLog(b.log, b.challengerName) || 'assassin', hp: getMaxHp(b.log, b.challengerName) };
-    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || guessClassFromLog(b.log, b.opponentName)   || 'assassin', hp: getMaxHp(b.log, b.opponentName)   };
+    const f1 = { name: b.challengerName, charClass: b.challengerClass || guessClassFromLog(b.log, b.challengerName) || 'assassin', hp: getMaxHp(b.log, b.challengerName), avatar: b.challengerAvatar||null, rankInfo: b.challengerRankInfo||null };
+    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || guessClassFromLog(b.log, b.opponentName)   || 'assassin', hp: getMaxHp(b.log, b.opponentName),   avatar: b.opponentAvatar||null,   rankInfo: b.opponentRankInfo||null };
     openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
   } catch(e) { showAlert(e.message); }
 }
@@ -776,7 +1011,9 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
     initArena(
       f1.charClass, f2.charClass,
       f1.hp, f2.hp,
-      f1.name, f2.name
+      f1.name, f2.name,
+      f1.avatar||null, f2.avatar||null,
+      f1.rankInfo, f2.rankInfo
     );
     playReplay(log, f1, f2, winnerId, rankChange);
   }, 350);
