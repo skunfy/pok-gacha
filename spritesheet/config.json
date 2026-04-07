@@ -1,0 +1,581 @@
+{
+  "frame_size": 256,
+  "characters": {
+    "bloody_alchemist": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "dark_oracle": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "fallen_angels": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "forest_ranger": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Shooting": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Shooting": {
+        "frames": 9,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "golem": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "minotaur": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "reaper_man": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    },
+    "valkyrie": {
+      "Dead": {
+        "frames": 15,
+        "fw": 256,
+        "fps": 7
+      },
+      "Falling_Down": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Hurt": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Idle": {
+        "frames": 18,
+        "fw": 256,
+        "fps": 7
+      },
+      "Jump_Loop": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Jump_Start": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Kicking": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run_Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Run": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 13
+      },
+      "Slashing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Sliding": {
+        "frames": 6,
+        "fw": 256,
+        "fps": 10
+      },
+      "Throwing": {
+        "frames": 12,
+        "fw": 256,
+        "fps": 10
+      },
+      "Walk": {
+        "frames": 24,
+        "fw": 256,
+        "fps": 10
+      }
+    }
+  }
+}
