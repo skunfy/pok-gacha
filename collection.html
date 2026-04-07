@@ -1874,7 +1874,7 @@ function render(items){
       : x.image;
 
     el.innerHTML=`
-      <div class="cImg" style="position:relative;${imgForCard ? `background-image:url('${imgForCard}');` : ''}">
+      <div class="cImg" style="position:relative;${imgForCard ? `background:url('${imgForCard}') center/contain no-repeat;` : ''}">
         <div class="marketBanner" data-idkey="${x.idKey}">
           <img class="marketBannerLogo" src="market.png" alt="Market">
           <span class="marketBannerText">Market</span>

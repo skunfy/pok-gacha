@@ -2903,63 +2903,41 @@ app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
   const game = getGame(req);
 
-  // INDEX LEGER : pas d'images — juste les métadonnées pour filtres/tri/binder
-  // ~50 octets/carte au lieu de 300+ avec les URLs d'images
-  const [items, me] = await Promise.all([
-    pool.query(
-      `SELECT idKey, game, cardId, setId, localId, name, setName, grade, mint, count, lastAt, grades_json
-       FROM collection
-       WHERE user_id=$1 AND game=$2
-       ORDER BY lastAt DESC`,
-      [req.user.id, game]
-    ),
-    pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]),
-  ]);
+  // COALESCE(image, imageHigh) : certaines cartes n'ont que imageHigh en base
+  const items = await pool.query(
+    `SELECT idKey, game, cardId, setId, localId, name, setName,
+            COALESCE(image, imageHigh) AS image,
+            grade, mint, count, lastAt
+     FROM collection
+     WHERE user_id=$1 AND game=$2
+     ORDER BY lastAt DESC`,
+    [req.user.id, game]
+  );
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-  // Cache 5 minutes
-  res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=120');
+  // Cache 3 minutes — drastiquement moins d'egress
+  res.setHeader('Cache-Control', 'public, max-age=180, stale-while-revalidate=60');
   res.json({
     money: me.rows[0]?.money || 0,
-    items: items.rows.map(x => ({
-      idKey:      x.idkey   || x.idKey,
-      game:       x.game    || game,
-      name:       x.name,
-      set:        x.setname || x.setName,
-      cardId:     x.cardid  || x.cardId  || null,
-      setId:      x.setid   || x.setId   || null,
-      localId:    x.localid || x.localId || null,
-      grade:      x.grade,
-      mint:       Boolean(x.mint),
-      count:      x.count,
-      lastAt:     Number(x.lastat || x.lastAt),
-      gradesJson: x.grades_json || null,
-      // PAS d'image ici — chargée via /api/collection/page
-    }))
-  });
-});
-
-// GET /api/collection/page — images d'une page de cartes (paginé, SQL LIMIT/OFFSET)
-// Appelé uniquement pour les cartes visibles à l'écran
-app.get("/api/collection/page", auth, async (req, res) => {
-  const game   = getGame(req);
-  const idKeys = (req.query.idKeys || '').split(',').map(s => s.trim()).filter(Boolean);
-  if (!idKeys.length) return res.json({ items: [] });
-
-  const q = await pool.query(
-    `SELECT idKey, game, image, imageHigh, cardId
-     FROM collection
-     WHERE user_id=$1 AND game=$2 AND idKey = ANY($3)`,
-    [req.user.id, game, idKeys]
-  );
-
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.json({
-    items: q.rows.map(x => {
+    items: items.rows.map((x) => {
       const itemGame = x.game || game;
       const cardId   = x.cardid || x.cardId || null;
-      const raw      = x.image;
-      const image    = itemGame === 'magic' ? rewriteMagicImageUrl(raw, cardId) : raw;
-      return { idKey: x.idkey || x.idKey, image };
+      const rawImage = x.image;
+      const image    = itemGame === "magic" ? rewriteMagicImageUrl(rawImage, cardId) : rawImage;
+      return {
+        idKey:   x.idkey   || x.idKey,
+        game:    itemGame,
+        name:    x.name,
+        set:     x.setname || x.setName,
+        cardId,
+        setId:   x.setid   || x.setId   || null,
+        localId: x.localid || x.localId || null,
+        image,   // basse résolution seulement — imageHigh chargé au zoom
+        grade:   x.grade,
+        mint:    Boolean(x.mint),
+        count:   x.count,
+        lastAt:  Number(x.lastat || x.lastAt),
+      };
     })
   });
 });
