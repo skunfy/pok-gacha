@@ -73,7 +73,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .search-wrap button:hover{opacity:.85}
 .user-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:8px;transition:.15s}
 .user-row:hover{border-color:var(--border2)}
-.user-row-avatar{width:40px;height:40px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background-size:cover;background-position:center}
+.user-row-avatar{width:40px;height:40px;border-radius:12px;background-color:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .user-row-info{flex:1}
 .user-row-name{font-size:14px;font-weight:700}
 .user-row-rank{font-size:11px;opacity:.5;margin-top:2px}
@@ -96,7 +96,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .podium-rank-icon-top{width:44px;height:44px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,255,255,.2))}
 .podium-avatar-wrap{position:relative;margin-bottom:8px}
 /* avatar utilise background-image comme leaderboard.html */
-.podium-avatar{border-radius:18px;background:var(--bg3) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,.15);box-shadow:0 18px 50px rgba(0,0,0,.5);position:relative;overflow:hidden;flex-shrink:0}
+.podium-avatar{border-radius:18px;background-color:var(--bg3);background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,.15);box-shadow:0 18px 50px rgba(0,0,0,.5);position:relative;overflow:hidden;flex-shrink:0}
 /* cadre de rang par dessus l'avatar */
 .podium-rank-frame-img{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:contain;pointer-events:none;z-index:2}
 .podium-name{font-size:13px;font-weight:900;text-align:center;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
@@ -118,7 +118,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);transition:.15s}
 .lb-row.me{border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.06)}
 .lb-rank-num{font-size:15px;font-weight:900;width:28px;text-align:center;flex-shrink:0}
-.lb-avatar{width:40px;height:40px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background-size:cover;background-position:center;overflow:hidden;border:2px solid rgba(255,255,255,.08)}
+.lb-avatar{width:40px;height:40px;border-radius:12px;background-color:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden;border:2px solid rgba(255,255,255,.08)}
 .lb-name{flex:1;font-size:13px;font-weight:700}
 .lb-stats{font-size:11px;opacity:.45;margin-top:2px}
 .lb-pts{font-size:14px;font-weight:900;text-align:right}
@@ -1040,7 +1040,7 @@ async function searchPlayer() {
     const noEnergy = !hasEnoughEnergy();
     el.innerHTML = d.users.map(u => {
       const avatarStyle = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-color:transparent`
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
         : '';
       return `<div class="user-row">
         <div class="user-row-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
@@ -1081,7 +1081,7 @@ async function loadDefis() {
     if (!count) { el.innerHTML = '<div class="empty">Aucun défi en attente</div>'; return; }
     el.innerHTML = d.challenges.map(c => {
       const avatarStyle = c.avatar
-        ? `background-image:url(${JSON.stringify(c.avatar)});background-size:cover;background-color:transparent`
+        ? `background-image:url(${JSON.stringify(c.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
         : '';
       return `<div class="challenge-card">
         <div class="user-row-avatar" style="${avatarStyle}">${c.avatar?'':'⚔️'}</div>
@@ -1142,7 +1142,7 @@ async function loadClassement() {
       const rankName = u.rankInfo?.name || 'Bronze';
       // avatar via background-image (même technique que leaderboard.html)
       const avatarBg = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center`
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;font-size:0`
         : '';
       const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
       // Icône de rang au-dessus
@@ -1185,11 +1185,11 @@ async function loadClassement() {
       const isMe = myData && u.name === myData.name;
       const rankName = u.rankInfo?.name || 'Bronze';
       const avatarBg = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent`
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
         : '';
       const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
       const rankFrame = RANK_FRAMES[rankName]
-        ? `<img src="${RANK_FRAMES[rankName]}" style="position:absolute;inset:-8px;width:56px;height:56px;object-fit:contain;pointer-events:none;z-index:2" onerror="this.style.display='none'">`
+        ? `<img src="${RANK_FRAMES[rankName]}" style="position:absolute;inset:-9px;width:58px;height:58px;object-fit:contain;pointer-events:none;z-index:2" onerror="this.style.display='none'">`
         : '';
       return `<div class="lb-row ${isMe?'me':''}">
         <div class="lb-rank-num">${u.rank}</div>
