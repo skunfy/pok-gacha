@@ -6408,25 +6408,27 @@ app.get("/api/pvp/me", auth, async (req, res) => {
 app.get("/api/pvp/leaderboard", auth, async (req, res) => {
   try {
     const topQ = await pool.query(`
-      SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses
+      SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses,
+             pc.char_class
       FROM users u
+      LEFT JOIN player_character pc ON pc.user_id = u.id
       ORDER BY u.pvp_rank DESC, u.pvp_wins DESC
       LIMIT 50
     `);
-    const meQ = await pool.query(`SELECT pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [req.user.id]);
+    const meQ = await pool.query(`SELECT pvp_rank, pvp_wins, pvp_losses, avatar FROM users WHERE id=$1`, [req.user.id]);
     const me = meQ.rows[0];
     res.json({
       top: topQ.rows.map((u,i) => ({
         rank: i+1,
         name: u.name,
         avatar: u.avatar || null,
-        charClass: null,
+        charClass: u.char_class || null,
         pts: Number(u.pvp_rank),
         wins: Number(u.pvp_wins),
         losses: Number(u.pvp_losses),
         rankInfo: getRankInfo(Number(u.pvp_rank)),
       })),
-      me: { pts: Number(me?.pvp_rank||1000), wins: Number(me?.pvp_wins||0), losses: Number(me?.pvp_losses||0), rankInfo: getRankInfo(Number(me?.pvp_rank||1000)) },
+      me: { pts: Number(me?.pvp_rank||1000), wins: Number(me?.pvp_wins||0), losses: Number(me?.pvp_losses||0), rankInfo: getRankInfo(Number(me?.pvp_rank||1000)), avatar: me?.avatar || null },
     });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
