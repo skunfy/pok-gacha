@@ -906,6 +906,33 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_rank INTEGER NOT NULL DEFAULT 1000`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins  INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_losses INTEGER NOT NULL DEFAULT 0`);
+
+  // ═══ SYSTEME PVP SEPARE ═══
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_xp         INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_gold        INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_win_streak  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_chests      INTEGER NOT NULL DEFAULT 0`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_equipment (
+      id            SERIAL PRIMARY KEY,
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      item_key      TEXT NOT NULL,
+      forge_level   INTEGER NOT NULL DEFAULT 0,
+      extra_stats   JSONB NOT NULL DEFAULT '{}'::jsonb,
+      equipped_slot TEXT DEFAULT NULL,
+      obtained_at   BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_equipment_user ON pvp_equipment(user_id)`);
+
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_level        INTEGER NOT NULL DEFAULT 1`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_xp           INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_pts_avail    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_force       INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_agilite     INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_intelligence INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_dexterite   INTEGER NOT NULL DEFAULT 5`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy INTEGER DEFAULT 100`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy_last_refill BIGINT DEFAULT 0`);
   await pool.query(`UPDATE users SET pvp_energy=100, pvp_energy_last_refill=${Date.now()} WHERE pvp_energy IS NULL OR pvp_energy_last_refill=0`);
@@ -1368,12 +1395,216 @@ const EQUIPMENT = {
   botte2_l:   { key:'botte2_l',   name:'Bottes de l\'Inferno',  slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte2.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:25, clan_crit:15 },
   botte3_l:   { key:'botte3_l',   name:'Sabots de l\'Apocalypse',slot:'boots', rarity:'legendary', image:`${EQ_R2}/legendaire/botte3.png`,  dmg_bonus:32, crit:0,  first_attack:15, clan_dmg:0,  clan_crit:0 },
   head1_l:    { key:'head1_l',    name:'Masque du Seigneur',    slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head1.png`,   dmg_bonus:0,  crit:25, first_attack:18, clan_dmg:0,  clan_crit:0 },
-  head2_l:    { key:'head2_l',    name:'Capuche du Faucheur',   slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  head2_l:    { key:'head2_l',    name:"Capuche du Faucheur",   slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
   head3_l:    { key:'head3_l',    name:'Heaume du Conquérant',  slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head3.png`,   dmg_bonus:35, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
   ring1_l:    { key:'ring1_l',    name:'Anneau du Dragon',      slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring1.png`,   dmg_bonus:18, crit:25, first_attack:0,  clan_dmg:0,  clan_crit:0 },
   ring2_l:    { key:'ring2_l',    name:'Anneau de l\'Éternité', slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
   ring3_l:    { key:'ring3_l',    name:'Anneau du Vide',        slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring3.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:18, clan_crit:22 },
 };
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEME PVP SEPARE — Items, Forge, Coffres, Stats
+// ═══════════════════════════════════════════════════════════
+
+// ── Stats PVP par niveau de perso ──
+// force      → ATK + HP
+// agilite    → Vitesse + Esquive
+// intelligence → Crit% + CritDmg%
+// dexterite  → Vitesse + Vol de vie
+
+function pvpXpForLevel(lvl) {
+  return Math.floor(100 * Math.pow(lvl, 1.6));
+}
+
+function pvpStatBonus(char) {
+  const force  = Number(char.pvp_stat_force       || 5);
+  const agi    = Number(char.pvp_stat_agilite     || 5);
+  const intel  = Number(char.pvp_stat_intelligence|| 5);
+  const dex    = Number(char.pvp_stat_dexterite   || 5);
+  return {
+    atk:      force  * 3,
+    hp:       force  * 20,
+    speed:    agi    * 2 + dex * 1,
+    dodge:    agi    * 0.8,
+    crit_pct: intel  * 0.6,
+    crit_dmg: intel  * 1.0,
+    lifesteal:dex    * 0.3,
+    def:      0,
+  };
+}
+
+// ── Items PVP ──
+const PVP_ITEMS = {
+  // ─── COMMUNS (5 slots) ───
+  pvp_sword_c:  { key:'pvp_sword_c',  name:'Épée Rouillée',          slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/sword1.png`,      atk:12, def:0,  hp:0,   speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_dagger_c: { key:'pvp_dagger_c', name:'Dague Ébréchée',          slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/dagger1.png`,     atk:6,  def:0,  hp:0,   speed:3,  crit_pct:2,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_staff_c:  { key:'pvp_staff_c',  name:'Bâton Fendu',             slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/staff1.png`,      atk:8,  def:0,  hp:20,  speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor_c:  { key:'pvp_armor_c',  name:'Tunique Usée',            slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor1.png`,      atk:0,  def:8,  hp:40,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor2_c: { key:'pvp_armor2_c', name:'Plastron de Fer',         slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor3.png`,      atk:0,  def:12, hp:20,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor3_c: { key:'pvp_armor3_c', name:'Robe du Disciple',        slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor2.png`,      atk:0,  def:5,  hp:30,  speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_boots_c:  { key:'pvp_boots_c',  name:'Bottes Rafistolées',      slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/Botte1.png`,      atk:0,  def:0,  hp:0,   speed:5,  crit_pct:0,   crit_dmg:0,   dodge:2,  lifesteal:0 },
+  pvp_boots2_c: { key:'pvp_boots2_c', name:'Chaussons du Sage',       slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte2.png`,      atk:0,  def:2,  hp:15,  speed:3,  crit_pct:0,   crit_dmg:0,   dodge:1,  lifesteal:0 },
+  pvp_boots3_c: { key:'pvp_boots3_c', name:'Bottes du Marcheur',      slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte3.png`,      atk:0,  def:0,  hp:0,   speed:6,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm_c:   { key:'pvp_helm_c',   name:'Casque Cabossé',          slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head1.png`,       atk:0,  def:6,  hp:30,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm2_c:  { key:'pvp_helm2_c',  name:'Chapeau du Mage',         slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head2.png`,       atk:0,  def:3,  hp:20,  speed:0,  crit_pct:2,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm3_c:  { key:'pvp_helm3_c',  name:'Heaume du Guerrier',      slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head3.png`,       atk:4,  def:5,  hp:10,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_ring_c:   { key:'pvp_ring_c',   name:'Anneau Terne',            slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring1.png`,       atk:4,  def:0,  hp:0,   speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_ring2_c:  { key:'pvp_ring2_c',  name:'Anneau de Clairvoyance',  slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring2.png`,       atk:0,  def:0,  hp:20,  speed:2,  crit_pct:0,   crit_dmg:0,   dodge:1,  lifesteal:0 },
+  pvp_ring3_c:  { key:'pvp_ring3_c',  name:"Anneau d'Argent",        slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring3.png`,       atk:2,  def:2,  hp:10,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+
+  // ─── RARES (15 items) ───
+  pvp_sword_r:  { key:'pvp_sword_r',  name:'Lame du Dueliste',        slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/sword1.png`,        atk:22, def:0,  hp:0,   speed:0,  crit_pct:3,   crit_dmg:10,  dodge:0,  lifesteal:0 },
+  pvp_dagger_r: { key:'pvp_dagger_r', name:'Croc de Vipère',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/dagger1.png`,       atk:14, def:0,  hp:0,   speed:6,  crit_pct:5,   crit_dmg:15,  dodge:0,  lifesteal:0 },
+  pvp_staff_r:  { key:'pvp_staff_r',  name:'Sceptre des Marées',      slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/staff1.png`,        atk:12, def:0,  hp:30,  speed:0,  crit_pct:2,   crit_dmg:8,   dodge:0,  lifesteal:2 },
+  pvp_armor_r:  { key:'pvp_armor_r',  name:'Cuirasse du Rôdeur',      slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor1.png`,        atk:0,  def:16, hp:80,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_armor2_r: { key:'pvp_armor2_r', name:'Robe des Anciens',        slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor2.png`,        atk:0,  def:10, hp:60,  speed:0,  crit_pct:3,   crit_dmg:0,   dodge:0,  lifesteal:2 },
+  pvp_armor3_r: { key:'pvp_armor3_r', name:'Cuirasse du Conquérant',  slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor3.png`,        atk:0,  def:22, hp:50,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_boots_r:  { key:'pvp_boots_r',  name:'Bottes du Chasseur',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte1r.png`,       atk:0,  def:0,  hp:0,   speed:10, crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_boots2_r: { key:'pvp_boots2_r', name:'Bottes du Héraut',        slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte2r.png`,       atk:0,  def:4,  hp:30,  speed:7,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_boots3_r: { key:'pvp_boots3_r', name:'Grèves de Fer Noir',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte3r.png`,       atk:4,  def:6,  hp:0,   speed:5,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm_r:   { key:'pvp_helm_r',   name:'Masque du Fantôme',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head1.png`,         atk:0,  def:10, hp:40,  speed:0,  crit_pct:4,   crit_dmg:0,   dodge:2,  lifesteal:0 },
+  pvp_helm2_r:  { key:'pvp_helm2_r',  name:'Capuche du Druide',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head2.png`,         atk:0,  def:6,  hp:50,  speed:0,  crit_pct:2,   crit_dmg:10,  dodge:0,  lifesteal:0 },
+  pvp_helm3_r:  { key:'pvp_helm3_r',  name:'Heaume du Paladin',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head3.png`,         atk:0,  def:14, hp:60,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:2 },
+  pvp_ring_r:   { key:'pvp_ring_r',   name:'Anneau de Feu',           slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring1.png`,         atk:10, def:0,  hp:0,   speed:0,  crit_pct:4,   crit_dmg:12,  dodge:0,  lifesteal:0 },
+  pvp_ring2_r:  { key:'pvp_ring2_r',  name:'Anneau du Crépuscule',    slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring2.png`,         atk:0,  def:4,  hp:30,  speed:3,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_ring3_r:  { key:'pvp_ring3_r',  name:'Anneau Mystique',         slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring3.png`,         atk:5,  def:0,  hp:20,  speed:0,  crit_pct:2,   crit_dmg:8,   dodge:0,  lifesteal:1 },
+
+  // ─── ÉPIQUES (15 items) ───
+  pvp_sword_e:  { key:'pvp_sword_e',  name:'Lame des Runes',          slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/sword1.png`,        atk:35, def:0,  hp:0,   speed:0,  crit_pct:5,   crit_dmg:20,  dodge:0,  lifesteal:3 },
+  pvp_dagger_e: { key:'pvp_dagger_e', name:"Pointe de l'Éclipse",    slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/dagger1.png`,       atk:22, def:0,  hp:0,   speed:12, crit_pct:10,  crit_dmg:30,  dodge:0,  lifesteal:0 },
+  pvp_staff_e:  { key:'pvp_staff_e',  name:'Sceptre du Chaos',        slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/staff1.png`,        atk:18, def:0,  hp:60,  speed:0,  crit_pct:7,   crit_dmg:18,  dodge:0,  lifesteal:4 },
+  pvp_armor_e:  { key:'pvp_armor_e',  name:'Armure du Conquérant',    slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor3.png`,        atk:0,  def:28, hp:150, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_armor2_e: { key:'pvp_armor2_e', name:'Toge des Abysses',        slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor2.png`,        atk:0,  def:18, hp:120, speed:0,  crit_pct:4,   crit_dmg:0,   dodge:0,  lifesteal:4 },
+  pvp_armor3_e: { key:'pvp_armor3_e', name:"Manteau de l'Éclaireur", slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor1.png`,        atk:0,  def:22, hp:100, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:8,  lifesteal:0 },
+  pvp_boots_e:  { key:'pvp_boots_e',  name:"Bottes de l'Éclair",     slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte2.png`,        atk:0,  def:0,  hp:0,   speed:18, crit_pct:0,   crit_dmg:0,   dodge:10, lifesteal:0 },
+  pvp_boots2_e: { key:'pvp_boots2_e', name:'Grèves du Colosse',       slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte3.png`,        atk:0,  def:10, hp:60,  speed:10, crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_boots3_e: { key:'pvp_boots3_e', name:'Bottes du Traqueur',      slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte1.png`,        atk:4,  def:0,  hp:0,   speed:14, crit_pct:3,   crit_dmg:0,   dodge:6,  lifesteal:0 },
+  pvp_helm_e:   { key:'pvp_helm_e',   name:'Voile du Néant',          slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head1.png`,         atk:0,  def:16, hp:80,  speed:0,  crit_pct:8,   crit_dmg:20,  dodge:0,  lifesteal:0 },
+  pvp_helm2_e:  { key:'pvp_helm2_e',  name:"Capuche de l'Arcane",    slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head2.png`,         atk:0,  def:12, hp:100, speed:0,  crit_pct:5,   crit_dmg:15,  dodge:0,  lifesteal:3 },
+  pvp_helm3_e:  { key:'pvp_helm3_e',  name:'Heaume du Suzerain',      slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head3.png`,         atk:0,  def:24, hp:120, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:4,  lifesteal:0 },
+  pvp_ring_e:   { key:'pvp_ring_e',   name:'Anneau du Sang',          slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring1.png`,         atk:18, def:0,  hp:0,   speed:0,  crit_pct:8,   crit_dmg:25,  dodge:0,  lifesteal:4 },
+  pvp_ring2_e:  { key:'pvp_ring2_e',  name:'Anneau des Abysses',      slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring2.png`,         atk:0,  def:8,  hp:60,  speed:5,  crit_pct:3,   crit_dmg:10,  dodge:4,  lifesteal:0 },
+  pvp_ring3_e:  { key:'pvp_ring3_e',  name:"Anneau de l'Œil",        slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring3.png`,         atk:10, def:0,  hp:30,  speed:0,  crit_pct:6,   crit_dmg:20,  dodge:0,  lifesteal:3 },
+
+  // ─── LÉGENDAIRES (15 items) ───
+  pvp_sword_l:  { key:'pvp_sword_l',  name:'Croc du Démon',           slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/sword1.png`,  atk:55, def:0,  hp:0,   speed:0,  crit_pct:8,   crit_dmg:35,  dodge:0,  lifesteal:6 },
+  pvp_dagger_l: { key:'pvp_dagger_l', name:'Serres du Néant',         slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/dagger1.png`, atk:35, def:0,  hp:0,   speed:20, crit_pct:15,  crit_dmg:50,  dodge:0,  lifesteal:0 },
+  pvp_staff_l:  { key:'pvp_staff_l',  name:"Sceptre de l'Astre",     slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/staff1.png`,  atk:28, def:0,  hp:100, speed:0,  crit_pct:12,  crit_dmg:40,  dodge:0,  lifesteal:8 },
+  pvp_armor_l:  { key:'pvp_armor_l',  name:'Armure du Dragon',        slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor3.png`,  atk:0,  def:45, hp:250, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:8,  lifesteal:5 },
+  pvp_armor2_l: { key:'pvp_armor2_l', name:"Toge de l'Empereur",     slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor2.png`,  atk:0,  def:30, hp:200, speed:0,  crit_pct:6,   crit_dmg:15,  dodge:0,  lifesteal:8 },
+  pvp_armor3_l: { key:'pvp_armor3_l', name:"Cuirasse de l'Archange", slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor1.png`,  atk:0,  def:38, hp:180, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:12, lifesteal:0 },
+  pvp_boots_l:  { key:'pvp_boots_l',  name:'Bottes du Portail',       slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte1.png`,  atk:0,  def:0,  hp:0,   speed:28, crit_pct:0,   crit_dmg:0,   dodge:18, lifesteal:0 },
+  pvp_boots2_l: { key:'pvp_boots2_l', name:"Bottes de l'Inferno",    slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte2.png`,  atk:0,  def:8,  hp:80,  speed:18, crit_pct:0,   crit_dmg:0,   dodge:10, lifesteal:5 },
+  pvp_boots3_l: { key:'pvp_boots3_l', name:"Sabots de l'Apocalypse", slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte3.png`,  atk:8,  def:0,  hp:0,   speed:22, crit_pct:5,   crit_dmg:15,  dodge:8,  lifesteal:0 },
+  pvp_helm_l:   { key:'pvp_helm_l',   name:'Masque du Seigneur',      slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head1.png`,   atk:0,  def:28, hp:150, speed:0,  crit_pct:12,  crit_dmg:30,  dodge:0,  lifesteal:0 },
+  pvp_helm2_l:  { key:'pvp_helm2_l',  name:"Capuche du Faucheur",     slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   atk:0,  def:20, hp:180, speed:0,  crit_pct:8,   crit_dmg:25,  dodge:0,  lifesteal:6 },
+  pvp_helm3_l:  { key:'pvp_helm3_l',  name:'Heaume du Conquérant',    slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head3.png`,   atk:0,  def:35, hp:200, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:6,  lifesteal:4 },
+  pvp_ring_l:   { key:'pvp_ring_l',   name:'Anneau du Dragon',        slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring1.png`,   atk:28, def:0,  hp:0,   speed:0,  crit_pct:15,  crit_dmg:40,  dodge:0,  lifesteal:8 },
+  pvp_ring2_l:  { key:'pvp_ring2_l',  name:"Anneau de l'Éternité",   slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring2.png`,   atk:0,  def:12, hp:100, speed:8,  crit_pct:8,   crit_dmg:20,  dodge:5,  lifesteal:0 },
+  pvp_ring3_l:  { key:'pvp_ring3_l',  name:'Anneau du Vide',          slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring3.png`,   atk:15, def:0,  hp:50,  speed:0,  crit_pct:10,  crit_dmg:30,  dodge:0,  lifesteal:6 },
+};
+
+// Stats bonus possibles par palier de forge (+3/+6/+9/+12/+15)
+const PVP_FORGE_BONUS_POOL = ['atk','def','hp','speed','crit_pct','crit_dmg','dodge','lifesteal'];
+
+// Paliers qui ajoutent une nouvelle ligne de stat
+const PVP_FORGE_MILESTONES = [3, 6, 9, 12, 15];
+
+// Bonus d'une ligne de stat par rareté et palier
+function pvpForgeBonusValue(stat, rarity, milestone) {
+  const base = { common: 1, rare: 1.5, epic: 2.5, legendary: 4 }[rarity] || 1;
+  const tier  = PVP_FORGE_MILESTONES.indexOf(milestone) + 1;
+  const statMult = { hp: 15, atk: 2, def: 2, speed: 1.5, crit_pct: 0.8, crit_dmg: 1.5, dodge: 0.8, lifesteal: 0.5 }[stat] || 1;
+  return Math.round(base * tier * statMult * 10) / 10;
+}
+
+// Coût forge PVP (juste de la monnaie PVP, pas de matériaux)
+function pvpForgeCost(rarity, forgeLevel) {
+  const next   = forgeLevel + 1;
+  const base   = { common: 50, rare: 120, epic: 300, legendary: 800 }[rarity] || 50;
+  const mult   = next <= 3 ? 1 : next <= 6 ? 2 : next <= 9 ? 4 : next <= 12 ? 8 : 15;
+  return base * mult;
+}
+
+// Stats totales d'un item PVP forgé (base + forge mult + lignes bonus)
+function pvpForgedStats(def, forgeLevel, extraStats) {
+  const mult = 1 + (forgeLevel * 0.08); // +8% par niveau
+  const result = {};
+  for (const s of PVP_FORGE_BONUS_POOL) {
+    result[s] = Math.round((def[s] || 0) * mult * 10) / 10;
+  }
+  // Ajouter les lignes bonus des paliers
+  for (const [stat, val] of Object.entries(extraStats || {})) {
+    result[stat] = (result[stat] || 0) + val;
+  }
+  return result;
+}
+
+// Bonus équipement PVP total pour un joueur
+async function getPvpEquipmentBonus(userId) {
+  const { rows } = await pool.query(
+    `SELECT item_key, forge_level, extra_stats FROM pvp_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    [userId]
+  );
+  const bonus = { atk:0, def:0, hp:0, speed:0, crit_pct:0, crit_dmg:0, dodge:0, lifesteal:0 };
+  for (const r of rows) {
+    const def = PVP_ITEMS[r.item_key];
+    if (!def) continue;
+    const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+    for (const s of PVP_FORGE_BONUS_POOL) bonus[s] += stats[s] || 0;
+  }
+  return bonus;
+}
+
+// Coffres PVP selon la ligue
+function pvpChestLoot(rankName) {
+  const tables = {
+    'Bronze':  [
+      { rarity:'common',    weight:70 },
+      { rarity:'rare',      weight:30 },
+    ],
+    'Argent':  [
+      { rarity:'common',    weight:40 },
+      { rarity:'rare',      weight:45 },
+      { rarity:'epic',      weight:15 },
+    ],
+    'Or':      [
+      { rarity:'rare',      weight:40 },
+      { rarity:'epic',      weight:50 },
+      { rarity:'legendary', weight:10 },
+    ],
+    'Platine': [
+      { rarity:'rare',      weight:20 },
+      { rarity:'epic',      weight:55 },
+      { rarity:'legendary', weight:25 },
+    ],
+    'Diamant': [
+      { rarity:'epic',      weight:50 },
+      { rarity:'legendary', weight:50 },
+    ],
+    'Maître':  [
+      { rarity:'epic',      weight:30 },
+      { rarity:'legendary', weight:70 },
+    ],
+  };
+  const table = tables[rankName] || tables['Bronze'];
+  let rand  = Math.random() * table.reduce((s, e) => s + e.weight, 0);
+  let rarity = table[0].rarity;
+  for (const e of table) { rand -= e.weight; if (rand <= 0) { rarity = e.rarity; break; } }
+
+  const itemPool = Object.values(PVP_ITEMS).filter(i => i.rarity === rarity);
+  if (!itemPool.length) return null;
+  return itemPool[Math.floor(Math.random() * itemPool.length)];
+}
+
+// Récompenses après victoire PVP
+function pvpWinRewards(rankName, pvpLevel) {
+  const xpBase   = { Bronze:30, Argent:50, Or:80, Platine:120, Diamant:180, Maître:250 }[rankName] || 30;
+  const goldBase = { Bronze:20, Argent:35, Or:55, Platine:80,  Diamant:120, Maître:180 }[rankName] || 20;
+  const xp   = xpBase   + Math.floor(pvpLevel * 2);
+  const gold = goldBase + Math.floor(pvpLevel * 1.5);
+  return { xp, gold };
+}
 
 // Drop équipement — uniquement sur Myntalis
 function randBetween(min, max) {
@@ -6311,40 +6542,62 @@ async function monthlyRankReset() {
 
 // Construire les stats PVP d'un joueur
 async function buildPvpFighter(userId) {
-  const char = await getOrCreateCharacter(userId);
-  const userQ = await pool.query(`SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses FROM users WHERE id=$1`, [userId]);
+  const char  = await getOrCreateCharacter(userId);
+  const userQ = await pool.query(
+    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests FROM users WHERE id=$1`,
+    [userId]
+  );
   const u = userQ.rows[0];
-  const statBonus = charStatBonus(char, 100);
-  const eqBonus   = await getEquipmentBonus(userId);
 
-  const lvl    = Number(char.char_level);
-  const cls    = CHAR_CLASSES[char.char_class] || null;
+  // Stats de base PVP (séparées des stats de raid)
+  const pvpLvl  = Number(char.pvp_level || 1);
+  const statB   = pvpStatBonus(char);
+  const eqB     = await getPvpEquipmentBonus(userId);
 
-  // HP = base + force × 8 + niveau × 12
-  const hp     = Math.round(200 + (Number(char.stat_force) * 8) + (lvl * 12));
-  // ATQ = base + stat bonus + équipement
-  const atq    = Math.round(20 + statBonus.dmg_bonus + eqBonus.dmg_bonus + eqBonus.clan_dmg);
+  // HP = base 200 + stats + équipement
+  const hp       = Math.round(200 + statB.hp       + (eqB.hp       || 0) + pvpLvl * 10);
+  // ATQ
+  const atq      = Math.round(10  + statB.atk      + (eqB.atk      || 0));
+  // DEF (réduit les dégâts reçus)
+  const def      = Math.round(       statB.def      + (eqB.def      || 0));
+  // Vitesse (détermine qui frappe en premier)
+  const speed    = Math.round(10  + statB.speed     + (eqB.speed    || 0));
   // Crit %
-  const crit   = Math.min(95, Math.round(statBonus.crit + eqBonus.crit + eqBonus.clan_crit));
-  // Esquive % = dextérité / 3
-  const dodge  = Math.min(40, Math.round(Number(char.stat_dexterite) * 0.4));
-  // Vitesse (qui attaque en premier) = dextérité + first_attack bonus
-  const speed  = Math.round(Number(char.stat_dexterite) * statEffectiveRate('dexterite', char.char_class) + statBonus.first_attack + eqBonus.first_attack);
+  const crit     = Math.min(80, Math.round(statB.crit_pct  + (eqB.crit_pct  || 0)));
+  // Crit DMG % (multiplicateur du coup critique)
+  const crit_dmg = Math.round(150 + statB.crit_dmg + (eqB.crit_dmg || 0));
+  // Esquive %
+  const dodge    = Math.min(40, Math.round(statB.dodge      + (eqB.dodge    || 0)));
+  // Vol de vie %
+  const lifesteal= Math.round(statB.lifesteal + (eqB.lifesteal || 0));
+
+  const rankInfo = getRankInfo(Number(u.pvp_rank));
 
   return {
     userId,
-    name:       u.name,
-    avatar:     u.avatar || null,
-    rank:       Number(u.pvp_rank),
-    wins:       Number(u.pvp_wins),
-    losses:     Number(u.pvp_losses),
-    rankInfo:   getRankInfo(Number(u.pvp_rank)),
-    charClass:  char.char_class,
-    pvpSkin:    char.pvp_skin || 'forest_ranger',
-    classLabel: cls?.label || 'Aucune',
-    classColor: cls?.color || '#aaa',
-    level:      lvl,
-    hp, atq, crit, dodge, speed,
+    name:        u.name,
+    avatar:      u.avatar || null,
+    rank:        Number(u.pvp_rank),
+    wins:        Number(u.pvp_wins),
+    losses:      Number(u.pvp_losses),
+    pvpGold:     Number(u.pvp_gold   || 0),
+    pvpXp:       Number(u.pvp_xp     || 0),
+    pvpChests:   Number(u.pvp_chests || 0),
+    winStreak:   Number(u.pvp_win_streak || 0),
+    rankInfo,
+    charClass:   char.char_class,
+    pvpSkin:     char.pvp_skin || 'forest_ranger',
+    pvpLevel:    pvpLvl,
+    pvpPtsAvail: Number(char.pvp_pts_avail || 0),
+    pvpStats: {
+      force:        Number(char.pvp_stat_force        || 5),
+      agilite:      Number(char.pvp_stat_agilite      || 5),
+      intelligence: Number(char.pvp_stat_intelligence || 5),
+      dexterite:    Number(char.pvp_stat_dexterite    || 5),
+    },
+    hp, atq, def, speed, crit, crit_dmg, dodge, lifesteal,
+    // Garder pour compatibilité UI existante
+    level: pvpLvl,
   };
 }
 
@@ -6355,33 +6608,53 @@ function simulatePvpBattle(f1, f2) {
 
   // Déterminer qui frappe en premier
   const [first, second] = f1.speed >= f2.speed ? [f1, f2] : [f2, f1];
-  let hpFirst = first === f1 ? hp1 : hp2;
-  let hpSecond = first === f1 ? hp2 : hp1;
+  let hpFirst  = first  === f1 ? hp1 : hp2;
+  let hpSecond = first  === f1 ? hp2 : hp1;
+
+  // Helper dégâts avec def, crit_dmg, lifesteal
+  function calcDmg(attacker, hpAtt) {
+    const isCrit = Math.random() * 100 < (attacker.crit || 0);
+    const critMult = isCrit ? ((attacker.crit_dmg || 150) / 100) : 1;
+    const rawDmg = Math.max(1, Math.round(attacker.atq * critMult));
+    return { dmg: rawDmg, isCrit };
+  }
+  function applyDef(dmg, defender) {
+    const reduction = Math.min(0.75, (defender.def || 0) / ((defender.def || 0) + 80));
+    return Math.max(1, Math.round(dmg * (1 - reduction)));
+  }
 
   for (let turn = 1; turn <= 50; turn++) {
     log.push({ type: 'turn', turn });
 
     // Attaque du premier
-    const dodge1 = Math.random() * 100 < second.dodge;
+    const dodge1 = Math.random() * 100 < (second.dodge || 0);
     if (dodge1) {
       log.push({ type: 'dodge', attacker: first.name, defender: second.name });
     } else {
-      const crit1 = Math.random() * 100 < first.crit;
-      const dmg1 = Math.round(first.atq * (0.85 + Math.random() * 0.3) * (crit1 ? 2 : 1));
+      const crit1   = Math.random() * 100 < (first.crit || 0);
+      const critMul1 = crit1 ? ((first.crit_dmg || 150) / 100) : 1;
+      const rawDmg1 = Math.round(first.atq * (0.85 + Math.random() * 0.3) * critMul1);
+      const defRed1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
+      const dmg1    = Math.max(1, Math.round(rawDmg1 * (1 - defRed1)));
       hpSecond = Math.max(0, hpSecond - dmg1);
+      if ((first.lifesteal || 0) > 0) hpFirst = Math.min(first.hp, hpFirst + Math.round(dmg1 * first.lifesteal / 100));
       log.push({ type: crit1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp });
     }
 
     if (hpSecond <= 0) break;
 
     // Attaque du second
-    const dodge2 = Math.random() * 100 < first.dodge;
+    const dodge2 = Math.random() * 100 < (first.dodge || 0);
     if (dodge2) {
       log.push({ type: 'dodge', attacker: second.name, defender: first.name });
     } else {
-      const crit2 = Math.random() * 100 < second.crit;
-      const dmg2 = Math.round(second.atq * (0.85 + Math.random() * 0.3) * (crit2 ? 2 : 1));
+      const crit2   = Math.random() * 100 < (second.crit || 0);
+      const critMul2 = crit2 ? ((second.crit_dmg || 150) / 100) : 1;
+      const rawDmg2 = Math.round(second.atq * (0.85 + Math.random() * 0.3) * critMul2);
+      const defRed2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
+      const dmg2    = Math.max(1, Math.round(rawDmg2 * (1 - defRed2)));
       hpFirst = Math.max(0, hpFirst - dmg2);
+      if ((second.lifesteal || 0) > 0) hpSecond = Math.min(second.hp, hpSecond + Math.round(dmg2 * second.lifesteal / 100));
       log.push({ type: crit2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp });
     }
 
@@ -6533,7 +6806,181 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
        JSON.stringify({ battleId }), Date.now()]
     );
 
-    res.json({ ok: true, battleId, winnerId, rankChange, log, fighters: { f1, f2 } });
+    // ── Récompenses PVP (XP, gold, streak, coffres) ──
+    const winnerInfo  = getRankInfo(winnerId === f1.userId ? f1.rank : f2.rank);
+    const winnerPvpLvl= winnerId === f1.userId ? f1.pvpLevel : f2.pvpLevel;
+    const rewards     = pvpWinRewards(winnerInfo.name, winnerPvpLvl);
+
+    // Récupérer streak actuel du gagnant
+    const streakQ = await pool.query(`SELECT pvp_win_streak, pvp_chests FROM users WHERE id=$1`, [winnerId]);
+    const oldStreak = Number(streakQ.rows[0]?.pvp_win_streak || 0);
+    const newStreak = oldStreak + 1;
+    const chestEarned = newStreak >= 3 ? 1 : 0;  // coffre tous les 3 wins
+    const finalStreak = chestEarned ? 0 : newStreak;  // reset streak si coffre
+
+    // Montée de niveau PVP
+    const winnerChar = await getOrCreateCharacter(winnerId);
+    let pvpLvl   = Number(winnerChar.pvp_level || 1);
+    let pvpXpChr = Number(winnerChar.pvp_xp    || 0) + rewards.xp;
+    let ptsGained = 0;
+    while (pvpXpChr >= pvpXpForLevel(pvpLvl)) {
+      pvpXpChr -= pvpXpForLevel(pvpLvl);
+      pvpLvl++;
+      ptsGained++;  // 1 point de cara par niveau
+    }
+    await pool.query(
+      `UPDATE player_character SET pvp_level=$1, pvp_xp=$2, pvp_pts_avail=pvp_pts_avail+$3 WHERE user_id=$4`,
+      [pvpLvl, pvpXpChr, ptsGained, winnerId]
+    );
+
+    // Mettre à jour XP user + gold + streak + coffres
+    await pool.query(
+      `UPDATE users SET pvp_xp=pvp_xp+$1, pvp_gold=pvp_gold+$2, pvp_win_streak=$3, pvp_chests=pvp_chests+$4 WHERE id=$5`,
+      [rewards.xp, rewards.gold, finalStreak, chestEarned, winnerId]
+    );
+    // Reset streak du perdant
+    await pool.query(`UPDATE users SET pvp_win_streak=0 WHERE id=$1`, [loserId]);
+
+    const winnerFighter = winnerId === f1.userId ? f1 : f2;
+    res.json({
+      ok: true, battleId, winnerId, rankChange, log, fighters: { f1, f2 },
+      rewards: winnerId === battle.opponent_id ? {
+        xp: rewards.xp, gold: rewards.gold,
+        chestEarned: chestEarned > 0,
+        winStreak: finalStreak,
+        levelUp: ptsGained > 0,
+        newLevel: pvpLvl,
+      } : null,
+      challengerRewards: winnerId === battle.challenger_id ? {
+        xp: rewards.xp, gold: rewards.gold,
+        chestEarned: chestEarned > 0,
+        winStreak: finalStreak,
+        levelUp: ptsGained > 0,
+        newLevel: pvpLvl,
+      } : null,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── ROUTES PVP SÉPARÉES ──────────────────────────────────
+
+// GET /api/pvp/inventory — inventaire équipement PVP
+app.get("/api/pvp/inventory", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, item_key, forge_level, extra_stats, equipped_slot, obtained_at FROM pvp_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
+      [req.user.id]
+    );
+    const inventory = rows.map(r => {
+      const def   = PVP_ITEMS[r.item_key] || {};
+      const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+      return { id: r.id, item_key: r.item_key, forge_level: r.forge_level || 0,
+               extra_stats: r.extra_stats || {}, equipped_slot: r.equipped_slot,
+               ...def, ...stats };
+    });
+    const equipped = {};
+    for (const i of inventory) { if (i.equipped_slot) equipped[i.equipped_slot] = i; }
+    res.json({ inventory, equipped });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/equip — équiper/déséquiper un item PVP
+app.post("/api/pvp/equip", auth, async (req, res) => {
+  try {
+    const { id, unequip } = req.body;
+    const itemQ = await pool.query(`SELECT id, item_key, equipped_slot FROM pvp_equipment WHERE id=$1 AND user_id=$2`, [id, req.user.id]);
+    if (!itemQ.rows.length) return res.status(404).json({ error: "Item introuvable" });
+    const item = itemQ.rows[0];
+    if (unequip) {
+      await pool.query(`UPDATE pvp_equipment SET equipped_slot=NULL WHERE id=$1`, [id]);
+      return res.json({ ok: true });
+    }
+    const def  = PVP_ITEMS[item.item_key];
+    if (!def) return res.status(400).json({ error: "Item invalide" });
+    await pool.query(`UPDATE pvp_equipment SET equipped_slot=NULL WHERE user_id=$1 AND equipped_slot=$2`, [req.user.id, def.slot]);
+    await pool.query(`UPDATE pvp_equipment SET equipped_slot=$1 WHERE id=$2`, [def.slot, id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/forge — améliorer un item PVP
+app.post("/api/pvp/forge", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { itemId } = req.body;
+    const itemQ = await client.query(`SELECT id, item_key, forge_level, extra_stats FROM pvp_equipment WHERE id=$1 AND user_id=$2`, [itemId, req.user.id]);
+    if (!itemQ.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+    const item      = itemQ.rows[0];
+    const def       = PVP_ITEMS[item.item_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+    const forgeLevel= item.forge_level || 0;
+    if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau max atteint (+15)" }); }
+
+    const cost = pvpForgeCost(def.rarity, forgeLevel);
+    const userQ = await client.query(`SELECT pvp_gold FROM users WHERE id=$1`, [req.user.id]);
+    const gold  = Number(userQ.rows[0]?.pvp_gold || 0);
+    if (gold < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${cost} requis)` }); }
+
+    // Calculer le nouveau niveau et les bonus de palier
+    const newLevel   = forgeLevel + 1;
+    let extraStats   = { ...(item.extra_stats || {}) };
+
+    // Ajouter une nouvelle ligne de stat aux paliers 3/6/9/12/15
+    if (PVP_FORGE_MILESTONES.includes(newLevel)) {
+      // Choisir une stat au hasard parmi celles non encore présentes (ou déjà présente → améliorer)
+      const statPool = PVP_FORGE_BONUS_POOL.filter(s => (def[s] || 0) > 0 || Object.keys(extraStats).includes(s));
+      const statFallback = PVP_FORGE_BONUS_POOL;
+      const statPoolFinal = statPool.length > 0 ? statPool : statFallback;
+      const chosenStat = statPoolFinal[Math.floor(Math.random() * statPoolFinal.length)];
+      const bonusVal   = pvpForgeBonusValue(chosenStat, def.rarity, newLevel);
+      extraStats[chosenStat] = (extraStats[chosenStat] || 0) + bonusVal;
+    }
+
+    await client.query(`UPDATE users SET pvp_gold=pvp_gold-$1 WHERE id=$2`, [cost, req.user.id]);
+    await client.query(`UPDATE pvp_equipment SET forge_level=$1, extra_stats=$2 WHERE id=$3`, [newLevel, JSON.stringify(extraStats), itemId]);
+    await client.query('COMMIT');
+
+    const newStats = pvpForgedStats(def, newLevel, extraStats);
+    res.json({ ok: true, newLevel, cost, extraStats, newStats,
+               isMilestone: PVP_FORGE_MILESTONES.includes(newLevel) });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// POST /api/pvp/open-chest — ouvrir un coffre PVP
+app.post("/api/pvp/open-chest", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const userQ = await client.query(`SELECT pvp_chests, pvp_rank FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const u = userQ.rows[0];
+    if (Number(u.pvp_chests) < 1) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Aucun coffre disponible" }); }
+    const rankInfo = getRankInfo(Number(u.pvp_rank));
+    const item     = pvpChestLoot(rankInfo.name);
+    if (!item) { await client.query('ROLLBACK'); return res.status(500).json({ error: "Loot error" }); }
+    await client.query(`INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`, [req.user.id, item.key, Date.now()]);
+    await client.query(`UPDATE users SET pvp_chests=pvp_chests-1 WHERE id=$1`, [req.user.id]);
+    await client.query('COMMIT');
+    res.json({ ok: true, item });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// POST /api/pvp/spend-stat — dépenser un point de caractéristique PVP
+app.post("/api/pvp/spend-stat", auth, async (req, res) => {
+  try {
+    const stat = req.body?.stat;
+    const validStats = ['force','agilite','intelligence','dexterite'];
+    if (!validStats.includes(stat)) return res.status(400).json({ error: "Stat invalide" });
+    const charQ = await pool.query(`SELECT pvp_pts_avail FROM player_character WHERE user_id=$1`, [req.user.id]);
+    const pts = Number(charQ.rows[0]?.pvp_pts_avail || 0);
+    if (pts < 1) return res.status(400).json({ error: "Aucun point disponible" });
+    await pool.query(
+      `UPDATE player_character SET pvp_pts_avail=pvp_pts_avail-1, pvp_stat_${stat}=pvp_stat_${stat}+1 WHERE user_id=$1`,
+      [req.user.id]
+    );
+    res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
