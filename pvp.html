@@ -320,8 +320,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .arena-stage{position:relative;height:560px;background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
 .arena-ground{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
 .arena-canvas{position:absolute;bottom:36px;image-rendering:pixelated;image-rendering:crisp-edges}
-.dmg-float{position:absolute;font-size:16px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none;text-shadow:0 2px 8px rgba(0,0,0,.8)}
-.dmg-float.crit{color:var(--gold);font-size:22px}
+.dmg-float{position:absolute;font-size:26px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 20px rgba(255,100,100,.4)}
+.dmg-float.crit{color:var(--gold);font-size:38px;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 24px rgba(255,216,0,.6)}
 .dmg-float.anim{animation:dmgPop .9s ease-out forwards}
 @keyframes dmgPop{0%{opacity:1;transform:translateY(0) scale(1.2)}30%{transform:translateY(-20px) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(.8)}}
 
@@ -1790,8 +1790,8 @@ async function loadReplay(battleId) {
   try {
     const d = await api('/api/pvp/result/'+battleId);
     const b = d.battle;
-    const f1 = { name: b.challengerName, charClass: b.challengerClass || guessClassFromLog(b.log, b.challengerName) || 'forest_ranger', pvpSkin: b.challengerSkin || b.challengerClass || 'forest_ranger', hp: getMaxHp(b.log, b.challengerName), avatar: b.challengerAvatar||null, rankInfo: b.challengerRankInfo||null };
-    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || guessClassFromLog(b.log, b.opponentName)   || 'forest_ranger', pvpSkin: b.opponentSkin   || b.opponentClass   || 'forest_ranger', hp: getMaxHp(b.log, b.opponentName),   avatar: b.opponentAvatar||null,   rankInfo: b.opponentRankInfo||null };
+    const f1 = { name: b.challengerName, charClass: b.challengerClass || 'forest_ranger', pvpSkin: b.challengerSkin || b.challengerClass || 'forest_ranger', hp: getMaxHp(b.log, b.challengerName), avatar: b.challengerAvatar||null, rankInfo: b.challengerRankInfo||null };
+    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || 'forest_ranger', pvpSkin: b.opponentSkin   || b.opponentClass   || 'forest_ranger', hp: getMaxHp(b.log, b.opponentName),   avatar: b.opponentAvatar||null,   rankInfo: b.opponentRankInfo||null };
     openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
   } catch(e) { showAlert(e.message); }
 }
@@ -2421,7 +2421,7 @@ function showArenaResult(isWin, winnerName, rankChange) {
   if (!overlay) return;
   if (isWin) {
     bg.style.background    = 'radial-gradient(ellipse at center, rgba(40,200,120,.6) 0%, rgba(0,0,0,.72) 100%)';
-    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/victoire.png" style="width:220px;height:auto;filter:drop-shadow(0 0 24px rgba(51,255,153,.6))" onerror="this.outerHTML=\'🏆\'">';
+    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/victoire.png" style="width:320px;height:auto;filter:drop-shadow(0 0 30px rgba(51,255,153,.7))" onerror="this.outerHTML=\'🏆\'">';
     icon.style.color       = '#33ff99';
     label.textContent      = '';
     label.style.color      = '#33ff99';
@@ -2430,7 +2430,7 @@ function showArenaResult(isWin, winnerName, rankChange) {
     pts.style.color        = '#33ff99';
   } else {
     bg.style.background    = 'radial-gradient(ellipse at center, rgba(200,30,30,.6) 0%, rgba(0,0,0,.75) 100%)';
-    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/defaite.png" style="width:220px;height:auto;filter:drop-shadow(0 0 24px rgba(255,68,68,.6))" onerror="this.outerHTML=\'💀\'">';
+    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/defaite.png" style="width:320px;height:auto;filter:drop-shadow(0 0 30px rgba(255,68,68,.7))" onerror="this.outerHTML=\'💀\'">';
     icon.style.color       = '#ff4444';
     label.textContent      = '';
     label.style.color      = '#ff4444';

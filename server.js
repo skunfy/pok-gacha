@@ -7150,8 +7150,8 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
     const r = q.rows[0];
     // Récupérer la classe des deux joueurs pour le replay animé
     const [c1char, c2char] = await Promise.all([
-      pool.query('SELECT char_class FROM player_character WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
-      pool.query('SELECT char_class FROM player_character WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
+      pool.query('SELECT char_class, pvp_skin FROM player_character WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
+      pool.query('SELECT char_class, pvp_skin FROM player_character WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
     ]);
     res.json({ battle: {
       id: r.id,
@@ -7159,6 +7159,8 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
       opponentName:       r.oname,
       challengerClass:    c1char.rows[0]?.char_class || null,
       opponentClass:      c2char.rows[0]?.char_class || null,
+      challengerSkin:     c1char.rows[0]?.pvp_skin || c1char.rows[0]?.char_class || 'forest_ranger',
+      opponentSkin:       c2char.rows[0]?.pvp_skin || c2char.rows[0]?.char_class || 'forest_ranger',
       challengerAvatar:   r.cavatar || null,
       opponentAvatar:     r.oavatar || null,
       challengerRankInfo: getRankInfo(Number(r.challenger_rank_before||1000)),
