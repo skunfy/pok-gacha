@@ -2901,57 +2901,61 @@ app.get("/api/foil_colors", auth, async (req, res) => {
 
 app.get("/api/collection", auth, async (req, res) => {
   await applyPayForUser(req.user.id);
-
   const game = getGame(req);
 
+  // Tout charger mais sans imageHigh — le client fait son propre tri/pagination
   const items = await pool.query(
-  `SELECT idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt
-   FROM collection
-   WHERE user_id=$1 AND game=$2
-   ORDER BY lastAt DESC`,
-  [req.user.id, game]
-);
-
+    `SELECT idKey, game, cardId, setId, localId, name, setName, image, grade, mint, count, lastAt
+     FROM collection
+     WHERE user_id=$1 AND game=$2
+     ORDER BY lastAt DESC`,
+    [req.user.id, game]
+  );
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-  res.setHeader('Cache-Control', 'no-store');
+  // Cache 3 minutes — drastiquement moins d'egress
+  res.setHeader('Cache-Control', 'public, max-age=180, stale-while-revalidate=60');
   res.json({
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => {
-  const itemGame = x.game || game;
-  const cardId = x.cardid || x.cardId || null;
-
-  const rawImage = x.image;
-  const rawImageHigh = x.imagehigh || x.imageHigh || null;
-
-  const image =
-    itemGame === "magic"
-      ? rewriteMagicImageUrl(rawImage, cardId)
-      : rawImage;
-
-  const imageHigh =
-    itemGame === "magic"
-      ? rewriteMagicImageUrl(rawImageHigh || rawImage, cardId)
-      : (rawImageHigh || null);
-
-  return {
-    idKey: x.idkey || x.idKey,
-    game: itemGame,
-    name: x.name,
-    set: x.setname || x.setName,
-    cardId,
-    setId: x.setid || x.setId || null,
-    localId: x.localid || x.localId || null,
-    image,
-    imageHigh,
-    grade: x.grade,
-    mint: Boolean(x.mint),
-    count: x.count,
-    lastAt: Number(x.lastat || x.lastAt),
-    gradesJson: x.grades_json || null,
-  };
-})
+      const itemGame = x.game || game;
+      const cardId   = x.cardid || x.cardId || null;
+      const rawImage = x.image;
+      const image    = itemGame === "magic" ? rewriteMagicImageUrl(rawImage, cardId) : rawImage;
+      return {
+        idKey:   x.idkey   || x.idKey,
+        game:    itemGame,
+        name:    x.name,
+        set:     x.setname || x.setName,
+        cardId,
+        setId:   x.setid   || x.setId   || null,
+        localId: x.localid || x.localId || null,
+        image,   // basse résolution seulement — imageHigh chargé au zoom
+        grade:   x.grade,
+        mint:    Boolean(x.mint),
+        count:   x.count,
+        lastAt:  Number(x.lastat || x.lastAt),
+      };
+    })
   });
+});
+
+// GET /api/collection/imagehigh — imageHigh d'une carte (chargée uniquement au zoom)
+app.get("/api/collection/imagehigh", auth, async (req, res) => {
+  const game  = getGame(req);
+  const idKey = req.query.idKey;
+  if (!idKey) return res.status(400).json({ error: 'idKey requis' });
+  const q = await pool.query(
+    `SELECT image, imageHigh, grades_json FROM collection WHERE user_id=$1 AND idKey=$2 AND game=$3`,
+    [req.user.id, idKey, game]
+  );
+  if (!q.rows.length) return res.status(404).json({ error: 'Carte introuvable' });
+  const x      = q.rows[0];
+  const cardId = idKey;
+  const raw    = x.imagehigh || x.imageHigh || x.image;
+  const imageHigh = game === 'magic' ? rewriteMagicImageUrl(raw, cardId) : raw;
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.json({ imageHigh, gradesJson: x.grades_json || null });
 });
 
 app.get("/api/sets", auth, async (req, res) => {

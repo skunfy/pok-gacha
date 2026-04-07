@@ -1720,13 +1720,11 @@ async function loadCollection(force = false){
   try{
     const fetchOpts = force ? { cache: "no-store" } : {};
     const data = await api("/api/collection", fetchOpts);
-
     allItems = (data.items || []).map(x => ({
       ...x,
-      imageHigh: x.imageHigh ?? x.imagehigh ?? null,
-      image: x.image ?? null,
+      image:     x.image ?? null,
+      imageHigh: null, // chargée uniquement au zoom via /api/collection/imagehigh
     }));
-
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
@@ -1764,11 +1762,20 @@ function applyFilters(){
   refreshSelUI();
 }
 
-function openZoom(x){
+async function openZoom(x){
   zoomSlab.classList.toggle("senpai-zoom", currentGame() === "senpaigodesshaven");
-  const img = x.image || x.imageHigh || x.imagehigh || null;
-
-  zoomImg.style.backgroundImage = `url('${img}')`;
+  // Afficher d'abord l'image basse résolution immédiatement
+  const imgLow = x.image || null;
+  zoomImg.style.backgroundImage = imgLow ? `url('${imgLow}')` : '';
+  // Charger la HD en arrière-plan
+  try {
+    const hd = await api(`/api/collection/imagehigh?idKey=${encodeURIComponent(x.idKey)}`);
+    if (hd.imageHigh) {
+      x.imageHigh = hd.imageHigh;
+      zoomImg.style.backgroundImage = `url('${hd.imageHigh}')`;
+      if (hd.gradesJson) x.gradesJson = hd.gradesJson;
+    }
+  } catch(e) {}
   // Extraction via proxy serveur (contourne CORS)
   zoomAdaptiveColors=null; zoomAdaptivePal=null;
   if(img){
@@ -1823,6 +1830,18 @@ function render(items){
   selectDupBtn.disabled = dupCount === 0;
 
   grid.innerHTML="";
+  // Lazy loading : charger les images seulement quand visibles
+  if (window._lazyObserver) window._lazyObserver.disconnect();
+  window._lazyObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const src = el.dataset.src;
+      if (src) { el.style.backgroundImage = `url('${src}')`; delete el.dataset.src; }
+      window._lazyObserver.unobserve(el);
+    });
+  }, { rootMargin: '200px' });
+
   pageItems.forEach(x=>{
     const el=document.createElement("div");
     el.className="cardBox";
@@ -1850,7 +1869,7 @@ function render(items){
       : x.image;
 
     el.innerHTML=`
-      <div class="cImg" style="background-image:url('${imgForCard}');position:relative;">
+      <div class="cImg lazy-card" data-src="${imgForCard || ''}" style="position:relative;">
         <div class="marketBanner" data-idkey="${x.idKey}">
           <img class="marketBannerLogo" src="market.png" alt="Market">
           <span class="marketBannerText">Market</span>
@@ -1959,6 +1978,9 @@ function render(items){
     };
 
     grid.appendChild(el);
+    // Observer les images lazy
+    const lazyEl = el.querySelector('.lazy-card');
+    if (lazyEl && lazyEl.dataset.src) window._lazyObserver.observe(lazyEl);
   });
 }
 
