@@ -558,8 +558,8 @@ Object.values(CLASS_SPRITES).forEach(cls => Object.values(cls).forEach(a => getI
 // ══════════════════════════════════════════════════
 // MOTEUR D'ANIMATION ARENA — sprites plus grands
 // ══════════════════════════════════════════════════
-const SPRITE_PX   = 220;  // Plus grand (était 160)
-const SPRITE_PX_W = Math.round(SPRITE_PX * (128 + 64) / 128);
+const SPRITE_PX   = 360;  // Grand affichage pour les nouveaux sprites
+const SPRITE_PX_W = Math.round(SPRITE_PX * (128 + 16) / 128);
 const P1_HOME_PX  = 20;
 
 let arenaState = null;
@@ -575,7 +575,7 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, r
   f1Class = cls1 || 'forest_ranger';
   f2Class = cls2 || 'forest_ranger';
 
-  const FRAME_W = 128, FRAME_H = 128, CANVAS_PAD = 32;
+  const FRAME_W = 128, FRAME_H = 128, CANVAS_PAD = 8;
   const CANVAS_W = FRAME_W + CANVAS_PAD * 2;
   const CANVAS_H = FRAME_H;
 
@@ -659,13 +659,16 @@ function tickAndDraw(id, f, dt) {
 
   const FRAME_W = a.fw || 128;
   const FRAME_H = a.fh || 128;
-  const dx = Math.floor((canvas.width - FRAME_W) / 2);
-  const dy = Math.floor((canvas.height - FRAME_H) / 2);
+  // Dessiner le sprite en remplissant le canvas entier (upscale)
+  const dstW = canvas.height;  // carré = hauteur du canvas
+  const dstH = canvas.height;
+  const dx = Math.floor((canvas.width - dstW) / 2);
+  const dy = 0;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   if (f.flip) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(img, f.frame * FRAME_W, 0, FRAME_W, FRAME_H, dx, dy, FRAME_W, FRAME_H);
+  ctx.drawImage(img, f.frame * FRAME_W, 0, FRAME_W, FRAME_H, dx, dy, dstW, dstH);
   ctx.restore();
 }
 
