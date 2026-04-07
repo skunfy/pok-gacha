@@ -6594,7 +6594,6 @@ async function buildPvpFighter(userId) {
     pvpChests:   Number(u.pvp_chests || 0),
     winStreak:   Number(u.pvp_win_streak || 0),
     rankInfo,
-    charClass:   char.char_class,
     pvpSkin:     char.pvp_skin || 'forest_ranger',
     pvpLevel:    pvpLvl,
     pvpPtsAvail: Number(char.pvp_pts_avail || 0),
