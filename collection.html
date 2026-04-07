@@ -1845,17 +1845,7 @@ function render(items){
   selectDupBtn.disabled = dupCount === 0;
 
   grid.innerHTML="";
-  // Lazy loading : charger les images seulement quand visibles
-  if (window._lazyObserver) window._lazyObserver.disconnect();
-  window._lazyObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const src = el.dataset.src;
-      if (src) { el.style.backgroundImage = `url('${src}')`; delete el.dataset.src; }
-      window._lazyObserver.unobserve(el);
-    });
-  }, { rootMargin: '200px' });
+  if (window._lazyObserver) { window._lazyObserver.disconnect(); window._lazyObserver = null; }
 
   pageItems.forEach(x=>{
     const el=document.createElement("div");
@@ -1884,7 +1874,7 @@ function render(items){
       : x.image;
 
     el.innerHTML=`
-      <div class="cImg lazy-card" data-idkey="${x.idKey}" data-src="${imgForCard || ''}" style="position:relative;">
+      <div class="cImg" style="position:relative;${imgForCard ? `background-image:url('${imgForCard}');` : ''}">
         <div class="marketBanner" data-idkey="${x.idKey}">
           <img class="marketBannerLogo" src="market.png" alt="Market">
           <span class="marketBannerText">Market</span>
@@ -1993,11 +1983,6 @@ function render(items){
     };
 
     grid.appendChild(el);
-  });
-
-  // Attacher l'observer à toutes les lazy-card qui ont un data-src
-  grid.querySelectorAll('.lazy-card[data-src]').forEach(el => {
-    if (el.dataset.src) window._lazyObserver.observe(el);
   });
 }
 
