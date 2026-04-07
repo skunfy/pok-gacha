@@ -850,6 +850,7 @@ async function initDb() {
     )
   `);
   await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS char_class TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_skin TEXT DEFAULT 'forest_ranger'`);
 
   // Table équipements
   await pool.query(`
@@ -6339,6 +6340,7 @@ async function buildPvpFighter(userId) {
     losses:     Number(u.pvp_losses),
     rankInfo:   getRankInfo(Number(u.pvp_rank)),
     charClass:  char.char_class,
+    pvpSkin:    char.pvp_skin || 'forest_ranger',
     classLabel: cls?.label || 'Aucune',
     classColor: cls?.color || '#aaa',
     level:      lvl,
@@ -6401,6 +6403,17 @@ app.get("/api/pvp/me", auth, async (req, res) => {
   try {
     const fighter = await buildPvpFighter(req.user.id);
     res.json({ fighter });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/skin — changer le skin du personnage PVP
+const VALID_PVP_SKINS = ['bloody_alchemist','dark_oracle','fallen_angels','forest_ranger','golem','minotaur','reaper_man','valkyrie'];
+app.post("/api/pvp/skin", auth, async (req, res) => {
+  try {
+    const skin = String(req.body?.skin || '').trim();
+    if (!VALID_PVP_SKINS.includes(skin)) return res.status(400).json({ error: 'Skin invalide' });
+    await pool.query(`UPDATE player_character SET pvp_skin=$1 WHERE user_id=$2`, [skin, req.user.id]);
+    res.json({ ok: true, skin });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
