@@ -252,6 +252,48 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
 .result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green);animation:victoryPulse 1s ease-out}
 .result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
+/* ── FORGE PVP (clone clan) ── */
+.forge-wrap{display:flex;flex-direction:column;gap:16px}
+.forge-main{display:grid;grid-template-columns:1fr auto 1fr;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;min-height:220px}
+.forge-col-left,.forge-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 16px}
+.forge-col-left{border-right:1px solid rgba(255,255,255,.06)}
+.forge-col-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;min-width:160px;border-left:1px solid rgba(255,255,255,.06)}
+.forge-anvil{width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(127,92,255,.4));transition:transform .3s}
+.forge-anvil:hover{transform:scale(1.05)}
+.forge-cost{font-size:13px;font-weight:900;color:#ffd84d;text-align:center}
+.forge-rate{font-size:12px;font-weight:800;text-align:center}
+.forge-btn{width:100%;padding:11px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px;transition:.15s}
+.forge-btn:hover:not(:disabled){opacity:.85;transform:translateY(-1px)}
+.forge-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.forge-item-slot{width:100px;height:100px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.2);border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;transition:.2s}
+.forge-item-slot:hover{border-color:rgba(127,92,255,.5);background:rgba(127,92,255,.08)}
+.forge-item-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);padding:0}
+.forge-item-slot img{width:100%;height:100%;object-fit:contain;border-radius:12px}
+.forge-item-level{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.7);border:1px solid}
+.forge-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.forge-inv-item{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);cursor:pointer;transition:.18s;position:relative}
+.forge-inv-item:hover{background:rgba(127,92,255,.12);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
+.forge-inv-item.selected{border-color:rgba(127,92,255,.8);background:rgba(127,92,255,.2);box-shadow:0 0 12px rgba(127,92,255,.3)}
+.forge-inv-item.legendary{border-color:rgba(255,184,0,.35)}
+.forge-inv-item.epic{border-color:rgba(192,132,255,.3)}
+.forge-inv-item.rare{border-color:rgba(77,166,255,.3)}
+.forge-inv-img{width:46px;height:46px;object-fit:contain}
+.forge-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center}
+.forge-inv-lvl{font-size:9px;font-weight:900;margin-top:2px}
+.forge-lv3{border-color:rgba(255,255,255,.7)!important;animation:forgeGlowW 2s ease-in-out infinite}
+.forge-lv6{border-color:rgba(77,166,255,.9)!important;animation:forgeGlowB 1.8s ease-in-out infinite}
+.forge-lv9{border-color:rgba(192,132,255,.9)!important;animation:forgeGlowP 1.6s ease-in-out infinite}
+.forge-lv12{border-color:rgba(255,184,0,.9)!important;animation:forgeGlowG 1.4s ease-in-out infinite}
+.forge-lv15{border-width:3px!important;animation:forgeRainbow2 .8s linear infinite}
+@keyframes forgeGlowW{0%,100%{box-shadow:0 0 6px rgba(255,255,255,.4)}50%{box-shadow:0 0 14px rgba(255,255,255,.8)}}
+@keyframes forgeGlowB{0%,100%{box-shadow:0 0 8px rgba(77,166,255,.6)}50%{box-shadow:0 0 20px rgba(77,166,255,1)}}
+@keyframes forgeGlowP{0%,100%{box-shadow:0 0 10px rgba(192,132,255,.7)}50%{box-shadow:0 0 24px rgba(192,132,255,1)}}
+@keyframes forgeGlowG{0%,100%{box-shadow:0 0 12px rgba(255,184,0,.8)}50%{box-shadow:0 0 28px rgba(255,184,0,1)}}
+@keyframes forgeRainbow2{0%{border-color:#ff0000}16%{border-color:#ff8800}33%{border-color:#ffff00}50%{border-color:#00ff88}66%{border-color:#0088ff}83%{border-color:#ff00ff}100%{border-color:#ff0000}}
+@keyframes forgeParticle2{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(0)}}
+/* matchmaking */
+@keyframes mmSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes mmPulse{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:1}}
 @keyframes chestBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes chestGlow{0%{opacity:.4;transform:scale(.9)}100%{opacity:.8;transform:scale(1.1)}}
 @keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}
@@ -298,6 +340,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
     <button class="tab-btn" onclick="showTab('defier',event)">Défier</button>
+    <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚡ Match</button>
     <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">Défis <span id="defis-count"></span></button>
     <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
     <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
@@ -311,6 +354,25 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div id="sec-profil" class="section active">
     <div class="card">
       <div id="profil-content"><div class="loading">Chargement...</div></div>
+    </div>
+  </div>
+
+  <div id="sec-matchmaking" class="section">
+    <div class="card">
+      <div id="energy-bar-mm"></div>
+      <div class="card-title">⚡ Matchmaking</div>
+      <div id="mm-content">
+        <div style="text-align:center;padding:30px">
+          <div id="mm-status" style="font-size:15px;margin-bottom:16px;opacity:.7">Trouve un adversaire automatiquement</div>
+          <button id="mm-btn" onclick="startMatchmaking()" style="padding:14px 32px;border:none;border-radius:14px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;font-size:15px;cursor:pointer;transition:.2s">⚡ Lancer le matchmaking</button>
+          <div id="mm-spinner" style="display:none;margin-top:20px">
+            <div style="font-size:32px;animation:mmSpin 1s linear infinite">⚙️</div>
+            <div style="margin-top:8px;opacity:.5;font-size:13px" id="mm-timer">Recherche en cours...</div>
+            <button onclick="stopMatchmaking()" style="margin-top:12px;padding:8px 20px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:12px">Annuler</button>
+          </div>
+          <div id="mm-found" style="display:none;margin-top:20px"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -342,10 +404,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 
   <div id="sec-forge" class="section">
-    <div class="card">
-      <div class="card-title">⚒️ Forge PVP</div>
-      <div id="forge-content"><div class="loading">Chargement...</div></div>
-    </div>
+    <div id="forge-content"><div class="loading">Chargement...</div></div>
   </div>
   <div id="sec-historique" class="section">
     <div class="card">
@@ -1199,6 +1258,7 @@ function showTab(name, ev) {
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
+  if (name==='matchmaking') { refreshEnergyUI(); initMatchmakingTab(); }
 }
 
 function rankBadgeHtml(rankInfo, pts) {
@@ -2014,131 +2074,257 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
 }
 
 
-// ══ FORGE PVP ══════════════════════════════════════════
-let _forgeInventory = null;
+// ══ FORGE PVP (style clan, sans matériaux) ══════════════
+const FORGE_IMG_PVP   = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/enclume.png';
+const FORGE_SFX_PVP   = new Audio('https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/anvil.wav');
+FORGE_SFX_PVP.preload = 'auto';
+const PVP_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+const PVP_STAT_LABELS  = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
+const PVP_STAT_COLORS  = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
+
+let _pvpForgeInv     = null;
+let _pvpForgeSelItem = null;
+let _pvpForgeGold    = 0;
+
+function pvpForgeLevelClass(lvl) {
+  if (lvl>=15) return 'forge-lv15'; if (lvl>=12) return 'forge-lv12';
+  if (lvl>=9)  return 'forge-lv9';  if (lvl>=6)  return 'forge-lv6';
+  if (lvl>=3)  return 'forge-lv3';  return '';
+}
+function pvpForgeLevelColor(lvl) {
+  if (lvl>=15) return '#ff4488'; if (lvl>=12) return '#ffd84d';
+  if (lvl>=9)  return '#c084ff'; if (lvl>=6)  return '#4da6ff';
+  if (lvl>=3)  return '#fff';    return 'rgba(255,255,255,.3)';
+}
 
 async function loadForge() {
   const el = document.getElementById('forge-content');
   if (!el) return;
-  el.innerHTML = '<div class="loading">Chargement...</div>';
+  el.innerHTML = '<div class="loading">Chargement de la forge...</div>';
   try {
-    const [inv, me] = await Promise.all([
-      api('/api/pvp/inventory'),
-      api('/api/pvp/me'),
-    ]);
-    _forgeInventory = inv;
-    _pvpInventory   = inv;
-    renderForgeUI(inv, Number(me.fighter?.pvpGold || 0), el);
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement</div>'; }
+    const [inv, me] = await Promise.all([ api('/api/pvp/inventory'), api('/api/pvp/me') ]);
+    _pvpForgeInv  = inv; _pvpInventory = inv;
+    _pvpForgeGold = Number(me.fighter?.pvpGold || 0);
+    renderPvpForge();
+  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement forge</div>'; }
 }
 
-function renderForgeUI(inv, gold, el) {
-  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-  const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
-  const statLabels  = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
-  const milestones  = [3,6,9,12,15];
+function renderPvpForge() {
+  const el = document.getElementById('forge-content');
+  if (!el || !_pvpForgeInv) return;
+  const inventory = _pvpForgeInv.inventory || [];
+  const gold = _pvpForgeGold;
+  const item = _pvpForgeSelItem ? inventory.find(i => i.id === _pvpForgeSelItem) : null;
+  const fl   = item ? (item.forge_level || 0) : 0;
+  const cost = item && fl < 15 ? pvpForgeCostClient(item.rarity, fl) : null;
+  const canForge = !!(item && cost !== null && gold >= cost);
+  const isMax = fl >= 15;
 
-  const items = inv.inventory || [];
+  // ── COL GAUCHE ──
+  let itemSlotHtml = '';
+  if (item) {
+    const col = pvpForgeLevelColor(fl);
+    const rarCol = PVP_RARITY_COLOR[item.rarity] || '#aaa';
+    const nextMul = 1 + (fl+1)*0.08;
+    const statsLines = Object.entries(PVP_STAT_LABELS)
+      .filter(([k]) => (item[k]||0) > 0)
+      .map(([k,lbl]) => {
+        const cur  = item[k]||0;
+        const next = fl<15 ? Math.round(cur*nextMul*10)/10 : null;
+        return '<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px">'
+          + '<span style="opacity:.6;color:'+PVP_STAT_COLORS[k]+'">'+cur+' '+lbl+'</span>'
+          + (next&&fl<15 ? '<span style="color:#33ff99">→ '+next+'</span>' : '')+'</div>';
+      }).join('');
+    const extraLines = Object.entries(item.extra_stats||{}).filter(([,v])=>v>0)
+      .map(([k,v])=>'<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px">'
+        +'<span style="color:#ffd84d">✦ '+(PVP_STAT_LABELS[k]||k)+'</span>'
+        +'<span style="color:#ffd84d">+'+v+'</span></div>').join('');
+    const nextMs = [3,6,9,12,15].find(m=>m>fl);
+    const msHint = nextMs&&!isMax ? '<div style="font-size:9px;color:#7f5cff;margin-top:6px;text-align:center">⭐ Nouvelle stat au +'+nextMs+'</div>' : '';
 
-  if (!items.length) {
-    el.innerHTML = `
-      <div style="text-align:center;padding:40px;opacity:.5">
-        <div style="font-size:40px;margin-bottom:10px">⚒️</div>
-        <div>Aucun item PVP à forger</div>
-        <div style="font-size:12px;margin-top:6px">Gagne des coffres en remportant 3 combats !</div>
-      </div>`;
-    return;
+    itemSlotHtml = '<div class="forge-item-slot filled '+(item.rarity||'')+' '+pvpForgeLevelClass(fl)+'" onclick="pvpOpenForgePicker()">'
+      + '<img src="'+esc(item.image||'')+'" onerror="this.style.display=\'none\'">'
+      + '<div class="forge-item-level" style="color:'+col+';border-color:'+col+'40">'+(fl>0?'+'+fl:'✓')+'</div></div>'
+      + '<div style="text-align:center;max-width:110px"><div style="font-size:11px;font-weight:900;color:'+rarCol+'">'+esc(item.name||item.item_key||'')+'</div>'
+      + '<div style="font-size:10px;opacity:.45;margin-top:2px">'+(isMax?'✨ MAX':'+'+fl+' → +'+(fl+1))+'</div></div>'
+      + '<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;width:100%;font-size:10px">'+statsLines
+      + (extraLines?'<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,.06);padding-top:4px">'+extraLines+'</div>':'')+'</div>'+msHint;
+  } else {
+    itemSlotHtml = '<div class="forge-item-slot" onclick="pvpOpenForgePicker()">'
+      + '<div style="font-size:28px;opacity:.25">⚔️</div>'
+      + '<div style="font-size:9px;opacity:.4;margin-top:4px">Choisir</div></div>'
+      + '<div style="font-size:12px;opacity:.4;text-align:center">Sélectionne un équipement</div>';
   }
 
-  const goldBar = `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgba(255,216,0,.06);border:1px solid rgba(255,216,0,.2);border-radius:12px;margin-bottom:16px">
-    <span style="font-size:20px">⚔️</span>
-    <span style="font-size:16px;font-weight:900;color:#ffd84d">${gold} Or PVP</span>
-    <span style="font-size:11px;opacity:.4;margin-left:auto">Gagné en remportant des combats</span>
-  </div>`;
+  // ── COL CENTRE ──
+  let centerHtml = '<img class="forge-anvil" src="'+FORGE_IMG_PVP+'" alt="Forge" onerror="this.remove()">';
+  centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">⚔️ '+gold+' Or PVP</div>';
+  if (cost!==null&&item&&!isMax) {
+    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#ffd84d':'#ff4444')+'">💰 '+cost+' Or PVP</div>';
+  } else if (isMax) {
+    centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
+  } else if (!item) {
+    centerHtml += '<div style="font-size:12px;opacity:.35;text-align:center">Sélectionne<br>un item</div>';
+  }
+  const btnLabel = !item?'Choisir un item':isMax?'✨ MAX':canForge?'⚒️ Forger +'+(fl+1):'Or PVP insuffisant';
+  centerHtml += '<button class="forge-btn" id="pvp-forge-btn" onclick="doPvpForge()" '+(!canForge||isMax?'disabled':'')+'>'+btnLabel+'</button>';
 
-  const itemsHtml = items.map(item => {
-    const col  = rarityColor[item.rarity] || '#aaa';
-    const fl   = item.forge_level || 0;
-    const flCol = fl>=15?'#ff4488':fl>=12?'#ffd84d':fl>=9?'#c084ff':fl>=6?'#4da6ff':fl>=3?'#4dff99':'#fff';
-    const nextMilestone = milestones.find(m => m > fl);
-    const cost = fl < 15 ? pvpForgeCostClient(item.rarity, fl) : null;
-    const canAfford = cost !== null && gold >= cost;
-    const isMax = fl >= 15;
+  // ── INVENTAIRE ──
+  let invHtml = !inventory.length
+    ? '<div style="opacity:.35;font-size:13px;text-align:center;padding:16px">Aucun item — gagne des coffres en combat !</div>'
+    : inventory.map(i => {
+        const sel=i.id===_pvpForgeSelItem?'selected':'';
+        const col=PVP_RARITY_COLOR[i.rarity]||'#aaa';
+        return '<div class="forge-inv-item '+(i.rarity||'')+' '+pvpForgeLevelClass(i.forge_level)+' '+sel+'" onclick="selectPvpForgeItem('+i.id+')">'
+          +'<img class="forge-inv-img" src="'+esc(i.image||'')+'" onerror="this.style.display=\'none\'">'
+          +'<div class="forge-inv-name" style="color:'+col+'">'+esc(i.name||i.item_key||'')+'</div>'
+          +'<div class="forge-inv-lvl" style="color:'+pvpForgeLevelColor(i.forge_level)+'">'+(i.forge_level>0?'+'+i.forge_level:'')+(i.equipped_slot?' 📌':'')+'</div></div>';
+      }).join('');
 
-    // Stats de base
-    const statsHtml = Object.entries(statLabels)
-      .filter(([s]) => (item[s]||0) > 0)
-      .map(([s,l]) => `<span style="font-size:10px;color:${col}">+${item[s]} ${l}</span>`)
-      .join('<span style="opacity:.3"> · </span>');
-
-    // Stats bonus forge
-    const extraHtml = Object.entries(item.extra_stats||{})
-      .filter(([,v]) => v > 0)
-      .map(([s,v]) => `<span style="font-size:10px;color:#ffd84d">✦+${v} ${statLabels[s]||s}</span>`)
-      .join('<span style="opacity:.3"> · </span>');
-
-    // Prochain palier
-    const milestoneHint = nextMilestone && !isMax
-      ? `<div style="font-size:10px;color:#7f5cff;margin-top:4px">⭐ Nouvelle stat au +${nextMilestone}</div>`
-      : '';
-
-    return `
-      <div style="background:rgba(255,255,255,.04);border:1px solid ${col}33;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
-        <!-- Image item -->
-        <div style="position:relative;flex-shrink:0">
-          <div style="width:64px;height:64px;border:2px solid ${col};border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05)">
-            <img src="${esc(item.image||'')}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
-          </div>
-          ${fl>0?`<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:#0d0e1c;border:1px solid ${flCol};color:${flCol};white-space:nowrap">+${fl}</div>`:''}
-        </div>
-
-        <!-- Infos -->
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:900;color:${col};font-size:13px;margin-bottom:2px">${esc(item.name||item.item_key)}</div>
-          <div style="font-size:10px;opacity:.4;margin-bottom:6px">${rarityLabel[item.rarity]||item.rarity} · ${item.slot?.toUpperCase()||''} ${item.equipped_slot?'<span style="color:#33ff99;font-size:9px">✓ ÉQUIPÉ</span>':''}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${statsHtml}</div>
-          ${extraHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px">${extraHtml}</div>`:''}
-          ${milestoneHint}
-        </div>
-
-        <!-- Bouton forge -->
-        <div style="flex-shrink:0;text-align:center">
-          ${isMax
-            ? `<div style="font-size:10px;color:#ff4488;font-weight:900">MAX +15</div>`
-            : `<button onclick="forgePvpItemFromForge(${item.id})"
-                style="padding:8px 12px;border:none;border-radius:10px;
-                  background:${canAfford?'linear-gradient(135deg,#7f5cff,#f053c5)':'rgba(255,255,255,.08)'};
-                  color:${canAfford?'#fff':'rgba(255,255,255,.3)'};
-                  font-weight:900;cursor:${canAfford?'pointer':'not-allowed'};
-                  font-size:11px;white-space:nowrap">
-                ⚒️ +${fl+1}<br>
-                <span style="font-size:10px">${cost} Or</span>
-              </button>`
-          }
-        </div>
-      </div>`;
-  }).join('');
-
-  el.innerHTML = goldBar + `<div style="max-height:65vh;overflow-y:auto;padding-right:4px">${itemsHtml}</div>`;
+  el.innerHTML = '<div class="forge-wrap">'
+    + '<div class="card"><div class="card-title" style="margin-bottom:16px">⚒️ Forge PVP</div>'
+    +   '<div class="forge-main"><div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
+    +   itemSlotHtml+'</div><div class="forge-col-center">'+centerHtml+'</div></div>'
+    +   '<div id="pvpForgeAlert" style="margin-top:10px"></div></div>'
+    + '<div class="card"><div class="card-title">🎒 Inventaire — choisir un équipement à forger</div>'
+    +   '<div class="forge-inv-grid">'+invHtml+'</div></div></div>';
 }
 
-async function forgePvpItemFromForge(itemId) {
+function selectPvpForgeItem(id) { _pvpForgeSelItem=(_pvpForgeSelItem===id)?null:id; renderPvpForge(); }
+function pvpOpenForgePicker() { document.querySelector('#forge-content .forge-inv-grid')?.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function pvpForgeSuccessAnim() {
+  const slot=document.querySelector('#forge-content .forge-item-slot.filled'); if(!slot) return;
+  slot.style.transition='transform .15s';
+  [1.25,0.9,1.15,0.95,1.0].forEach((s,i)=>setTimeout(()=>{slot.style.transform='scale('+s+')';},i*80));
+  setTimeout(()=>{slot.style.transform='';slot.style.transition='';},500);
+  const rect=slot.getBoundingClientRect();
+  for(let i=0;i<12;i++){const p=document.createElement('div');const a=(i/12)*Math.PI*2,d=40+Math.random()*30;
+    p.style.cssText='position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:99999;left:'+(rect.left+rect.width/2)+'px;top:'+(rect.top+rect.height/2)+'px;background:'+['#ffd84d','#ff8800','#fff','#c084ff'][i%4]+';transition:all .6s ease-out;opacity:1;';
+    document.body.appendChild(p);setTimeout(()=>{p.style.transform='translate('+(Math.cos(a)*d)+'px,'+(Math.sin(a)*d)+'px) scale(0)';p.style.opacity='0';},20);setTimeout(()=>p.remove(),700);}
+}
+function pvpForgeFailAnim() {
+  const slot=document.querySelector('#forge-content .forge-item-slot.filled'); if(!slot) return;
+  slot.style.transition='transform .08s';
+  [-10,10,-8,8,-5,5,0].forEach((x,i)=>setTimeout(()=>{slot.style.transform='translateX('+x+'px)';},i*80));
+  setTimeout(()=>{slot.style.transform='';slot.style.transition='';},650);
+  const f=document.createElement('div');f.style.cssText='position:fixed;inset:0;background:rgba(255,50,50,.15);pointer-events:none;z-index:99998;transition:opacity .4s';
+  document.body.appendChild(f);setTimeout(()=>{f.style.opacity='0';},50);setTimeout(()=>f.remove(),500);
+}
+
+async function doPvpForge() {
+  if (!_pvpForgeSelItem) return;
+  const alertEl=document.getElementById('pvpForgeAlert');
+  const btn=document.getElementById('pvp-forge-btn');
+  if (btn) btn.disabled=true;
   try {
-    const d = await api('/api/pvp/forge', { method:'POST', body: JSON.stringify({ itemId }) });
-    if (d.isMilestone) {
-      // Trouver la stat bonus gagnée
-      const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
-      const bonusStat = Object.entries(d.extraStats||{}).pop();
-      const bonusLabel = bonusStat ? `+${bonusStat[1]} ${statLabels[bonusStat[0]]||bonusStat[0]}` : '';
-      showAlert(`⭐ Palier +${d.newLevel} ! Nouvelle stat : <strong>${bonusLabel}</strong>`, 'success');
-    } else {
-      showAlert(`⚒️ Item amélioré à +${d.newLevel} !`, 'success');
-    }
-    loadForge();
-    // Recharger le profil si on est dessus
-    if (document.getElementById('sec-profil')?.classList.contains('active')) loadProfil();
-  } catch(e) { showAlert(e.message||'Or PVP insuffisant', 'error'); }
+    FORGE_SFX_PVP.currentTime=0; FORGE_SFX_PVP.play().catch(()=>{});
+    const anvil=document.querySelector('#forge-content .forge-anvil');
+    if (anvil){anvil.style.transform='scale(1.1) rotate(-5deg)';setTimeout(()=>{anvil.style.transform='';},300);}
+    const d=await api('/api/pvp/forge',{method:'POST',body:JSON.stringify({itemId:_pvpForgeSelItem})});
+    const [inv,me]=await Promise.all([api('/api/pvp/inventory'),api('/api/pvp/me')]);
+    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.pvpGold||0);
+    pvpForgeSuccessAnim();
+    const msg=d.isMilestone?'⭐ Palier +'+d.newLevel+' ! Nouvelle stat ajoutée !':'✅ Succès ! Équipement amélioré à +'+d.newLevel+' !';
+    if (alertEl) alertEl.innerHTML='<div class="alert alert-success">'+msg+'</div>';
+    setTimeout(()=>{if(alertEl)alertEl.innerHTML='';},4000);
+    renderPvpForge();
+  } catch(e) {
+    pvpForgeFailAnim();
+    if (alertEl) alertEl.innerHTML='<div class="alert alert-error">'+esc(e.message||'Or PVP insuffisant')+'</div>';
+    if (btn) btn.disabled=false;
+    renderPvpForge();
+  }
 }
+
+// ══ MATCHMAKING ══════════════════════════════════════════
+let _mmInterval=null, _mmSeconds=0, _mmSearching=false;
+
+function initMatchmakingTab() {
+  stopMatchmaking();
+  refreshEnergyUI();
+}
+
+async function startMatchmaking() {
+  if (_mmSearching) return;
+  _mmSearching=true; _mmSeconds=0;
+  document.getElementById('mm-btn').style.display='none';
+  document.getElementById('mm-spinner').style.display='block';
+  document.getElementById('mm-found').style.display='none';
+  document.getElementById('mm-status').textContent="Recherche d'un adversaire...";
+  await mmSearchOnce();
+  _mmInterval=setInterval(async()=>{
+    _mmSeconds+=3;
+    const t=document.getElementById('mm-timer');
+    if(t) t.textContent='Recherche en cours... '+_mmSeconds+'s';
+    await mmSearchOnce();
+  },3000);
+}
+
+async function mmSearchOnce() {
+  try {
+    const d=await api('/api/pvp/matchmaking');
+    if (d.opponent && _mmSearching) { stopMatchmaking(); showMmFound(d.opponent, d.battleId); }
+  } catch(e) {}
+}
+
+function stopMatchmaking() {
+  _mmSearching=false;
+  if (_mmInterval){clearInterval(_mmInterval);_mmInterval=null;}
+  const btn=document.getElementById('mm-btn');
+  const spinner=document.getElementById('mm-spinner');
+  const status=document.getElementById('mm-status');
+  if (btn) btn.style.display='block';
+  if (spinner) spinner.style.display='none';
+  if (status) status.textContent='Trouve un adversaire automatiquement';
+}
+
+function showMmFound(opponent, battleId) {
+  const rankCol=RANK_COLORS[opponent.rankInfo?.name]||'#aaa';
+  const rankIcon=RANK_ICONS[opponent.rankInfo?.name]?'<img src="'+RANK_ICONS[opponent.rankInfo.name]+'" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px">':'';
+  const avBg=opponent.avatar?'background-image:url('+JSON.stringify(opponent.avatar)+');background-size:cover;background-position:center':'';
+  document.getElementById('mm-status').textContent='⚡ Adversaire trouvé !';
+  document.getElementById('mm-btn').style.display='none';
+  document.getElementById('mm-spinner').style.display='none';
+  const found=document.getElementById('mm-found');
+  found.style.display='block';
+  found.innerHTML=`<div style="background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.3);border-radius:16px;padding:20px;text-align:center;animation:mmPulse 1.5s ease-in-out infinite">
+    <div style="width:72px;height:72px;border-radius:50%;border:3px solid ${rankCol};background:var(--bg3);margin:0 auto 10px;${avBg}"></div>
+    <div style="font-size:17px;font-weight:900;margin-bottom:4px">${esc(opponent.name)}</div>
+    <div style="font-size:12px;color:${rankCol};margin-bottom:16px">${rankIcon}${esc(opponent.rankInfo?.name||'')} · ${fmtPts(opponent.pts)} pts</div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="mmAccept(${battleId})" style="padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D9E75,#33ff99);color:#000;font-weight:900;font-size:14px;cursor:pointer">⚔️ Accepter</button>
+      <button onclick="mmDecline(${battleId})" style="padding:12px 24px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Refuser</button>
+    </div></div>`;
+}
+
+async function mmAccept(battleId) {
+  try {
+    document.getElementById('mm-found').innerHTML='<div style="opacity:.5;font-size:13px">Combat en cours...</div>';
+    const d=await api('/api/pvp/accept',{method:'POST',body:JSON.stringify({battleId})});
+    await loadDefis(); await loadEnergy();
+    document.getElementById('mm-found').style.display='none';
+    stopMatchmaking();
+    openReplay(d.log,d.fighters.f1,d.fighters.f2,d.winnerId,d.rankChange);
+    if(d.rewards||d.challengerRewards) showPvpRewards(d.rewards||d.challengerRewards);
+  } catch(e){showAlert(e.message||'Erreur','error');stopMatchmaking();}
+}
+async function mmDecline(battleId) {
+  try{await api('/api/pvp/decline',{method:'POST',body:JSON.stringify({battleId})});}catch(e){}
+  stopMatchmaking();
+  document.getElementById('mm-found').style.display='none';
+}
+function showPvpRewards(r) {
+  if (!r) return;
+  const parts=[];
+  if(r.xp) parts.push('+'+r.xp+' XP PVP');
+  if(r.gold) parts.push('+'+r.gold+' Or PVP');
+  if(r.chestEarned) parts.push('🎁 Coffre obtenu !');
+  if(r.levelUp) parts.push('⬆️ Niveau PVP '+r.newLevel+' !');
+  if(parts.length) showAlert(parts.join(' · '),'success');
+}
+
+
 
 // OVERLAY RESULTAT ARENE
 function showArenaResult(isWin, winnerName, rankChange) {

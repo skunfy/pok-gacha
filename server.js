@@ -6984,6 +6984,58 @@ app.post("/api/pvp/spend-stat", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/pvp/matchmaking — trouver un adversaire de rang proche et créer un défi
+app.get("/api/pvp/matchmaking", auth, async (req, res) => {
+  try {
+    const meQ = await pool.query(`SELECT pvp_rank, pvp_energy FROM users WHERE id=$1`, [req.user.id]);
+    const me  = meQ.rows[0];
+    if (Number(me.pvp_energy) < 1) return res.status(400).json({ error: "Énergie insuffisante" });
+
+    const rank = Number(me.pvp_rank);
+    const margin = 300; // écart de rang acceptable
+
+    // Chercher un joueur de rang proche qui n'a pas de défi en attente avec moi
+    const opQ = await pool.query(`
+      SELECT u.id, u.name, u.avatar, u.pvp_rank
+      FROM users u
+      WHERE u.id != $1
+        AND u.pvp_rank BETWEEN $2 AND $3
+        AND u.pvp_energy > 0
+        AND NOT EXISTS (
+          SELECT 1 FROM pvp_battles pb
+          WHERE pb.status = 'pending'
+            AND ((pb.challenger_id=$1 AND pb.opponent_id=u.id)
+              OR (pb.challenger_id=u.id AND pb.opponent_id=$1))
+        )
+      ORDER BY ABS(u.pvp_rank - $4) ASC
+      LIMIT 5
+    `, [req.user.id, Math.max(0, rank - margin), rank + margin, rank]);
+
+    if (!opQ.rows.length) return res.json({ opponent: null });
+
+    // Choisir parmi les 5 premiers au hasard pour éviter le même adversaire en boucle
+    const opponent = opQ.rows[Math.floor(Math.random() * opQ.rows.length)];
+
+    // Créer le défi automatiquement
+    const battleQ = await pool.query(
+      `INSERT INTO pvp_battles(challenger_id, opponent_id, status, created_at) VALUES($1,$2,'pending',$3) RETURNING id`,
+      [req.user.id, opponent.id, Date.now()]
+    );
+    const battleId = battleQ.rows[0].id;
+
+    res.json({
+      opponent: {
+        id:       opponent.id,
+        name:     opponent.name,
+        avatar:   opponent.avatar || null,
+        pts:      Number(opponent.pvp_rank),
+        rankInfo: getRankInfo(Number(opponent.pvp_rank)),
+      },
+      battleId,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // POST /api/pvp/decline — refuser un défi
 app.post("/api/pvp/decline", auth, async (req, res) => {
   const battleId = Number(req.body?.battleId || 0) | 0;
