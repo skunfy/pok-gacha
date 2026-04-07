@@ -273,7 +273,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .arena-hp-bar{height:8px;border-radius:4px;transition:width .4s ease}
 .arena-hp-val{font-size:11px;opacity:.45;margin-top:4px}
 .arena-vs{font-size:16px;font-weight:900;opacity:.25;text-align:center}
-.arena-stage{position:relative;height:420px;background-image:url('/spritesheet/background/forest.png');background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.arena-stage{position:relative;height:420px;background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
 .arena-ground{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
 .arena-canvas{position:absolute;bottom:36px;image-rendering:pixelated;image-rendering:crisp-edges}
 .dmg-float{position:absolute;font-size:16px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none;text-shadow:0 2px 8px rgba(0,0,0,.8)}
@@ -563,7 +563,10 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, r
     c.height = CANVAS_H;
     c.style.height = SPRITE_PX + 'px';
     c.style.width  = Math.round(SPRITE_PX * CANVAS_W / CANVAS_H) + 'px';
-    c.style.imageRendering = 'pixelated';
+    c.style.imageRendering = 'auto';  // smooth pour les sprites haute res
+    // Désactiver le lissage pour garder la netteté
+    const ctx2 = c.getContext('2d');
+    if (ctx2) { ctx2.imageSmoothingEnabled = true; ctx2.imageSmoothingQuality = 'high'; }
   });
 
   const sw = (document.getElementById('replay-stage')||{offsetWidth:700}).offsetWidth;
@@ -659,8 +662,7 @@ function placeCanvas(id, x) {
 function setAnim(fid, anim) {
   if (!arenaState) return;
   const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-  if (anim === 'hurt') anim = 'idle';
-  if (f.anim === anim && anim !== 'dead') return;
+  if (f.anim === anim && anim !== 'dead' && anim !== 'hurt') return;
   f.anim = anim; f.frame = 0; f.tick = 0;
   f.freezeOnEnd = (anim === 'dead');
 }
@@ -1464,9 +1466,21 @@ function getMaxHp(log, name) {
 // ══════════════════════════════════════════════════
 // REPLAY ANIMÉ
 // ══════════════════════════════════════════════════
+const BATTLEBACKS = [
+  '/battleback/game_background_1.png',
+  '/battleback/game_background_2.png',
+  '/battleback/game_background_3.png',
+  '/battleback/game_background_4.png',
+];
+
 function openReplay(log, f1, f2, winnerId, rankChange) {
   if (replayBusy) return;
   replayBusy = true;
+
+  // Choisir un fond d'arene aleatoire
+  const bg = BATTLEBACKS[Math.floor(Math.random() * BATTLEBACKS.length)];
+  const stage = document.getElementById('replay-stage');
+  if (stage) stage.style.backgroundImage = `url('${bg}')`;
 
   const modal = document.getElementById('replay-modal');
   document.getElementById('replay-title').textContent = `⚔️ ${f1.name} vs ${f2.name}`;
@@ -1673,6 +1687,7 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
 
       playSfx(attClass);
       flashHit(defId);
+      setAnim(defId, 'hurt');  // animation hurt sur le defenseur
       spawnDmg(defId, ev.dmg, isCrit);
 
       // Shake écran
