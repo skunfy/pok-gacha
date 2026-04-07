@@ -1262,7 +1262,7 @@ function renderProfilPvp(f) {
   const sk       = SKIN_LABELS[skin] || SKIN_LABELS.forest_ranger;
   const cls      = CLASS_DEF_PVP[f.charClass] || null;
   const clsColor = cls?.color || '#7f5cff';
-  const equipped = _pvpEquipData?.equipped || {};
+  const equipped = _pvpEquipData?.equipped || {}; // items PVP équipés
   const rankName = f.rankInfo?.name || 'Bronze';
   const rankCol  = RANK_COLORS[rankName] || '#aaa';
 
@@ -1340,10 +1340,11 @@ let _pvpEquipData = null;
 async function loadProfil() {
   document.getElementById('profil-content').innerHTML = '<div class="loading">Chargement...</div>';
   try {
-    const [dPvp] = await Promise.all([
+    const [dPvp, dInv] = await Promise.all([
       api('/api/pvp/me'),
-      api('/api/equipment').then(d => { _pvpEquipData = d; }).catch(() => { _pvpEquipData = { inventory:[], equipped:{} }; }),
+      api('/api/pvp/inventory').catch(() => ({ inventory:[], equipped:{} })),
     ]);
+    _pvpEquipData = dInv;
     myData = dPvp.fighter;
     renderProfilPvp(dPvp.fighter);
   } catch(e) { document.getElementById('profil-content').innerHTML = '<div class="empty">Erreur chargement profil</div>'; }
@@ -1355,25 +1356,26 @@ function renderPvpSlot(slot, equipped) {
   const def  = SLOT_DEF[slot];
   const item = equipped[slot];
   const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+  const statLabels = { atk:'⚔️ ATQ', def:'🛡️ DEF', hp:'❤️ PV', speed:'⚡ VIT', crit_pct:'💥 Crit%', crit_dmg:'🔥 CritDMG%', dodge:'💨 Esquive%', lifesteal:'🩸 Vol vie%' };
+  const statColors = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
   if (item) {
-    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
-    const fl  = item.forge_level || 0;
-    const fm  = 1 + fl * 0.10;
-    const fs  = v => v ? Math.round(v * fm * 10) / 10 : 0;
+    const col   = EQ_RARITY_COLOR[item.rarity] || '#aaa';
+    const fl    = item.forge_level || 0;
     const flCol = fl>=15?'#ff4488':fl>=12?'#ffd84d':fl>=9?'#c084ff':fl>=6?'#4da6ff':fl>=3?'#fff':null;
-    const stats = [];
-    if (item.dmg_bonus)    stats.push(`<div class="eq-tooltip-stat"><span>⚔️</span><span style="color:#ff8844">+${fs(item.dmg_bonus)}% DMG</span></div>`);
-    if (item.crit)         stats.push(`<div class="eq-tooltip-stat"><span>💥</span><span style="color:#ffd84d">+${fs(item.crit)}% Crit</span></div>`);
-    if (item.first_attack) stats.push(`<div class="eq-tooltip-stat"><span>⚡</span><span style="color:#44aaff">+${fs(item.first_attack)}% 1ère frappe</span></div>`);
-    if (item.clan_dmg)     stats.push(`<div class="eq-tooltip-stat"><span>🛡️</span><span style="color:#4da6ff">+${fs(item.clan_dmg)}% DMG clan</span></div>`);
-    if (item.clan_crit)    stats.push(`<div class="eq-tooltip-stat"><span>💫</span><span style="color:#c084ff">+${fs(item.clan_crit)}% Crit clan</span></div>`);
+    const stats = Object.entries(statLabels)
+      .filter(([s]) => (item[s]||0) > 0)
+      .map(([s,l]) => `<div class="eq-tooltip-stat"><span>${l}</span><span style="color:${statColors[s]}">+${item[s]}</span></div>`);
+    // Lignes bonus forge
+    Object.entries(item.extra_stats||{}).forEach(([s,v]) => {
+      if (v > 0) stats.push(`<div class="eq-tooltip-stat"><span>${statLabels[s]||s} <span style="color:#ffd84d;font-size:9px">✦</span></span><span style="color:#ffd84d">+${v}</span></div>`);
+    });
     const forgeBadge = fl>0 ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:#0d0e1c;border:1px solid ${flCol};color:${flCol};z-index:4">+${fl}</div>` : '';
     return `<div class="eq-slot filled ${item.rarity}" onclick="pvpOpenEquip('${slot}')" style="position:relative">
       <img class="eq-slot-img" src="${esc(item.image)}" onerror="this.style.display='none'">
       ${forgeBadge}
       <span class="eq-slot-unequip" onclick="event.stopPropagation();pvpUnequip(${item.id})">✕</span>
       <div class="eq-slot-tooltip">
-        <div class="eq-tooltip-name">${esc(item.name)}${fl>0?` <span style="color:${flCol}">+${fl}</span>`:''}</div>
+        <div class="eq-tooltip-name">${esc(item.name||item.item_key)}${fl>0?` <span style="color:${flCol}">+${fl}</span>`:''}</div>
         <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
         ${stats.length ? stats.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
       </div>
@@ -1415,8 +1417,8 @@ function pvpCloseInv() { document.getElementById('pvp-inv-overlay').classList.re
 async function pvpEquip(id, slot) {
   pvpCloseInv();
   try {
-    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id }) });
-    _pvpEquipData = await api('/api/equipment');
+    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id }) });
+    _pvpEquipData = await api('/api/pvp/inventory');
     const fresh = await api('/api/pvp/me');
     myData = fresh.fighter;
     renderProfilPvp(fresh.fighter);
@@ -1425,8 +1427,8 @@ async function pvpEquip(id, slot) {
 
 async function pvpUnequip(id) {
   try {
-    await api('/api/equipment/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
-    _pvpEquipData = await api('/api/equipment');
+    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
+    _pvpEquipData = await api('/api/pvp/inventory');
     const fresh = await api('/api/pvp/me');
     myData = fresh.fighter;
     renderProfilPvp(fresh.fighter);
