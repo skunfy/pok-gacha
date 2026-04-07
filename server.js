@@ -7171,6 +7171,64 @@ app.get("/api/pvp/result/:id", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/pvp/battle-result/:id — poll pour voir si un combat est terminé
+app.get("/api/pvp/battle-result/:id", auth, async (req, res) => {
+  const battleId = Number(req.params.id) | 0;
+  try {
+    const q = await pool.query(`
+      SELECT pb.status, pb.winner_id, pb.rank_change, pb.log,
+             pb.challenger_id, pb.opponent_id,
+             u1.name as cname, u1.avatar as cavatar, u1.pvp_rank as crank,
+             u2.name as oname, u2.avatar as oavatar, u2.pvp_rank as orank,
+             pc1.pvp_skin as cskin, pc2.pvp_skin as oskin,
+             pc1.char_class as cclass, pc2.char_class as oclass
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id = pb.challenger_id
+      JOIN users u2 ON u2.id = pb.opponent_id
+      LEFT JOIN player_character pc1 ON pc1.user_id = pb.challenger_id
+      LEFT JOIN player_character pc2 ON pc2.user_id = pb.opponent_id
+      WHERE pb.id = $1
+        AND (pb.challenger_id = $2 OR pb.opponent_id = $2)
+    `, [battleId, req.user.id]);
+
+    if (!q.rows.length) return res.status(404).json({ error: 'Combat introuvable' });
+    const b = q.rows[0];
+
+    // Pas encore terminé
+    if (b.status !== 'done') return res.json({ done: false });
+
+    // Terminé — retourner tout ce qu'il faut pour le replay
+    const f1 = {
+      name:      b.cname,
+      avatar:    b.cavatar || null,
+      charClass: b.cclass  || null,
+      pvpSkin:   b.cskin   || 'forest_ranger',
+      rankInfo:  getRankInfo(Number(b.crank)),
+      hp: 100, // getMaxHp() se fait depuis le log côté client
+    };
+    const f2 = {
+      name:      b.oname,
+      avatar:    b.oavatar || null,
+      charClass: b.oclass  || null,
+      pvpSkin:   b.oskin   || 'forest_ranger',
+      rankInfo:  getRankInfo(Number(b.orank)),
+      hp: 100,
+    };
+
+    // Calcul rankChange du point de vue du demandeur
+    const isWinner    = b.winner_id === req.user.id;
+    const rankChange  = Number(b.rank_change || 0);
+
+    res.json({
+      done:       true,
+      winnerId:   b.winner_id,
+      rankChange: isWinner ? rankChange : -rankChange,
+      log:        b.log,
+      fighters:   { f1, f2 },
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // =========================
 // START
 // =========================

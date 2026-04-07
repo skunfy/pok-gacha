@@ -2297,6 +2297,7 @@ async function startMatchmaking() {
 async function stopMatchmaking(leaveQueue = true) {
   _mmSearching = false;
   if (_mmPollInterval) { clearInterval(_mmPollInterval); _mmPollInterval = null; }
+  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
 
   if (leaveQueue) {
     try { await api('/api/pvp/matchmaking/leave', { method: 'POST', body: '{}' }); } catch(e) {}
@@ -2311,6 +2312,8 @@ async function stopMatchmaking(leaveQueue = true) {
   if (status)  status.textContent    = 'Trouve un adversaire automatiquement';
   if (found)   found.style.display   = 'none';
 }
+
+let _mmBattlePollInterval = null;
 
 function showMmFound(opponent, battleId) {
   const rankCol  = RANK_COLORS[opponent.rankInfo?.name] || '#aaa';
@@ -2336,18 +2339,37 @@ function showMmFound(opponent, battleId) {
         <button onclick="mmAccept(${battleId})" style="padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D9E75,#33ff99);color:#000;font-weight:900;font-size:14px;cursor:pointer">⚔️ Accepter</button>
         <button onclick="mmDecline(${battleId})" style="padding:12px 24px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Refuser</button>
       </div>
+      <div style="margin-top:10px;font-size:11px;opacity:.4">En attente que l'adversaire accepte...</div>
     </div>`;
+
+  // Poll toutes les 2s pour voir si l'adversaire a accepté → replay auto
+  _mmBattlePollInterval = setInterval(async () => {
+    try {
+      const d = await api('/api/pvp/battle-result/' + battleId);
+      if (d.done) {
+        clearInterval(_mmBattlePollInterval);
+        _mmBattlePollInterval = null;
+        document.getElementById('mm-found').style.display = 'none';
+        stopMatchmaking(false);
+        openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
+        await loadEnergy();
+        loadProfil();
+      }
+    } catch(e) {}
+  }, 2000);
 }
 
 async function mmAccept(battleId) {
+  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
   try {
-    document.getElementById('mm-found').innerHTML = '<div style="opacity:.5;font-size:13px;text-align:center;padding:10px">Combat en cours...</div>';
+    document.getElementById('mm-found').innerHTML = '<div style="opacity:.5;font-size:13px;text-align:center;padding:10px">⚔️ Combat en cours...</div>';
     const d = await api('/api/pvp/accept', { method: 'POST', body: JSON.stringify({ battleId }) });
-    await loadDefis();
     await loadEnergy();
     document.getElementById('mm-found').style.display = 'none';
+    stopMatchmaking(false);
     openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
     if (d.rewards || d.challengerRewards) showPvpRewards(d.rewards || d.challengerRewards);
+    loadProfil();
   } catch(e) {
     showAlert(e.message || 'Erreur', 'error');
     stopMatchmaking(false);
@@ -2355,6 +2377,7 @@ async function mmAccept(battleId) {
 }
 
 async function mmDecline(battleId) {
+  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
   try { await api('/api/pvp/decline', { method: 'POST', body: JSON.stringify({ battleId }) }); } catch(e) {}
   stopMatchmaking(false);
 }
