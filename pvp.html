@@ -252,6 +252,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
 .result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green);animation:victoryPulse 1s ease-out}
 .result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
+@keyframes chestBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes chestGlow{0%{opacity:.4;transform:scale(.9)}100%{opacity:.8;transform:scale(1.1)}}
 @keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}
 @keyframes victoryPulse{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
 .rank-change{font-size:14px;margin-top:6px;opacity:.75;font-weight:700}
@@ -299,6 +301,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">Défis <span id="defis-count"></span></button>
     <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
     <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
+    <button class="tab-btn" onclick="showTab('forge',event)">⚒️ Forge</button>
   </div>
 </nav>
 
@@ -338,6 +341,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
   </div>
 
+  <div id="sec-forge" class="section">
+    <div class="card">
+      <div class="card-title">⚒️ Forge PVP</div>
+      <div id="forge-content"><div class="loading">Chargement...</div></div>
+    </div>
+  </div>
   <div id="sec-historique" class="section">
     <div class="card">
       <div class="card-title">Mes combats récents</div>
@@ -951,7 +960,7 @@ function renderPvpProgression(f) {
     ? `<button onclick="openPvpChest()" style="padding:8px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:13px">
         🎁 Ouvrir coffre (${f.pvpChests})
       </button>`
-    : `<div style="font-size:11px;opacity:.4;text-align:center">Prochain coffre : ${3 - (f.winStreak||0)} victoires</div>`;
+    : `<div style="font-size:11px;opacity:.4;text-align:center">Prochain coffre : ${3 - ((f.winStreak||0)%3)} victoire(s)</div>`;
 
   return `
     <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -969,16 +978,11 @@ function renderPvpProgression(f) {
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center">
         <div style="font-size:22px;font-weight:900;color:#ffd84d">⚔️ ${f.pvpGold||0} <span style="font-size:12px;opacity:.5">Or PVP</span></div>
         <div style="width:100%;background:rgba(255,255,255,.06);border-radius:6px;height:6px;overflow:hidden">
-          <div style="height:100%;width:${(f.winStreak||0)/3*100}%;background:linear-gradient(90deg,#7f5cff,#f053c5);border-radius:6px;transition:width .4s"></div>
+          <div style="height:100%;width:${((f.winStreak||0)%3)/3*100}%;background:linear-gradient(90deg,#7f5cff,#f053c5);border-radius:6px;transition:width .4s"></div>
         </div>
         ${chestHtml}
       </div>
 
-    </div>
-    <!-- Inventaire PVP -->
-    <div style="margin-top:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px">
-      <div style="font-size:11px;font-weight:900;opacity:.5;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">Équipement PVP</div>
-      <div id="pvp-inventory-wrap"><div style="font-size:12px;opacity:.4">Chargement...</div></div>
     </div>`;
 }
 
@@ -1118,12 +1122,63 @@ async function forgePvpItem(id) {
 async function openPvpChest() {
   try {
     const d = await api('/api/pvp/open-chest', { method:'POST', body:'{}' });
-    const item = d.item;
-    const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-    const col = rarityColor[item?.rarity] || '#aaa';
-    showAlert(`🎁 Item obtenu : <span style="color:${col};font-weight:900">${item?.name||'Inconnu'}</span> (${item?.rarity})`, 'success');
+    showChestRewardPopup(d.item);
     loadProfil();
   } catch(e) { showAlert(e.message||'Erreur', 'error'); }
+}
+
+function showChestRewardPopup(item) {
+  if (!item) return;
+  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+  const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+  const col = rarityColor[item.rarity] || '#aaa';
+  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
+  const stats = Object.entries(statLabels)
+    .filter(([s]) => (item[s]||0) > 0)
+    .map(([s,l]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="opacity:.6">${l}</span><span style="color:${col};font-weight:700">+${item[s]}</span></div>`)
+    .join('');
+
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+  // Particules selon rareté
+  const glowColor = item.rarity === 'legendary' ? 'rgba(255,216,0,.4)' : item.rarity === 'epic' ? 'rgba(192,132,255,.4)' : item.rarity === 'rare' ? 'rgba(77,166,255,.3)' : 'rgba(170,170,170,.2)';
+
+  overlay.innerHTML = `
+    <div style="
+      background:#0d0e1f;
+      border:2px solid ${col};
+      border-radius:20px;
+      padding:32px 28px;
+      width:min(340px,92vw);
+      text-align:center;
+      position:relative;
+      box-shadow:0 0 60px ${glowColor}, 0 20px 60px rgba(0,0,0,.8);
+      transform:scale(.85);
+      transition:transform .4s cubic-bezier(.175,.885,.32,1.275);
+    " id="chest-popup-box">
+      <div style="font-size:13px;opacity:.5;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">Coffre ouvert !</div>
+      <div style="font-size:13px;font-weight:900;color:${col};margin-bottom:16px;letter-spacing:.05em">${rarityLabel[item.rarity]||item.rarity}</div>
+      <div style="position:relative;display:inline-block;margin-bottom:16px">
+        <div style="position:absolute;inset:-20px;background:radial-gradient(circle,${glowColor} 0%,transparent 70%);border-radius:50%;animation:chestGlow 2s ease-in-out infinite alternate"></div>
+        <img src="${esc(item.image||'')}"
+          style="width:120px;height:120px;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 0 20px ${col});animation:chestBounce .6s cubic-bezier(.175,.885,.32,1.275) .1s both"
+          onerror="this.style.display='none'">
+      </div>
+      <div style="font-size:18px;font-weight:900;color:${col};margin-bottom:4px">${esc(item.name||item.key)}</div>
+      <div style="font-size:11px;opacity:.4;margin-bottom:16px">${item.slot?.toUpperCase()||''}</div>
+      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:18px;text-align:left">${stats||'<div style="opacity:.4;font-size:12px;text-align:center">Aucune stat</div>'}</div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,${col},${col}88);color:#000;font-weight:900;font-size:14px;cursor:pointer">Super !</button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    const box = document.getElementById('chest-popup-box');
+    if (box) box.style.transform = 'scale(1)';
+  });
 }
 async function spendPvpStat(stat) {
   try {
@@ -1143,6 +1198,7 @@ function showTab(name, ev) {
   if (name==='defis') loadDefis();
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
+  if (name==='forge') loadForge();
 }
 
 function rankBadgeHtml(rankInfo, pts) {
@@ -1324,7 +1380,6 @@ function renderProfilPvp(f) {
   // Lancer l'animation idle après rendu du DOM
   requestAnimationFrame(() => {
     startProfilIdle(skin);
-    loadPvpInventory();
   });
 }
 const SLOT_DEF = {
@@ -1958,6 +2013,132 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
   replayBusy = false;
 }
 
+
+// ══ FORGE PVP ══════════════════════════════════════════
+let _forgeInventory = null;
+
+async function loadForge() {
+  const el = document.getElementById('forge-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Chargement...</div>';
+  try {
+    const [inv, me] = await Promise.all([
+      api('/api/pvp/inventory'),
+      api('/api/pvp/me'),
+    ]);
+    _forgeInventory = inv;
+    _pvpInventory   = inv;
+    renderForgeUI(inv, Number(me.fighter?.pvpGold || 0), el);
+  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement</div>'; }
+}
+
+function renderForgeUI(inv, gold, el) {
+  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+  const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
+  const statLabels  = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
+  const milestones  = [3,6,9,12,15];
+
+  const items = inv.inventory || [];
+
+  if (!items.length) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:40px;opacity:.5">
+        <div style="font-size:40px;margin-bottom:10px">⚒️</div>
+        <div>Aucun item PVP à forger</div>
+        <div style="font-size:12px;margin-top:6px">Gagne des coffres en remportant 3 combats !</div>
+      </div>`;
+    return;
+  }
+
+  const goldBar = `<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgba(255,216,0,.06);border:1px solid rgba(255,216,0,.2);border-radius:12px;margin-bottom:16px">
+    <span style="font-size:20px">⚔️</span>
+    <span style="font-size:16px;font-weight:900;color:#ffd84d">${gold} Or PVP</span>
+    <span style="font-size:11px;opacity:.4;margin-left:auto">Gagné en remportant des combats</span>
+  </div>`;
+
+  const itemsHtml = items.map(item => {
+    const col  = rarityColor[item.rarity] || '#aaa';
+    const fl   = item.forge_level || 0;
+    const flCol = fl>=15?'#ff4488':fl>=12?'#ffd84d':fl>=9?'#c084ff':fl>=6?'#4da6ff':fl>=3?'#4dff99':'#fff';
+    const nextMilestone = milestones.find(m => m > fl);
+    const cost = fl < 15 ? pvpForgeCostClient(item.rarity, fl) : null;
+    const canAfford = cost !== null && gold >= cost;
+    const isMax = fl >= 15;
+
+    // Stats de base
+    const statsHtml = Object.entries(statLabels)
+      .filter(([s]) => (item[s]||0) > 0)
+      .map(([s,l]) => `<span style="font-size:10px;color:${col}">+${item[s]} ${l}</span>`)
+      .join('<span style="opacity:.3"> · </span>');
+
+    // Stats bonus forge
+    const extraHtml = Object.entries(item.extra_stats||{})
+      .filter(([,v]) => v > 0)
+      .map(([s,v]) => `<span style="font-size:10px;color:#ffd84d">✦+${v} ${statLabels[s]||s}</span>`)
+      .join('<span style="opacity:.3"> · </span>');
+
+    // Prochain palier
+    const milestoneHint = nextMilestone && !isMax
+      ? `<div style="font-size:10px;color:#7f5cff;margin-top:4px">⭐ Nouvelle stat au +${nextMilestone}</div>`
+      : '';
+
+    return `
+      <div style="background:rgba(255,255,255,.04);border:1px solid ${col}33;border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+        <!-- Image item -->
+        <div style="position:relative;flex-shrink:0">
+          <div style="width:64px;height:64px;border:2px solid ${col};border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05)">
+            <img src="${esc(item.image||'')}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
+          </div>
+          ${fl>0?`<div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:#0d0e1c;border:1px solid ${flCol};color:${flCol};white-space:nowrap">+${fl}</div>`:''}
+        </div>
+
+        <!-- Infos -->
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:900;color:${col};font-size:13px;margin-bottom:2px">${esc(item.name||item.item_key)}</div>
+          <div style="font-size:10px;opacity:.4;margin-bottom:6px">${rarityLabel[item.rarity]||item.rarity} · ${item.slot?.toUpperCase()||''} ${item.equipped_slot?'<span style="color:#33ff99;font-size:9px">✓ ÉQUIPÉ</span>':''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${statsHtml}</div>
+          ${extraHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px">${extraHtml}</div>`:''}
+          ${milestoneHint}
+        </div>
+
+        <!-- Bouton forge -->
+        <div style="flex-shrink:0;text-align:center">
+          ${isMax
+            ? `<div style="font-size:10px;color:#ff4488;font-weight:900">MAX +15</div>`
+            : `<button onclick="forgePvpItemFromForge(${item.id})"
+                style="padding:8px 12px;border:none;border-radius:10px;
+                  background:${canAfford?'linear-gradient(135deg,#7f5cff,#f053c5)':'rgba(255,255,255,.08)'};
+                  color:${canAfford?'#fff':'rgba(255,255,255,.3)'};
+                  font-weight:900;cursor:${canAfford?'pointer':'not-allowed'};
+                  font-size:11px;white-space:nowrap">
+                ⚒️ +${fl+1}<br>
+                <span style="font-size:10px">${cost} Or</span>
+              </button>`
+          }
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = goldBar + `<div style="max-height:65vh;overflow-y:auto;padding-right:4px">${itemsHtml}</div>`;
+}
+
+async function forgePvpItemFromForge(itemId) {
+  try {
+    const d = await api('/api/pvp/forge', { method:'POST', body: JSON.stringify({ itemId }) });
+    if (d.isMilestone) {
+      // Trouver la stat bonus gagnée
+      const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
+      const bonusStat = Object.entries(d.extraStats||{}).pop();
+      const bonusLabel = bonusStat ? `+${bonusStat[1]} ${statLabels[bonusStat[0]]||bonusStat[0]}` : '';
+      showAlert(`⭐ Palier +${d.newLevel} ! Nouvelle stat : <strong>${bonusLabel}</strong>`, 'success');
+    } else {
+      showAlert(`⚒️ Item amélioré à +${d.newLevel} !`, 'success');
+    }
+    loadForge();
+    // Recharger le profil si on est dessus
+    if (document.getElementById('sec-profil')?.classList.contains('active')) loadProfil();
+  } catch(e) { showAlert(e.message||'Or PVP insuffisant', 'error'); }
+}
 
 // OVERLAY RESULTAT ARENE
 function showArenaResult(isWin, winnerName, rankChange) {
