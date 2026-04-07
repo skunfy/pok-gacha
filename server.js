@@ -6728,50 +6728,7 @@ app.get("/api/pvp/leaderboard", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/pvp/search?name=... — chercher un joueur à défier
-app.get("/api/pvp/search", auth, async (req, res) => {
-  const q = String(req.query.name || '').trim();
-  if (q.length < 2) return res.json({ users: [] });
-  try {
-    const r = await pool.query(
-      `SELECT id, name, avatar, pvp_rank, pvp_wins, pvp_losses FROM users WHERE name ILIKE $1 AND id != $2 LIMIT 10`,
-      ['%'+q+'%', req.user.id]
-    );
-    res.json({ users: r.rows.map(u => ({ id: u.id, name: u.name, avatar: u.avatar||'', pts: Number(u.pvp_rank), rankInfo: getRankInfo(Number(u.pvp_rank)) })) });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
 
-// POST /api/pvp/challenge — envoyer un défi
-app.post("/api/pvp/challenge", auth, async (req, res) => {
-  const opponentId = Number(req.body?.opponentId || 0) | 0;
-  if (!opponentId || opponentId === req.user.id) return res.status(400).json({ error: "Cible invalide" });
-  try {
-    // Vérifier + consommer l'énergie du challenger
-    await consumePvpEnergy(req.user.id);
-
-    // Vérifier pas déjà un défi en attente entre ces deux joueurs
-    const pending = await pool.query(
-      `SELECT id FROM pvp_battles WHERE status='pending' AND ((challenger_id=$1 AND opponent_id=$2) OR (challenger_id=$2 AND opponent_id=$1))`,
-      [req.user.id, opponentId]
-    );
-    if (pending.rows.length) return res.status(400).json({ error: "Un défi est déjà en attente" });
-
-    const opponent = await pool.query(`SELECT id, name, pvp_rank FROM users WHERE id=$1`, [opponentId]);
-    if (!opponent.rows.length) return res.status(404).json({ error: "Joueur introuvable" });
-
-    const me = await pool.query(`SELECT pvp_rank FROM users WHERE id=$1`, [req.user.id]);
-    const battle = await pool.query(
-      `INSERT INTO pvp_battles(challenger_id, opponent_id, status, challenger_rank_before, opponent_rank_before, created_at) VALUES($1,$2,'pending',$3,$4,$5) RETURNING id`,
-      [req.user.id, opponentId, Number(me.rows[0].pvp_rank), Number(opponent.rows[0].pvp_rank), Date.now()]
-    );
-    // Notif pour l'adversaire
-    await pool.query(
-      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'pvp','⚔️ Défi PVP !',$2,$3,0,$4)`,
-      [opponentId, `${req.user.name} te défie en combat !`, JSON.stringify({ battleId: battle.rows[0].id }), Date.now()]
-    );
-    res.json({ ok: true, battleId: battle.rows[0].id });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
 
 // POST /api/pvp/accept — accepter et simuler le combat
 app.post("/api/pvp/accept", auth, async (req, res) => {
@@ -7091,27 +7048,7 @@ app.get("/api/pvp/matchmaking/status", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/pvp/decline — refuser un défi
-app.post("/api/pvp/decline", auth, async (req, res) => {
-  const battleId = Number(req.body?.battleId || 0) | 0;
-  try {
-    await pool.query(`UPDATE pvp_battles SET status='declined' WHERE id=$1 AND opponent_id=$2 AND status='pending'`, [battleId, req.user.id]);
-    res.json({ ok: true });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
 
-// GET /api/pvp/pending — défis en attente pour moi
-app.get("/api/pvp/pending", auth, async (req, res) => {
-  try {
-    const q = await pool.query(`
-      SELECT pb.id, pb.challenger_id, pb.created_at, u.name as challenger_name, u.avatar, u.pvp_rank as challenger_rank
-      FROM pvp_battles pb JOIN users u ON u.id=pb.challenger_id
-      WHERE pb.opponent_id=$1 AND pb.status='pending'
-      ORDER BY pb.created_at DESC LIMIT 10
-    `, [req.user.id]);
-    res.json({ challenges: q.rows.map(r => ({ battleId: r.id, challengerId: r.challenger_id, challengerName: r.challenger_name, avatar: r.avatar||'', rankInfo: getRankInfo(Number(r.challenger_rank)), createdAt: Number(r.created_at) })) });
-  } catch(e) { res.status(500).json({ error: e.message }); }
-});
 
 // GET /api/pvp/history — historique des combats
 app.get("/api/pvp/history", auth, async (req, res) => {

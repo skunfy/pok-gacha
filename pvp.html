@@ -339,9 +339,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <span class="nav-title">⚔️ PVP</span>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
-    <button class="tab-btn" onclick="showTab('defier',event)">Défier</button>
     <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚡ Match</button>
-    <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">Défis <span id="defis-count"></span></button>
     <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
     <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
     <button class="tab-btn" onclick="showTab('forge',event)">⚒️ Forge</button>
@@ -376,32 +374,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     </div>
   </div>
 
-  <div id="sec-defier" class="section">
-    <div class="card">
-      <!-- Barre d'énergie affichée dans l'onglet Défier -->
-      <div id="energy-bar-defier"></div>
-      <div class="card-title">Rechercher un joueur</div>
-      <div class="search-wrap">
-        <input type="text" id="search-input" placeholder="Nom du joueur..." maxlength="30" oninput="searchDebounce()">
-        <button onclick="searchPlayer()">Chercher</button>
-      </div>
-      <div id="search-results"></div>
-    </div>
-  </div>
 
-  <div id="sec-defis" class="section">
-    <div class="card">
-      <div class="card-title">Défis en attente</div>
-      <div id="defis-content"><div class="loading">Chargement...</div></div>
-    </div>
-  </div>
-
-  <div id="sec-classement" class="section">
-    <div class="card">
-      <div class="card-title">Classement</div>
-      <div id="lb-content"><div class="loading">Chargement...</div></div>
-    </div>
-  </div>
 
   <div id="sec-forge" class="section">
     <div id="forge-content"><div class="loading">Chargement...</div></div>
@@ -917,7 +890,7 @@ async function loadEnergy() {
 }
 
 function refreshEnergyUI() {
-  const el = document.getElementById('energy-bar-defier');
+  const el = document.getElementById('energy-bar-mm');
   if (el) el.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
 }
 
@@ -971,7 +944,6 @@ function buildRankProgressHtml(pts) {
 }
 
 let myData = null;
-let searchTimer = null;
 let replayBusy = false;
 
 async function api(path, opts={}) {
@@ -1267,8 +1239,6 @@ function showTab(name, ev) {
   if (name !== 'profil') stopProfilIdle();
   if (name !== 'matchmaking' && _mmSearching) stopMatchmaking(); // stopper l'animation idle si on quitte le profil
   if (name==='profil') loadProfil();
-  if (name==='defier') { document.getElementById('search-input').focus(); refreshEnergyUI(); }
-  if (name==='defis') loadDefis();
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
@@ -1562,102 +1532,6 @@ async function pvpUnequip(id) {
     myData = fresh.fighter;
     renderProfilPvp(fresh.fighter);
   } catch(e) { showAlert(e.message, 'error'); }
-}
-
-// ── RECHERCHE ──
-function searchDebounce() { clearTimeout(searchTimer); searchTimer = setTimeout(searchPlayer, 400); }
-
-async function searchPlayer() {
-  const q = document.getElementById('search-input').value.trim();
-  const el = document.getElementById('search-results');
-  if (q.length < 2) { el.innerHTML = ''; return; }
-  el.innerHTML = '<div class="loading">Recherche...</div>';
-  try {
-    const d = await api('/api/pvp/search?name='+encodeURIComponent(q));
-    if (!d.users.length) { el.innerHTML = '<div class="empty">Aucun joueur trouvé</div>'; return; }
-    const noEnergy = !hasEnoughEnergy();
-    el.innerHTML = d.users.map(u => {
-      const avatarStyle = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
-        : '';
-      return `<div class="user-row">
-        <div class="user-row-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
-        <div class="user-row-info">
-          <div class="user-row-name">${esc(u.name)}</div>
-          <div class="user-row-rank" style="color:${RANK_COLORS[u.rankInfo?.name]||'#aaa'}">${u.rankInfo?.icon||''} ${esc(u.rankInfo?.name||'')} · ${fmtPts(u.pts)} pts</div>
-        </div>
-        <button class="challenge-btn" onclick="sendChallenge(${u.id},'${esc(u.name)}',this)" ${noEnergy?'disabled title="Pas assez d\'énergie"':''}>⚔️ Défier</button>
-      </div>`;
-    }).join('');
-    if (noEnergy) {
-      el.insertAdjacentHTML('afterbegin', `<div style="text-align:center;padding:10px;color:#ff8888;font-size:12px;font-weight:700">⚡ Tu n'as pas assez d'énergie pour lancer un duel (il te faut ${ENERGY_PER_DUEL})</div>`);
-    }
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
-}
-
-async function sendChallenge(opponentId, name, btn) {
-  if (!hasEnoughEnergy()) { showAlert(`⚡ Énergie insuffisante — il te faut ${ENERGY_PER_DUEL} points.`, 'error'); return; }
-  btn.disabled = true; btn.textContent = '...';
-  try {
-    await api('/api/pvp/challenge', { method:'POST', body: JSON.stringify({ opponentId }) });
-    btn.textContent = '✅ Envoyé';
-    showAlert(`Défi envoyé à ${name} !`, 'success');
-    await loadEnergy();
-  } catch(e) {
-    btn.disabled = false; btn.textContent = '⚔️ Défier';
-    showAlert(e.message, 'error');
-  }
-}
-
-// ── DÉFIS REÇUS ──
-async function loadDefis() {
-  const el = document.getElementById('defis-content');
-  try {
-    const d = await api('/api/pvp/pending');
-    const count = d.challenges.length;
-    document.getElementById('defis-count').textContent = count > 0 ? `(${count})` : '';
-    if (!count) { el.innerHTML = '<div class="empty">Aucun défi en attente</div>'; return; }
-    el.innerHTML = d.challenges.map(c => {
-      const avatarStyle = c.avatar
-        ? `background-image:url(${JSON.stringify(c.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
-        : '';
-      return `<div class="challenge-card">
-        <div class="user-row-avatar" style="${avatarStyle}">${c.avatar?'':'⚔️'}</div>
-        <div class="challenge-card-info">
-          <div class="challenge-card-name">${esc(c.challengerName)}</div>
-          <div class="challenge-card-sub" style="color:${RANK_COLORS[c.rankInfo?.name]||'#aaa'}">
-            ${RANK_ICONS[c.rankInfo?.name] ? `<img src="${RANK_ICONS[c.rankInfo.name]}" style="width:12px;height:12px;object-fit:contain;vertical-align:middle">` : (c.rankInfo?.icon||'')}
-            ${esc(c.rankInfo?.name||'')} · il y a ${timeAgo(c.createdAt)}
-          </div>
-        </div>
-        <div class="challenge-actions">
-          <button class="btn-accept" onclick="acceptChallenge(${c.battleId},this)">⚔️ Accepter</button>
-          <button class="btn-decline" onclick="declineChallenge(${c.battleId},this)">Refuser</button>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
-}
-
-async function acceptChallenge(battleId, btn) {
-  btn.disabled = true; btn.textContent = '...';
-  try {
-    const d = await api('/api/pvp/accept', { method:'POST', body: JSON.stringify({ battleId }) });
-    await loadDefis();
-    await loadEnergy();
-    openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
-  } catch(e) {
-    btn.disabled = false; btn.textContent = '⚔️ Accepter';
-    showAlert(e.message, 'error');
-  }
-}
-
-async function declineChallenge(battleId, btn) {
-  btn.disabled = true;
-  try {
-    await api('/api/pvp/decline', { method:'POST', body: JSON.stringify({ battleId }) });
-    await loadDefis();
-  } catch(e) { btn.disabled = false; showAlert(e.message, 'error'); }
 }
 
 // ── CLASSEMENT avec PODIUM ──
@@ -2500,13 +2374,6 @@ function spawnConfetti() {
 window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
 loadProfil();
 loadEnergy();
-(async () => {
-  try {
-    const d = await api('/api/pvp/pending');
-    const count = d.challenges.length;
-    if (count > 0) document.getElementById('defis-count').textContent = `(${count})`;
-  } catch {}
-})();
 </script>
 </body>
 </html>
