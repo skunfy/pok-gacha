@@ -52,16 +52,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .stat-box-label{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
 
 /* ══ ÉNERGIE ══ */
-.energy-bar-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(255,184,0,.05);border:1px solid rgba(255,184,0,.15);border-radius:14px;margin-bottom:14px}
-.energy-icon{font-size:20px;flex-shrink:0}
+.energy-bar-wrap{display:flex;align-items:center;gap:14px;padding:13px 18px;background:rgba(255,184,0,.04);border:1px solid rgba(255,184,0,.12);border-radius:14px;margin-bottom:14px}
+.energy-icon{font-size:18px;flex-shrink:0;opacity:.9}
 .energy-info{flex:1;min-width:0}
-.energy-label{font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.energy-pips{display:flex;gap:4px;flex-wrap:wrap}
-.energy-pip{width:22px;height:22px;border-radius:6px;border:2px solid rgba(255,184,0,.25);background:rgba(255,184,0,.06);transition:all .3s;position:relative;overflow:hidden}
-.energy-pip.filled{background:linear-gradient(135deg,#ffb300,#ffd84d);border-color:#ffd84d;box-shadow:0 0 8px rgba(255,211,77,.4)}
-.energy-pip.filled::after{content:'⚡';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px}
-.energy-timer{font-size:11px;opacity:.5;margin-top:4px;white-space:nowrap}
-.energy-cost{font-size:12px;font-weight:900;color:#ffd84d;white-space:nowrap;flex-shrink:0}
+.energy-label{font-size:10px;font-weight:900;opacity:.4;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.energy-track{position:relative;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.energy-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#e6900a,#ffd84d);transition:width .4s ease;position:relative}
+.energy-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.25),transparent);border-radius:999px}
+.energy-segs{position:absolute;inset:0;display:flex;pointer-events:none}
+.energy-seg{flex:1;border-right:2px solid rgba(10,11,24,.5)}
+.energy-seg:last-child{border-right:none}
+.energy-timer{font-size:10px;opacity:.4;margin-top:5px}
+.energy-count{font-size:13px;font-weight:900;color:#ffd84d;white-space:nowrap;flex-shrink:0;text-align:right;line-height:1.3}
 
 /* SEARCH */
 .search-wrap{display:flex;gap:8px;margin-bottom:14px}
@@ -89,22 +91,28 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .btn-decline{padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:700;font-size:12px;cursor:pointer}
 
 /* ══ LEADERBOARD PODIUM ══ */
-.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:24px 8px 0;margin-bottom:20px}
-.podium-col{display:flex;flex-direction:column;align-items:center;gap:0}
-.podium-avatar-wrap{position:relative;margin-bottom:6px}
-.podium-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;border:3px solid rgba(255,255,255,.15);background-size:cover;background-position:center}
-.podium-crown{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:22px;filter:drop-shadow(0 0 8px currentColor)}
-.podium-rank-frame{position:absolute;inset:-8px;width:80px;height:80px;object-fit:contain;pointer-events:none}
-.podium-name{font-size:12px;font-weight:900;text-align:center;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
-.podium-pts{font-size:11px;font-weight:700;opacity:.6;margin-bottom:6px}
-.podium-rank-badge{font-size:10px;display:flex;align-items:center;gap:3px;margin-bottom:8px}
-.podium-block{border-radius:14px 14px 0 0;width:90px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;opacity:.8}
-.podium-1 .podium-avatar{border-color:#ffd84d;box-shadow:0 0 20px rgba(255,216,77,.35)}
-.podium-1 .podium-block{background:linear-gradient(180deg,rgba(255,216,77,.18),rgba(255,216,77,.06));border:1px solid rgba(255,216,77,.25);height:80px;color:#ffd84d}
-.podium-2 .podium-avatar{border-color:#aaa;box-shadow:0 0 14px rgba(170,170,170,.2)}
-.podium-2 .podium-block{background:linear-gradient(180deg,rgba(170,170,170,.12),rgba(170,170,170,.04));border:1px solid rgba(170,170,170,.18);height:55px;color:#aaa}
-.podium-3 .podium-avatar{border-color:#cd7f32;box-shadow:0 0 14px rgba(205,127,50,.2)}
-.podium-3 .podium-block{background:linear-gradient(180deg,rgba(205,127,50,.12),rgba(205,127,50,.04));border:1px solid rgba(205,127,50,.18);height:40px;color:#cd7f32}
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:20px;padding:32px 8px 0;margin-bottom:24px}
+.podium-col{display:flex;flex-direction:column;align-items:center;gap:0;cursor:default}
+.podium-rank-icon-top{width:44px;height:44px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,255,255,.2))}
+.podium-avatar-wrap{position:relative;margin-bottom:8px}
+/* avatar utilise background-image comme leaderboard.html */
+.podium-avatar{border-radius:18px;background:var(--bg3) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,.15);box-shadow:0 18px 50px rgba(0,0,0,.5);position:relative;overflow:hidden;flex-shrink:0}
+/* cadre de rang par dessus l'avatar */
+.podium-rank-frame-img{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:contain;pointer-events:none;z-index:2}
+.podium-name{font-size:13px;font-weight:900;text-align:center;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.podium-pts{font-size:11px;font-weight:700;opacity:.55;margin-bottom:6px}
+.podium-rank-label{font-size:10px;font-weight:900;display:flex;align-items:center;gap:3px;margin-bottom:8px;opacity:.8}
+.podium-block{border-radius:14px 14px 0 0;width:100px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;letter-spacing:.04em}
+/* tailles par position */
+.podium-1 .podium-avatar{width:90px;height:90px}
+.podium-2 .podium-avatar{width:72px;height:72px}
+.podium-3 .podium-avatar{width:66px;height:66px}
+.podium-1 .podium-avatar{border-color:rgba(255,216,77,.55);box-shadow:0 0 0 2px rgba(255,216,77,.35),0 0 32px rgba(255,216,77,.3),0 18px 50px rgba(0,0,0,.5)}
+.podium-2 .podium-avatar{border-color:rgba(190,205,255,.45);box-shadow:0 0 0 2px rgba(190,205,255,.25),0 0 22px rgba(190,205,255,.2),0 18px 50px rgba(0,0,0,.5)}
+.podium-3 .podium-avatar{border-color:rgba(205,127,50,.5);box-shadow:0 0 0 2px rgba(205,127,50,.3),0 0 22px rgba(205,127,50,.2),0 18px 50px rgba(0,0,0,.5)}
+.podium-1 .podium-block{background:linear-gradient(180deg,rgba(255,216,77,.15),rgba(255,216,77,.04));border:1px solid rgba(255,216,77,.2);height:80px;color:rgba(255,216,77,.8)}
+.podium-2 .podium-block{background:linear-gradient(180deg,rgba(190,205,255,.1),rgba(190,205,255,.03));border:1px solid rgba(190,205,255,.15);height:56px;color:rgba(190,205,255,.7)}
+.podium-3 .podium-block{background:linear-gradient(180deg,rgba(205,127,50,.1),rgba(205,127,50,.03));border:1px solid rgba(205,127,50,.15);height:40px;color:rgba(205,127,50,.7)}
 
 /* LEADERBOARD rows (from rank 4) */
 .lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);transition:.15s}
@@ -706,25 +714,31 @@ function energyTimerText(state) {
   return `+10 dans ${m}m${s.toString().padStart(2,'0')}s`;
 }
 
-function buildEnergyHtml(state, compact=false) {
+function buildEnergyHtml(state) {
   const current = computeEnergy(state);
-  const pips = Math.round(current / ENERGY_PER_DUEL); // nombre de "pips" pleins sur 10
-  const totalPips = ENERGY_MAX / ENERGY_PER_DUEL;
-
-  let pipsHtml = '';
-  for (let i = 0; i < totalPips; i++) {
-    pipsHtml += `<div class="energy-pip${i < pips ? ' filled' : ''}"></div>`;
-  }
+  const pct = Math.round(current / ENERGY_MAX * 100);
   const timer = energyTimerText(state);
+  const totalSegs = ENERGY_MAX / ENERGY_PER_DUEL; // 10 segments
+
+  let segsHtml = '';
+  for (let i = 0; i < totalSegs; i++) segsHtml += `<div class="energy-seg"></div>`;
+
+  const fillColor = current <= 0 ? '#ff4444' : current < 30 ? '#ff8c00' : '#ffd84d';
 
   return `<div class="energy-bar-wrap">
     <div class="energy-icon">⚡</div>
     <div class="energy-info">
       <div class="energy-label">Énergie PVP</div>
-      <div class="energy-pips">${pipsHtml}</div>
+      <div class="energy-track">
+        <div class="energy-fill" style="width:${pct}%;background:linear-gradient(90deg,${current<30?'#e6400a':'#e6900a'},${fillColor})"></div>
+        <div class="energy-segs">${segsHtml}</div>
+      </div>
       <div class="energy-timer">${timer}</div>
     </div>
-    <div class="energy-cost"><span style="font-size:22px;font-weight:900;color:${current>=ENERGY_PER_DUEL?'#ffd84d':'#ff4444'}">${current}</span><span style="opacity:.5;font-size:11px"> / ${ENERGY_MAX}</span><br><span style="opacity:.5;font-size:10px">−${ENERGY_PER_DUEL} / duel</span></div>
+    <div class="energy-count">
+      <span style="font-size:20px;color:${fillColor}">${current}</span><span style="opacity:.4;font-size:11px"> / ${ENERGY_MAX}</span>
+      <div style="font-size:10px;opacity:.4;margin-top:1px">−${ENERGY_PER_DUEL} par duel</div>
+    </div>
   </div>`;
 }
 
@@ -746,9 +760,6 @@ async function loadEnergy() {
 function refreshEnergyUI() {
   const el = document.getElementById('energy-bar-defier');
   if (el) el.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
-  // Aussi dans le profil si présent
-  const elP = document.getElementById('energy-bar-profil');
-  if (elP) elP.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
 }
 
 function hasEnoughEnergy() {
@@ -893,7 +904,6 @@ function renderProfilPvp(f) {
   const frameHtml = RANK_FRAMES[rankName] ? `<img class="frame" src="${RANK_FRAMES[rankName]}" alt="">` : '';
 
   document.getElementById('profil-content').innerHTML = `
-    <div id="energy-bar-profil" style="margin-bottom:14px"></div>
     <div class="pvp-profil-wrap" style="--pvp-cls-color:${clsColor}">
       <div class="pvp-col-left">
         <div class="pvp-user-photo-wrap">${photoHtml}${frameHtml}</div>
@@ -932,9 +942,6 @@ function renderProfilPvp(f) {
       <div class="pvp-rank-showcase-pts">${fmtPts(f.rank)} pts</div>
     </div>
     ${buildRankProgressHtml(f.rank)}`;
-
-  // Injecter l'énergie dans le profil
-  refreshEnergyUI();
 }
 
 function renderPvpSlot(slot, equipped) {
@@ -1132,29 +1139,37 @@ async function loadClassement() {
     function podiumAvatarHtml(u, cls) {
       if (!u) return '';
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
-      const medals = { 1:'🥇', 2:'🥈', 3:'🥉' };
-      const crowns  = { 1:'👑', 2:'🥈', 3:'🥉' };
-      const avatarStyle = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;font-size:0`
+      const rankName = u.rankInfo?.name || 'Bronze';
+      // avatar via background-image (même technique que leaderboard.html)
+      const avatarBg = u.avatar
+        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center`
         : '';
-      const rankIcon = RANK_ICONS[u.rankInfo?.name]
-        ? `<img class="podium-rank-frame" src="${RANK_ICONS[u.rankInfo.name]}" style="width:84px;height:84px;inset:-10px;pointer-events:none" onerror="this.style.display='none'">`
+      const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
+      // Icône de rang au-dessus
+      const rankIconTop = RANK_ICONS[rankName]
+        ? `<img class="podium-rank-icon-top" src="${RANK_ICONS[rankName]}" alt="${rankName}" onerror="this.style.display='none'">`
         : '';
+      // Cadre de rang par dessus l'avatar
+      const rankFrame = RANK_FRAMES[rankName]
+        ? `<img class="podium-rank-frame-img" src="${RANK_FRAMES[rankName]}" alt="" onerror="this.style.display='none'">`
+        : '';
+      // Label de rang sous le nom
+      const rankLabel = `<div class="podium-rank-label" style="color:${col}">
+        ${RANK_ICONS[rankName]?`<img src="${RANK_ICONS[rankName]}" style="width:13px;height:13px;object-fit:contain">`:''}
+        ${esc(rankName)}
+      </div>`;
+      // Numéro de position dans le bloc
+      const posLabel = { 1:'1er', 2:'2e', 3:'3e' }[u.rank] || u.rank;
+
       return `<div class="podium-col ${cls}">
+        ${rankIconTop}
         <div class="podium-avatar-wrap">
-          <div style="position:relative;width:64px;height:64px">
-            <div class="podium-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
-            ${rankIcon}
-          </div>
-          <div class="podium-crown" style="color:${col}">${crowns[u.rank]||''}</div>
+          <div class="podium-avatar" style="${avatarBg}">${avatarInner}${rankFrame}</div>
         </div>
         <div class="podium-name">${esc(u.name)}</div>
         <div class="podium-pts" style="color:${col}">${fmtPts(u.pts)} pts</div>
-        <div class="podium-rank-badge" style="color:${col}">
-          ${RANK_ICONS[u.rankInfo?.name]?`<img src="${RANK_ICONS[u.rankInfo.name]}" style="width:14px;height:14px;object-fit:contain">`:''}
-          ${esc(u.rankInfo?.name||'')}
-        </div>
-        <div class="podium-block">${medals[u.rank]||u.rank}</div>
+        ${rankLabel}
+        <div class="podium-block" style="color:${col}">${posLabel}</div>
       </div>`;
     }
 
@@ -1168,12 +1183,20 @@ async function loadClassement() {
     let rowsHtml = rest.map(u => {
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
       const isMe = myData && u.name === myData.name;
-      const avatarStyle = u.avatar
+      const rankName = u.rankInfo?.name || 'Bronze';
+      const avatarBg = u.avatar
         ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent`
+        : '';
+      const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
+      const rankFrame = RANK_FRAMES[rankName]
+        ? `<img src="${RANK_FRAMES[rankName]}" style="position:absolute;inset:-8px;width:56px;height:56px;object-fit:contain;pointer-events:none;z-index:2" onerror="this.style.display='none'">`
         : '';
       return `<div class="lb-row ${isMe?'me':''}">
         <div class="lb-rank-num">${u.rank}</div>
-        <div class="lb-avatar" style="${avatarStyle}">${u.avatar?'':CLASS_EMOJI[u.charClass]||'🧑'}</div>
+        <div style="position:relative;width:40px;height:40px;flex-shrink:0">
+          <div class="lb-avatar" style="${avatarBg};width:40px;height:40px">${avatarInner}</div>
+          ${rankFrame}
+        </div>
         <div style="flex:1">
           <div class="lb-name">${esc(u.name)}${isMe?' <span style="font-size:10px;opacity:.5">(toi)</span>':''}</div>
           <div class="lb-stats">${u.wins}V ${u.losses}D</div>
@@ -1181,8 +1204,8 @@ async function loadClassement() {
         <div>
           <div class="lb-pts" style="color:${col}">${fmtPts(u.pts)}</div>
           <div class="lb-rank-badge" style="color:${col};display:flex;align-items:center;gap:3px;justify-content:flex-end">
-            ${RANK_ICONS[u.rankInfo?.name] ? `<img src="${RANK_ICONS[u.rankInfo.name]}" style="width:14px;height:14px;object-fit:contain">` : (u.rankInfo?.icon||'')}
-            ${esc(u.rankInfo?.name||'')}
+            ${RANK_ICONS[rankName] ? `<img src="${RANK_ICONS[rankName]}" style="width:14px;height:14px;object-fit:contain">` : ''}
+            ${esc(rankName)}
           </div>
         </div>
       </div>`;
