@@ -6647,7 +6647,7 @@ function simulatePvpBattle(f1, f2) {
       const dmg1    = Math.max(1, Math.round(rawDmg1 * (1 - defRed1)));
       hpSecond = Math.max(0, hpSecond - dmg1);
       if ((first.lifesteal || 0) > 0) hpFirst = Math.min(first.hp, hpFirst + Math.round(dmg1 * first.lifesteal / 100));
-      log.push({ type: crit1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp });
+      log.push({ type: crit1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp, hpLeftAtt: hpFirst, hpMaxAtt: first.hp });
     }
 
     if (hpSecond <= 0) break;
@@ -6664,7 +6664,7 @@ function simulatePvpBattle(f1, f2) {
       const dmg2    = Math.max(1, Math.round(rawDmg2 * (1 - defRed2)));
       hpFirst = Math.max(0, hpFirst - dmg2);
       if ((second.lifesteal || 0) > 0) hpSecond = Math.min(second.hp, hpSecond + Math.round(dmg2 * second.lifesteal / 100));
-      log.push({ type: crit2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp });
+      log.push({ type: crit2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp, hpLeftAtt: hpSecond, hpMaxAtt: second.hp });
     }
 
     if (hpFirst <= 0) break;
