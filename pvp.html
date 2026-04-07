@@ -1251,7 +1251,8 @@ function showTab(name, ev) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('sec-'+name).classList.add('active');
   if (ev && ev.target) ev.target.classList.add('active');
-  if (name !== 'profil') stopProfilIdle(); // stopper l'animation idle si on quitte le profil
+  if (name !== 'profil') stopProfilIdle();
+  if (name !== 'matchmaking' && _mmSearching) stopMatchmaking(); // stopper l'animation idle si on quitte le profil
   if (name==='profil') loadProfil();
   if (name==='defier') { document.getElementById('search-input').focus(); refreshEnergyUI(); }
   if (name==='defis') loadDefis();
@@ -2238,7 +2239,9 @@ async function doPvpForge() {
 }
 
 // ══ MATCHMAKING ══════════════════════════════════════════
-let _mmInterval=null, _mmSeconds=0, _mmSearching=false;
+// Système de file d'attente : join → polling status → found/waiting
+let _mmPollInterval = null;
+let _mmSearching    = false;
 
 function initMatchmakingTab() {
   stopMatchmaking();
@@ -2247,72 +2250,113 @@ function initMatchmakingTab() {
 
 async function startMatchmaking() {
   if (_mmSearching) return;
-  _mmSearching=true; _mmSeconds=0;
-  document.getElementById('mm-btn').style.display='none';
-  document.getElementById('mm-spinner').style.display='block';
-  document.getElementById('mm-found').style.display='none';
-  document.getElementById('mm-status').textContent="Recherche d'un adversaire...";
-  await mmSearchOnce();
-  _mmInterval=setInterval(async()=>{
-    _mmSeconds+=3;
-    const t=document.getElementById('mm-timer');
-    if(t) t.textContent='Recherche en cours... '+_mmSeconds+'s';
-    await mmSearchOnce();
-  },3000);
-}
+  _mmSearching = true;
 
-async function mmSearchOnce() {
+  document.getElementById('mm-btn').style.display     = 'none';
+  document.getElementById('mm-spinner').style.display = 'block';
+  document.getElementById('mm-found').style.display   = 'none';
+  document.getElementById('mm-status').textContent    = "Recherche d'un adversaire...";
+  document.getElementById('mm-timer').textContent     = 'En attente...';
+
   try {
-    const d=await api('/api/pvp/matchmaking');
-    if (d.opponent && _mmSearching) { stopMatchmaking(); showMmFound(d.opponent, d.battleId); }
-  } catch(e) {}
+    // Rejoindre la file ET chercher immédiatement
+    const d = await api('/api/pvp/matchmaking/join', { method: 'POST', body: '{}' });
+    if (d.status === 'found') {
+      _mmSearching = false;
+      showMmFound(d.opponent, d.battleId);
+      return;
+    }
+  } catch(e) {
+    showAlert(e.message || 'Erreur matchmaking', 'error');
+    stopMatchmaking();
+    return;
+  }
+
+  // Personne trouvé immédiatement → polling toutes les 2s
+  let elapsed = 0;
+  _mmPollInterval = setInterval(async () => {
+    elapsed += 2;
+    const t = document.getElementById('mm-timer');
+    if (t) t.textContent = `En file depuis ${elapsed}s...`;
+
+    try {
+      const d = await api('/api/pvp/matchmaking/status');
+
+      if (d.status === 'found') {
+        stopMatchmaking(false); // ne pas quitter la file (déjà retiré côté serveur)
+        showMmFound(d.opponent, d.battleId);
+      } else if (d.status === 'idle') {
+        // Plus dans la file sans match = timeout ou problème
+        stopMatchmaking(false);
+      }
+      // 'waiting' → continuer à attendre
+    } catch(e) { /* continuer */ }
+  }, 2000);
 }
 
-function stopMatchmaking() {
-  _mmSearching=false;
-  if (_mmInterval){clearInterval(_mmInterval);_mmInterval=null;}
-  const btn=document.getElementById('mm-btn');
-  const spinner=document.getElementById('mm-spinner');
-  const status=document.getElementById('mm-status');
-  if (btn) btn.style.display='block';
-  if (spinner) spinner.style.display='none';
-  if (status) status.textContent='Trouve un adversaire automatiquement';
+async function stopMatchmaking(leaveQueue = true) {
+  _mmSearching = false;
+  if (_mmPollInterval) { clearInterval(_mmPollInterval); _mmPollInterval = null; }
+
+  if (leaveQueue) {
+    try { await api('/api/pvp/matchmaking/leave', { method: 'POST', body: '{}' }); } catch(e) {}
+  }
+
+  const btn     = document.getElementById('mm-btn');
+  const spinner = document.getElementById('mm-spinner');
+  const status  = document.getElementById('mm-status');
+  const found   = document.getElementById('mm-found');
+  if (btn)     btn.style.display     = 'block';
+  if (spinner) spinner.style.display = 'none';
+  if (status)  status.textContent    = 'Trouve un adversaire automatiquement';
+  if (found)   found.style.display   = 'none';
 }
 
 function showMmFound(opponent, battleId) {
-  const rankCol=RANK_COLORS[opponent.rankInfo?.name]||'#aaa';
-  const rankIcon=RANK_ICONS[opponent.rankInfo?.name]?'<img src="'+RANK_ICONS[opponent.rankInfo.name]+'" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px">':'';
-  const avBg=opponent.avatar?'background-image:url('+JSON.stringify(opponent.avatar)+');background-size:cover;background-position:center':'';
-  document.getElementById('mm-status').textContent='⚡ Adversaire trouvé !';
-  document.getElementById('mm-btn').style.display='none';
-  document.getElementById('mm-spinner').style.display='none';
-  const found=document.getElementById('mm-found');
-  found.style.display='block';
-  found.innerHTML=`<div style="background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.3);border-radius:16px;padding:20px;text-align:center;animation:mmPulse 1.5s ease-in-out infinite">
-    <div style="width:72px;height:72px;border-radius:50%;border:3px solid ${rankCol};background:var(--bg3);margin:0 auto 10px;${avBg}"></div>
-    <div style="font-size:17px;font-weight:900;margin-bottom:4px">${esc(opponent.name)}</div>
-    <div style="font-size:12px;color:${rankCol};margin-bottom:16px">${rankIcon}${esc(opponent.rankInfo?.name||'')} · ${fmtPts(opponent.pts)} pts</div>
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button onclick="mmAccept(${battleId})" style="padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D9E75,#33ff99);color:#000;font-weight:900;font-size:14px;cursor:pointer">⚔️ Accepter</button>
-      <button onclick="mmDecline(${battleId})" style="padding:12px 24px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Refuser</button>
-    </div></div>`;
+  const rankCol  = RANK_COLORS[opponent.rankInfo?.name] || '#aaa';
+  const rankIcon = RANK_ICONS[opponent.rankInfo?.name]
+    ? '<img src="' + RANK_ICONS[opponent.rankInfo.name] + '" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px">'
+    : '';
+  const avBg = opponent.avatar
+    ? 'background-image:url(' + JSON.stringify(opponent.avatar) + ');background-size:cover;background-position:center'
+    : '';
+
+  document.getElementById('mm-btn').style.display     = 'none';
+  document.getElementById('mm-spinner').style.display = 'none';
+  document.getElementById('mm-status').textContent    = '⚡ Adversaire trouvé !';
+
+  const found = document.getElementById('mm-found');
+  found.style.display = 'block';
+  found.innerHTML = `
+    <div style="background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.3);border-radius:16px;padding:20px;text-align:center;animation:mmPulse 1.5s ease-in-out infinite">
+      <div style="width:72px;height:72px;border-radius:50%;border:3px solid ${rankCol};background:var(--bg3);margin:0 auto 10px;${avBg}"></div>
+      <div style="font-size:17px;font-weight:900;margin-bottom:4px">${esc(opponent.name)}</div>
+      <div style="font-size:12px;color:${rankCol};margin-bottom:16px">${rankIcon}${esc(opponent.rankInfo?.name || '')} · ${fmtPts(opponent.pts)} pts</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button onclick="mmAccept(${battleId})" style="padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D9E75,#33ff99);color:#000;font-weight:900;font-size:14px;cursor:pointer">⚔️ Accepter</button>
+        <button onclick="mmDecline(${battleId})" style="padding:12px 24px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Refuser</button>
+      </div>
+    </div>`;
 }
 
 async function mmAccept(battleId) {
   try {
-    document.getElementById('mm-found').innerHTML='<div style="opacity:.5;font-size:13px">Combat en cours...</div>';
-    const d=await api('/api/pvp/accept',{method:'POST',body:JSON.stringify({battleId})});
-    await loadDefis(); await loadEnergy();
-    document.getElementById('mm-found').style.display='none';
-    stopMatchmaking();
-    openReplay(d.log,d.fighters.f1,d.fighters.f2,d.winnerId,d.rankChange);
-    if(d.rewards||d.challengerRewards) showPvpRewards(d.rewards||d.challengerRewards);
-  } catch(e){showAlert(e.message||'Erreur','error');stopMatchmaking();}
+    document.getElementById('mm-found').innerHTML = '<div style="opacity:.5;font-size:13px;text-align:center;padding:10px">Combat en cours...</div>';
+    const d = await api('/api/pvp/accept', { method: 'POST', body: JSON.stringify({ battleId }) });
+    await loadDefis();
+    await loadEnergy();
+    document.getElementById('mm-found').style.display = 'none';
+    openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
+    if (d.rewards || d.challengerRewards) showPvpRewards(d.rewards || d.challengerRewards);
+  } catch(e) {
+    showAlert(e.message || 'Erreur', 'error');
+    stopMatchmaking(false);
+  }
 }
+
 async function mmDecline(battleId) {
-  try{await api('/api/pvp/decline',{method:'POST',body:JSON.stringify({battleId})});}catch(e){}
-  stopMatchmaking();
-  document.getElementById('mm-found').style.display='none';
+  try { await api('/api/pvp/decline', { method: 'POST', body: JSON.stringify({ battleId }) }); } catch(e) {}
+  stopMatchmaking(false);
 }
 function showPvpRewards(r) {
   if (!r) return;
@@ -2412,6 +2456,7 @@ function spawnConfetti() {
 }
 
 // ── INIT ──
+window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
 loadProfil();
 loadEnergy();
 (async () => {

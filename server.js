@@ -926,6 +926,15 @@ async function initDb() {
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_equipment_user ON pvp_equipment(user_id)`);
 
+  // File d'attente matchmaking
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_queue (
+      user_id   INTEGER NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      pvp_rank  INTEGER NOT NULL DEFAULT 1000,
+      joined_at BIGINT  NOT NULL DEFAULT 0
+    )
+  `);
+
   await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_level        INTEGER NOT NULL DEFAULT 1`);
   await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_xp           INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_pts_avail    INTEGER NOT NULL DEFAULT 0`);
@@ -6811,12 +6820,12 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
     const winnerPvpLvl= winnerId === f1.userId ? f1.pvpLevel : f2.pvpLevel;
     const rewards     = pvpWinRewards(winnerInfo.name, winnerPvpLvl);
 
-    // Récupérer streak actuel du gagnant
-    const streakQ = await pool.query(`SELECT pvp_win_streak, pvp_chests FROM users WHERE id=$1`, [winnerId]);
-    const oldStreak = Number(streakQ.rows[0]?.pvp_win_streak || 0);
-    const newStreak = oldStreak + 1;
-    const chestEarned = newStreak >= 3 ? 1 : 0;  // coffre tous les 3 wins
-    const finalStreak = chestEarned ? 0 : newStreak;  // reset streak si coffre
+    // Coffre toutes les 3 victoires (pas forcément consécutives)
+    // pvp_wins est le total cumulé de victoires
+    const winsAfter = await pool.query(`SELECT pvp_wins FROM users WHERE id=$1`, [winnerId]);
+    const totalWins  = Number(winsAfter.rows[0]?.pvp_wins || 0) + 1; // +1 car UPDATE pvp_wins pas encore fait ici
+    const chestEarned = (totalWins % 3 === 0) ? 1 : 0;  // coffre toutes les 3 victoires
+    const finalStreak = totalWins % 3;  // position dans le cycle (0-2), pour l'affichage
 
     // Montée de niveau PVP
     const winnerChar = await getOrCreateCharacter(winnerId);
@@ -6838,8 +6847,7 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
       `UPDATE users SET pvp_xp=pvp_xp+$1, pvp_gold=pvp_gold+$2, pvp_win_streak=$3, pvp_chests=pvp_chests+$4 WHERE id=$5`,
       [rewards.xp, rewards.gold, finalStreak, chestEarned, winnerId]
     );
-    // Reset streak du perdant
-    await pool.query(`UPDATE users SET pvp_win_streak=0 WHERE id=$1`, [loserId]);
+    // Le perdant ne perd pas son compteur de victoires
 
     const winnerFighter = winnerId === f1.userId ? f1 : f2;
     res.json({
@@ -6984,48 +6992,54 @@ app.post("/api/pvp/spend-stat", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/pvp/matchmaking — trouver un adversaire de rang proche et créer un défi
-app.get("/api/pvp/matchmaking", auth, async (req, res) => {
+// POST /api/pvp/matchmaking/join — rejoindre la file
+app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
   try {
     const meQ = await pool.query(`SELECT pvp_rank, pvp_energy FROM users WHERE id=$1`, [req.user.id]);
     const me  = meQ.rows[0];
     if (Number(me.pvp_energy) < 1) return res.status(400).json({ error: "Énergie insuffisante" });
 
-    const rank = Number(me.pvp_rank);
-    const margin = 300; // écart de rang acceptable
+    // Ajouter à la file (upsert)
+    await pool.query(
+      `INSERT INTO pvp_queue(user_id, pvp_rank, joined_at) VALUES($1,$2,$3)
+       ON CONFLICT(user_id) DO UPDATE SET pvp_rank=$2, joined_at=$3`,
+      [req.user.id, Number(me.pvp_rank), Date.now()]
+    );
 
-    // Chercher un joueur de rang proche qui n'a pas de défi en attente avec moi
+    // Chercher un autre joueur dans la file (rang proche, pas soi-même)
+    const rank   = Number(me.pvp_rank);
+    const margin = 400;
     const opQ = await pool.query(`
-      SELECT u.id, u.name, u.avatar, u.pvp_rank
-      FROM users u
-      WHERE u.id != $1
-        AND u.pvp_rank BETWEEN $2 AND $3
-        AND u.pvp_energy > 0
-        AND NOT EXISTS (
-          SELECT 1 FROM pvp_battles pb
-          WHERE pb.status = 'pending'
-            AND ((pb.challenger_id=$1 AND pb.opponent_id=u.id)
-              OR (pb.challenger_id=u.id AND pb.opponent_id=$1))
-        )
-      ORDER BY ABS(u.pvp_rank - $4) ASC
-      LIMIT 5
+      SELECT q.user_id, u.name, u.avatar, q.pvp_rank
+      FROM pvp_queue q
+      JOIN users u ON u.id = q.user_id
+      WHERE q.user_id != $1
+        AND q.pvp_rank BETWEEN $2 AND $3
+      ORDER BY ABS(q.pvp_rank - $4) ASC, q.joined_at ASC
+      LIMIT 1
     `, [req.user.id, Math.max(0, rank - margin), rank + margin, rank]);
 
-    if (!opQ.rows.length) return res.json({ opponent: null });
+    if (!opQ.rows.length) {
+      // Personne dans la file, on attend
+      return res.json({ status: 'waiting', opponent: null });
+    }
 
-    // Choisir parmi les 5 premiers au hasard pour éviter le même adversaire en boucle
-    const opponent = opQ.rows[Math.floor(Math.random() * opQ.rows.length)];
+    const opponent = opQ.rows[0];
 
-    // Créer le défi automatiquement
+    // Retirer les deux joueurs de la file
+    await pool.query(`DELETE FROM pvp_queue WHERE user_id = ANY($1)`, [[req.user.id, opponent.user_id]]);
+
+    // Créer le combat
     const battleQ = await pool.query(
       `INSERT INTO pvp_battles(challenger_id, opponent_id, status, created_at) VALUES($1,$2,'pending',$3) RETURNING id`,
-      [req.user.id, opponent.id, Date.now()]
+      [req.user.id, opponent.user_id, Date.now()]
     );
     const battleId = battleQ.rows[0].id;
 
     res.json({
+      status: 'found',
       opponent: {
-        id:       opponent.id,
+        id:       opponent.user_id,
         name:     opponent.name,
         avatar:   opponent.avatar || null,
         pts:      Number(opponent.pvp_rank),
@@ -7033,6 +7047,47 @@ app.get("/api/pvp/matchmaking", auth, async (req, res) => {
       },
       battleId,
     });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/matchmaking/leave — quitter la file
+app.post("/api/pvp/matchmaking/leave", auth, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM pvp_queue WHERE user_id=$1`, [req.user.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/matchmaking/status — vérifier si un match a été trouvé
+app.get("/api/pvp/matchmaking/status", auth, async (req, res) => {
+  try {
+    // Vérifier si je suis encore dans la file
+    const qQ = await pool.query(`SELECT 1 FROM pvp_queue WHERE user_id=$1`, [req.user.id]);
+    if (qQ.rows.length) return res.json({ status: 'waiting' });
+
+    // Je ne suis plus dans la file — chercher un battle pending récent (< 30s)
+    const bQ = await pool.query(`
+      SELECT pb.id, pb.challenger_id, pb.opponent_id,
+             u1.name as cname, u1.avatar as cavatar, u1.pvp_rank as crank,
+             u2.name as oname, u2.avatar as oavatar, u2.pvp_rank as orank
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id = pb.challenger_id
+      JOIN users u2 ON u2.id = pb.opponent_id
+      WHERE (pb.challenger_id=$1 OR pb.opponent_id=$1)
+        AND pb.status = 'pending'
+        AND pb.created_at > $2
+      ORDER BY pb.created_at DESC LIMIT 1
+    `, [req.user.id, Date.now() - 30000]);
+
+    if (!bQ.rows.length) return res.json({ status: 'idle' });
+
+    const b = bQ.rows[0];
+    const isChallenger = b.challenger_id === req.user.id;
+    const opponent = isChallenger
+      ? { id: b.opponent_id,   name: b.oname, avatar: b.oavatar, pts: Number(b.orank), rankInfo: getRankInfo(Number(b.orank)) }
+      : { id: b.challenger_id, name: b.cname, avatar: b.cavatar, pts: Number(b.crank), rankInfo: getRankInfo(Number(b.crank)) };
+
+    res.json({ status: 'found', opponent, battleId: b.id });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
