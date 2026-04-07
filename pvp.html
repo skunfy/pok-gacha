@@ -232,6 +232,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
 .result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green);animation:victoryPulse 1s ease-out}
 .result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}
 @keyframes victoryPulse{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
 .rank-change{font-size:14px;margin-top:6px;opacity:.75;font-weight:700}
 
@@ -369,12 +370,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div class="dmg-float" id="rdmg1"></div>
       <div class="dmg-float" id="rdmg2"></div>
       <div class="vs-flash" id="vs-flash"><div class="vs-text">VS</div></div>
+      <div id="arena-result-overlay" style="position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;border-radius:inherit;">
+        <div id="arena-result-bg" style="position:absolute;inset:0;border-radius:inherit;opacity:0;"></div>
+        <div id="arena-result-icon" style="font-size:80px;line-height:1;position:relative;z-index:1;transform:scale(0) rotate(-15deg);"></div>
+        <div id="arena-result-label" style="font-size:34px;font-weight:900;letter-spacing:.05em;margin-top:12px;text-shadow:0 2px 20px rgba(0,0,0,.9);position:relative;z-index:1;transform:translateY(24px);opacity:0;"></div>
+        <div id="arena-result-pts" style="font-size:17px;font-weight:700;margin-top:8px;position:relative;z-index:1;opacity:0;"></div>
+      </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
       <div class="battle-log" id="replay-log"></div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="result-banner" id="replay-result"></div>
+        <div class="result-banner" id="replay-result" style="display:none"></div>
         <button style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:14px;margin-top:auto" onclick="closeReplay()">Fermer le combat</button>
       </div>
     </div>
@@ -1140,10 +1147,9 @@ async function loadClassement() {
       if (!u) return '';
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
       const rankName = u.rankInfo?.name || 'Bronze';
-      // avatar via background-image (même technique que leaderboard.html)
-      const avatarBg = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;font-size:0`
-        : '';
+      // avatar via background-image — même syntaxe que leaderboard.html
+      const _avPodium = (u.avatar || '').trim() || 'poke.png';
+      const avatarBg = "background-image:url('" + _avPodium.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;font-size:0";
       const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
       // Icône de rang au-dessus
       const rankIconTop = RANK_ICONS[rankName]
@@ -1184,9 +1190,8 @@ async function loadClassement() {
       const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
       const isMe = myData && u.name === myData.name;
       const rankName = u.rankInfo?.name || 'Bronze';
-      const avatarBg = u.avatar
-        ? `background-image:url(${JSON.stringify(u.avatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
-        : '';
+      const _avRow = (u.avatar || '').trim() || 'poke.png';
+      const avatarBg = "background-image:url('" + _avRow.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;background-color:transparent;font-size:0";
       const avatarInner = u.avatar ? '' : (CLASS_EMOJI[u.charClass] || '🧑');
       const rankFrame = RANK_FRAMES[rankName]
         ? `<img src="${RANK_FRAMES[rankName]}" style="position:absolute;inset:-9px;width:58px;height:58px;object-fit:contain;pointer-events:none;z-index:2" onerror="this.style.display='none'">`
@@ -1215,9 +1220,8 @@ async function loadClassement() {
     if (d.me && (!myData || !d.top.find(u => myData && u.name === myData.name))) {
       const col = RANK_COLORS[d.me.rankInfo?.name] || '#aaa';
       const meAvatar = d.me.avatar || myData?.avatar || null;
-      const meAvatarBg = meAvatar
-        ? `background-image:url(${JSON.stringify(meAvatar)});background-size:cover;background-position:center;background-color:transparent;font-size:0`
-        : '';
+      const _avMe = (meAvatar || '').trim() || 'poke.png';
+      const meAvatarBg = "background-image:url('" + _avMe.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;background-color:transparent;font-size:0";
       const meAvatarInner = meAvatar ? '' : (CLASS_EMOJI[myData?.charClass] || '🧑');
       rowsHtml += `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
         <div class="lb-row me">
@@ -1281,6 +1285,7 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
   document.getElementById('replay-title').textContent = `⚔️ ${f1.name} vs ${f2.name}`;
   document.getElementById('replay-log').innerHTML = '';
   document.getElementById('replay-result').style.display = 'none';
+  resetArenaResultOverlay();
   modal.classList.add('show');
 
   setTimeout(() => {
@@ -1298,6 +1303,7 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
 function closeReplay() {
   document.getElementById('replay-modal').classList.remove('show');
   stopArena();
+  resetArenaResultOverlay();
   replayBusy = false;
 }
 
@@ -1521,36 +1527,103 @@ async function playReplay(log, f1, f2, winnerId, rankChange) {
       );
       const loserId = ev.winner === f1.name ? 2 : 1;
 
-      // Pause dramatique avant l'animation de mort
       await wait(400);
       setAnim(loserId, 'dead');
-      await wait(900);
-
-      // Flash de victoire / défaite
-      if (isMyWin) flashScreen('rgba(29,200,120,0.25)', 0.25);
-      else         flashScreen('rgba(220,60,60,0.2)', 0.2);
+      await wait(1000);
 
       addNarrLine(logEl, pickNarr(NARRATION.win, ev.winner), isMyWin ? 'win' : 'lose');
-      await wait(400);
+      await wait(500);
 
-      const banner = document.getElementById('replay-result');
-      banner.className     = 'result-banner ' + (isMyWin ? 'victory' : 'defeat');
-      banner.style.display = 'block';
-      banner.style.opacity = '0';
-      banner.style.transform = 'scale(.9)';
-      banner.style.transition = 'opacity .35s ease, transform .35s ease';
-      banner.innerHTML = isMyWin
-        ? `🏆 Victoire !<div class="rank-change">+${rankChange||'?'} pts de rang</div>`
-        : `💀 Défaite<div class="rank-change">${rankChange ? '-'+rankChange : ''} pts de rang</div>`;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          banner.style.opacity = '1';
-          banner.style.transform = 'scale(1)';
-        });
-      });
+      showArenaResult(isMyWin, ev.winner, rankChange);
     }
   }
   replayBusy = false;
+}
+
+
+// OVERLAY RESULTAT ARENE
+function showArenaResult(isWin, winnerName, rankChange) {
+  var overlay = document.getElementById('arena-result-overlay');
+  var bg      = document.getElementById('arena-result-bg');
+  var icon    = document.getElementById('arena-result-icon');
+  var label   = document.getElementById('arena-result-label');
+  var pts     = document.getElementById('arena-result-pts');
+  if (!overlay) return;
+  if (isWin) {
+    bg.style.background    = 'radial-gradient(ellipse at center, rgba(40,200,120,.6) 0%, rgba(0,0,0,.72) 100%)';
+    icon.textContent       = '🏆';
+    icon.style.color       = '#33ff99';
+    label.textContent      = 'VICTOIRE !';
+    label.style.color      = '#33ff99';
+    label.style.textShadow = '0 0 40px rgba(51,255,153,.9), 0 2px 20px rgba(0,0,0,.9)';
+    pts.textContent        = rankChange ? '+' + rankChange + ' pts de rang' : '';
+    pts.style.color        = '#33ff99';
+  } else {
+    bg.style.background    = 'radial-gradient(ellipse at center, rgba(200,30,30,.6) 0%, rgba(0,0,0,.75) 100%)';
+    icon.textContent       = '💀';
+    icon.style.color       = '#ff4444';
+    label.textContent      = 'DÉFAITE';
+    label.style.color      = '#ff4444';
+    label.style.textShadow = '0 0 40px rgba(255,68,68,.9), 0 2px 20px rgba(0,0,0,.9)';
+    pts.textContent        = rankChange ? '−' + rankChange + ' pts de rang' : '';
+    pts.style.color        = 'rgba(255,120,120,.9)';
+  }
+  [overlay, bg, icon, label, pts].forEach(function(el){ el.style.transition = 'none'; });
+  overlay.style.opacity   = '0';
+  bg.style.opacity        = '0';
+  icon.style.transform    = 'scale(0) rotate(-15deg)';
+  label.style.opacity     = '0';
+  label.style.transform   = 'translateY(28px)';
+  pts.style.opacity       = '0';
+  void overlay.offsetWidth;
+  overlay.style.transition = 'opacity .35s ease';
+  bg.style.transition      = 'opacity .5s ease';
+  icon.style.transition    = 'transform .55s cubic-bezier(.175,.885,.32,1.275) .05s';
+  label.style.transition   = 'transform .4s ease .22s, opacity .4s ease .22s';
+  pts.style.transition     = 'opacity .4s ease .48s';
+  overlay.style.opacity    = '1';
+  bg.style.opacity         = '1';
+  icon.style.transform     = 'scale(1) rotate(0deg)';
+  label.style.opacity      = '1';
+  label.style.transform    = 'translateY(0)';
+  pts.style.opacity        = '1';
+  if (isWin) spawnConfetti();
+}
+
+function resetArenaResultOverlay() {
+  var overlay = document.getElementById('arena-result-overlay');
+  if (!overlay) return;
+  overlay.style.transition    = 'none';
+  overlay.style.opacity       = '0';
+  overlay.style.pointerEvents = 'none';
+  var icon  = document.getElementById('arena-result-icon');
+  var label = document.getElementById('arena-result-label');
+  var pts   = document.getElementById('arena-result-pts');
+  var bg    = document.getElementById('arena-result-bg');
+  if (bg)    { bg.style.transition = 'none'; bg.style.opacity = '0'; }
+  if (icon)  { icon.style.transition = 'none'; icon.style.transform = 'scale(0) rotate(-15deg)'; }
+  if (label) { label.style.transition = 'none'; label.style.opacity = '0'; label.style.transform = 'translateY(28px)'; }
+  if (pts)   { pts.style.transition = 'none'; pts.style.opacity = '0'; }
+}
+
+function spawnConfetti() {
+  var stage = document.getElementById('replay-stage');
+  if (!stage) return;
+  var colors = ['#ffd700','#33ff99','#7f5cff','#f053c5','#4da6ff','#ff6b6b','#ffffff'];
+  for (var i = 0; i < 45; i++) {
+    (function() {
+      var p    = document.createElement('div');
+      var size = 5 + Math.random() * 8;
+      var x    = 5 + Math.random() * 90;
+      var del  = Math.random() * 700;
+      var dur  = 800 + Math.random() * 800;
+      var col  = colors[Math.floor(Math.random() * colors.length)];
+      var rot  = Math.random() * 360;
+      p.style.cssText = 'position:absolute;top:-12px;left:'+x+'%;width:'+size+'px;height:'+(size*.42)+'px;background:'+col+';border-radius:2px;opacity:0;z-index:61;pointer-events:none;transform:rotate('+rot+'deg);animation:confettiFall '+dur+'ms ease-in '+del+'ms forwards';
+      stage.appendChild(p);
+      setTimeout(function(){ p.remove(); }, del + dur + 120);
+    })();
+  }
 }
 
 // ── INIT ──
