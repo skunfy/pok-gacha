@@ -1993,10 +1993,34 @@ function render(items){
     };
 
     grid.appendChild(el);
-    // Observer les images lazy
-    const lazyEl = el.querySelector('.lazy-card');
-    if (lazyEl && lazyEl.dataset.src) window._lazyObserver.observe(lazyEl);
   });
+
+  // Charger les images de cette page en 1 requête puis activer l'observer
+  loadGridPageImages(pageItems);
+}
+
+async function loadGridPageImages(pageItems) {
+  if (!pageItems.length) return;
+  const idKeys = pageItems.map(x => x.idKey).filter(Boolean);
+  try {
+    const data = await api(`/api/collection/page?idKeys=${encodeURIComponent(idKeys.join(','))}`);
+    const imgMap = {};
+    for (const it of (data.items || [])) imgMap[it.idKey] = it.image;
+
+    // Mettre à jour allItems pour les prochains rendus
+    for (const item of allItems) {
+      if (imgMap[item.idKey]) item.image = imgMap[item.idKey];
+    }
+
+    // Injecter dans le DOM via data-src puis déclencher l'observer
+    document.querySelectorAll('.lazy-card[data-idkey]').forEach(el => {
+      const idKey = el.dataset.idkey;
+      if (imgMap[idKey]) {
+        el.dataset.src = imgMap[idKey];
+        if (window._lazyObserver) window._lazyObserver.observe(el);
+      }
+    });
+  } catch(e) {}
 }
 
 function parseIdKey(idKey){
@@ -2111,7 +2135,7 @@ function buildOwnedMapForSet(setId){
   return m;
 }
 
-async function renderBinder(){
+function renderBinder(){
   const isBinder = currentView() === "binder";
 
   setBinderControlsVisible();
@@ -2221,9 +2245,9 @@ async function renderBinder(){
     const ownedItem = owned.get(key) || null;
     const have = !!ownedItem;
 
-    // Pour les cartes manquantes : image du set (déjà dans cardBrief)
-    // Pour les possédées : null pour l'instant, chargée après via loadBinderPageImages
-    const img = have ? null : (cardBrief.image || cardBrief.imageHigh || null);
+    const img = have
+      ? (ownedItem.image || ownedItem.imageHigh || ownedItem.imagehigh || null)
+      : (cardBrief.image || cardBrief.imageHigh || cardBrief.imagehigh || null);
 
     const isSenpaiMissing = !have && currentGame() === "senpaigodesshaven";
     slot.className = "slot" + (have ? "" : " missing") + (isSenpaiMissing ? " senpai-blur" : "");
@@ -2237,14 +2261,14 @@ async function renderBinder(){
     slot.innerHTML = `
       ${!have ? `<div class="missTag">MANQUANTE</div>` : ""}
 
-      <div class="slotImg" ${have ? `data-owned-idkey="${ownedItem.idKey}"` : ''} style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <div class="slotImg" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
         ${
           img
             ? `<img
                 src="${img}"
                 alt="${title}"
                 style="max-width:100%;max-height:100%;object-fit:contain;display:block;"
-                onerror="this.style.display='none'"
+                onerror="console.error('IMG ERROR:', this.src)"
               >`
             : ``
         }
@@ -2269,30 +2293,6 @@ async function renderBinder(){
 
     binderGrid.appendChild(slot);
   });
-
-  // Charger les images des cartes possédées sur cette page (1 requête)
-  await loadBinderPageImages(owned);
-}
-
-async function loadBinderPageImages(ownedMap) {
-  const idKeys = [...ownedMap.values()].map(it => it.idKey).filter(Boolean);
-  if (!idKeys.length) return;
-  try {
-    const data = await api(`/api/collection/page?idKeys=${encodeURIComponent(idKeys.join(','))}`);
-    const imgMap = {};
-    for (const it of (data.items || [])) imgMap[it.idKey] = it.image;
-    // Mettre à jour allItems
-    for (const item of allItems) {
-      if (imgMap[item.idKey]) item.image = imgMap[item.idKey];
-    }
-    // Injecter les images dans le DOM du binder
-    document.querySelectorAll('.slotImg[data-owned-idkey]').forEach(el => {
-      const idKey = el.dataset.ownedIdkey;
-      if (imgMap[idKey]) {
-        el.innerHTML = `<img src="${imgMap[idKey]}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;" onerror="this.style.display='none'">`;
-      }
-    });
-  } catch(e) {}
 }
 
 prevPageBtn.addEventListener("click", () => {
