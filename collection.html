@@ -1720,15 +1720,42 @@ async function loadCollection(force = false){
   try{
     const fetchOpts = force ? { cache: "no-store" } : {};
     const data = await api("/api/collection", fetchOpts);
+    // Index léger : métadonnées seulement, PAS d'images
+    // Les images sont chargées page par page via loadPageImages()
     allItems = (data.items || []).map(x => ({
       ...x,
-      image:     x.image ?? null,
-      imageHigh: null, // chargée uniquement au zoom via /api/collection/imagehigh
+      image:     null, // sera rempli par loadPageImages() pour la page visible
+      imageHigh: null,
     }));
   }catch(e){
     localStorage.removeItem(TOKEN_KEY);
     location.href="/login.html";
   }
+}
+
+// Charger les images uniquement pour les cartes de la page visible
+async function loadPageImages(pageItems) {
+  if (!pageItems.length) return;
+  const idKeys = pageItems.map(x => x.idKey).join(',');
+  try {
+    const data = await api(`/api/collection/page?idKeys=${encodeURIComponent(idKeys)}`);
+    const imgMap = {};
+    for (const it of (data.items || [])) imgMap[it.idKey] = it.image;
+    // Mettre à jour allItems avec les images
+    for (const item of allItems) {
+      if (imgMap[item.idKey]) item.image = imgMap[item.idKey];
+    }
+    // Mettre à jour le DOM directement sans re-render
+    for (const item of pageItems) {
+      if (imgMap[item.idKey]) {
+        const el = document.querySelector(`.lazy-card[data-idkey="${CSS.escape(item.idKey)}"]`);
+        if (el) {
+          el.style.backgroundImage = `url('${imgMap[item.idKey]}')`;
+          delete el.dataset.src;
+        }
+      }
+    }
+  } catch(e) {}
 }
 
 function applyFilters(){
@@ -1764,13 +1791,13 @@ function applyFilters(){
 
 async function openZoom(x){
   zoomSlab.classList.toggle("senpai-zoom", currentGame() === "senpaigodesshaven");
-
-  // Afficher d'abord la basse résolution immédiatement (pas de blanc)
-  const imgLow = x.image || null;
-  zoomImg.style.backgroundImage = imgLow ? `url('${imgLow}')` : '';
   zoomImg.classList.remove("is-horizontal");
+  zoomAdaptiveColors = null;
+  zoomAdaptivePal    = null;
 
-  // Ouvrir la modale tout de suite avec la LowRes
+  // Ouvrir la modale immédiatement (vide ou avec lowRes si déjà chargée)
+  const imgLow = x.image || null;
+  zoomImg.style.backgroundImage = imgLow ? `url('${imgLow}')` : 'none';
   zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
   zoomGrade.textContent = (x.grade ?? "?");
   zoomSlab.dataset.tier = tierFromGrade(Number(x.grade)||0);
@@ -1779,46 +1806,38 @@ async function openZoom(x){
   modal.classList.add("open");
   modal.setAttribute("aria-hidden","false");
 
-  // Charger la HD + couleurs holo en parallèle
-  zoomAdaptiveColors = null;
-  zoomAdaptivePal    = null;
+  // Charger imageHigh depuis le serveur (1 requête légère, 1 carte)
+  try {
+    const hd = await api(`/api/collection/imagehigh?idKey=${encodeURIComponent(x.idKey)}`);
+    if (hd.imageHigh) {
+      x.imageHigh = hd.imageHigh;
+      if (hd.gradesJson) x.gradesJson = hd.gradesJson;
+      zoomImg.style.backgroundImage = `url('${hd.imageHigh}')`;
 
-  const [hdResult] = await Promise.allSettled([
-    api(`/api/collection/imagehigh?idKey=${encodeURIComponent(x.idKey)}`),
-  ]);
+      // Détection carte horizontale
+      const tmpImg = new Image();
+      tmpImg.onload = () => {
+        zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
+      };
+      tmpImg.src = hd.imageHigh;
 
-  let imgForHolo = imgLow;
-
-  if (hdResult.status === 'fulfilled' && hdResult.value?.imageHigh) {
-    const imgHigh = hdResult.value.imageHigh;
-    x.imageHigh = imgHigh;
-    if (hdResult.value.gradesJson) x.gradesJson = hdResult.value.gradesJson;
-    zoomImg.style.backgroundImage = `url('${imgHigh}')`;
-    imgForHolo = imgHigh;
-
-    // Détection carte horizontale sur la HD
-    const tmpImg = new Image();
-    tmpImg.onload = () => {
-      zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
-    };
-    tmpImg.src = imgHigh;
-  } else if (imgLow) {
-    // Fallback : détection sur la LowRes
-    const tmpImg = new Image();
-    tmpImg.onload = () => {
-      zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
-    };
-    tmpImg.src = imgLow;
-  }
-
-  // Effet holo — extraction couleurs via proxy
-  if (imgForHolo) {
-    fetch(`/api/foil_colors?url=${encodeURIComponent(imgForHolo)}`, {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("gacha_token_v1") || ""}` }
-    })
-    .then(r => r.json())
-    .then(d => { if (d.colors) { zoomAdaptiveColors = d.colors; zoomAdaptivePal = colorsToSparkPal(d.colors); } })
-    .catch(() => {});
+      // Effet holo
+      fetch(`/api/foil_colors?url=${encodeURIComponent(hd.imageHigh)}`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("gacha_token_v1") || ""}` }
+      })
+      .then(r => r.json())
+      .then(d => { if (d.colors) { zoomAdaptiveColors = d.colors; zoomAdaptivePal = colorsToSparkPal(d.colors); } })
+      .catch(() => {});
+    }
+  } catch(e) {
+    // Fallback sur image basse résolution déjà affichée
+    if (imgLow) {
+      const tmpImg = new Image();
+      tmpImg.onload = () => {
+        zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
+      };
+      tmpImg.src = imgLow;
+    }
   }
 }
 
@@ -1845,17 +1864,6 @@ function render(items){
   selectDupBtn.disabled = dupCount === 0;
 
   grid.innerHTML="";
-  // Lazy loading : charger les images seulement quand visibles
-  if (window._lazyObserver) window._lazyObserver.disconnect();
-  window._lazyObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (!entry.isIntersecting) return;
-      const el = entry.target;
-      const src = el.dataset.src;
-      if (src) { el.style.backgroundImage = `url('${src}')`; delete el.dataset.src; }
-      window._lazyObserver.unobserve(el);
-    });
-  }, { rootMargin: '200px' });
 
   pageItems.forEach(x=>{
     const el=document.createElement("div");
@@ -1878,13 +1886,8 @@ function render(items){
     const wasSelected = selected.has(x.idKey);
     const selQty = selected.get(x.idKey) || 1;
 
-    const imgForCard =
-    (currentGame() === "pokemon" || currentGame() === "lorcana")
-      ? (x.image || x.imageHigh || x.imagehigh || null)
-      : x.image;
-
     el.innerHTML=`
-      <div class="cImg lazy-card" data-src="${imgForCard || ''}" style="position:relative;">
+      <div class="cImg lazy-card" data-idkey="${x.idKey}" style="position:relative;">
         <div class="marketBanner" data-idkey="${x.idKey}">
           <img class="marketBannerLogo" src="market.png" alt="Market">
           <span class="marketBannerText">Market</span>
@@ -1993,10 +1996,10 @@ function render(items){
     };
 
     grid.appendChild(el);
-    // Observer les images lazy
-    const lazyEl = el.querySelector('.lazy-card');
-    if (lazyEl && lazyEl.dataset.src) window._lazyObserver.observe(lazyEl);
   });
+
+  // Charger les images de cette page depuis le serveur (1 seule requête)
+  loadPageImages(pageItems);
 }
 
 function parseIdKey(idKey){
