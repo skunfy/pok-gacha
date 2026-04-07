@@ -221,12 +221,12 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* ══ BATTLE LOG & ARENA (AGRANDIE) ══ */
 .battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;height:180px;min-height:180px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
-.log-line{font-size:13px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted)}
+.log-line{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted);line-height:1.4}
 .log-line:last-child{border-bottom:none}
-.log-line.crit{color:var(--gold);font-weight:700}
+.log-line.crit{color:var(--gold);font-weight:700;font-size:13.5px}
 .log-line.win{color:var(--green);font-weight:700;font-size:14px}
 .log-line.lose{color:var(--red);font-weight:700;font-size:14px}
-.log-line.turn{color:rgba(255,255,255,.2);font-size:10px;padding-top:6px;letter-spacing:.05em;text-transform:uppercase}
+.log-line.turn{color:rgba(255,255,255,.25);font-size:10px;padding-top:8px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
 .log-line.dodge{color:#4da6ff;font-style:italic}
 
 .result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
@@ -1301,84 +1301,253 @@ function closeReplay() {
   replayBusy = false;
 }
 
+// ══════════════════════════════════════════════════
+// NARRATION — phrases immersives par situation
+// ══════════════════════════════════════════════════
+const NARRATION = {
+  hit: [
+    (att, def, dmg) => `${att} frappe ${def} pour ${dmg} dégâts !`,
+    (att, def, dmg) => `${att} porte un coup brutal sur ${def} — ${dmg} dégâts !`,
+    (att, def, dmg) => `${def} encaisse ${dmg} dégâts de ${att} !`,
+    (att, def, dmg) => `${att} attaque ! ${dmg} dégâts infligés à ${def}.`,
+    (att, def, dmg) => `Coup solide de ${att} sur ${def} : -${dmg} PV !`,
+  ],
+  crit: [
+    (att, def, dmg) => `⚡ CRITIQUE ! ${att} dévaste ${def} avec ${dmg} dégâts !`,
+    (att, def, dmg) => `💥 ${att} trouve la faille — ${dmg} dégâts CRITIQUES sur ${def} !`,
+    (att, def, dmg) => `🔥 COUP CRITIQUE ! ${dmg} dégâts ! ${def} chancelle !`,
+    (att, def, dmg) => `⚡ ${att} frappe dans le mille ! ${def} subit ${dmg} dégâts critiques !`,
+    (att, def, dmg) => `💥 Attaque dévastatrice de ${att} — CRITIQUE ${dmg} dégâts !`,
+  ],
+  dodge: [
+    (att, def) => `💨 ${def} esquive l'attaque de ${att} !`,
+    (att, def) => `💨 ${att} attaque mais ${def} s'écarte au dernier moment !`,
+    (att, def) => `💨 ${def} disparaît dans l'ombre — esquive parfaite !`,
+    (att, def) => `💨 Réflexes fulgurants ! ${def} évite le coup de ${att} !`,
+    (att, def) => `💨 ${att} rate sa cible — ${def} est trop rapide !`,
+  ],
+  lowHp: [
+    name => `⚠️ ${name} est en danger critique !`,
+    name => `⚠️ ${name} tient à peine debout...`,
+    name => `⚠️ Plus que quelques instants pour ${name} !`,
+  ],
+  turn: [
+    n => `— Round ${n} —`,
+    n => `— Échange ${n} —`,
+    n => `— Tour ${n} —`,
+  ],
+  win: [
+    name => `🏆 ${name} triomphe et s'empare de la victoire !`,
+    name => `🏆 ${name} remporte le combat avec brio !`,
+    name => `🏆 Victoire écrasante de ${name} !`,
+    name => `🏆 ${name} s'impose et domine l'arène !`,
+  ],
+};
+
+function pickNarr(arr, ...args) {
+  return arr[Math.floor(Math.random() * arr.length)](...args);
+}
+
+// ══════════════════════════════════════════════════
+// EFFETS VISUELS SUPPLÉMENTAIRES
+// ══════════════════════════════════════════════════
+function shakeStage() {
+  const stage = document.getElementById('replay-stage');
+  if (!stage) return;
+  stage.style.transition = 'none';
+  stage.style.transform = 'translateX(-5px)';
+  setTimeout(() => { stage.style.transform = 'translateX(5px)'; }, 60);
+  setTimeout(() => { stage.style.transform = 'translateX(-3px)'; }, 120);
+  setTimeout(() => { stage.style.transform = 'translateX(3px)'; }, 170);
+  setTimeout(() => { stage.style.transform = 'translateX(0)'; stage.style.transition = ''; }, 220);
+}
+
+function shakeStageCrit() {
+  const stage = document.getElementById('replay-stage');
+  if (!stage) return;
+  stage.style.transition = 'none';
+  stage.style.transform = 'translateX(-9px) scale(1.01)';
+  setTimeout(() => { stage.style.transform = 'translateX(9px) scale(1.01)'; }, 60);
+  setTimeout(() => { stage.style.transform = 'translateX(-6px)'; }, 130);
+  setTimeout(() => { stage.style.transform = 'translateX(6px)'; }, 190);
+  setTimeout(() => { stage.style.transform = 'translateX(-3px)'; }, 250);
+  setTimeout(() => { stage.style.transform = 'translateX(0) scale(1)'; stage.style.transition = ''; }, 310);
+}
+
+function slowMotionHit() {
+  // légère pause dramatique avant le coup fatal
+  return wait(320);
+}
+
+function flashScreen(color, opacity) {
+  const stage = document.getElementById('replay-stage');
+  if (!stage) return;
+  const fl = document.createElement('div');
+  fl.style.cssText = `position:absolute;inset:0;background:${color};opacity:${opacity};pointer-events:none;z-index:20;border-radius:inherit;transition:opacity .4s`;
+  stage.appendChild(fl);
+  requestAnimationFrame(() => { fl.style.opacity = '0'; });
+  setTimeout(() => { fl.remove(); }, 450);
+}
+
+function addNarrLine(logEl, text, cls='') {
+  const d = document.createElement('div');
+  d.className = 'log-line ' + cls;
+  d.style.opacity = '0';
+  d.style.transform = 'translateX(-8px)';
+  d.style.transition = 'opacity .25s ease, transform .25s ease';
+  d.textContent = text;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      d.style.opacity = '1';
+      d.style.transform = 'translateX(0)';
+    });
+  });
+}
+
 async function playReplay(log, f1, f2, winnerId, rankChange) {
   const logEl = document.getElementById('replay-log');
-  function addLog(text, cls='') {
-    const d = document.createElement('div');
-    d.className = 'log-line ' + cls;
-    d.textContent = text;
-    logEl.appendChild(d);
-    logEl.scrollTop = logEl.scrollHeight;
-  }
 
   await wait(300);
-
-  // Flash VS avant l'approche
   showVsFlash();
   await wait(600);
 
-  // Phase 1 : approche
+  // Phase 1 : approche dramatique
   await approachCenter(420);
   setAnim(1, 'idle'); setAnim(2, 'idle');
   await wait(500);
+
+  // Compter les événements pour détecter le dernier coup
+  const hitEvents = log.filter(e => e.type === 'hit' || e.type === 'crit');
+  const lastHit = hitEvents[hitEvents.length - 1];
+
+  let turnPhraseIdx = 0;
 
   // Phase 2 : combat
   for (const ev of log) {
     if (!arenaState) break;
 
+    // ── TOUR ──
     if (ev.type === 'turn') {
-      if (ev.turn > 1) addLog('— Tour ' + ev.turn + ' —', 'turn');
+      if (ev.turn > 1) {
+        await wait(200);
+        const phrase = NARRATION.turn[turnPhraseIdx % NARRATION.turn.length](ev.turn);
+        turnPhraseIdx++;
+        addNarrLine(logEl, phrase, 'turn');
+        await wait(300);
+      }
       continue;
     }
 
+    // ── ESQUIVE ──
     if (ev.type === 'dodge') {
-      addLog('💨 ' + (ev.defender === f1.name ? f1.name : f2.name) + ' esquive !', 'dodge');
-      await wait(350);
+      const defId = ev.defender === f1.name ? 1 : 2;
+      const attId = ev.defender === f1.name ? 2 : 1;
+      // Petit step en arrière du défenseur
+      if (arenaState) {
+        const f = defId === 1 ? arenaState.f1 : arenaState.f2;
+        const origX = f.x;
+        const dir = defId === 1 ? -18 : 18;
+        f.x += dir;
+        await wait(120);
+        f.x = origX;
+      }
+      addNarrLine(logEl, pickNarr(NARRATION.dodge, ev.attacker, ev.defender), 'dodge');
+      await wait(380);
       continue;
     }
 
+    // ── COUP NORMAL ou CRITIQUE ──
     if (ev.type === 'hit' || ev.type === 'crit') {
-      const isF1att = ev.attacker === f1.name;
-      const attId   = isF1att ? 1 : 2;
-      const defId   = isF1att ? 2 : 1;
+      const isF1att  = ev.attacker === f1.name;
+      const attId    = isF1att ? 1 : 2;
+      const defId    = isF1att ? 2 : 1;
       const attClass = isF1att ? f1Class : f2Class;
+      const isCrit   = ev.type === 'crit';
+      const isFatal  = ev === lastHit; // dernier coup
 
-      setAnim(attId, ev.type === 'crit' ? 'attack2' : 'attack1');
-      await wait(250);
+      // Ralenti dramatique sur le coup fatal
+      if (isFatal) {
+        await slowMotionHit();
+      }
 
-      // SFX attaque
+      setAnim(attId, isCrit ? 'attack2' : 'attack1');
+      await wait(isCrit ? 200 : 250);
+
       playSfx(attClass);
-
       flashHit(defId);
-      spawnDmg(defId, ev.dmg, ev.type === 'crit');
+      spawnDmg(defId, ev.dmg, isCrit);
+
+      // Shake écran
+      if (isCrit) {
+        shakeStageCrit();
+        flashScreen('rgba(255,200,0,0.18)', 0.18);
+      } else if (isFatal) {
+        shakeStageCrit();
+        flashScreen('rgba(255,60,60,0.2)', 0.2);
+      } else {
+        shakeStage();
+      }
 
       if (isF1att) { updateArenaHp(2, ev.hpLeft, ev.hpMax); }
-      else          { updateArenaHp(1, ev.hpLeft, ev.hpMax); }
+      else         { updateArenaHp(1, ev.hpLeft, ev.hpMax); }
 
-      addLog(ev.attacker + ' → ' + ev.dmg + ' dégâts' + (ev.type==='crit' ? ' ⚡ CRITIQUE!' : ''), ev.type==='crit'?'crit':'');
-      await wait(500);
+      // Narration
+      const narr = isCrit
+        ? pickNarr(NARRATION.crit, ev.attacker, ev.defender, ev.dmg)
+        : pickNarr(NARRATION.hit,  ev.attacker, ev.defender, ev.dmg);
+      addNarrLine(logEl, narr, isCrit ? 'crit' : '');
+
+      // HP critique — avertissement
+      const hpPct = ev.hpLeft / ev.hpMax;
+      if (hpPct > 0 && hpPct <= 0.20) {
+        await wait(120);
+        addNarrLine(logEl, pickNarr(NARRATION.lowHp, ev.defender), 'dodge');
+      }
+
+      await wait(isCrit ? 650 : 520);
 
       if (arenaState && arenaState.f1.anim !== 'dead') setAnim(1, 'idle');
       if (arenaState && arenaState.f2.anim !== 'dead') setAnim(2, 'idle');
       await wait(150);
     }
 
+    // ── FIN ──
     if (ev.type === 'end') {
       const isMyWin = myData && (
         (ev.winner === f1.name && f1.name === myData.name) ||
         (ev.winner === f2.name && f2.name === myData.name)
       );
       const loserId = ev.winner === f1.name ? 2 : 1;
-      setAnim(loserId, 'dead');
-      await wait(1100);
 
-      addLog(ev.winner + ' remporte le combat !', isMyWin ? 'win' : 'lose');
+      // Pause dramatique avant l'animation de mort
+      await wait(400);
+      setAnim(loserId, 'dead');
+      await wait(900);
+
+      // Flash de victoire / défaite
+      if (isMyWin) flashScreen('rgba(29,200,120,0.25)', 0.25);
+      else         flashScreen('rgba(220,60,60,0.2)', 0.2);
+
+      addNarrLine(logEl, pickNarr(NARRATION.win, ev.winner), isMyWin ? 'win' : 'lose');
+      await wait(400);
+
       const banner = document.getElementById('replay-result');
       banner.className     = 'result-banner ' + (isMyWin ? 'victory' : 'defeat');
       banner.style.display = 'block';
+      banner.style.opacity = '0';
+      banner.style.transform = 'scale(.9)';
+      banner.style.transition = 'opacity .35s ease, transform .35s ease';
       banner.innerHTML = isMyWin
         ? `🏆 Victoire !<div class="rank-change">+${rankChange||'?'} pts de rang</div>`
         : `💀 Défaite<div class="rank-change">${rankChange ? '-'+rankChange : ''} pts de rang</div>`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          banner.style.opacity = '1';
+          banner.style.transform = 'scale(1)';
+        });
+      });
     }
   }
   replayBusy = false;
