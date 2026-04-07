@@ -1764,47 +1764,62 @@ function applyFilters(){
 
 async function openZoom(x){
   zoomSlab.classList.toggle("senpai-zoom", currentGame() === "senpaigodesshaven");
-  // Afficher d'abord l'image basse résolution immédiatement
+
+  // Afficher d'abord la basse résolution immédiatement (pas de blanc)
   const imgLow = x.image || null;
   zoomImg.style.backgroundImage = imgLow ? `url('${imgLow}')` : '';
-  // Charger la HD en arrière-plan
-  try {
-    const hd = await api(`/api/collection/imagehigh?idKey=${encodeURIComponent(x.idKey)}`);
-    if (hd.imageHigh) {
-      x.imageHigh = hd.imageHigh;
-      zoomImg.style.backgroundImage = `url('${hd.imageHigh}')`;
-      if (hd.gradesJson) x.gradesJson = hd.gradesJson;
-    }
-  } catch(e) {}
-  // Extraction via proxy serveur (contourne CORS)
-  zoomAdaptiveColors=null; zoomAdaptivePal=null;
-  if(img){
-    fetch(`/api/foil_colors?url=${encodeURIComponent(img)}`, {
-      headers:{ "Authorization": `Bearer ${localStorage.getItem("gacha_token_v1")||""}` }
-    })
-    .then(r=>r.json())
-    .then(d=>{ if(d.colors){zoomAdaptiveColors=d.colors;zoomAdaptivePal=colorsToSparkPal(d.colors);} })
-    .catch(()=>{});
-  }  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
-  zoomGrade.textContent = (x.grade ?? "?");
+  zoomImg.classList.remove("is-horizontal");
 
+  // Ouvrir la modale tout de suite avec la LowRes
+  zoomTitle.textContent = `${x.name} • ${x.set || x.setName || ""}`;
+  zoomGrade.textContent = (x.grade ?? "?");
   zoomSlab.dataset.tier = tierFromGrade(Number(x.grade)||0);
   zoomSlab.dataset.mint = x.mint ? "1" : "0";
   zoomMint.style.display = x.mint ? "inline-flex" : "none";
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
 
-  // Détection carte horizontale
-  if(img){
+  // Charger la HD + couleurs holo en parallèle
+  zoomAdaptiveColors = null;
+  zoomAdaptivePal    = null;
+
+  const [hdResult] = await Promise.allSettled([
+    api(`/api/collection/imagehigh?idKey=${encodeURIComponent(x.idKey)}`),
+  ]);
+
+  let imgForHolo = imgLow;
+
+  if (hdResult.status === 'fulfilled' && hdResult.value?.imageHigh) {
+    const imgHigh = hdResult.value.imageHigh;
+    x.imageHigh = imgHigh;
+    if (hdResult.value.gradesJson) x.gradesJson = hdResult.value.gradesJson;
+    zoomImg.style.backgroundImage = `url('${imgHigh}')`;
+    imgForHolo = imgHigh;
+
+    // Détection carte horizontale sur la HD
     const tmpImg = new Image();
     tmpImg.onload = () => {
       zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
     };
-    tmpImg.src = img;
-  } else {
-    zoomImg.classList.remove("is-horizontal");
+    tmpImg.src = imgHigh;
+  } else if (imgLow) {
+    // Fallback : détection sur la LowRes
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      zoomImg.classList.toggle("is-horizontal", tmpImg.naturalWidth > tmpImg.naturalHeight);
+    };
+    tmpImg.src = imgLow;
   }
 
-  modal.classList.add("open");
-  modal.setAttribute("aria-hidden","false");
+  // Effet holo — extraction couleurs via proxy
+  if (imgForHolo) {
+    fetch(`/api/foil_colors?url=${encodeURIComponent(imgForHolo)}`, {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("gacha_token_v1") || ""}` }
+    })
+    .then(r => r.json())
+    .then(d => { if (d.colors) { zoomAdaptiveColors = d.colors; zoomAdaptivePal = colorsToSparkPal(d.colors); } })
+    .catch(() => {});
+  }
 }
 
 function updateGridPager(total){
