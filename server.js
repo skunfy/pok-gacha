@@ -911,7 +911,9 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_xp         INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_gold        INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_win_streak  INTEGER NOT NULL DEFAULT 0`);
-  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_chests      INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_chests        INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins_today    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins_day_key  TEXT    NOT NULL DEFAULT ''`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pvp_equipment (
@@ -6563,22 +6565,35 @@ async function buildPvpFighter(userId) {
   const statB   = pvpStatBonus(char);
   const eqB     = await getPvpEquipmentBonus(userId);
 
-  // HP = base 200 + stats + équipement
-  const hp       = Math.round(200 + statB.hp       + (eqB.hp       || 0) + pvpLvl * 10);
+  // ── Caps équipement par ligue ──
+  const pvpRankName = getRankInfo(Number(u.pvp_rank)).name;
+  const EQ_CAPS = {
+    'Bronze':  { atk:40,  hp:200,  def:20,  speed:15, crit_pct:10, crit_dmg:30,  dodge:10, lifesteal:5  },
+    'Argent':  { atk:70,  hp:350,  def:35,  speed:25, crit_pct:18, crit_dmg:50,  dodge:15, lifesteal:10 },
+    'Or':      { atk:110, hp:550,  def:55,  speed:35, crit_pct:28, crit_dmg:70,  dodge:20, lifesteal:15 },
+    'Platine': { atk:160, hp:800,  def:80,  speed:50, crit_pct:40, crit_dmg:90,  dodge:28, lifesteal:20 },
+    'Diamant': { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
+    'Maître':  { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
+  };
+  const cap    = EQ_CAPS[pvpRankName] || EQ_CAPS['Bronze'];
+  const capEq  = (val, key) => Math.min(val, cap[key]);
+
+  // HP = base 200 + stats + équipement (capé)
+  const hp       = Math.round(200 + statB.hp       + capEq(eqB.hp||0,      'hp')      + pvpLvl * 10);
   // ATQ
-  const atq      = Math.round(10  + statB.atk      + (eqB.atk      || 0));
+  const atq      = Math.round(10  + statB.atk      + capEq(eqB.atk||0,     'atk'));
   // DEF (réduit les dégâts reçus)
-  const def      = Math.round(       statB.def      + (eqB.def      || 0));
+  const def      = Math.round(       statB.def      + capEq(eqB.def||0,     'def'));
   // Vitesse (détermine qui frappe en premier)
-  const speed    = Math.round(10  + statB.speed     + (eqB.speed    || 0));
+  const speed    = Math.round(10  + statB.speed     + capEq(eqB.speed||0,   'speed'));
   // Crit %
-  const crit     = Math.min(80, Math.round(statB.crit_pct  + (eqB.crit_pct  || 0)));
-  // Crit DMG % (multiplicateur du coup critique)
-  const crit_dmg = Math.round(150 + statB.crit_dmg + (eqB.crit_dmg || 0));
+  const crit     = Math.min(80, Math.round(statB.crit_pct  + capEq(eqB.crit_pct||0,  'crit_pct')));
+  // Crit DMG %
+  const crit_dmg = Math.round(150 + statB.crit_dmg + capEq(eqB.crit_dmg||0, 'crit_dmg'));
   // Esquive %
-  const dodge    = Math.min(40, Math.round(statB.dodge      + (eqB.dodge    || 0)));
+  const dodge    = Math.min(40, Math.round(statB.dodge      + capEq(eqB.dodge||0,     'dodge')));
   // Vol de vie %
-  const lifesteal= Math.round(statB.lifesteal + (eqB.lifesteal || 0));
+  const lifesteal= Math.round(statB.lifesteal + capEq(eqB.lifesteal||0,      'lifesteal'));
 
   const rankInfo = getRankInfo(Number(u.pvp_rank));
 
@@ -6594,6 +6609,7 @@ async function buildPvpFighter(userId) {
     pvpChests:   Number(u.pvp_chests || 0),
     winStreak:   Number(u.pvp_win_streak || 0),
     rankInfo,
+    charClass:   char.char_class,
     pvpSkin:     char.pvp_skin || 'forest_ranger',
     pvpLevel:    pvpLvl,
     pvpPtsAvail: Number(char.pvp_pts_avail || 0),
@@ -6635,13 +6651,13 @@ function simulatePvpBattle(f1, f2) {
     log.push({ type: 'turn', turn });
 
     // Attaque du premier
-    const dodge1 = Math.random() * 100 < (second.dodge || 0);
+    const dodge1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 5); // 5% miss de base
     if (dodge1) {
       log.push({ type: 'dodge', attacker: first.name, defender: second.name });
     } else {
       const crit1   = Math.random() * 100 < (first.crit || 0);
       const critMul1 = crit1 ? ((first.crit_dmg || 150) / 100) : 1;
-      const rawDmg1 = Math.round(first.atq * (0.85 + Math.random() * 0.3) * critMul1);
+      const rawDmg1 = Math.round(first.atq * (0.70 + Math.random() * 0.60) * critMul1);
       const defRed1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
       const dmg1    = Math.max(1, Math.round(rawDmg1 * (1 - defRed1)));
       hpSecond = Math.max(0, hpSecond - dmg1);
@@ -6652,13 +6668,13 @@ function simulatePvpBattle(f1, f2) {
     if (hpSecond <= 0) break;
 
     // Attaque du second
-    const dodge2 = Math.random() * 100 < (first.dodge || 0);
+    const dodge2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 5); // 5% miss de base
     if (dodge2) {
       log.push({ type: 'dodge', attacker: second.name, defender: first.name });
     } else {
       const crit2   = Math.random() * 100 < (second.crit || 0);
       const critMul2 = crit2 ? ((second.crit_dmg || 150) / 100) : 1;
-      const rawDmg2 = Math.round(second.atq * (0.85 + Math.random() * 0.3) * critMul2);
+      const rawDmg2 = Math.round(second.atq * (0.70 + Math.random() * 0.60) * critMul2);
       const defRed2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
       const dmg2    = Math.max(1, Math.round(rawDmg2 * (1 - defRed2)));
       hpFirst = Math.max(0, hpFirst - dmg2);
@@ -6753,8 +6769,20 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
     const rankChange = calcElo(winnerRank, loserRank);
 
     // Mettre à jour les rangs
-    await pool.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank+$1), pvp_wins=pvp_wins+1 WHERE id=$2`, [rankChange, winnerId]);
+    // Cap 10 victoires/jour : pas de gain de rang au-delà
+    const todayKey = new Date().toISOString().slice(0,10);
+    const winnerDayQ = await pool.query(`SELECT pvp_wins_today, pvp_wins_day_key FROM users WHERE id=$1`, [winnerId]);
+    const wDay = winnerDayQ.rows[0];
+    const winsToday = wDay.pvp_wins_day_key === todayKey ? Number(wDay.pvp_wins_today) : 0;
+    const rankGain  = winsToday < 10 ? rankChange : 0; // plus de gain de rang après 10 wins/jour
+    await pool.query(
+      `UPDATE users SET pvp_rank=GREATEST(0,pvp_rank+$1), pvp_wins=pvp_wins+1,
+        pvp_wins_today=CASE WHEN pvp_wins_day_key=$2 THEN pvp_wins_today+1 ELSE 1 END,
+        pvp_wins_day_key=$2 WHERE id=$3`,
+      [rankGain, todayKey, winnerId]
+    );
     await pool.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [rankChange, loserId]);
+    const dailyCapReached = winsToday >= 9; // 10e victoire = cap atteint
 
     // Sauvegarder le résultat
     await pool.query(
@@ -6814,6 +6842,8 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
         winStreak: finalStreak,
         levelUp: ptsGained > 0,
         newLevel: pvpLvl,
+        dailyCapReached,
+        winsToday: winsToday + 1,
       } : null,
       challengerRewards: winnerId === battle.challenger_id ? {
         xp: rewards.xp, gold: rewards.gold,
