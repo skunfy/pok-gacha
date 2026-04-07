@@ -1884,7 +1884,7 @@ function render(items){
       : x.image;
 
     el.innerHTML=`
-      <div class="cImg lazy-card" data-src="${imgForCard || ''}" style="position:relative;">
+      <div class="cImg lazy-card" data-idkey="${x.idKey}" data-src="${imgForCard || ''}" style="position:relative;">
         <div class="marketBanner" data-idkey="${x.idKey}">
           <img class="marketBannerLogo" src="market.png" alt="Market">
           <span class="marketBannerText">Market</span>
@@ -1995,32 +1995,10 @@ function render(items){
     grid.appendChild(el);
   });
 
-  // Charger les images de cette page en 1 requête puis activer l'observer
-  loadGridPageImages(pageItems);
-}
-
-async function loadGridPageImages(pageItems) {
-  if (!pageItems.length) return;
-  const idKeys = pageItems.map(x => x.idKey).filter(Boolean);
-  try {
-    const data = await api(`/api/collection/page?idKeys=${encodeURIComponent(idKeys.join(','))}`);
-    const imgMap = {};
-    for (const it of (data.items || [])) imgMap[it.idKey] = it.image;
-
-    // Mettre à jour allItems pour les prochains rendus
-    for (const item of allItems) {
-      if (imgMap[item.idKey]) item.image = imgMap[item.idKey];
-    }
-
-    // Injecter dans le DOM via data-src puis déclencher l'observer
-    document.querySelectorAll('.lazy-card[data-idkey]').forEach(el => {
-      const idKey = el.dataset.idkey;
-      if (imgMap[idKey]) {
-        el.dataset.src = imgMap[idKey];
-        if (window._lazyObserver) window._lazyObserver.observe(el);
-      }
-    });
-  } catch(e) {}
+  // Attacher l'observer à toutes les lazy-card qui ont un data-src
+  grid.querySelectorAll('.lazy-card[data-src]').forEach(el => {
+    if (el.dataset.src) window._lazyObserver.observe(el);
+  });
 }
 
 function parseIdKey(idKey){
