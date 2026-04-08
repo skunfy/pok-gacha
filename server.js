@@ -961,6 +961,8 @@ async function initDb() {
   // PVE — Tables
   // =========================
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_fights_today INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_level INTEGER NOT NULL DEFAULT 1`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_xp    INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pve_progress (
@@ -7106,17 +7108,6 @@ const PVE_ENEMIES = {
     xp:   { easy: 40,  medium: 80,  hard: 150 },
     gold: { easy: 25,  medium: 50,  hard: 90  },
   },
-  orc: {
-    key: 'orc', name: 'Orc',
-    sprite: '/ennemie spritesheet/orc',
-    difficulties: {
-      easy:   { hp: 200, atq: 14, def: 5,  speed: 8,  crit: 5,  crit_dmg: 110, dodge: 3  },
-      medium: { hp: 320, atq: 22, def: 10, speed: 10, crit: 8,  crit_dmg: 115, dodge: 5  },
-      hard:   { hp: 480, atq: 34, def: 18, speed: 12, crit: 12, crit_dmg: 120, dodge: 8  },
-    },
-    xp:   { easy: 60,  medium: 120, hard: 220 },
-    gold: { easy: 35,  medium: 70,  hard: 130 },
-  },
   skeleton_warrior: {
     key: 'skeleton_warrior', name: 'Squelette Guerrier',
     sprite: '/ennemie spritesheet/skeleton_warrior',
@@ -7128,16 +7119,16 @@ const PVE_ENEMIES = {
     xp:   { easy: 70,  medium: 140, hard: 260 },
     gold: { easy: 40,  medium: 80,  hard: 150 },
   },
-  ogre: {
-    key: 'ogre', name: 'Ogre',
-    sprite: '/ennemie spritesheet/ogre',
+  orc: {
+    key: 'orc', name: 'Orc',
+    sprite: '/ennemie spritesheet/orc',
     difficulties: {
-      easy:   { hp: 350, atq: 18, def: 10, speed: 6,  crit: 4,  crit_dmg: 110, dodge: 2  },
-      medium: { hp: 550, atq: 28, def: 18, speed: 8,  crit: 6,  crit_dmg: 115, dodge: 4  },
-      hard:   { hp: 800, atq: 42, def: 28, speed: 10, crit: 10, crit_dmg: 120, dodge: 6  },
+      easy:   { hp: 200, atq: 14, def: 5,  speed: 8,  crit: 5,  crit_dmg: 110, dodge: 3  },
+      medium: { hp: 320, atq: 22, def: 10, speed: 10, crit: 8,  crit_dmg: 115, dodge: 5  },
+      hard:   { hp: 480, atq: 34, def: 18, speed: 12, crit: 12, crit_dmg: 120, dodge: 8  },
     },
-    xp:   { easy: 90,  medium: 180, hard: 320 },
-    gold: { easy: 55,  medium: 110, hard: 200 },
+    xp:   { easy: 60,  medium: 120, hard: 220 },
+    gold: { easy: 35,  medium: 70,  hard: 130 },
   },
   zombie_villager: {
     key: 'zombie_villager', name: 'Zombie Villageois',
@@ -7149,6 +7140,17 @@ const PVE_ENEMIES = {
     },
     xp:   { easy: 80,  medium: 160, hard: 290 },
     gold: { easy: 50,  medium: 100, hard: 180 },
+  },
+  ogre: {
+    key: 'ogre', name: 'Ogre',
+    sprite: '/ennemie spritesheet/ogre',
+    difficulties: {
+      easy:   { hp: 350, atq: 18, def: 10, speed: 6,  crit: 4,  crit_dmg: 110, dodge: 2  },
+      medium: { hp: 550, atq: 28, def: 18, speed: 8,  crit: 6,  crit_dmg: 115, dodge: 4  },
+      hard:   { hp: 800, atq: 42, def: 28, speed: 10, crit: 10, crit_dmg: 120, dodge: 6  },
+    },
+    xp:   { easy: 90,  medium: 180, hard: 320 },
+    gold: { easy: 55,  medium: 110, hard: 200 },
   },
   golem: {
     key: 'golem', name: 'Golem de Pierre',
@@ -7165,14 +7167,45 @@ const PVE_ENEMIES = {
     key: 'necromancer_of_the_shadow', name: 'Nécromancien des Ombres',
     sprite: '/ennemie spritesheet/necromancer_of_the_shadow',
     difficulties: {
-      easy:   { hp: 300, atq: 28, def: 8,  speed: 14, crit: 15, crit_dmg: 135, dodge: 15 },
-      medium: { hp: 480, atq: 42, def: 14, speed: 18, crit: 22, crit_dmg: 145, dodge: 22 },
-      hard:   { hp: 700, atq: 60, def: 22, speed: 22, crit: 30, crit_dmg: 160, dodge: 30 },
+      easy:   { hp: 650,  atq: 35, def: 12, speed: 16, crit: 18, crit_dmg: 138, dodge: 18 },
+      medium: { hp: 1000, atq: 52, def: 18, speed: 20, crit: 26, crit_dmg: 150, dodge: 26 },
+      hard:   { hp: 1500, atq: 75, def: 28, speed: 24, crit: 35, crit_dmg: 165, dodge: 35 },
     },
-    xp:   { easy: 150, medium: 300, hard: 550 },
-    gold: { easy: 90,  medium: 180, hard: 330 },
+    xp:   { easy: 180, medium: 360, hard: 650 },
+    gold: { easy: 110, medium: 220, hard: 400 },
   },
 };
+
+
+const PVE_MAX_LEVEL = 50;
+
+// XP nécessaire pour passer du niveau N au N+1 (courbe progressive)
+function pveXpForLevel(lvl) {
+  lvl = Math.max(1, Math.min(lvl, PVE_MAX_LEVEL));
+  return Math.floor(200 * Math.pow(lvl, 1.5));
+}
+
+// Donne de l'XP PVE et monte de niveau si besoin
+async function addPveXp(userId, xpGain, client) {
+  const q = await client.query(`SELECT pve_level, pve_xp FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+  let lvl = Number(q.rows[0]?.pve_level || 1);
+  let xp  = Number(q.rows[0]?.pve_xp    || 0) + xpGain;
+  let levelsGained = 0;
+
+  while (lvl < PVE_MAX_LEVEL && xp >= pveXpForLevel(lvl)) {
+    xp -= pveXpForLevel(lvl);
+    lvl++;
+    levelsGained++;
+  }
+  // Au niveau max, on plafonne l'XP
+  if (lvl >= PVE_MAX_LEVEL) xp = 0;
+
+  await client.query(
+    `UPDATE users SET pve_level=$1, pve_xp=$2 WHERE id=$3`,
+    [lvl, xp, userId]
+  );
+  return { newLevel: lvl, newXp: xp, levelsGained };
+}
 
 const PVE_DAILY_MAX = 9;
 
@@ -7273,7 +7306,13 @@ app.get('/api/pve/enemies', auth, async (req, res) => {
       })),
     }));
 
-    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX });
+    // Récupérer le niveau PVE du joueur
+    const pveLvlQ = await pool.query(`SELECT pve_level, pve_xp FROM users WHERE id=$1`, [userId]);
+    const pveUser = pveLvlQ.rows[0] || {};
+    const pveLevel = Number(pveUser.pve_level || 1);
+    const pveXp    = Number(pveUser.pve_xp    || 0);
+    const pveXpNeeded = pveXpForLevel(pveLevel);
+    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX, pveLevel, pveXp, pveXpNeeded });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -7333,8 +7372,8 @@ app.post('/api/pve/fight', auth, async (req, res) => {
       xpGained   = enemyDef.xp[difficulty];
       goldGained = enemyDef.gold[difficulty];
 
-      // XP personnage
-      await addCharXp(userId, xpGained);
+      // XP PVE (système propre, niveau 1-50)
+      const pveProgress = await addPveXp(userId, xpGained, client);
       // Or dollax
       await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [goldGained, userId]);
 
@@ -7379,6 +7418,10 @@ app.post('/api/pve/fight', auth, async (req, res) => {
         chestEarned,
         winsAgainstEnemy: winsAfter,
         nextChestIn: 3 - (winsAfter % 3),
+        pveLevel: pveProgress.newLevel,
+        pveLevelUp: pveProgress.levelsGained > 0,
+        pveXp: pveProgress.newXp,
+        pveXpForNext: pveXpForLevel(pveProgress.newLevel),
       } : null,
       fighter: { name: fighter.name, hp: fighter.hp, pvpSkin: fighter.pvpSkin, charClass: fighter.charClass },
       enemy:   { name: enemy.name, hp: enemy.hp, key: enemyKey, difficulty },

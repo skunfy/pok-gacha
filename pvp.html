@@ -523,6 +523,101 @@ function playSfx(charClass) {
 // CONFIG SPRITES
 // ══════════════════════════════════════════════════
 const SPRITE_PATH = '/spritesheet/';
+const ENEMY_SPRITE_PATH = '/ennemie spritesheet/';
+
+// Icônes fallback si le sprite ne se charge pas
+const PVE_ENEMY_ICONS_SPRITE = {
+  goblin:'👺', orc:'👹', skeleton_warrior:'💀', ogre:'🗿',
+  zombie_villager:'🧟', golem:'🪨', necromancer_of_the_shadow:'🧙'
+};
+
+// Sprites des ennemis PVE (dossier séparé)
+// Les spritesheets sont des bandes horizontales: fw = largeur d'une frame
+// On essaie plusieurs noms possibles via getEnemyImg (fallback auto en minuscules)
+const ENEMY_SPRITES = {
+  goblin: {
+    idle:    { file:'goblin/Idle.png',    frames:18,  fw:256, fps:36  },
+    run:     { file:'goblin/Running.png',    frames:12,  fw:256, fps:24  },
+    attack1: { file:'goblin/Slashing.png',  frames:12,  fw:256, fps:24 },
+    attack2: { file:'goblin/Kicking.png',  frames:12,  fw:256, fps:24 },
+    hurt:    { file:'goblin/Hurt.png',    frames:12,  fw:256, fps:24  },
+    dead:    { file:'goblin/Dying.png',    frames:15,  fw:256, fps:30  },
+    walk:    { file:'goblin/Walking.png',    frames:24,  fw:256, fps:48  },
+  },
+  skeleton_warrior: {
+    idle:    { file:'skeleton_warrior/Idle.png',    frames:18,  fw:256, fps:36  },
+    run:     { file:'skeleton_warrior/Running.png',    frames:12,  fw:256, fps:24  },
+    attack1: { file:'skeleton_warrior/Slashing.png',  frames:12,  fw:256, fps:24 },
+    attack2: { file:'skeleton_warrior/Run_Slashing.png',  frames:12,  fw:256, fps:24 },
+    hurt:    { file:'skeleton_warrior/Hurt.png',    frames:12,  fw:256, fps:24  },
+    dead:    { file:'skeleton_warrior/Dying.png',    frames:15,  fw:256, fps:30  },
+    walk:    { file:'skeleton_warrior/Walking.png',    frames:24,  fw:256, fps:48  },
+  },
+  orc: {
+    idle:    { file:'orc/Idle.png',       frames:18,  fw:256, fps:36  },
+    run:     { file:'orc/Running.png',       frames:12,  fw:256, fps:24  },
+    attack1: { file:'orc/Slashing.png',     frames:12,  fw:256, fps:24 },
+    attack2: { file:'orc/Run_Slashing.png',     frames:12,  fw:256, fps:24 },
+    hurt:    { file:'orc/Hurt.png',       frames:12,  fw:256, fps:24  },
+    dead:    { file:'orc/Dying.png',       frames:15,  fw:256, fps:30  },
+    walk:    { file:'orc/Walking.png',       frames:24,  fw:256, fps:48  },
+  },
+  zombie_villager: {
+    idle:    { file:'zombie_villager/Idle.png',    frames:18,  fw:256, fps:36 },
+    run:     { file:'zombie_villager/Running.png',    frames:12,  fw:256, fps:24  },
+    attack1: { file:'zombie_villager/Slashing.png',  frames:12,  fw:256, fps:24  },
+    attack2: { file:'zombie_villager/Kicking.png',  frames:12,  fw:256, fps:24  },
+    hurt:    { file:'zombie_villager/Hurt.png',    frames:12,  fw:256, fps:24  },
+    dead:    { file:'zombie_villager/Dying.png',    frames:15,  fw:256, fps:30  },
+    walk:    { file:'zombie_villager/Walking.png',    frames:24,  fw:256, fps:48  },
+  },
+  ogre: {
+    idle:    { file:'ogre/Idle.png',      frames:18,  fw:256, fps:5  },
+    run:     { file:'ogre/Running.png',      frames:12,  fw:256, fps:24  },
+    attack1: { file:'ogre/Slashing.png',    frames:12,  fw:256, fps:24  },
+    attack2: { file:'ogre/Run_Slashing.png',    frames:12,  fw:256, fps:24  },
+    hurt:    { file:'ogre/Hurt.png',      frames:12,  fw:256, fps:24 },
+    dead:    { file:'ogre/Dying.png',      frames:15,  fw:256, fps:30  },
+    walk:    { file:'ogre/Walking.png',      frames:24,  fw:256, fps:48  },
+  },
+  golem: {
+    idle:    { file:'golem/Idle.png',     frames:18,  fw:256, fps:36  },
+    run:     { file:'golem/Running.png',     frames:12,  fw:256, fps:24  },
+    attack1: { file:'golem/Slashing.png',   frames:12,  fw:256, fps:24  },
+    attack2: { file:'golem/Run_Slashing.png',   frames:12,  fw:256, fps:24  },
+    hurt:    { file:'golem/Hurt.png',     frames:12,  fw:256, fps:24  },
+    dead:    { file:'golem/Dying.png',     frames:15,  fw:256, fps:30  },
+    walk:    { file:'golem/Walking.png',     frames:24,  fw:256, fps:48  },
+  },
+  necromancer_of_the_shadow: {
+    idle:    { file:'necromancer_of_the_shadow/Idle.png',    frames:18,  fw:256, fps:36  },
+    run:     { file:'necromancer_of_the_shadow/Running.png',    frames:12,  fw:256, fps:24  },
+    attack1: { file:'necromancer_of_the_shadow/Slashing.png',  frames:12,  fw:256, fps:24 },
+    attack2: { file:'necromancer_of_the_shadow/Run_Slashing.png',  frames:12,  fw:256, fps:24 },
+    hurt:    { file:'necromancer_of_the_shadow/Hurt.png',    frames:12,  fw:256, fps:24  },
+    dead:    { file:'necromancer_of_the_shadow/Dying.png',    frames:15,  fw:256, fps:30  },
+    walk:    { file:'necromancer_of_the_shadow/Walking.png',    frames:24,  fw:256, fps:48  },
+  },
+};
+
+// Cache séparé pour les sprites ennemis
+const ENEMY_IMG_CACHE = {};
+function getEnemyImg(src) {
+  if (!ENEMY_IMG_CACHE[src]) {
+    const img = new Image();
+    // Essayer d'abord avec la casse exacte, puis fallback minuscule
+    img.src = ENEMY_SPRITE_PATH + src;
+    img.onerror = function() {
+      // Essayer variantes: Death→Dead, minuscules
+      const alt = src.includes('Death.png') ? src.replace('Death.png', 'Dead.png')
+                : src.includes('Dead.png')  ? src.replace('Dead.png', 'Death.png')
+                : src.replace(/([A-Z])/g, m => m.toLowerCase());
+      if (alt !== src) { this.onerror = null; this.src = ENEMY_SPRITE_PATH + alt; }
+    };
+    ENEMY_IMG_CACHE[src] = img;
+  }
+  return ENEMY_IMG_CACHE[src];
+}
 
 const CLASS_SPRITES = {
   bloody_alchemist: {
@@ -610,6 +705,9 @@ Object.entries(CLASS_SPRITES)
   .filter(([k]) => NEW_SKINS.includes(k))
   .forEach(([,cls]) => Object.values(cls).forEach(a => getImg(a.file)));
 
+// Précharger les sprites ennemis PVE
+Object.values(ENEMY_SPRITES).forEach(cls => Object.values(cls).forEach(a => getEnemyImg(a.file)));
+
 // ══════════════════════════════════════════════════
 // MOTEUR D'ANIMATION ARENA — sprites plus grands
 // ══════════════════════════════════════════════════
@@ -624,7 +722,7 @@ let arenaLastT = 0;
 let f1Class = 'forest_ranger';
 let f2Class = 'forest_ranger';
 
-function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, rankInfo1, rankInfo2) {
+function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, rankInfo1, rankInfo2, isEnemy2) {
   if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
   arenaState = null;
   f1Class = cls1 || 'forest_ranger';
@@ -651,8 +749,8 @@ function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, r
   const p2Home = sw - P1_HOME_PX - SPRITE_PX_W;
 
   arenaState = {
-    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME_PX, anim:'idle', frame:0, tick:0, flip:false, freezeOnEnd:false },
-    f2: { cls: cls2||DEFAULT_CLASS, x: p2Home,      anim:'idle', frame:0, tick:0, flip:true,  freezeOnEnd:false },
+    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME_PX, anim:'idle', frame:0, tick:0, flip:false, freezeOnEnd:false, isEnemy:false },
+    f2: { cls: cls2||DEFAULT_CLASS, x: p2Home,      anim:'idle', frame:0, tick:0, flip:true,  freezeOnEnd:false, isEnemy:isEnemy2||false },
   };
 
   updateArenaHp(1, maxHp1, maxHp1);
@@ -695,6 +793,11 @@ function arenaLoop(ts) {
 }
 
 function getAnimDef(f) {
+  // Si c'est un ennemi PVE, utiliser ENEMY_SPRITES
+  if (f.isEnemy && ENEMY_SPRITES[f.cls]) {
+    const sprites = ENEMY_SPRITES[f.cls];
+    return sprites[f.anim] || sprites.idle;
+  }
   const sprites = CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS];
   return sprites[f.anim] || sprites.idle;
 }
@@ -704,8 +807,21 @@ function tickAndDraw(id, f, dt) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const a   = getAnimDef(f);
-  const img = getImg(a.file);
-  if (!img.complete || !img.naturalWidth) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
+  // Utiliser le bon cache selon si c'est un ennemi ou un joueur
+  const img = (f.isEnemy && ENEMY_SPRITES[f.cls]) ? getEnemyImg(a.file) : getImg(a.file);
+  if (!img.complete || !img.naturalWidth) {
+    // Fallback: dessiner l'icône emoji de l'ennemi si le sprite ne charge pas
+    if (f.isEnemy) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = Math.round(canvas.height * 0.55) + 'px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(PVE_ENEMY_ICONS_SPRITE[f.cls] || '👾', canvas.width / 2, canvas.height / 2);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    return;
+  }
 
   f.tick += dt;
   const ms = 1000 / a.fps;
@@ -1047,10 +1163,16 @@ function renderPvpProgression(f) {
         <div style="margin-top:10px">
           <div style="display:flex;justify-content:space-between;font-size:10px;opacity:.5;margin-bottom:4px">
             <span>Niv. PVP ${pvpLvl}</span>
-            <span>${xpInLevel} / ${xpNeeded} XP</span>
+            <span style="opacity:.35;font-size:9px">XP via combats PVE</span>
           </div>
-          <div style="height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7f5cff,#f053c5);border-radius:999px;transition:width .4s ease"></div>
+          <div id="pve-xp-bar-profil" style="margin-top:2px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#33ff99;margin-bottom:4px">
+              <span>Niv. PVE <span id="pve-lvl-badge" style="font-weight:900">—</span></span>
+              <span id="pve-xp-txt" style="opacity:.6">— / — XP</span>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
+              <div id="pve-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1275,7 +1397,12 @@ function showTab(name, ev) {
   if (ev && ev.target) ev.target.classList.add('active');
   if (name !== 'profil') stopProfilIdle();
   if (name !== 'matchmaking' && _mmSearching) stopMatchmaking(); // stopper l'animation idle si on quitte le profil
-  if (name==='profil') loadProfil();
+  if (name==='profil') {
+    loadProfil();
+    // Refresh PVE XP bar if we have data
+    if (_pveData) refreshPveXpBar(_pveData);
+    else api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(()=>{});
+  }
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
@@ -1729,7 +1856,7 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
   if (stage) stage.style.backgroundImage = `url('${bg}')`;
 
   const modal = document.getElementById('replay-modal');
-  document.getElementById('replay-title').textContent = `⚔️ ${f1.name} vs ${f2.name}`;
+  document.getElementById('replay-title').textContent = `${f2.isEnemy ? "🐉" : "⚔️"} ${f1.name} vs ${f2.name}`;
   document.getElementById('replay-log').innerHTML = '';
   document.getElementById('replay-result').style.display = 'none';
   resetArenaResultOverlay();
@@ -1744,7 +1871,8 @@ function openReplay(log, f1, f2, winnerId, rankChange) {
       f1.hp, f2.hp,
       f1.name, f2.name,
       f1.avatar||null, f2.avatar||null,
-      f1.rankInfo, f2.rankInfo
+      f1.rankInfo, f2.rankInfo,
+      f2.isEnemy||false
     );
     playReplay(log, f1, f2, winnerId, rankChange);
   }, 350);
@@ -2407,6 +2535,21 @@ const PVE_ENEMY_ICONS = {
 
 let _pveData = null;
 
+function refreshPveXpBar(d) {
+  // d = response from /api/pve/enemies, contains pveLevel, pveXp, pveXpNeeded
+  const lvlEl  = document.getElementById('pve-lvl-badge');
+  const xpEl   = document.getElementById('pve-xp-txt');
+  const fillEl = document.getElementById('pve-xp-fill');
+  if (!lvlEl || !d) return;
+  const lvl     = d.pveLevel || 1;
+  const xp      = d.pveXp || 0;
+  const needed  = d.pveXpNeeded || 1;
+  const pct     = lvl >= 50 ? 100 : Math.min(100, Math.round(xp / needed * 100));
+  lvlEl.textContent  = lvl >= 50 ? 'MAX (50)' : lvl;
+  xpEl.textContent   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
+  if (fillEl) fillEl.style.width = pct + '%';
+}
+
 async function loadPve() {
   const el = document.getElementById('pve-content');
   el.innerHTML = '<div class="loading">Chargement...</div>';
@@ -2414,6 +2557,7 @@ async function loadPve() {
     const d = await api('/api/pve/enemies');
     _pveData = d;
     renderPve(d);
+    refreshPveXpBar(d);  // Met à jour la barre XP PVE dans le profil aussi
   } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement PVE</div>'; }
 }
 
@@ -2469,14 +2613,15 @@ async function doPveFight(enemyKey, difficulty) {
     // Build fake fighter objects for replay
     const me = myData || { name: 'Toi', pvpSkin: 'forest_ranger', charClass: null, hp: 300 };
     const f1 = { name: me.name, pvpSkin: me.pvpSkin || 'forest_ranger', charClass: me.charClass || null, hp: me.hp || 300, rankInfo: me.rankInfo || null, avatar: me.avatar || null };
-    const f2 = { name: d.enemy.name, pvpSkin: 'forest_ranger', charClass: null, hp: d.enemy.hp, rankInfo: null, avatar: null };
+    const f2 = { name: d.enemy.name, pvpSkin: d.enemy.key, charClass: d.enemy.key, hp: d.enemy.hp, rankInfo: null, avatar: null, isEnemy: true };
 
     // Show rewards
     if (d.rewards) {
       const parts = [];
-      if (d.rewards.xp)   parts.push(`+${d.rewards.xp} XP`);
-      if (d.rewards.gold) parts.push(`+${d.rewards.gold} or`);
-      if (d.rewards.chestEarned) parts.push('🎁 Coffre PVP obtenu !');
+      if (d.rewards.xp)         parts.push(`+${d.rewards.xp} XP PVE`);
+      if (d.rewards.gold)       parts.push(`+${d.rewards.gold} or`);
+      if (d.rewards.chestEarned) parts.push('🎁 Coffre obtenu !');
+      if (d.rewards.pveLevelUp) parts.push(`⬆️ Niv. PVE ${d.rewards.pveLevel} !`);
       if (parts.length) showAlert(parts.join(' · '), 'success');
     } else {
       showAlert('💀 Défaite... Réessaie !', 'error');
@@ -2489,6 +2634,7 @@ async function doPveFight(enemyKey, difficulty) {
     const fresh = await api('/api/pve/enemies');
     _pveData = fresh;
     renderPve(fresh);
+    refreshPveXpBar(fresh);
     // Also refresh profil XP/gold
     loadProfil();
   } catch(e) {
@@ -2501,6 +2647,8 @@ async function doPveFight(enemyKey, difficulty) {
 window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
 loadProfil();
 loadEnergy();
+// Charger le niveau PVE dès le départ pour afficher la barre dans le profil
+api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(() => {});
 </script>
 </body>
 </html>
