@@ -2978,41 +2978,44 @@ async function launchDefi(opponentId, btn) {
   try {
     const d = await api('/api/pvp/defi/fight', { method: 'POST', body: JSON.stringify({ opponentId }) });
 
-    // Afficher résultat
-    const banner = document.getElementById('defi-result');
-    if (banner) {
-      const pts = d.playerWon ? ('+' + d.rankChange + ' pts') : ('-' + d.loserLoss + ' pts');
-      const vsName = d.opponent?.name || '?';
-      if (d.playerWon) {
-        banner.className = 'defi-result-banner win';
-        banner.textContent = '🏆 Victoire contre ' + vsName + ' ! ' + pts + ' de rang';
-      } else {
-        banner.className = 'defi-result-banner lose';
-        banner.textContent = '💀 Défaite contre ' + vsName + '. ' + pts + ' de rang';
-      }
-      banner.style.display = 'block';
-      setTimeout(function() { if (banner) banner.style.display = 'none'; }, 5000);
-    }
-
-    // Marquer le bouton comme fait
+    // Marquer le bouton comme fait immédiatement
     if (btn) { btn.textContent = '✓ Défié'; btn.disabled = true; }
 
-    // Rafraîchir les badges
+    // Ouvrir le replay animé
+    if (d.log && d.fighters) {
+      const f1 = d.fighters.f1;
+      const f2 = d.fighters.f2;
+      // Pts de rang affiché dans le replay
+      const displayRankChange = d.playerWon ? d.rankChange : -d.loserLoss;
+      openReplay(d.log, f1, f2, d.winnerId, displayRankChange);
+    }
+
+    // Toast récompenses
+    var parts = [];
+    if (d.playerWon) {
+      parts.push('+' + d.rankChange + ' pts de rang');
+      if (d.goldWon) parts.push('+' + d.goldWon + ' Or PVE');
+    } else {
+      if (d.loserLoss) parts.push('-' + d.loserLoss + ' pts de rang');
+    }
+    if (parts.length) showAlert((d.playerWon ? '🏆 Victoire ! ' : '💀 Défaite. ') + parts.join(' · '), d.playerWon ? 'success' : 'error');
+
+    // Rafraîchir les badges énergie/défis sans recharger toute la liste
     const fresh = await api('/api/pvp/defi/players');
     _defiData = fresh;
-    const leftEl   = document.getElementById('defi-left-badge');
-    const energyEl = document.getElementById('defi-energy-badge');
+    var leftEl   = document.getElementById('defi-left-badge');
+    var energyEl = document.getElementById('defi-energy-badge');
     if (leftEl) {
-      const col = fresh.defiLeft <= 0 ? '#ff4444' : fresh.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
+      var col = fresh.defiLeft <= 0 ? '#ff4444' : fresh.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
       leftEl.innerHTML = '<span style="color:' + col + '">⚔️ ' + fresh.defiLeft + '/' + fresh.maxDaily + ' défis restants</span>';
     }
     if (energyEl) {
-      const col = fresh.energy <= 0 ? '#ff4444' : fresh.energy < 30 ? '#ffd84d' : '#aaa';
-      const min = fresh.nextRegenMs ? Math.ceil(fresh.nextRegenMs / 60000) : '?';
-      energyEl.innerHTML = '<span style="color:' + col + '">⚡ ' + fresh.energy + '/100 énergie</span>'
+      var ecol = fresh.energy <= 0 ? '#ff4444' : fresh.energy < 30 ? '#ffd84d' : '#aaa';
+      var min  = fresh.nextRegenMs ? Math.ceil(fresh.nextRegenMs / 60000) : '?';
+      energyEl.innerHTML = '<span style="color:' + ecol + '">⚡ ' + fresh.energy + '/100 énergie</span>'
         + (fresh.energy < 100 ? ' · +10 dans ' + min + ' min' : '');
     }
-    // Rafraîchir profil (rang mis à jour)
+    // Rafraîchir profil (rang + or PVE mis à jour)
     loadProfil();
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '⚔️ Défier'; }

@@ -7667,7 +7667,7 @@ app.post('/api/pvp/defi/fight', auth, async (req, res) => {
 
     // Simuler le combat
     const [challenger, opponent] = await Promise.all([buildPvpFighter(userId), buildPvpFighter(opponentId)]);
-    const { winner } = simulatePvpBattle(challenger, opponent);
+    const { log: defiLog, winner } = simulatePvpBattle(challenger, opponent);
     const winnerId = winner.name === challenger.name ? userId : opponentId;
     const loserId  = winnerId === userId ? opponentId : userId;
 
@@ -7680,13 +7680,14 @@ app.post('/api/pvp/defi/fight', auth, async (req, res) => {
     const loserLoss = Math.round(rankChange * lossMult);
 
     // Commit
+    const DEFI_GOLD_WIN = 25;
     const newEnergy    = energy - DEFI_ENERGY_COST;
     const newDefiToday = defiToday + 1;
     await client.query(
       `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2, defi_today=$3, defi_day_key=$4 WHERE id=$5`,
       [newEnergy, lastRefill, newDefiToday, todayKey, userId]
     );
-    await client.query(`UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1 WHERE id=$2`, [rankChange, winnerId]);
+    await client.query(`UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1, pve_gold=pve_gold+$2 WHERE id=$3`, [rankChange, DEFI_GOLD_WIN, winnerId]);
     await client.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [loserLoss, loserId]);
     await client.query(
       `INSERT INTO pvp_defi_log(challenger_id,opponent_id,winner_id,rank_change,day_key,fought_at) VALUES($1,$2,$3,$4,$5,$6)`,
@@ -7702,16 +7703,29 @@ app.post('/api/pvp/defi/fight', auth, async (req, res) => {
     );
     await client.query('COMMIT');
 
+    // Préparer les fighters pour le replay côté client
+    const f1 = {
+      name: challenger.name, avatar: challenger.avatar||null,
+      pvpSkin: challenger.pvpSkin||'forest_ranger', charClass: challenger.charClass||null,
+      hp: challenger.hp, rankInfo: challenger.rankInfo,
+    };
+    const f2 = {
+      name: opponent.name, avatar: opponent.avatar||null,
+      pvpSkin: opponent.pvpSkin||'forest_ranger', charClass: opponent.charClass||null,
+      hp: opponent.hp, rankInfo: opponent.rankInfo,
+    };
+
     res.json({
       ok: true,
       playerWon:  winnerId === userId,
+      winnerId,
       rankChange,
       loserLoss,
+      goldWon:    winnerId === userId ? DEFI_GOLD_WIN : 0,
       defiLeft:   Math.max(0, DEFI_DAILY_MAX - newDefiToday),
       energy:     newEnergy,
-      winnerName: winner.name === challenger.name ? challenger.name : opponent.name,
-      challenger: { name: challenger.name, rankInfo: challenger.rankInfo },
-      opponent:   { name: opponent.name,   rankInfo: opponent.rankInfo },
+      log:        defiLog,
+      fighters:   { f1, f2 },
     });
   } catch(e) {
     await client.query('ROLLBACK');
