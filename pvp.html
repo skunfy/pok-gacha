@@ -419,6 +419,20 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
         <div id="pve-fights-left" style="font-size:13px;font-weight:700;opacity:.7"></div>
       </div>
       <div style="font-size:12px;opacity:.45;margin-top:6px">Bats des ennemis pour gagner XP &amp; or · Coffre toutes les 3 victoires · 9 combats/jour</div>
+
+      <!-- Barre XP PVE + Coffres disponibles -->
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#33ff99;margin-bottom:5px">
+            <span>Niv. PVE <span id="pve-tab-lvl" style="font-weight:900">—</span></span>
+            <span id="pve-tab-xp" style="opacity:.6">— / — XP</span>
+          </div>
+          <div style="height:7px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
+            <div id="pve-tab-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>
+          </div>
+        </div>
+        <div id="pve-chest-btn-wrap" style="flex-shrink:0"></div>
+      </div>
     </div>
     <div id="pve-content"><div class="loading">Chargement...</div></div>
   </div>
@@ -1145,11 +1159,12 @@ function renderPvpProgression(f) {
     </div>
   `).join('');
 
+  // Coffres disponibles (gagnés via PVE toutes les 3 victoires)
   const chestHtml = f.pvpChests > 0
-    ? `<button onclick="openPvpChest()" style="padding:8px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:13px">
-        🎁 Ouvrir coffre (${f.pvpChests})
+    ? `<button onclick="openPveChest()" style="padding:8px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:13px;width:100%">
+        🎁 Ouvrir coffre (${f.pvpChests} dispo)
       </button>`
-    : `<div style="font-size:11px;opacity:.4;text-align:center">Prochain coffre : ${3 - ((f.winStreak||0)%3)} victoire(s)</div>`;
+    : `<div style="font-size:11px;opacity:.4;text-align:center">Aucun coffre · Gagne des combats PVE !</div>`;
 
   return `
     <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -1177,12 +1192,10 @@ function renderPvpProgression(f) {
         </div>
       </div>
 
-      <!-- Or PVP + Coffre -->
+      <!-- Or PVE (dollax) + Coffres PVE -->
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center">
-        <div style="font-size:22px;font-weight:900;color:#ffd84d">⚔️ ${f.pvpGold||0} <span style="font-size:12px;opacity:.5">Or PVP</span></div>
-        <div style="width:100%;background:rgba(255,255,255,.06);border-radius:6px;height:6px;overflow:hidden">
-          <div style="height:100%;width:${((f.winStreak||0)%3)/3*100}%;background:linear-gradient(90deg,#7f5cff,#f053c5);border-radius:6px;transition:width .4s"></div>
-        </div>
+        <div style="font-size:18px;font-weight:900;color:#33ff99">🐉 <span id="profil-money">${f.money||0}</span> <span style="font-size:12px;opacity:.5">Or</span></div>
+        <div style="font-size:10px;opacity:.4;text-align:center;line-height:1.5">Gagné en combattant des ennemis PVE<br>Utilisable pour la Forge</div>
         ${chestHtml}
       </div>
 
@@ -1262,7 +1275,7 @@ function showPvpItemDetail(itemId) {
 
   const forgeBtn = nextCost !== null
     ? `<button onclick="forgePvpItem(${item.id})" style="width:100%;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px">
-        ⚒️ Améliorer +${fl+1} — ${nextCost} Or PVP
+        ⚒️ Améliorer +${fl+1} — ${nextCost} Or
         ${isMilestone ? '<div style="font-size:10px;opacity:.8">⭐ Nouvelle ligne de stat au prochain palier !</div>' : ''}
       </button>`
     : `<div style="text-align:center;font-size:12px;opacity:.4">Niveau maximum atteint (+15)</div>`;
@@ -1320,13 +1333,20 @@ async function forgePvpItem(id) {
     document.getElementById('pvp-item-modal')?.remove();
     if (d.isMilestone) showAlert(`⭐ Palier atteint ! Nouvelle stat bonus ajoutée !`, 'success');
     loadProfil();
-  } catch(e) { showAlert(e.message||'Or PVP insuffisant', 'error'); }
+  } catch(e) { showAlert(e.message||'Or insuffisant', 'error'); }
 }
-async function openPvpChest() {
+async function openPveChest() {
   try {
     const d = await api('/api/pvp/open-chest', { method:'POST', body:'{}' });
     showChestRewardPopup(d.item);
     loadProfil();
+    // Aussi rafraîchir le compteur dans l'onglet PVE
+    if (_pveData) {
+      const fresh = await api('/api/pve/enemies');
+      _pveData = fresh;
+      renderPve(fresh);
+      refreshPveXpBar(fresh);
+    }
   } catch(e) { showAlert(e.message||'Erreur', 'error'); }
 }
 
@@ -2155,7 +2175,7 @@ async function loadForge() {
   try {
     const [inv, me] = await Promise.all([ api('/api/pvp/inventory'), api('/api/pvp/me') ]);
     _pvpForgeInv  = inv; _pvpInventory = inv;
-    _pvpForgeGold = Number(me.fighter?.pvpGold || 0);
+    _pvpForgeGold = Number(me.fighter?.money || 0);
     renderPvpForge();
   } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement forge</div>'; }
 }
@@ -2209,20 +2229,20 @@ function renderPvpForge() {
 
   // ── COL CENTRE ──
   let centerHtml = '<img class="forge-anvil" src="'+FORGE_IMG_PVP+'" alt="Forge" onerror="this.remove()">';
-  centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">⚔️ '+gold+' Or PVP</div>';
+  centerHtml += '<div style="font-size:13px;font-weight:900;color:#33ff99;text-align:center">🐉 '+gold+' Or</div>';
   if (cost!==null&&item&&!isMax) {
-    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#ffd84d':'#ff4444')+'">💰 '+cost+' Or PVP</div>';
+    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#33ff99':'#ff4444')+'">💰 '+cost+' Or</div>';
   } else if (isMax) {
     centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
   } else if (!item) {
     centerHtml += '<div style="font-size:12px;opacity:.35;text-align:center">Sélectionne<br>un item</div>';
   }
-  const btnLabel = !item?'Choisir un item':isMax?'✨ MAX':canForge?'⚒️ Forger +'+(fl+1):'Or PVP insuffisant';
+  const btnLabel = !item?'Choisir un item':isMax?'✨ MAX':canForge?'⚒️ Forger +'+(fl+1):'Or insuffisant';
   centerHtml += '<button class="forge-btn" id="pvp-forge-btn" onclick="doPvpForge()" '+(!canForge||isMax?'disabled':'')+'>'+btnLabel+'</button>';
 
   // ── INVENTAIRE ──
   let invHtml = !inventory.length
-    ? '<div style="opacity:.35;font-size:13px;text-align:center;padding:16px">Aucun item — gagne des coffres en combat !</div>'
+    ? '<div style="opacity:.35;font-size:13px;text-align:center;padding:16px">Aucun item — gagne des coffres en PVE !</div>'
     : inventory.map(i => {
         const sel=i.id===_pvpForgeSelItem?'selected':'';
         const col=PVP_RARITY_COLOR[i.rarity]||'#aaa';
@@ -2233,7 +2253,7 @@ function renderPvpForge() {
       }).join('');
 
   el.innerHTML = '<div class="forge-wrap">'
-    + '<div class="card"><div class="card-title" style="margin-bottom:16px">⚒️ Forge PVP</div>'
+    + '<div class="card"><div class="card-title" style="margin-bottom:16px">⚒️ Forge — coût en Or</div>'
     +   '<div class="forge-main"><div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
     +   itemSlotHtml+'</div><div class="forge-col-center">'+centerHtml+'</div></div>'
     +   '<div id="pvpForgeAlert" style="margin-top:10px"></div></div>'
@@ -2274,7 +2294,7 @@ async function doPvpForge() {
     if (anvil){anvil.style.transform='scale(1.1) rotate(-5deg)';setTimeout(()=>{anvil.style.transform='';},300);}
     const d=await api('/api/pvp/forge',{method:'POST',body:JSON.stringify({itemId:_pvpForgeSelItem})});
     const [inv,me]=await Promise.all([api('/api/pvp/inventory'),api('/api/pvp/me')]);
-    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.pvpGold||0);
+    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.money||0);
     pvpForgeSuccessAnim();
     const msg=d.isMilestone?'⭐ Palier +'+d.newLevel+' ! Nouvelle stat ajoutée !':'✅ Succès ! Équipement amélioré à +'+d.newLevel+' !';
     if (alertEl) alertEl.innerHTML='<div class="alert alert-success">'+msg+'</div>';
@@ -2282,7 +2302,7 @@ async function doPvpForge() {
     renderPvpForge();
   } catch(e) {
     pvpForgeFailAnim();
-    if (alertEl) alertEl.innerHTML='<div class="alert alert-error">'+esc(e.message||'Or PVP insuffisant')+'</div>';
+    if (alertEl) alertEl.innerHTML='<div class="alert alert-error">'+esc(e.message||'Or insuffisant')+'</div>';
     if (btn) btn.disabled=false;
     renderPvpForge();
   }
@@ -2536,18 +2556,29 @@ const PVE_ENEMY_ICONS = {
 let _pveData = null;
 
 function refreshPveXpBar(d) {
-  // d = response from /api/pve/enemies, contains pveLevel, pveXp, pveXpNeeded
-  const lvlEl  = document.getElementById('pve-lvl-badge');
-  const xpEl   = document.getElementById('pve-xp-txt');
-  const fillEl = document.getElementById('pve-xp-fill');
-  if (!lvlEl || !d) return;
+  if (!d) return;
   const lvl     = d.pveLevel || 1;
   const xp      = d.pveXp || 0;
   const needed  = d.pveXpNeeded || 1;
   const pct     = lvl >= 50 ? 100 : Math.min(100, Math.round(xp / needed * 100));
-  lvlEl.textContent  = lvl >= 50 ? 'MAX (50)' : lvl;
-  xpEl.textContent   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
+  const lvlTxt  = lvl >= 50 ? 'MAX (50)' : String(lvl);
+  const xpTxt   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
+
+  // Barre dans le profil
+  const lvlEl  = document.getElementById('pve-lvl-badge');
+  const xpEl   = document.getElementById('pve-xp-txt');
+  const fillEl = document.getElementById('pve-xp-fill');
+  if (lvlEl) lvlEl.textContent = lvlTxt;
+  if (xpEl)  xpEl.textContent  = xpTxt;
   if (fillEl) fillEl.style.width = pct + '%';
+
+  // Barre dans l'onglet PVE
+  const tabLvl  = document.getElementById('pve-tab-lvl');
+  const tabXp   = document.getElementById('pve-tab-xp');
+  const tabFill = document.getElementById('pve-tab-xp-fill');
+  if (tabLvl) tabLvl.textContent = lvlTxt;
+  if (tabXp)  tabXp.textContent  = xpTxt;
+  if (tabFill) tabFill.style.width = pct + '%';
 }
 
 async function loadPve() {
@@ -2567,6 +2598,29 @@ function renderPve(d) {
   if (flEl) {
     const col = d.fightsLeft <= 0 ? '#ff4444' : d.fightsLeft <= 3 ? '#ffd84d' : '#33ff99';
     flEl.innerHTML = `<span style="color:${col}">⚡ ${d.fightsLeft}/${d.maxDaily} combats restants</span>`;
+  }
+
+  // Barre XP PVE dans l'onglet PVE
+  const tabLvl  = document.getElementById('pve-tab-lvl');
+  const tabXp   = document.getElementById('pve-tab-xp');
+  const tabFill = document.getElementById('pve-tab-xp-fill');
+  if (tabLvl && d.pveLevel !== undefined) {
+    const lvl    = d.pveLevel || 1;
+    const xp     = d.pveXp || 0;
+    const needed = d.pveXpNeeded || 1;
+    const pct    = lvl >= 50 ? 100 : Math.min(100, Math.round(xp / needed * 100));
+    tabLvl.textContent  = lvl >= 50 ? 'MAX' : lvl;
+    if (tabXp)   tabXp.textContent   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
+    if (tabFill) tabFill.style.width = pct + '%';
+  }
+
+  // Coffres disponibles dans l'onglet PVE
+  const chestWrap = document.getElementById('pve-chest-btn-wrap');
+  if (chestWrap && myData) {
+    const chests = myData.pvpChests || 0;
+    chestWrap.innerHTML = chests > 0
+      ? `<button onclick="openPveChest()" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:12px;white-space:nowrap">🎁 ${chests} coffre${chests>1?'s':''}</button>`
+      : `<div style="font-size:11px;opacity:.35;white-space:nowrap">Aucun coffre</div>`;
   }
 
   el.innerHTML = d.enemies.map(e => {

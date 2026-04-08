@@ -6540,7 +6540,7 @@ function pvpWinRewards(rankName, pvpLevel) {
 async function buildPvpFighter(userId) {
   const char  = await getOrCreateCharacter(userId);
   const userQ = await pool.query(
-    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests FROM users WHERE id=$1`,
+    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, money FROM users WHERE id=$1`,
     [userId]
   );
   const u = userQ.rows[0];
@@ -6583,6 +6583,7 @@ async function buildPvpFighter(userId) {
     pvpXp:       Number(u.pvp_xp     || 0),
     pvpChests:   Number(u.pvp_chests || 0),
     winStreak:   Number(u.pvp_win_streak || 0),
+    money:       Number(u.money       || 0),
     rankInfo,
     charClass:   char.char_class,
     pvpSkin:     char.pvp_skin || 'forest_ranger',
@@ -6819,8 +6820,8 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
     if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau max atteint (+15)" }); }
 
     const cost = pvpForgeCost(def.rarity, forgeLevel);
-    const userQ = await client.query(`SELECT pvp_gold FROM users WHERE id=$1`, [req.user.id]);
-    const gold  = Number(userQ.rows[0]?.pvp_gold || 0);
+    const userQ = await client.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    const gold  = Number(userQ.rows[0]?.money || 0);
     if (gold < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${cost} requis)` }); }
 
     const newLevel   = forgeLevel + 1;
@@ -6835,7 +6836,7 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
       extraStats[chosenStat] = (extraStats[chosenStat] || 0) + bonusVal;
     }
 
-    await client.query(`UPDATE users SET pvp_gold=pvp_gold-$1 WHERE id=$2`, [cost, req.user.id]);
+    await client.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [cost, req.user.id]);
     await client.query(`UPDATE pvp_equipment SET forge_level=$1, extra_stats=$2 WHERE id=$3`, [newLevel, JSON.stringify(extraStats), itemId]);
     await client.query('COMMIT');
 
@@ -7367,13 +7368,14 @@ app.post('/api/pve/fight', auth, async (req, res) => {
     );
 
     let xpGained = 0, goldGained = 0, chestEarned = false, winsAfter = 0;
+    let pveProgress = { newLevel: 1, newXp: 0, levelsGained: 0 };
 
     if (playerWon) {
       xpGained   = enemyDef.xp[difficulty];
       goldGained = enemyDef.gold[difficulty];
 
       // XP PVE (système propre, niveau 1-50)
-      const pveProgress = await addPveXp(userId, xpGained, client);
+      pveProgress = await addPveXp(userId, xpGained, client);
       // Or dollax
       await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [goldGained, userId]);
 
