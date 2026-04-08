@@ -969,6 +969,21 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_rare      INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_epic      INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_legendary INTEGER NOT NULL DEFAULT 0`);
+  // Défis (mode fantôme)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_today   INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_day_key TEXT    NOT NULL DEFAULT ''`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_defi_log (
+      id            SERIAL PRIMARY KEY,
+      challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      opponent_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      winner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      rank_change   INTEGER NOT NULL DEFAULT 0,
+      day_key       TEXT NOT NULL,
+      fought_at     BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_defi_log_challenger ON pvp_defi_log(challenger_id, day_key)`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pve_progress (
@@ -6359,9 +6374,11 @@ function getRankInfo(pts) {
   return PVP_RANKS.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS[0];
 }
 
-// Calcul ELO simplifié
+// Calcul ELO — K variable selon écart de rang
+// Faible bat fort → gagne beaucoup | Fort bat faible → gagne peu
 function calcElo(winnerRank, loserRank) {
-  const K = 32;
+  const diff = Math.abs(winnerRank - loserRank);
+  const K = diff >= 400 ? 48 : diff >= 200 ? 40 : diff >= 100 ? 36 : 32;
   const expected = 1 / (1 + Math.pow(10, (loserRank - winnerRank) / 400));
   return Math.round(K * (1 - expected));
 }
@@ -6938,6 +6955,10 @@ app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
 
     const rank   = Number(me.pvp_rank);
     const margin = 400;
+    // Paires bannies — ces deux IDs ne se rencontrent jamais
+    const BANNED_PAIRS = [[13, 16]];
+    const isBanned = (a, b) => BANNED_PAIRS.some(p => (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+
     const opQ = await pool.query(`
       SELECT q.user_id, u.name, u.avatar, q.pvp_rank
       FROM pvp_queue q
@@ -6945,14 +6966,13 @@ app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
       WHERE q.user_id != $1
         AND q.pvp_rank BETWEEN $2 AND $3
       ORDER BY ABS(q.pvp_rank - $4) ASC, q.joined_at ASC
-      LIMIT 1
+      LIMIT 10
     `, [req.user.id, Math.max(0, rank - margin), rank + margin, rank]);
 
-    if (!opQ.rows.length) {
+    const opponent = opQ.rows.find(r => !isBanned(req.user.id, r.user_id));
+    if (!opponent) {
       return res.json({ status: 'waiting', opponent: null });
     }
-
-    const opponent = opQ.rows[0];
     await pool.query(`DELETE FROM pvp_queue WHERE user_id = ANY($1)`, [[req.user.id, opponent.user_id]]);
 
     const battleQ = await pool.query(
@@ -7524,6 +7544,180 @@ app.post('/api/pve/fight', auth, async (req, res) => {
   } finally { client.release(); }
 });
 
+
+
+// =========================
+// DÉFIS (mode fantôme)
+// =========================
+const DEFI_DAILY_MAX   = 10;
+const DEFI_ENERGY_COST = 10;
+const DEFI_ENERGY_REGEN_MS = 3 * 60 * 60 * 1000; // +10 toutes les 3h
+const DEFI_ELO_MULT    = 0.5; // moitié ELO normal
+const DEFI_BANNED_PAIRS = [[13, 16]];
+const defiIsBanned = (a, b) => DEFI_BANNED_PAIRS.some(p => (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+
+async function getDefiEnergy(userId) {
+  const r = await pool.query(`SELECT pvp_energy, pvp_energy_last_refill FROM users WHERE id=$1`, [userId]);
+  let energy     = Number(r.rows[0]?.pvp_energy ?? 100);
+  let lastRefill = Number(r.rows[0]?.pvp_energy_last_refill ?? Date.now());
+  // Regen 3h pour défis (on utilise la même colonne d'énergie)
+  const tranches = Math.floor((Date.now() - lastRefill) / DEFI_ENERGY_REGEN_MS);
+  if (tranches > 0) {
+    energy = Math.min(100, energy + tranches * DEFI_ENERGY_COST);
+    lastRefill += tranches * DEFI_ENERGY_REGEN_MS;
+    await pool.query(`UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`, [energy, lastRefill, userId]);
+  }
+  return { energy, lastRefill };
+}
+
+// GET /api/pvp/defi/players
+app.get('/api/pvp/defi/players', auth, async (req, res) => {
+  try {
+    const userId   = req.user.id;
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    const [doneQ, dayQ, playersQ] = await Promise.all([
+      pool.query(`SELECT opponent_id FROM pvp_defi_log WHERE challenger_id=$1 AND day_key=$2`, [userId, todayKey]),
+      pool.query(`SELECT defi_today, defi_day_key FROM users WHERE id=$1`, [userId]),
+      pool.query(`
+        SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses,
+               pc.char_class, pc.pvp_skin
+        FROM users u
+        LEFT JOIN player_character pc ON pc.user_id = u.id
+        WHERE u.id != $1
+        ORDER BY u.pvp_rank DESC
+        LIMIT 100
+      `, [userId]),
+    ]);
+
+    const doneIds   = new Set(doneQ.rows.map(r => r.opponent_id));
+    const u         = dayQ.rows[0] || {};
+    const defiToday = u.defi_day_key === todayKey ? Number(u.defi_today || 0) : 0;
+    const { energy, lastRefill } = await getDefiEnergy(userId);
+
+    // Calcul du prochain regen énergie
+    const elapsed = Date.now() - lastRefill;
+    const nextRegenMs = DEFI_ENERGY_REGEN_MS - (elapsed % DEFI_ENERGY_REGEN_MS);
+
+    const players = playersQ.rows
+      .filter(p => !defiIsBanned(userId, p.id))
+      .map(p => ({
+        id:          p.id,
+        name:        p.name,
+        avatar:      p.avatar || null,
+        pvpRank:     Number(p.pvp_rank || 1000),
+        wins:        Number(p.pvp_wins || 0),
+        losses:      Number(p.pvp_losses || 0),
+        charClass:   p.char_class || null,
+        pvpSkin:     p.pvp_skin || 'forest_ranger',
+        rankInfo:    getRankInfo(Number(p.pvp_rank || 1000)),
+        alreadyDone: doneIds.has(p.id),
+      }));
+
+    res.json({
+      players,
+      defiLeft: Math.max(0, DEFI_DAILY_MAX - defiToday),
+      defiToday,
+      maxDaily: DEFI_DAILY_MAX,
+      energy,
+      nextRegenMs,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/defi/fight
+app.post('/api/pvp/defi/fight', auth, async (req, res) => {
+  const opponentId = Number(req.body?.opponentId || 0) | 0;
+  if (!opponentId) return res.status(400).json({ error: 'opponentId requis' });
+  const userId = req.user.id;
+
+  if (defiIsBanned(userId, opponentId)) return res.status(403).json({ error: 'Défi non autorisé' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    // Vérifier limite journalière + énergie
+    const dayQ = await client.query(`SELECT defi_today, defi_day_key FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+    const u = dayQ.rows[0];
+    const defiToday = u.defi_day_key === todayKey ? Number(u.defi_today || 0) : 0;
+    if (defiToday >= DEFI_DAILY_MAX) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Limite atteinte (${DEFI_DAILY_MAX} défis/jour)` });
+    }
+
+    // Énergie (regen 3h)
+    const { energy, lastRefill } = await getDefiEnergy(userId);
+    if (energy < DEFI_ENERGY_COST) {
+      await client.query('ROLLBACK');
+      const min = Math.ceil((DEFI_ENERGY_REGEN_MS - ((Date.now() - lastRefill) % DEFI_ENERGY_REGEN_MS)) / 60000);
+      return res.status(400).json({ error: `Énergie insuffisante — rechargement dans ${min} min` });
+    }
+
+    // Déjà défié aujourd'hui ?
+    const doneQ = await client.query(
+      `SELECT 1 FROM pvp_defi_log WHERE challenger_id=$1 AND opponent_id=$2 AND day_key=$3`,
+      [userId, opponentId, todayKey]
+    );
+    if (doneQ.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: "Tu as déjà défié ce joueur aujourd'hui" });
+    }
+
+    // Simuler le combat
+    const [challenger, opponent] = await Promise.all([buildPvpFighter(userId), buildPvpFighter(opponentId)]);
+    const { winner } = simulatePvpBattle(challenger, opponent);
+    const winnerId = winner.name === challenger.name ? userId : opponentId;
+    const loserId  = winnerId === userId ? opponentId : userId;
+
+    // ELO réduit
+    const winnerRank = winnerId === userId ? challenger.rank : opponent.rank;
+    const loserRank  = loserId  === userId ? challenger.rank : opponent.rank;
+    const rankChange = Math.max(1, Math.round(calcElo(winnerRank, loserRank) * DEFI_ELO_MULT));
+    const loserRankInfo = getRankInfo(loserRank);
+    const lossMult = loserRankInfo.name === 'Bronze' ? 0 : loserRankInfo.name === 'Argent' ? 0.5 : loserRankInfo.name === 'Or' ? 0.75 : 1;
+    const loserLoss = Math.round(rankChange * lossMult);
+
+    // Commit
+    const newEnergy    = energy - DEFI_ENERGY_COST;
+    const newDefiToday = defiToday + 1;
+    await client.query(
+      `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2, defi_today=$3, defi_day_key=$4 WHERE id=$5`,
+      [newEnergy, lastRefill, newDefiToday, todayKey, userId]
+    );
+    await client.query(`UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1 WHERE id=$2`, [rankChange, winnerId]);
+    await client.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [loserLoss, loserId]);
+    await client.query(
+      `INSERT INTO pvp_defi_log(challenger_id,opponent_id,winner_id,rank_change,day_key,fought_at) VALUES($1,$2,$3,$4,$5,$6)`,
+      [userId, opponentId, winnerId, rankChange, todayKey, Date.now()]
+    );
+    // Notif à l'adversaire
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'defi',$2,$3,$4,0,$5)`,
+      [opponentId,
+       winnerId === opponentId ? '⚔️ Défi reçu — Victoire !' : '⚔️ Défi reçu — Défaite',
+       winnerId === opponentId ? `${challenger.name} t'a défié... et a perdu ! +${rankChange} pts` : `${challenger.name} t'a défié et a gagné. -${loserLoss} pts`,
+       JSON.stringify({ challengerName: challenger.name }), Date.now()]
+    );
+    await client.query('COMMIT');
+
+    res.json({
+      ok: true,
+      playerWon:  winnerId === userId,
+      rankChange,
+      loserLoss,
+      defiLeft:   Math.max(0, DEFI_DAILY_MAX - newDefiToday),
+      energy:     newEnergy,
+      winnerName: winner.name === challenger.name ? challenger.name : opponent.name,
+      challenger: { name: challenger.name, rankInfo: challenger.rankInfo },
+      opponent:   { name: opponent.name,   rankInfo: opponent.rankInfo },
+    });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
 
 // =========================
 // RÉCOMPENSES HEBDOMADAIRES ELO

@@ -382,6 +382,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .radio-vol{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.15);border-radius:999px;outline:none;cursor:pointer}
 .radio-vol::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#ffd84d;cursor:pointer}
 
+
+/* ══ DÉFIS ══ */
+.defi-player-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:7px;transition:.15s}
+.defi-player-row:hover{border-color:var(--border2)}
+.defi-player-row.done{opacity:.45}
+.defi-avatar{width:44px;height:44px;border-radius:12px;background:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px solid rgba(255,255,255,.08)}
+.defi-info{flex:1;min-width:0}
+.defi-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.defi-rank{font-size:11px;opacity:.5;margin-top:2px}
+.defi-btn{padding:7px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0;transition:.15s}
+.defi-btn:hover{opacity:.85;transform:translateY(-1px)}
+.defi-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.defi-result-banner{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;margin-bottom:10px;display:none}
+.defi-result-banner.win{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.25);color:#33ff99}
+.defi-result-banner.lose{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.2);color:#ff8888}
+
 </style>
 </head>
 <body>
@@ -392,6 +408,7 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
     <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚔️ PVP</button>
+    <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">🗡️ Défis</button>
     <button class="tab-btn" onclick="showTab('pve',event)" id="pve-tab">🐉 PVE</button>
     <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
     <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
@@ -410,7 +427,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
   <div id="sec-matchmaking" class="section">
     <div class="card">
-      <div id="energy-bar-mm"></div>
       <div class="card-title">⚡ Matchmaking</div>
       <!-- Récompenses hebdomadaires ELO -->
       <div id="weekly-rewards-bar" style="margin-bottom:14px;background:rgba(255,216,77,.05);border:1px solid rgba(255,216,77,.15);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -452,6 +468,22 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div class="card-title">Mes combats récents</div>
       <div id="hist-content"><div class="loading">Chargement...</div></div>
     </div>
+  </div>
+
+  <div id="sec-defis" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">🗡️ Défis — Mode Fantôme</div>
+          <div style="font-size:11px;opacity:.45">Défie les joueurs • Pas de replay • ELO ×½ • 1 défi/joueur/jour</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div id="defi-left-badge" style="font-size:13px;font-weight:700"></div>
+          <div id="defi-energy-badge" style="font-size:11px;opacity:.6"></div>
+        </div>
+      </div>
+    </div>
+    <div id="defi-content"><div class="loading">Chargement...</div></div>
   </div>
 
   <div id="sec-pve" class="section">
@@ -1101,8 +1133,7 @@ async function loadEnergy() {
 }
 
 function refreshEnergyUI() {
-  const el = document.getElementById('energy-bar-mm');
-  if (el) el.innerHTML = energyState ? buildEnergyHtml(energyState) : '';
+  // Barre énergie retirée du matchmaking — énergie visible dans l'onglet Défis
 }
 
 function hasEnoughEnergy() {
@@ -1504,7 +1535,8 @@ function showTab(name, ev) {
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
   if (name==='pve') loadPve();
-  if (name==='matchmaking') { refreshEnergyUI(); initMatchmakingTab(); loadWeeklyRewards(); }
+  if (name==='matchmaking') { initMatchmakingTab(); loadWeeklyRewards(); }
+  if (name==='defis') loadDefis();
 }
 
 function rankBadgeHtml(rankInfo, pts) {
@@ -2392,7 +2424,6 @@ let _mmSearching    = false;
 
 function initMatchmakingTab() {
   stopMatchmaking();
-  refreshEnergyUI();
 }
 
 async function startMatchmaking() {
@@ -2859,6 +2890,134 @@ async function loadWeeklyRewards() {
     el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">${rows}</div>
       <div style="font-size:10px;opacity:.5;text-align:right;margin-top:4px">Ton rang actuel : <b style="color:#ffd84d">${r.rank}</b> → +${r.dollax.toLocaleString()} dollax lundi</div>`;
   } catch(e) { if (el) el.innerHTML = ''; }
+}
+
+
+// ══════════════════════════════════════════════════
+// DÉFIS — mode fantôme
+// ══════════════════════════════════════════════════
+let _defiData = null;
+let _defiSearchTerm = '';
+
+async function loadDefis() {
+  const el = document.getElementById('defi-content');
+  el.innerHTML = '<div class="loading">Chargement...</div>';
+  try {
+    const d = await api('/api/pvp/defi/players');
+    _defiData = d;
+    renderDefis(d);
+  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement</div>'; }
+}
+
+function renderDefis(d) {
+  // Badges
+  const leftEl   = document.getElementById('defi-left-badge');
+  const energyEl = document.getElementById('defi-energy-badge');
+  if (leftEl) {
+    const col = d.defiLeft <= 0 ? '#ff4444' : d.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
+    leftEl.innerHTML = '<span style="color:' + col + '">⚔️ ' + d.defiLeft + '/' + d.maxDaily + ' défis restants</span>';
+  }
+  if (energyEl) {
+    const col = d.energy <= 0 ? '#ff4444' : d.energy < 30 ? '#ffd84d' : '#aaa';
+    const min = d.nextRegenMs ? Math.ceil(d.nextRegenMs / 60000) : '?';
+    energyEl.innerHTML = '<span style="color:' + col + '">⚡ ' + d.energy + '/100 énergie</span>'
+      + (d.energy < 100 ? ' · <span style="opacity:.5">+10 dans ' + min + ' min</span>' : '');
+  }
+
+  const el = document.getElementById('defi-content');
+
+  // Barre de recherche
+  let searchHtml = '<div style="margin-bottom:12px;display:flex;gap:8px">'
+    + '<input id="defi-search" type="text" placeholder="🔍 Rechercher un joueur..." '
+    + 'style="flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px" '
+    + 'oninput="filterDefis(this.value)">'
+    + '</div>';
+
+  // Banner résultat (réutilisé)
+  let bannerHtml = '<div id="defi-result" class="defi-result-banner"></div>';
+
+  // Trier : non faits en premier, puis par rang
+  const sorted = [...d.players].sort(function(a, b) {
+    if (a.alreadyDone !== b.alreadyDone) return a.alreadyDone ? 1 : -1;
+    return b.pvpRank - a.pvpRank;
+  });
+
+  const rowsHtml = sorted.map(function(p) {
+    const col     = RANK_COLORS[p.rankInfo?.name] || '#aaa';
+    const rankName = p.rankInfo?.name || 'Bronze';
+    const avBg    = p.avatar ? "background-image:url('" + p.avatar.replace(/'/g,"\'") + "');background-size:cover;font-size:0" : '';
+    const avTxt   = p.avatar ? '' : '🧑';
+    const done    = p.alreadyDone;
+    const noEnergy = d.energy < 10;
+    const disabled = done || d.defiLeft <= 0 || noEnergy;
+    const btnLabel = done ? '✓ Défié' : '⚔️ Défier';
+    const rankIcon = RANK_ICONS[rankName] ? '<img src="' + RANK_ICONS[rankName] + '" style="width:12px;height:12px;object-fit:contain;vertical-align:middle;margin-right:3px">' : '';
+    return '<div class="defi-player-row' + (done?' done':'') + '" data-name="' + esc(p.name).toLowerCase() + '">'
+      + '<div class="defi-avatar" style="' + avBg + '">' + avTxt + '</div>'
+      + '<div class="defi-info">'
+        + '<div class="defi-name">' + esc(p.name) + '</div>'
+        + '<div class="defi-rank" style="color:' + col + '">' + rankIcon + rankName + ' · ' + fmtPts(p.pvpRank) + ' pts · ' + p.wins + 'V ' + p.losses + 'D</div>'
+      + '</div>'
+      + '<button class="defi-btn" ' + (disabled?'disabled':'') + ' onclick="launchDefi(' + p.id + ',this)">' + btnLabel + '</button>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML = searchHtml + bannerHtml + '<div id="defi-rows">' + rowsHtml + '</div>';
+}
+
+function filterDefis(term) {
+  _defiSearchTerm = term.toLowerCase();
+  document.querySelectorAll('#defi-rows .defi-player-row').forEach(function(row) {
+    const name = row.getAttribute('data-name') || '';
+    row.style.display = name.includes(_defiSearchTerm) ? '' : 'none';
+  });
+}
+
+async function launchDefi(opponentId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
+  try {
+    const d = await api('/api/pvp/defi/fight', { method: 'POST', body: JSON.stringify({ opponentId }) });
+
+    // Afficher résultat
+    const banner = document.getElementById('defi-result');
+    if (banner) {
+      const pts = d.playerWon ? ('+' + d.rankChange + ' pts') : ('-' + d.loserLoss + ' pts');
+      const vsName = d.opponent?.name || '?';
+      if (d.playerWon) {
+        banner.className = 'defi-result-banner win';
+        banner.textContent = '🏆 Victoire contre ' + vsName + ' ! ' + pts + ' de rang';
+      } else {
+        banner.className = 'defi-result-banner lose';
+        banner.textContent = '💀 Défaite contre ' + vsName + '. ' + pts + ' de rang';
+      }
+      banner.style.display = 'block';
+      setTimeout(function() { if (banner) banner.style.display = 'none'; }, 5000);
+    }
+
+    // Marquer le bouton comme fait
+    if (btn) { btn.textContent = '✓ Défié'; btn.disabled = true; }
+
+    // Rafraîchir les badges
+    const fresh = await api('/api/pvp/defi/players');
+    _defiData = fresh;
+    const leftEl   = document.getElementById('defi-left-badge');
+    const energyEl = document.getElementById('defi-energy-badge');
+    if (leftEl) {
+      const col = fresh.defiLeft <= 0 ? '#ff4444' : fresh.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
+      leftEl.innerHTML = '<span style="color:' + col + '">⚔️ ' + fresh.defiLeft + '/' + fresh.maxDaily + ' défis restants</span>';
+    }
+    if (energyEl) {
+      const col = fresh.energy <= 0 ? '#ff4444' : fresh.energy < 30 ? '#ffd84d' : '#aaa';
+      const min = fresh.nextRegenMs ? Math.ceil(fresh.nextRegenMs / 60000) : '?';
+      energyEl.innerHTML = '<span style="color:' + col + '">⚡ ' + fresh.energy + '/100 énergie</span>'
+        + (fresh.energy < 100 ? ' · +10 dans ' + min + ' min' : '');
+    }
+    // Rafraîchir profil (rang mis à jour)
+    loadProfil();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '⚔️ Défier'; }
+    showAlert(e.message || 'Erreur', 'error');
+  }
 }
 
 // ── INIT ──
