@@ -964,6 +964,11 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_level INTEGER NOT NULL DEFAULT 1`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_xp    INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_gold  INTEGER NOT NULL DEFAULT 0`);
+  // Coffres PVE par rareté (séparés du coffre PVP)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_common    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_rare      INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_epic      INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_legendary INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pve_progress (
@@ -6479,8 +6484,8 @@ function pvpForgeBonusValue(stat, rarity, milestone) {
 
 function pvpForgeCost(rarity, forgeLevel) {
   const next   = forgeLevel + 1;
-  const base   = { common: 50, rare: 120, epic: 300, legendary: 800 }[rarity] || 50;
-  const mult   = next <= 3 ? 1 : next <= 6 ? 2 : next <= 9 ? 4 : next <= 12 ? 8 : 15;
+  const base   = { common: 15, rare: 35, epic: 80, legendary: 200 }[rarity] || 15;
+  const mult   = next <= 3 ? 1 : next <= 6 ? 2 : next <= 9 ? 3 : next <= 12 ? 5 : 8;
   return base * mult;
 }
 
@@ -6541,7 +6546,7 @@ function pvpWinRewards(rankName, pvpLevel) {
 async function buildPvpFighter(userId) {
   const char  = await getOrCreateCharacter(userId);
   const userQ = await pool.query(
-    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, pve_gold, pve_level, pve_xp FROM users WHERE id=$1`,
+    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, pve_gold, pve_level, pve_xp, pve_chest_common, pve_chest_rare, pve_chest_epic, pve_chest_legendary FROM users WHERE id=$1`,
     [userId]
   );
   const u = userQ.rows[0];
@@ -6585,6 +6590,12 @@ async function buildPvpFighter(userId) {
     pvpChests:   Number(u.pvp_chests || 0),
     winStreak:   Number(u.pvp_win_streak || 0),
     pveGold:     Number(u.pve_gold   || 0),
+    pveChests: {
+      common:    Number(u.pve_chest_common    || 0),
+      rare:      Number(u.pve_chest_rare      || 0),
+      epic:      Number(u.pve_chest_epic      || 0),
+      legendary: Number(u.pve_chest_legendary || 0),
+    },
     pveLevel:    Number(u.pve_level  || 1),
     pveXp:       Number(u.pve_xp     || 0),
     pveXpNeeded: pveXpForLevel(Number(u.pve_level || 1)),
@@ -6851,7 +6862,7 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
   finally { client.release(); }
 });
 
-// POST /api/pvp/open-chest — ouvrir un coffre PVP
+// POST /api/pvp/open-chest — ouvrir un coffre PVP (ancien système)
 app.post("/api/pvp/open-chest", auth, async (req, res) => {
   const client = await pool.connect();
   try {
@@ -6866,6 +6877,31 @@ app.post("/api/pvp/open-chest", auth, async (req, res) => {
     await client.query(`UPDATE users SET pvp_chests=pvp_chests-1 WHERE id=$1`, [req.user.id]);
     await client.query('COMMIT');
     res.json({ ok: true, item });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// POST /api/pve/open-chest — ouvrir un coffre PVE par rareté
+app.post("/api/pve/open-chest", auth, async (req, res) => {
+  const chestRarity = String(req.body?.rarity || 'common');
+  const colMap = { common:'pve_chest_common', rare:'pve_chest_rare', epic:'pve_chest_epic', legendary:'pve_chest_legendary' };
+  const col = colMap[chestRarity];
+  if (!col) return res.status(400).json({ error: 'Rareté invalide' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const userQ = await client.query(`SELECT ${col} FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const count = Number(userQ.rows[0]?.[col] || 0);
+    if (count < 1) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Aucun coffre ' + chestRarity + ' disponible' }); }
+
+    const item = pveChestLoot(chestRarity);
+    if (!item) { await client.query('ROLLBACK'); return res.status(500).json({ error: 'Loot error' }); }
+
+    await client.query(`INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`, [req.user.id, item.key, Date.now()]);
+    await client.query(`UPDATE users SET ${col} = ${col} - 1 WHERE id=$1`, [req.user.id]);
+    await client.query('COMMIT');
+    res.json({ ok: true, item, chestRarity });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
 });
@@ -7202,15 +7238,60 @@ async function addPveXp(userId, xpGain, client) {
     lvl++;
     levelsGained++;
   }
-  // Au niveau max, on plafonne l'XP
   if (lvl >= PVE_MAX_LEVEL) xp = 0;
 
-  await client.query(
-    `UPDATE users SET pve_level=$1, pve_xp=$2 WHERE id=$3`,
-    [lvl, xp, userId]
-  );
+  await client.query(`UPDATE users SET pve_level=$1, pve_xp=$2 WHERE id=$3`, [lvl, xp, userId]);
+
+  // Chaque niveau PVE donne 1 point de stat PVP
+  if (levelsGained > 0) {
+    await client.query(
+      `UPDATE player_character SET pvp_pts_avail = pvp_pts_avail + $1 WHERE user_id = $2`,
+      [levelsGained, userId]
+    );
+  }
   return { newLevel: lvl, newXp: xp, levelsGained };
 }
+
+// Détermine le type de coffre PVE selon les HP de l'ennemi
+function pveChestTypeForEnemy(enemyKey, difficulty) {
+  const enemyDef = PVE_ENEMIES[enemyKey];
+  if (!enemyDef) return 'common';
+  const hp = enemyDef.difficulties[difficulty]?.hp || 0;
+  if (hp >= 1450) return 'legendary';
+  if (hp >= 779)  return 'epic';
+  if (hp >= 401)  return 'rare';
+  return 'common';
+}
+
+// Loot d'un coffre PVE selon sa rareté
+function pveChestLoot(chestRarity) {
+  // commun  → item commun (80%) ou rare (20%)
+  // rare    → item rare (65%) ou épique (35%)
+  // épique  → item épique (60%) ou légendaire (40%)
+  // légendaire → item légendaire (100%)
+  const pools = {
+    common:    [{ rarity:'common', w:80 }, { rarity:'rare',      w:20 }],
+    rare:      [{ rarity:'rare',   w:65 }, { rarity:'epic',      w:35 }],
+    epic:      [{ rarity:'epic',   w:60 }, { rarity:'legendary', w:40 }],
+    legendary: [{ rarity:'legendary', w:100 }],
+  };
+  const pool = pools[chestRarity] || pools.common;
+  const total = pool.reduce((s, e) => s + e.w, 0);
+  let rand = Math.random() * total;
+  let chosen = pool[0].rarity;
+  for (const e of pool) { rand -= e.w; if (rand <= 0) { chosen = e.rarity; break; } }
+
+  const items = Object.values(PVP_ITEMS).filter(i => i.rarity === chosen);
+  if (!items.length) return null;
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+const PVE_CHEST_IMG = {
+  common:    'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png',
+  rare:      'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png',
+  epic:      'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png',
+  legendary: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png',
+};
 
 const PVE_DAILY_MAX = 9;
 
@@ -7312,12 +7393,19 @@ app.get('/api/pve/enemies', auth, async (req, res) => {
     }));
 
     // Récupérer le niveau PVE du joueur
-    const pveLvlQ = await pool.query(`SELECT pve_level, pve_xp FROM users WHERE id=$1`, [userId]);
+    const pveLvlQ = await pool.query(`SELECT pve_level, pve_xp, pve_chest_common, pve_chest_rare, pve_chest_epic, pve_chest_legendary FROM users WHERE id=$1`, [userId]);
     const pveUser = pveLvlQ.rows[0] || {};
     const pveLevel = Number(pveUser.pve_level || 1);
     const pveXp    = Number(pveUser.pve_xp    || 0);
     const pveXpNeeded = pveXpForLevel(pveLevel);
-    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX, pveLevel, pveXp, pveXpNeeded });
+    const pveChests = {
+      common:    Number(pveUser.pve_chest_common    || 0),
+      rare:      Number(pveUser.pve_chest_rare      || 0),
+      epic:      Number(pveUser.pve_chest_epic      || 0),
+      legendary: Number(pveUser.pve_chest_legendary || 0),
+    };
+    const pveTotalChests = pveChests.common + pveChests.rare + pveChests.epic + pveChests.legendary;
+    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX, pveLevel, pveXp, pveXpNeeded, pveChests, pveTotalChests });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -7397,17 +7485,14 @@ app.post('/api/pve/fight', auth, async (req, res) => {
         [userId, enemyKey, difficulty, winsAfter, Date.now()]
       );
 
-      // Coffre toutes les 3 victoires
+      // Coffre toutes les 3 victoires → ajouter 1 coffre PVE du bon type
       if (winsAfter % 3 === 0) {
         chestEarned = true;
-        const rankInfo = getRankInfo(Number(fighter.rank));
-        const item = pvpChestLoot(rankInfo.name);
-        if (item) {
-          await client.query(
-            `INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`,
-            [userId, item.key, Date.now()]
-          );
-        }
+        const chestType = pveChestTypeForEnemy(enemyKey, difficulty);
+        const colMap = { common:'pve_chest_common', rare:'pve_chest_rare', epic:'pve_chest_epic', legendary:'pve_chest_legendary' };
+        const col = colMap[chestType] || 'pve_chest_common';
+        await client.query(`UPDATE users SET ${col} = ${col} + 1 WHERE id=$1`, [userId]);
+        chestEarned = chestType; // retourner le type
       }
     }
 
@@ -7421,7 +7506,8 @@ app.post('/api/pve/fight', auth, async (req, res) => {
       rewards: playerWon ? {
         xp: xpGained,
         gold: goldGained,
-        chestEarned,
+        chestEarned: chestEarned !== false ? chestEarned : false,
+        chestType: chestEarned !== false ? chestEarned : null,
         winsAgainstEnemy: winsAfter,
         nextChestIn: 3 - (winsAfter % 3),
         pveLevel: pveProgress.newLevel,

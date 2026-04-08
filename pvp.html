@@ -1176,11 +1176,30 @@ function renderPvpProgression(f) {
   // Or PVE
   var pveGold = f.pveGold || 0;
 
-  // Coffres PVE
-  var chests = f.pvpChests || 0;
-  var chestHtml = chests > 0
-    ? '<button onclick="openPveChest()" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:12px;width:100%;margin-top:4px">🎁 Ouvrir coffre (' + chests + ' dispo)</button>'
-    : '<div style="font-size:11px;opacity:.35;text-align:center;margin-top:4px">Aucun coffre · Gagne des combats PVE !</div>';
+  // Coffres PVE par rareté
+  var pveChests = f.pveChests || {};
+  var chestDefs = [
+    { type:'common',    label:'Commun',    img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png',    col:'#aaa',    count: pveChests.common    || 0 },
+    { type:'rare',      label:'Rare',      img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png',      col:'#4da6ff', count: pveChests.rare      || 0 },
+    { type:'epic',      label:'Épique',    img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png',      col:'#c084ff', count: pveChests.epic      || 0 },
+    { type:'legendary', label:'Légend.',   img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png',col:'#ffd84d', count: pveChests.legendary || 0 },
+  ];
+  var totalChests = chestDefs.reduce(function(s, c) { return s + c.count; }, 0);
+  var chestsHtmlItems = chestDefs.map(function(c) {
+    if (c.count <= 0) return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.25">'
+      + '<img src="' + c.img + '" style="width:36px;height:36px;object-fit:contain;filter:grayscale(1)" onerror="this.remove()">'
+      + '<div style="font-size:9px">' + c.label + '</div></div>';
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer" onclick="openPveChest(\'' + c.type + '\')">'
+      + '<div style="position:relative">'
+      + '<img src="' + c.img + '" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 6px ' + c.col + ')" onerror="this.remove()">'
+      + '<div style="position:absolute;top:-5px;right:-5px;background:' + c.col + ';color:#000;border-radius:999px;font-size:10px;font-weight:900;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 3px">' + c.count + '</div>'
+      + '</div>'
+      + '<div style="font-size:9px;font-weight:700;color:' + c.col + '">' + c.label + '</div></div>';
+  }).join('');
+  var chestHtml = totalChests > 0
+    ? '<div style="display:flex;justify-content:space-around;width:100%;margin-top:6px;gap:4px">' + chestsHtmlItems + '</div>'
+      + '<div style="font-size:10px;opacity:.4;text-align:center;margin-top:6px">Ouvrir coffre</div>'
+    : '<div style="font-size:11px;opacity:.35;text-align:center;margin-top:6px">Aucun coffre · Gagne des combats PVE !</div>';
 
   // Titre stats avec badge points
   var statsTitleBadge = ptsAvail > 0
@@ -1327,8 +1346,8 @@ function showPvpItemDetail(itemId) {
 
 function pvpForgeCostClient(rarity, forgeLevel) {
   const next = forgeLevel + 1;
-  const base = { common:50, rare:120, epic:300, legendary:800 }[rarity] || 50;
-  const mult = next<=3?1:next<=6?2:next<=9?4:next<=12?8:15;
+  const base = { common:15, rare:35, epic:80, legendary:200 }[rarity] || 15;
+  const mult = next<=3?1:next<=6?2:next<=9?3:next<=12?5:8;
   return base * mult;
 }
 
@@ -1354,22 +1373,22 @@ async function forgePvpItem(id) {
     loadProfil();
   } catch(e) { showAlert(e.message||'Or insuffisant', 'error'); }
 }
-async function openPveChest() {
+async function openPveChest(rarity) {
+  rarity = rarity || 'common';
   try {
-    const d = await api('/api/pvp/open-chest', { method:'POST', body:'{}' });
-    showChestRewardPopup(d.item);
+    const d = await api('/api/pve/open-chest', { method:'POST', body: JSON.stringify({ rarity }) });
+    showChestRewardPopup(d.item, d.chestRarity);
     loadProfil();
-    // Aussi rafraîchir le compteur dans l'onglet PVE
-    if (_pveData) {
-      const fresh = await api('/api/pve/enemies');
-      _pveData = fresh;
-      renderPve(fresh);
-      refreshPveXpBar(fresh);
-    }
-  } catch(e) { showAlert(e.message||'Erreur', 'error'); }
+    // Rafraîchir l'onglet PVE
+    const fresh = await api('/api/pve/enemies');
+    _pveData = fresh;
+    renderPve(fresh);
+    refreshPveXpBar(fresh);
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
 }
 
-function showChestRewardPopup(item) {
+function showChestRewardPopup(item, chestRar) {
+  chestRar = chestRar || (item && item.rarity) || 'common';
   if (!item) return;
   const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
   const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
@@ -1388,12 +1407,14 @@ function showChestRewardPopup(item) {
   // Particules selon rareté
   const glowColor = item.rarity === 'legendary' ? 'rgba(255,216,0,.4)' : item.rarity === 'epic' ? 'rgba(192,132,255,.4)' : item.rarity === 'rare' ? 'rgba(77,166,255,.3)' : 'rgba(170,170,170,.2)';
 
+  var CHEST_IMGS_UI = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
+  var chestImgSrc = CHEST_IMGS_UI[chestRar] || CHEST_IMGS_UI.common;
   overlay.innerHTML = `
     <div style="
       background:#0d0e1f;
       border:2px solid ${col};
       border-radius:20px;
-      padding:32px 28px;
+      padding:28px 28px;
       width:min(340px,92vw);
       text-align:center;
       position:relative;
@@ -1402,6 +1423,7 @@ function showChestRewardPopup(item) {
       transition:transform .4s cubic-bezier(.175,.885,.32,1.275);
     " id="chest-popup-box">
       <div style="font-size:13px;opacity:.5;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">Coffre ouvert !</div>
+      <img src="${chestImgSrc}" style="width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 0 12px ${col});margin-bottom:10px;animation:chestBounce .5s cubic-bezier(.175,.885,.32,1.275) both" onerror="this.style.display='none'">
       <div style="font-size:13px;font-weight:900;color:${col};margin-bottom:16px;letter-spacing:.05em">${rarityLabel[item.rarity]||item.rarity}</div>
       <div style="position:relative;display:inline-block;margin-bottom:16px">
         <div style="position:absolute;inset:-20px;background:radial-gradient(circle,${glowColor} 0%,transparent 70%);border-radius:50%;animation:chestGlow 2s ease-in-out infinite alternate"></div>
@@ -2635,28 +2657,48 @@ function renderPve(d) {
 
   // Coffres disponibles dans l'onglet PVE
   const chestWrap = document.getElementById('pve-chest-btn-wrap');
-  if (chestWrap && myData) {
-    const chests = myData.pvpChests || 0;
-    chestWrap.innerHTML = chests > 0
-      ? `<button onclick="openPveChest()" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:12px;white-space:nowrap">🎁 ${chests} coffre${chests>1?'s':''}</button>`
-      : `<div style="font-size:11px;opacity:.35;white-space:nowrap">Aucun coffre</div>`;
+  if (chestWrap) {
+    const pc = d.pveChests || {};
+    const total = (pc.common||0)+(pc.rare||0)+(pc.epic||0)+(pc.legendary||0);
+    if (total > 0) {
+      const CIMGS = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
+      const CCOLS = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+      let btns = '';
+      ['common','rare','epic','legendary'].forEach(function(t) {
+        if ((pc[t]||0) <= 0) return;
+        btns += '<div onclick="openPveChest(\'' + t + '\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative">'
+          + '<img src="' + CIMGS[t] + '" style="width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 5px ' + CCOLS[t] + ')" onerror="this.remove()">'
+          + '<div style="position:absolute;top:-5px;right:-5px;background:' + CCOLS[t] + ';color:#000;border-radius:999px;font-size:9px;font-weight:900;width:16px;height:16px;display:flex;align-items:center;justify-content:center">' + pc[t] + '</div>'
+          + '</div>';
+      });
+      chestWrap.innerHTML = '<div style="display:flex;gap:6px;align-items:center">' + btns + '</div>';
+    } else {
+      chestWrap.innerHTML = '<div style="font-size:11px;opacity:.35;white-space:nowrap">Aucun coffre</div>';
+    }
   }
 
   el.innerHTML = d.enemies.map(e => {
     const icon = PVE_ENEMY_ICONS[e.key] || '👾';
     const diffHtml = e.difficulties.map(diff => {
       const col = PVE_DIFF_COLORS[diff.id] || '#aaa';
+      // Type de coffre selon HP
+      const chestType = diff.hp >= 1450 ? 'legendary' : diff.hp >= 779 ? 'epic' : diff.hp >= 401 ? 'rare' : 'common';
+      const chestCols = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+      const chestImgs = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
       const chestLabel = diff.wins > 0
         ? (diff.nextChestIn === 3
-            ? `🎁 Coffre dans 3 victoires`
-            : `🎁 +${diff.nextChestIn} victoire${diff.nextChestIn > 1 ? 's' : ''} pour coffre`)
-        : `🎁 Coffre à la 3e victoire`;
+            ? `Coffre dans 3 victoires`
+            : `+${diff.nextChestIn} victoire${diff.nextChestIn > 1 ? 's' : ''} pour coffre`)
+        : `Coffre à la 3e victoire`;
       return `<div class="pve-diff-btn ${diff.id}" onclick="doPveFight('${e.key}','${diff.id}')" ${d.fightsLeft <= 0 ? 'disabled' : ''}>
         <div class="pve-diff-label">${PVE_DIFF_LABELS[diff.id]}</div>
         <div class="pve-diff-hp" style="color:${col}">❤️ ${diff.hp} PV</div>
         <div class="pve-diff-rewards">+${diff.xp} XP · +${diff.gold} or</div>
         <div class="pve-diff-wins">${diff.wins} victoire${diff.wins !== 1 ? 's' : ''}</div>
-        <div class="pve-diff-chest">${chestLabel}</div>
+        <div class="pve-diff-chest" style="display:flex;align-items:center;justify-content:center;gap:5px;color:${chestCols[chestType]}">
+          <img src="${chestImgs[chestType]}" style="width:18px;height:18px;object-fit:contain" onerror="this.style.display='none'">
+          <span style="font-size:10px">${chestLabel}</span>
+        </div>
       </div>`;
     }).join('');
 
@@ -2693,7 +2735,11 @@ async function doPveFight(enemyKey, difficulty) {
       const parts = [];
       if (d.rewards.xp)         parts.push(`+${d.rewards.xp} XP PVE`);
       if (d.rewards.gold)       parts.push(`+${d.rewards.gold} or`);
-      if (d.rewards.chestEarned) parts.push('🎁 Coffre obtenu !');
+      if (d.rewards.chestEarned) {
+        const chestT = typeof d.rewards.chestEarned === 'string' ? d.rewards.chestEarned : 'common';
+        const chestN = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'}[chestT] || chestT;
+        parts.push('🎁 Coffre ' + chestN + ' obtenu !');
+      }
       if (d.rewards.pveLevelUp) parts.push(`⬆️ Niv. PVE ${d.rewards.pveLevel} !`);
       if (parts.length) showAlert(parts.join(' · '), 'success');
     } else {
