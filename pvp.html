@@ -298,6 +298,15 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 @keyframes chestGlow{0%{opacity:.4;transform:scale(.9)}100%{opacity:.8;transform:scale(1.1)}}
 @keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}
 @keyframes victoryPulse{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+/* ── Victory / Defeat text animations ── */
+@keyframes vLetterDrop{0%{opacity:0;transform:translateY(-80px) scale(1.4) rotate(-8deg)}60%{transform:translateY(8px) scale(.95) rotate(2deg)}80%{transform:translateY(-4px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0deg)}}
+@keyframes vGlow{0%,100%{text-shadow:0 0 20px currentColor,0 0 60px currentColor}50%{text-shadow:0 0 40px currentColor,0 0 100px currentColor,0 0 160px currentColor}}
+@keyframes vShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes vSlide{0%{opacity:0;transform:translateY(30px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes vFlicker{0%,100%{opacity:1}10%{opacity:.6}30%{opacity:.9}50%{opacity:.5}70%{opacity:.95}}
+@keyframes radioWave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
+@keyframes radioPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,184,0,.4)}70%{box-shadow:0 0 0 8px rgba(255,184,0,0)}}
+@keyframes radioOpen{0%{max-height:0;opacity:0;transform:translateY(10px)}100%{max-height:200px;opacity:1;transform:translateY(0)}}
 .rank-change{font-size:14px;margin-top:6px;opacity:.75;font-weight:700}
 
 /* MODAL REPLAY — plus grande */
@@ -348,6 +357,31 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .pve-diff-chest{font-size:10px;color:#ffd84d;margin-top:3px}
 .pve-diff-rewards{font-size:10px;opacity:.6;margin-top:3px}
 .pve-diff-hp{font-size:10px;color:#ff6464;margin-top:2px}
+
+/* ══ RADIO ══ */
+#radio-widget{position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+#radio-btn{width:64px;height:64px;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));transition:transform .2s,filter .2s;border:none;background:none;padding:0}
+#radio-btn:hover{transform:scale(1.08);filter:drop-shadow(0 6px 18px rgba(255,184,0,.5))}
+#radio-btn.on{filter:drop-shadow(0 0 14px rgba(255,184,0,.8)) drop-shadow(0 4px 12px rgba(0,0,0,.6));animation:radioPulse 1.8s ease-in-out infinite}
+#radio-panel{background:rgba(10,11,24,.96);border:1px solid rgba(255,184,0,.25);border-radius:14px;padding:12px 14px;margin-bottom:8px;min-width:220px;overflow:hidden;animation:radioOpen .25s ease forwards}
+#radio-panel.hidden{display:none}
+.radio-track{font-size:12px;font-weight:700;color:#ffd84d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;margin-bottom:8px}
+.radio-track-scroll{animation:radioScroll 8s linear infinite}
+@keyframes radioScroll{0%,10%{transform:translateX(0)}90%,100%{transform:translateX(-60%)}}
+.radio-bars{display:flex;align-items:flex-end;gap:2px;height:18px;margin-bottom:8px}
+.radio-bar{width:4px;border-radius:2px;background:#ffd84d;animation:radioWave .6s ease-in-out infinite}
+.radio-bar:nth-child(2){animation-delay:.1s;height:12px}
+.radio-bar:nth-child(3){animation-delay:.2s;height:16px}
+.radio-bar:nth-child(4){animation-delay:.05s;height:10px}
+.radio-bar:nth-child(5){animation-delay:.15s;height:14px}
+.radio-bars.paused .radio-bar{animation-play-state:paused}
+.radio-controls{display:flex;align-items:center;gap:8px}
+.radio-ctrl{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.radio-ctrl:hover{background:rgba(255,184,0,.2);border-color:rgba(255,184,0,.4)}
+.radio-ctrl.active{background:rgba(255,184,0,.25);border-color:rgba(255,184,0,.6);color:#ffd84d}
+.radio-vol{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.15);border-radius:999px;outline:none;cursor:pointer}
+.radio-vol::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#ffd84d;cursor:pointer}
+
 </style>
 </head>
 <body>
@@ -492,8 +526,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div class="vs-flash" id="vs-flash"><div class="vs-text">VS</div></div>
       <div id="arena-result-overlay" style="position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;border-radius:inherit;">
         <div id="arena-result-bg" style="position:absolute;inset:0;border-radius:inherit;opacity:0;"></div>
-        <div id="arena-result-icon" style="font-size:80px;line-height:1;position:relative;z-index:1;transform:scale(0) rotate(-15deg);text-align:center"></div>
-        <div id="arena-result-label" style="font-size:34px;font-weight:900;letter-spacing:.05em;margin-top:12px;text-shadow:0 2px 20px rgba(0,0,0,.9);position:relative;z-index:1;transform:translateY(24px);opacity:0;"></div>
+        <!-- Texte animé Victory/Defeat -->
+        <div id="arena-result-icon" style="font-size:80px;line-height:1;position:relative;z-index:1;transform:scale(0) rotate(-15deg);text-align:center;display:none"></div>
+        <div id="arena-result-word" style="position:relative;z-index:2;display:flex;gap:0;align-items:center;justify-content:center;"></div>
+        <div id="arena-result-label" style="font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:14px;position:relative;z-index:1;opacity:0;"></div>
         <div id="arena-result-pts" style="font-size:17px;font-weight:700;margin-top:8px;position:relative;z-index:1;opacity:0;"></div>
       </div>
     </div>
@@ -2502,48 +2538,81 @@ function showPvpRewards(r) {
 function showArenaResult(isWin, winnerName, rankChange) {
   var overlay = document.getElementById('arena-result-overlay');
   var bg      = document.getElementById('arena-result-bg');
-  var icon    = document.getElementById('arena-result-icon');
+  var word    = document.getElementById('arena-result-word');
   var label   = document.getElementById('arena-result-label');
   var pts     = document.getElementById('arena-result-pts');
   if (!overlay) return;
-  if (isWin) {
-    bg.style.background    = 'radial-gradient(ellipse at center, rgba(40,200,120,.6) 0%, rgba(0,0,0,.72) 100%)';
-    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/victoire.png" style="width:320px;height:auto;filter:drop-shadow(0 0 30px rgba(51,255,153,.7))" onerror="this.outerHTML=\'🏆\'">';
-    icon.style.color       = '#33ff99';
-    label.textContent      = '';
-    label.style.color      = '#33ff99';
-    label.style.textShadow = '0 0 40px rgba(51,255,153,.9), 0 2px 20px rgba(0,0,0,.9)';
-    pts.textContent        = rankChange ? '+' + rankChange + ' pts de rang' : '';
-    pts.style.color        = '#33ff99';
-  } else {
-    bg.style.background    = 'radial-gradient(ellipse at center, rgba(200,30,30,.6) 0%, rgba(0,0,0,.75) 100%)';
-    icon.innerHTML         = '<img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/defaite.png" style="width:320px;height:auto;filter:drop-shadow(0 0 30px rgba(255,68,68,.7))" onerror="this.outerHTML=\'💀\'">';
-    icon.style.color       = '#ff4444';
-    label.textContent      = '';
-    label.style.color      = '#ff4444';
-    label.style.textShadow = '0 0 40px rgba(255,68,68,.9), 0 2px 20px rgba(0,0,0,.9)';
-    pts.textContent        = rankChange ? '−' + rankChange + ' pts de rang' : '';
-    pts.style.color        = 'rgba(255,120,120,.9)';
-  }
-  [overlay, bg, icon, label, pts].forEach(function(el){ el.style.transition = 'none'; });
-  overlay.style.opacity   = '0';
-  bg.style.opacity        = '0';
-  icon.style.transform    = 'scale(0) rotate(-15deg)';
-  label.style.opacity     = '0';
-  label.style.transform   = 'translateY(28px)';
-  pts.style.opacity       = '0';
+
+  var text  = isWin ? 'VICTORY' : 'DEFEAT';
+  var color = isWin ? '#33ff99' : '#ff4444';
+  var glow  = isWin ? 'rgba(51,255,153,.9)' : 'rgba(255,68,68,.9)';
+  var bgGrad = isWin
+    ? 'radial-gradient(ellipse at center, rgba(20,160,100,.55) 0%, rgba(0,0,0,.78) 100%)'
+    : 'radial-gradient(ellipse at center, rgba(180,20,20,.55) 0%, rgba(0,0,0,.78) 100%)';
+
+  // Reset
+  [overlay, bg, label, pts].forEach(function(el){ el.style.transition='none'; });
+  overlay.style.opacity = '0';
+  bg.style.opacity = '0';
+  bg.style.background = bgGrad;
+  label.style.opacity = '0';
+  pts.style.opacity = '0';
+
+  // Construire les lettres
+  word.innerHTML = '';
+  text.split('').forEach(function(ch, i) {
+    var span = document.createElement('span');
+    span.textContent = ch;
+    span.style.cssText = [
+      'display:inline-block',
+      'font-size:clamp(52px,8vw,88px)',
+      'font-weight:900',
+      'font-family:Impact,Arial Black,sans-serif',
+      'letter-spacing:.05em',
+      'color:' + color,
+      'text-shadow:0 0 30px ' + glow + ',0 4px 0 rgba(0,0,0,.8)',
+      'opacity:0',
+      'position:relative',
+      'z-index:2',
+      '-webkit-text-stroke:2px rgba(0,0,0,.5)',
+    ].join(';');
+    word.appendChild(span);
+    setTimeout(function() {
+      span.style.animation = 'vLetterDrop .5s cubic-bezier(.175,.885,.32,1.275) forwards, vGlow 2s ease-in-out ' + (.5 + i*.04) + 's infinite';
+      span.style.opacity = '1';
+    }, i * 55);
+  });
+
+  // Sous-titre
+  label.style.color = color;
+  label.style.opacity = '0';
+  label.textContent = isWin ? '— Victoire —' : '— Défaite —';
+
+  // Points
+  pts.style.color = isWin ? '#33ff99' : 'rgba(255,140,140,.9)';
+  pts.textContent = rankChange
+    ? (isWin ? '+' : '−') + Math.abs(rankChange) + ' pts de rang'
+    : '';
+
   void overlay.offsetWidth;
-  overlay.style.transition = 'opacity .35s ease';
-  bg.style.transition      = 'opacity .5s ease';
-  icon.style.transition    = 'transform .55s cubic-bezier(.175,.885,.32,1.275) .05s';
-  label.style.transition   = 'transform .4s ease .22s, opacity .4s ease .22s';
-  pts.style.transition     = 'opacity .4s ease .48s';
-  overlay.style.opacity    = '1';
-  bg.style.opacity         = '1';
-  icon.style.transform     = 'scale(1) rotate(0deg)';
-  label.style.opacity      = '1';
-  label.style.transform    = 'translateY(0)';
-  pts.style.opacity        = '1';
+  overlay.style.transition = 'opacity .3s ease';
+  bg.style.transition = 'opacity .4s ease';
+  overlay.style.opacity = '1';
+  bg.style.opacity = '1';
+
+  // Apparition décalée du label et pts
+  var delay = text.length * 55 + 300;
+  setTimeout(function() {
+    label.style.transition = 'opacity .5s ease';
+    label.style.opacity = '1';
+    // Effet shake sur défaite
+    if (!isWin) { word.style.animation = 'vShake .4s ease'; }
+  }, delay);
+  setTimeout(function() {
+    pts.style.transition = 'opacity .5s ease';
+    pts.style.opacity = '1';
+  }, delay + 200);
+
   if (isWin) spawnConfetti();
 }
 
@@ -2553,13 +2622,13 @@ function resetArenaResultOverlay() {
   overlay.style.transition    = 'none';
   overlay.style.opacity       = '0';
   overlay.style.pointerEvents = 'none';
-  var icon  = document.getElementById('arena-result-icon');
+  var word  = document.getElementById('arena-result-word');
   var label = document.getElementById('arena-result-label');
   var pts   = document.getElementById('arena-result-pts');
   var bg    = document.getElementById('arena-result-bg');
   if (bg)    { bg.style.transition = 'none'; bg.style.opacity = '0'; }
-  if (icon)  { icon.style.transition = 'none'; icon.style.transform = 'scale(0) rotate(-15deg)'; }
-  if (label) { label.style.transition = 'none'; label.style.opacity = '0'; label.style.transform = 'translateY(28px)'; }
+  if (word)  { word.innerHTML = ''; word.style.animation = ''; }
+  if (label) { label.style.transition = 'none'; label.style.opacity = '0'; }
   if (pts)   { pts.style.transition = 'none'; pts.style.opacity = '0'; }
 }
 
@@ -2801,5 +2870,128 @@ api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch((
 // Charger les récompenses hebdomadaires
 loadWeeklyRewards();
 </script>
+
+<!-- ══ RADIO ══ -->
+<div id="radio-widget">
+  <div id="radio-panel" class="hidden">
+    <div class="radio-track" id="radio-track-name">♪ Sélectionne une piste...</div>
+    <div class="radio-bars" id="radio-bars">
+      <div class="radio-bar" style="height:8px"></div>
+      <div class="radio-bar"></div>
+      <div class="radio-bar"></div>
+      <div class="radio-bar"></div>
+      <div class="radio-bar" style="height:8px"></div>
+    </div>
+    <div class="radio-controls">
+      <button class="radio-ctrl" onclick="radioPrev()" title="Précédent">⏮</button>
+      <button class="radio-ctrl" id="radio-play-btn" onclick="radioToggle()" title="Play/Pause">▶</button>
+      <button class="radio-ctrl" onclick="radioNext()" title="Suivant">⏭</button>
+      <button class="radio-ctrl" id="radio-mute-btn" onclick="radioMute()" title="Mute">🔊</button>
+      <input type="range" class="radio-vol" id="radio-vol" min="0" max="1" step="0.05" value="0.6" oninput="radioSetVol(this.value)" title="Volume">
+    </div>
+  </div>
+  <button id="radio-btn" onclick="radioTogglePanel()" title="Radio">
+    <img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/radio.png" style="width:64px;height:64px;object-fit:contain" onerror="this.outerHTML='📻'">
+  </button>
+</div>
+
+<script>
+// ══ RADIO ══
+var RADIO_TRACKS = [
+  { name:'Tenebrus',         src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/Tenebrus.mp3' },
+  { name:'Battle',           src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/battle.mp3' },
+  { name:'Boys And Girls',   src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/boys and girls.mp3' },
+  { name:'Castle',           src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/castle.mp3' },
+  { name:'Demon',            src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/demon.mp3' },
+  { name:'Honk Honk',        src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/honk honk.mp3' },
+  { name:'Need You',         src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/need you.mp3' },
+  { name:'Pop',              src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/pop.mp3' },
+];
+
+var _radioAudio   = new Audio();
+var _radioIdx     = 0;
+var _radioPlaying = false;
+var _radioPanelOpen = false;
+var _radioMuted   = false;
+
+_radioAudio.volume = 0.6;
+_radioAudio.addEventListener('ended', function() { radioNext(); });
+
+function radioTogglePanel() {
+  _radioPanelOpen = !_radioPanelOpen;
+  var panel = document.getElementById('radio-panel');
+  var btn   = document.getElementById('radio-btn');
+  if (_radioPanelOpen) {
+    panel.classList.remove('hidden');
+    btn.classList.add('on');
+    // Auto-play à l'ouverture si rien ne joue
+    if (!_radioPlaying) radioPlay();
+  } else {
+    panel.classList.add('hidden');
+    btn.classList.remove('on');
+  }
+}
+
+function radioPlay() {
+  var track = RADIO_TRACKS[_radioIdx];
+  if (_radioAudio.src !== track.src) {
+    _radioAudio.src = track.src;
+    _radioAudio.load();
+  }
+  _radioAudio.play().catch(function(){});
+  _radioPlaying = true;
+  document.getElementById('radio-play-btn').textContent = '⏸';
+  document.getElementById('radio-track-name').textContent = '♪ ' + track.name;
+  document.getElementById('radio-bars').classList.remove('paused');
+  document.getElementById('radio-btn').classList.add('on');
+}
+
+function radioPause() {
+  _radioAudio.pause();
+  _radioPlaying = false;
+  document.getElementById('radio-play-btn').textContent = '▶';
+  document.getElementById('radio-bars').classList.add('paused');
+}
+
+function radioToggle() {
+  if (_radioPlaying) radioPause(); else radioPlay();
+}
+
+function radioNext() {
+  _radioIdx = (_radioIdx + 1) % RADIO_TRACKS.length;
+  _radioAudio.src = RADIO_TRACKS[_radioIdx].src;
+  _radioAudio.load();
+  if (_radioPlaying) radioPlay(); else {
+    document.getElementById('radio-track-name').textContent = '♪ ' + RADIO_TRACKS[_radioIdx].name;
+  }
+}
+
+function radioPrev() {
+  _radioIdx = (_radioIdx - 1 + RADIO_TRACKS.length) % RADIO_TRACKS.length;
+  _radioAudio.src = RADIO_TRACKS[_radioIdx].src;
+  _radioAudio.load();
+  if (_radioPlaying) radioPlay(); else {
+    document.getElementById('radio-track-name').textContent = '♪ ' + RADIO_TRACKS[_radioIdx].name;
+  }
+}
+
+function radioMute() {
+  _radioMuted = !_radioMuted;
+  _radioAudio.muted = _radioMuted;
+  document.getElementById('radio-mute-btn').textContent = _radioMuted ? '🔇' : '🔊';
+  document.getElementById('radio-mute-btn').classList.toggle('active', _radioMuted);
+}
+
+function radioSetVol(v) {
+  _radioAudio.volume = parseFloat(v);
+  if (_radioMuted && parseFloat(v) > 0) {
+    _radioMuted = false;
+    _radioAudio.muted = false;
+    document.getElementById('radio-mute-btn').textContent = '🔊';
+    document.getElementById('radio-mute-btn').classList.remove('active');
+  }
+}
+</script>
+
 </body>
 </html>
