@@ -956,6 +956,24 @@ async function initDb() {
     )
   `);
 
+
+  // =========================
+  // PVE — Tables
+  // =========================
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_fights_today INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pve_progress (
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      enemy_key   TEXT NOT NULL,
+      difficulty  TEXT NOT NULL,
+      wins        INTEGER NOT NULL DEFAULT 0,
+      last_fought_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, enemy_key, difficulty)
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pve_progress_user ON pve_progress(user_id)`);
+
   console.log("✅ Postgres DB ready");
 }
   
@@ -6545,9 +6563,9 @@ async function buildPvpFighter(userId) {
   const atq      = Math.round(10  + statB.atk      + capEq(eqB.atk||0,     'atk'));
   const def      = Math.round(       statB.def      + capEq(eqB.def||0,     'def'));
   const speed    = Math.round(10  + statB.speed     + capEq(eqB.speed||0,   'speed'));
-  const crit     = Math.min(80, Math.round(statB.crit_pct  + capEq(eqB.crit_pct||0,  'crit_pct')));
-  const crit_dmg = Math.round(150 + statB.crit_dmg + capEq(eqB.crit_dmg||0, 'crit_dmg'));
-  const dodge    = Math.min(40, Math.round(statB.dodge      + capEq(eqB.dodge||0,     'dodge')));
+  const crit     = Math.min(80, Math.round(10 + statB.crit_pct  + capEq(eqB.crit_pct||0,  'crit_pct')));
+  const crit_dmg = Math.round(120 + statB.crit_dmg + capEq(eqB.crit_dmg||0, 'crit_dmg'));
+  const dodge    = Math.min(40, Math.round(10 + statB.dodge + capEq(eqB.dodge||0,     'dodge')));
   const lifesteal= Math.round(statB.lifesteal + capEq(eqB.lifesteal||0,      'lifesteal'));
 
   const rankInfo = getRankInfo(Number(u.pvp_rank));
@@ -6592,12 +6610,12 @@ function simulatePvpBattle(f1, f2) {
     log.push({ type: 'turn', turn });
 
     // Attaque du premier
-    const dodge1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 5);
+    const dodge1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 10);
     if (dodge1) {
       log.push({ type: 'dodge', attacker: first.name, defender: second.name });
     } else {
       const crit1   = Math.random() * 100 < (first.crit || 0);
-      const critMul1 = crit1 ? ((first.crit_dmg || 150) / 100) : 1;
+      const critMul1 = crit1 ? ((first.crit_dmg || 120) / 100) : 1;
       const rawDmg1 = Math.round(first.atq * (0.70 + Math.random() * 0.60) * critMul1);
       const defRed1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
       const dmg1    = Math.max(1, Math.round(rawDmg1 * (1 - defRed1)));
@@ -6609,12 +6627,12 @@ function simulatePvpBattle(f1, f2) {
     if (hpSecond <= 0) break;
 
     // Attaque du second
-    const dodge2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 5);
+    const dodge2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 10);
     if (dodge2) {
       log.push({ type: 'dodge', attacker: second.name, defender: first.name });
     } else {
       const crit2   = Math.random() * 100 < (second.crit || 0);
-      const critMul2 = crit2 ? ((second.crit_dmg || 150) / 100) : 1;
+      const critMul2 = crit2 ? ((second.crit_dmg || 120) / 100) : 1;
       const rawDmg2 = Math.round(second.atq * (0.70 + Math.random() * 0.60) * critMul2);
       const defRed2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
       const dmg2    = Math.max(1, Math.round(rawDmg2 * (1 - defRed2)));
@@ -6704,19 +6722,24 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
     const loserRank  = loserId  === f1.userId ? f1.rank : f2.rank;
     const rankChange = calcElo(winnerRank, loserRank);
 
-    const todayKey = new Date().toISOString().slice(0,10);
-    const winnerDayQ = await pool.query(`SELECT pvp_wins_today, pvp_wins_day_key FROM users WHERE id=$1`, [winnerId]);
-    const wDay = winnerDayQ.rows[0];
-    const winsToday = wDay.pvp_wins_day_key === todayKey ? Number(wDay.pvp_wins_today) : 0;
-    const rankGain  = winsToday < 10 ? rankChange : 0;
+    // Bronze (0-1199) : aucune perte d'ELO en défaite
+    // Argent : perte partielle (rankChange / 2)
+    // Or et + : perte pleine
+    const loserRankInfo = getRankInfo(loserRank);
+    const rankLossMult = loserRankInfo.name === 'Bronze' ? 0
+      : loserRankInfo.name === 'Argent' ? 0.5
+      : loserRankInfo.name === 'Or' ? 0.75
+      : 1.0;
+    const loserLoss = Math.round(rankChange * rankLossMult);
+
     await pool.query(
-      `UPDATE users SET pvp_rank=GREATEST(0,pvp_rank+$1), pvp_wins=pvp_wins+1,
-        pvp_wins_today=CASE WHEN pvp_wins_day_key=$2 THEN pvp_wins_today+1 ELSE 1 END,
-        pvp_wins_day_key=$2 WHERE id=$3`,
-      [rankGain, todayKey, winnerId]
+      `UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1 WHERE id=$2`,
+      [rankChange, winnerId]
     );
-    await pool.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [rankChange, loserId]);
-    const dailyCapReached = winsToday >= 9;
+    await pool.query(
+      `UPDATE users SET pvp_rank=GREATEST(0, pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`,
+      [loserLoss, loserId]
+    );
 
     await pool.query(
       `UPDATE pvp_battles SET status='done', winner_id=$1, log=$2, rank_change=$3, accepted_at=$4 WHERE id=$5`,
@@ -6727,56 +6750,13 @@ app.post("/api/pvp/accept", auth, async (req, res) => {
       `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'pvp',$2,$3,$4,0,$5)`,
       [battle.challenger_id,
        winnerId === battle.challenger_id ? '🏆 Victoire PVP !' : '💀 Défaite PVP',
-       winnerId === battle.challenger_id ? `Tu as battu ${f2.name} ! +${rankChange} pts` : `${f2.name} t'a battu. -${rankChange} pts`,
+       winnerId === battle.challenger_id ? `Tu as battu ${f2.name} ! +${rankChange} pts` : `${f2.name} t'a battu. -${loserLoss} pts`,
        JSON.stringify({ battleId }), Date.now()]
     );
 
-    const winnerInfo  = getRankInfo(winnerId === f1.userId ? f1.rank : f2.rank);
-    const winnerPvpLvl= winnerId === f1.userId ? f1.pvpLevel : f2.pvpLevel;
-    const rewards     = pvpWinRewards(winnerInfo.name, winnerPvpLvl);
-
-    const winsAfter = await pool.query(`SELECT pvp_wins FROM users WHERE id=$1`, [winnerId]);
-    const totalWins  = Number(winsAfter.rows[0]?.pvp_wins || 0) + 1;
-    const chestEarned = (totalWins % 3 === 0) ? 1 : 0;
-    const finalStreak = totalWins % 3;
-
-    const winnerChar = await getOrCreateCharacter(winnerId);
-    let pvpLvl   = Number(winnerChar.pvp_level || 1);
-    let pvpXpChr = Number(winnerChar.pvp_xp    || 0) + rewards.xp;
-    let ptsGained = 0;
-    while (pvpXpChr >= pvpXpForLevel(pvpLvl)) {
-      pvpXpChr -= pvpXpForLevel(pvpLvl);
-      pvpLvl++;
-      ptsGained++;
-    }
-    await pool.query(
-      `UPDATE player_character SET pvp_level=$1, pvp_xp=$2, pvp_pts_avail=pvp_pts_avail+$3 WHERE user_id=$4`,
-      [pvpLvl, pvpXpChr, ptsGained, winnerId]
-    );
-
-    await pool.query(
-      `UPDATE users SET pvp_xp=pvp_xp+$1, pvp_gold=pvp_gold+$2, pvp_win_streak=$3, pvp_chests=pvp_chests+$4 WHERE id=$5`,
-      [rewards.xp, rewards.gold, finalStreak, chestEarned, winnerId]
-    );
-
+    // PVP = ELO uniquement, pas de XP/or/coffres
     res.json({
-      ok: true, battleId, winnerId, rankChange, log, fighters: { f1, f2 },
-      rewards: winnerId === battle.opponent_id ? {
-        xp: rewards.xp, gold: rewards.gold,
-        chestEarned: chestEarned > 0,
-        winStreak: finalStreak,
-        levelUp: ptsGained > 0,
-        newLevel: pvpLvl,
-        dailyCapReached,
-        winsToday: winsToday + 1,
-      } : null,
-      challengerRewards: winnerId === battle.challenger_id ? {
-        xp: rewards.xp, gold: rewards.gold,
-        chestEarned: chestEarned > 0,
-        winStreak: finalStreak,
-        levelUp: ptsGained > 0,
-        newLevel: pvpLvl,
-      } : null,
+      ok: true, battleId, winnerId, rankChange, loserLoss, log, fighters: { f1, f2 },
     });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -7105,6 +7085,309 @@ app.get("/api/pvp/battle-result/:id", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+
+
+// =========================
+// SYSTÈME PVE
+// =========================
+
+// Tables PVE créées dans initDb (voir ci-dessus)
+// 7 ennemis × 3 difficultés, 9 combats/jour, coffre toutes les 3 victoires contre un même ennemi
+
+const PVE_ENEMIES = {
+  goblin: {
+    key: 'goblin', name: 'Gobelin',
+    sprite: '/ennemie spritesheet/goblin',
+    difficulties: {
+      easy:   { hp: 120, atq: 8,  def: 2,  speed: 12, crit: 5,  crit_dmg: 110, dodge: 5  },
+      medium: { hp: 200, atq: 14, def: 5,  speed: 14, crit: 8,  crit_dmg: 115, dodge: 8  },
+      hard:   { hp: 320, atq: 22, def: 10, speed: 16, crit: 12, crit_dmg: 120, dodge: 12 },
+    },
+    xp:   { easy: 40,  medium: 80,  hard: 150 },
+    gold: { easy: 25,  medium: 50,  hard: 90  },
+  },
+  orc: {
+    key: 'orc', name: 'Orc',
+    sprite: '/ennemie spritesheet/orc',
+    difficulties: {
+      easy:   { hp: 200, atq: 14, def: 5,  speed: 8,  crit: 5,  crit_dmg: 110, dodge: 3  },
+      medium: { hp: 320, atq: 22, def: 10, speed: 10, crit: 8,  crit_dmg: 115, dodge: 5  },
+      hard:   { hp: 480, atq: 34, def: 18, speed: 12, crit: 12, crit_dmg: 120, dodge: 8  },
+    },
+    xp:   { easy: 60,  medium: 120, hard: 220 },
+    gold: { easy: 35,  medium: 70,  hard: 130 },
+  },
+  skeleton_warrior: {
+    key: 'skeleton_warrior', name: 'Squelette Guerrier',
+    sprite: '/ennemie spritesheet/skeleton_warrior',
+    difficulties: {
+      easy:   { hp: 160, atq: 12, def: 3,  speed: 10, crit: 8,  crit_dmg: 120, dodge: 8  },
+      medium: { hp: 260, atq: 20, def: 8,  speed: 13, crit: 12, crit_dmg: 130, dodge: 12 },
+      hard:   { hp: 400, atq: 30, def: 14, speed: 16, crit: 18, crit_dmg: 140, dodge: 18 },
+    },
+    xp:   { easy: 70,  medium: 140, hard: 260 },
+    gold: { easy: 40,  medium: 80,  hard: 150 },
+  },
+  ogre: {
+    key: 'ogre', name: 'Ogre',
+    sprite: '/ennemie spritesheet/ogre',
+    difficulties: {
+      easy:   { hp: 350, atq: 18, def: 10, speed: 6,  crit: 4,  crit_dmg: 110, dodge: 2  },
+      medium: { hp: 550, atq: 28, def: 18, speed: 8,  crit: 6,  crit_dmg: 115, dodge: 4  },
+      hard:   { hp: 800, atq: 42, def: 28, speed: 10, crit: 10, crit_dmg: 120, dodge: 6  },
+    },
+    xp:   { easy: 90,  medium: 180, hard: 320 },
+    gold: { easy: 55,  medium: 110, hard: 200 },
+  },
+  zombie_villager: {
+    key: 'zombie_villager', name: 'Zombie Villageois',
+    sprite: '/ennemie spritesheet/zombie_villager',
+    difficulties: {
+      easy:   { hp: 250, atq: 16, def: 6,  speed: 5,  crit: 3,  crit_dmg: 108, dodge: 3  },
+      medium: { hp: 400, atq: 25, def: 12, speed: 7,  crit: 5,  crit_dmg: 112, dodge: 5  },
+      hard:   { hp: 600, atq: 38, def: 20, speed: 9,  crit: 8,  crit_dmg: 118, dodge: 8  },
+    },
+    xp:   { easy: 80,  medium: 160, hard: 290 },
+    gold: { easy: 50,  medium: 100, hard: 180 },
+  },
+  golem: {
+    key: 'golem', name: 'Golem de Pierre',
+    sprite: '/ennemie spritesheet/golem',
+    difficulties: {
+      easy:   { hp: 500, atq: 22, def: 18, speed: 4,  crit: 3,  crit_dmg: 110, dodge: 1  },
+      medium: { hp: 780, atq: 34, def: 28, speed: 6,  crit: 5,  crit_dmg: 115, dodge: 3  },
+      hard:   { hp: 1100,atq: 50, def: 42, speed: 8,  crit: 8,  crit_dmg: 120, dodge: 5  },
+    },
+    xp:   { easy: 120, medium: 240, hard: 420 },
+    gold: { easy: 70,  medium: 140, hard: 260 },
+  },
+  necromancer_of_the_shadow: {
+    key: 'necromancer_of_the_shadow', name: 'Nécromancien des Ombres',
+    sprite: '/ennemie spritesheet/necromancer_of_the_shadow',
+    difficulties: {
+      easy:   { hp: 300, atq: 28, def: 8,  speed: 14, crit: 15, crit_dmg: 135, dodge: 15 },
+      medium: { hp: 480, atq: 42, def: 14, speed: 18, crit: 22, crit_dmg: 145, dodge: 22 },
+      hard:   { hp: 700, atq: 60, def: 22, speed: 22, crit: 30, crit_dmg: 160, dodge: 30 },
+    },
+    xp:   { easy: 150, medium: 300, hard: 550 },
+    gold: { easy: 90,  medium: 180, hard: 330 },
+  },
+};
+
+const PVE_DAILY_MAX = 9;
+
+function simulatePveBattle(fighter, enemy) {
+  let hpF = fighter.hp;
+  let hpE = enemy.hp;
+  const log = [];
+
+  // Qui frappe en premier (vitesse)
+  const [first, second, hpFirst0, hpSecond0] = fighter.speed >= enemy.speed
+    ? [fighter, enemy, hpF, hpE]
+    : [enemy, fighter, hpE, hpF];
+
+  let hpFirst  = hpFirst0;
+  let hpSecond = hpSecond0;
+  const firstIsPlayer = first === fighter;
+
+  for (let turn = 1; turn <= 60; turn++) {
+    log.push({ type: 'turn', turn });
+
+    // Attaque du premier
+    const d1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 10);
+    if (d1) {
+      log.push({ type: 'dodge', attacker: first.name, defender: second.name });
+    } else {
+      const c1 = Math.random() * 100 < (first.crit || 0);
+      const cm1 = c1 ? ((first.crit_dmg || 120) / 100) : 1;
+      const raw1 = Math.round(first.atq * (0.80 + Math.random() * 0.40) * cm1);
+      const red1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
+      const dmg1 = Math.max(1, Math.round(raw1 * (1 - red1)));
+      hpSecond = Math.max(0, hpSecond - dmg1);
+      if ((first.lifesteal || 0) > 0) hpFirst = Math.min(first.hp, hpFirst + Math.round(dmg1 * first.lifesteal / 100));
+      log.push({ type: c1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp, hpLeftAtt: hpFirst, hpMaxAtt: first.hp });
+    }
+    if (hpSecond <= 0) break;
+
+    // Attaque du second
+    const d2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 10);
+    if (d2) {
+      log.push({ type: 'dodge', attacker: second.name, defender: first.name });
+    } else {
+      const c2 = Math.random() * 100 < (second.crit || 0);
+      const cm2 = c2 ? ((second.crit_dmg || 120) / 100) : 1;
+      const raw2 = Math.round(second.atq * (0.80 + Math.random() * 0.40) * cm2);
+      const red2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
+      const dmg2 = Math.max(1, Math.round(raw2 * (1 - red2)));
+      hpFirst = Math.max(0, hpFirst - dmg2);
+      if ((second.lifesteal || 0) > 0) hpSecond = Math.min(second.hp, hpSecond + Math.round(dmg2 * second.lifesteal / 100));
+      log.push({ type: c2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp, hpLeftAtt: hpSecond, hpMaxAtt: second.hp });
+    }
+    if (hpFirst <= 0) break;
+  }
+
+  const playerHp = firstIsPlayer ? hpFirst : hpSecond;
+  const enemyHp  = firstIsPlayer ? hpSecond : hpFirst;
+  const playerWon = playerHp > enemyHp || (enemyHp <= 0 && playerHp > 0) || (playerHp > 0 && enemyHp <= 0);
+  log.push({ type: 'end', winner: playerHp > 0 && (enemyHp <= 0 || playerHp >= enemyHp) ? fighter.name : enemy.name });
+  return { log, playerWon: playerHp > 0 && (enemyHp <= 0 || playerHp >= enemyHp) };
+}
+
+// GET /api/pve/enemies — liste des ennemis + progression du joueur
+app.get('/api/pve/enemies', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Combats restants aujourd'hui
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dayQ = await pool.query(
+      `SELECT pve_fights_today, pve_day_key FROM users WHERE id=$1`, [userId]
+    );
+    const u = dayQ.rows[0] || {};
+    const fightsToday = u.pve_day_key === todayKey ? Number(u.pve_fights_today || 0) : 0;
+    const fightsLeft  = Math.max(0, PVE_DAILY_MAX - fightsToday);
+
+    // Victoires par ennemi+difficulté
+    const winsQ = await pool.query(
+      `SELECT enemy_key, difficulty, wins FROM pve_progress WHERE user_id=$1`, [userId]
+    );
+    const wins = {};
+    for (const r of winsQ.rows) {
+      wins[r.enemy_key + '_' + r.difficulty] = Number(r.wins);
+    }
+
+    const enemies = Object.values(PVE_ENEMIES).map(e => ({
+      key: e.key,
+      name: e.name,
+      sprite: e.sprite,
+      difficulties: ['easy', 'medium', 'hard'].map(d => ({
+        id: d,
+        label: d === 'easy' ? 'Facile' : d === 'medium' ? 'Moyen' : 'Difficile',
+        hp: e.difficulties[d].hp,
+        wins: wins[e.key + '_' + d] || 0,
+        xp: e.xp[d],
+        gold: e.gold[d],
+        // Coffre toutes les 3 victoires
+        chestEvery: 3,
+        nextChestIn: 3 - ((wins[e.key + '_' + d] || 0) % 3),
+      })),
+    }));
+
+    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pve/fight — lancer un combat PVE
+app.post('/api/pve/fight', auth, async (req, res) => {
+  const userId     = req.user.id;
+  const enemyKey   = String(req.body?.enemy || '');
+  const difficulty = String(req.body?.difficulty || 'easy');
+
+  const enemyDef = PVE_ENEMIES[enemyKey];
+  if (!enemyDef) return res.status(400).json({ error: 'Ennemi invalide' });
+  if (!['easy', 'medium', 'hard'].includes(difficulty)) return res.status(400).json({ error: 'Difficulté invalide' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Vérifier limite journalière
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dayQ = await client.query(`SELECT pve_fights_today, pve_day_key FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+    const u = dayQ.rows[0] || {};
+    const fightsToday = u.pve_day_key === todayKey ? Number(u.pve_fights_today || 0) : 0;
+    if (fightsToday >= PVE_DAILY_MAX) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Limite journalière atteinte (${PVE_DAILY_MAX} combats/jour)` });
+    }
+
+    // Construire le fighter joueur
+    const fighter = await buildPvpFighter(userId);
+    // Construire l'ennemi
+    const eStats = enemyDef.difficulties[difficulty];
+    const enemy = {
+      name: enemyDef.name,
+      hp: eStats.hp,
+      atq: eStats.atq,
+      def: eStats.def,
+      speed: eStats.speed,
+      crit: eStats.crit,
+      crit_dmg: eStats.crit_dmg,
+      dodge: eStats.dodge,
+      lifesteal: 0,
+    };
+
+    // Simuler
+    const { log, playerWon } = simulatePveBattle(fighter, enemy);
+
+    // Mettre à jour les combats du jour
+    const newFightsToday = fightsToday + 1;
+    await client.query(
+      `UPDATE users SET pve_fights_today=$1, pve_day_key=$2 WHERE id=$3`,
+      [newFightsToday, todayKey, userId]
+    );
+
+    let xpGained = 0, goldGained = 0, chestEarned = false, winsAfter = 0;
+
+    if (playerWon) {
+      xpGained   = enemyDef.xp[difficulty];
+      goldGained = enemyDef.gold[difficulty];
+
+      // XP personnage
+      await addCharXp(userId, xpGained);
+      // Or dollax
+      await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [goldGained, userId]);
+
+      // Progression PVE
+      const progQ = await client.query(
+        `SELECT wins FROM pve_progress WHERE user_id=$1 AND enemy_key=$2 AND difficulty=$3`,
+        [userId, enemyKey, difficulty]
+      );
+      const prevWins = Number(progQ.rows[0]?.wins || 0);
+      winsAfter = prevWins + 1;
+      await client.query(
+        `INSERT INTO pve_progress(user_id, enemy_key, difficulty, wins, last_fought_at)
+         VALUES($1,$2,$3,$4,$5)
+         ON CONFLICT(user_id, enemy_key, difficulty) DO UPDATE SET wins=pve_progress.wins+1, last_fought_at=$5`,
+        [userId, enemyKey, difficulty, winsAfter, Date.now()]
+      );
+
+      // Coffre toutes les 3 victoires
+      if (winsAfter % 3 === 0) {
+        chestEarned = true;
+        const rankInfo = getRankInfo(Number(fighter.rank));
+        const item = pvpChestLoot(rankInfo.name);
+        if (item) {
+          await client.query(
+            `INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`,
+            [userId, item.key, Date.now()]
+          );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+
+    res.json({
+      ok: true,
+      playerWon,
+      log,
+      fightsLeft: Math.max(0, PVE_DAILY_MAX - newFightsToday),
+      rewards: playerWon ? {
+        xp: xpGained,
+        gold: goldGained,
+        chestEarned,
+        winsAgainstEnemy: winsAfter,
+        nextChestIn: 3 - (winsAfter % 3),
+      } : null,
+      fighter: { name: fighter.name, hp: fighter.hp, pvpSkin: fighter.pvpSkin, charClass: fighter.charClass },
+      enemy:   { name: enemy.name, hp: enemy.hp, key: enemyKey, difficulty },
+    });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
 
 // =========================
 // START

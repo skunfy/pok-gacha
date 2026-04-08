@@ -330,6 +330,24 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .vs-flash.show{animation:vsFlash .8s ease-out forwards}
 @keyframes vsFlash{0%{opacity:0;transform:scale(2)}30%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(.8)}}
 .vs-text{font-size:72px;font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,#ff6464,#ffd84d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(255,100,100,.5))}
+
+/* ══ PVE ══ */
+.pve-enemy-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
+.pve-enemy-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.pve-enemy-icon{width:52px;height:52px;border-radius:12px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.pve-enemy-name{font-size:15px;font-weight:900}
+.pve-diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pve-diff-btn{border-radius:12px;border:1px solid var(--border);background:var(--bg3);padding:10px 6px;cursor:pointer;transition:all .18s;text-align:center;position:relative;overflow:hidden}
+.pve-diff-btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--purple);background:rgba(127,92,255,.1)}
+.pve-diff-btn:disabled{opacity:.5;cursor:not-allowed}
+.pve-diff-btn.easy{--diff-color:#33ff99}
+.pve-diff-btn.medium{--diff-color:#ffd84d}
+.pve-diff-btn.hard{--diff-color:#ff6464}
+.pve-diff-label{font-size:11px;font-weight:900;color:var(--diff-color);margin-bottom:4px}
+.pve-diff-wins{font-size:10px;opacity:.5;margin-top:2px}
+.pve-diff-chest{font-size:10px;color:#ffd84d;margin-top:3px}
+.pve-diff-rewards{font-size:10px;opacity:.6;margin-top:3px}
+.pve-diff-hp{font-size:10px;color:#ff6464;margin-top:2px}
 </style>
 </head>
 <body>
@@ -339,7 +357,8 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   <span class="nav-title">⚔️ PVP</span>
   <div class="tabs">
     <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
-    <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚡ Match</button>
+    <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚔️ PVP</button>
+    <button class="tab-btn" onclick="showTab('pve',event)" id="pve-tab">🐉 PVE</button>
     <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
     <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
     <button class="tab-btn" onclick="showTab('forge',event)">⚒️ Forge</button>
@@ -391,6 +410,17 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
       <div class="card-title">Mes combats récents</div>
       <div id="hist-content"><div class="loading">Chargement...</div></div>
     </div>
+  </div>
+
+  <div id="sec-pve" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">🐉 Mode PVE</div>
+        <div id="pve-fights-left" style="font-size:13px;font-weight:700;opacity:.7"></div>
+      </div>
+      <div style="font-size:12px;opacity:.45;margin-top:6px">Bats des ennemis pour gagner XP &amp; or · Coffre toutes les 3 victoires · 9 combats/jour</div>
+    </div>
+    <div id="pve-content"><div class="loading">Chargement...</div></div>
   </div>
 </div>
 
@@ -1249,6 +1279,7 @@ function showTab(name, ev) {
   if (name==='classement') loadClassement();
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
+  if (name==='pve') loadPve();
   if (name==='matchmaking') { refreshEnergyUI(); initMatchmakingTab(); }
 }
 
@@ -2259,7 +2290,7 @@ async function mmAccept(battleId) {
     document.getElementById('mm-found').style.display = 'none';
     stopMatchmaking(false);
     openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
-    if (d.rewards || d.challengerRewards) showPvpRewards(d.rewards || d.challengerRewards);
+    // PVP rewards removed — ELO only
     loadProfil();
   } catch(e) {
     showAlert(e.message || 'Erreur', 'error');
@@ -2273,13 +2304,7 @@ async function mmDecline(battleId) {
   stopMatchmaking(false);
 }
 function showPvpRewards(r) {
-  if (!r) return;
-  const parts=[];
-  if(r.xp) parts.push('+'+r.xp+' XP PVP');
-  if(r.gold) parts.push('+'+r.gold+' Or PVP');
-  if(r.chestEarned) parts.push('🎁 Coffre obtenu !');
-  if(r.levelUp) parts.push('⬆️ Niveau PVP '+r.newLevel+' !');
-  if(parts.length) showAlert(parts.join(' · '),'success');
+  // PVP ne donne plus XP/or/coffres — juste l'ELO
 }
 
 
@@ -2366,6 +2391,109 @@ function spawnConfetti() {
       stage.appendChild(p);
       setTimeout(function(){ p.remove(); }, del + dur + 120);
     })();
+  }
+}
+
+
+// ══════════════════════════════════════════════════
+// PVE
+// ══════════════════════════════════════════════════
+const PVE_DIFF_COLORS = { easy:'#33ff99', medium:'#ffd84d', hard:'#ff6464' };
+const PVE_DIFF_LABELS = { easy:'Facile', medium:'Moyen', hard:'Difficile' };
+const PVE_ENEMY_ICONS = {
+  goblin:'👺', orc:'👹', skeleton_warrior:'💀', ogre:'🗿',
+  zombie_villager:'🧟', golem:'🪨', necromancer_of_the_shadow:'🧙'
+};
+
+let _pveData = null;
+
+async function loadPve() {
+  const el = document.getElementById('pve-content');
+  el.innerHTML = '<div class="loading">Chargement...</div>';
+  try {
+    const d = await api('/api/pve/enemies');
+    _pveData = d;
+    renderPve(d);
+  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement PVE</div>'; }
+}
+
+function renderPve(d) {
+  const el = document.getElementById('pve-content');
+  const flEl = document.getElementById('pve-fights-left');
+  if (flEl) {
+    const col = d.fightsLeft <= 0 ? '#ff4444' : d.fightsLeft <= 3 ? '#ffd84d' : '#33ff99';
+    flEl.innerHTML = `<span style="color:${col}">⚡ ${d.fightsLeft}/${d.maxDaily} combats restants</span>`;
+  }
+
+  el.innerHTML = d.enemies.map(e => {
+    const icon = PVE_ENEMY_ICONS[e.key] || '👾';
+    const diffHtml = e.difficulties.map(diff => {
+      const col = PVE_DIFF_COLORS[diff.id] || '#aaa';
+      const chestLabel = diff.wins > 0
+        ? (diff.nextChestIn === 3
+            ? `🎁 Coffre dans 3 victoires`
+            : `🎁 +${diff.nextChestIn} victoire${diff.nextChestIn > 1 ? 's' : ''} pour coffre`)
+        : `🎁 Coffre à la 3e victoire`;
+      return `<div class="pve-diff-btn ${diff.id}" onclick="doPveFight('${e.key}','${diff.id}')" ${d.fightsLeft <= 0 ? 'disabled' : ''}>
+        <div class="pve-diff-label">${PVE_DIFF_LABELS[diff.id]}</div>
+        <div class="pve-diff-hp" style="color:${col}">❤️ ${diff.hp} PV</div>
+        <div class="pve-diff-rewards">+${diff.xp} XP · +${diff.gold} or</div>
+        <div class="pve-diff-wins">${diff.wins} victoire${diff.wins !== 1 ? 's' : ''}</div>
+        <div class="pve-diff-chest">${chestLabel}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="pve-enemy-card">
+      <div class="pve-enemy-header">
+        <div class="pve-enemy-icon">${icon}</div>
+        <div>
+          <div class="pve-enemy-name">${esc(e.name)}</div>
+          <div style="font-size:11px;opacity:.45;margin-top:2px">3 niveaux de difficulté</div>
+        </div>
+      </div>
+      <div class="pve-diff-grid">${diffHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+async function doPveFight(enemyKey, difficulty) {
+  if (!_pveData || _pveData.fightsLeft <= 0) {
+    showAlert('Plus de combats disponibles!', 'error'); return;
+  }
+  // Disable all buttons during fight
+  document.querySelectorAll('.pve-diff-btn').forEach(b => b.disabled = true);
+  try {
+    const d = await api('/api/pve/fight', { method: 'POST', body: JSON.stringify({ enemy: enemyKey, difficulty }) });
+    _pveData.fightsLeft = d.fightsLeft;
+
+    // Build fake fighter objects for replay
+    const me = myData || { name: 'Toi', pvpSkin: 'forest_ranger', charClass: null, hp: 300 };
+    const f1 = { name: me.name, pvpSkin: me.pvpSkin || 'forest_ranger', charClass: me.charClass || null, hp: me.hp || 300, rankInfo: me.rankInfo || null, avatar: me.avatar || null };
+    const f2 = { name: d.enemy.name, pvpSkin: 'forest_ranger', charClass: null, hp: d.enemy.hp, rankInfo: null, avatar: null };
+
+    // Show rewards
+    if (d.rewards) {
+      const parts = [];
+      if (d.rewards.xp)   parts.push(`+${d.rewards.xp} XP`);
+      if (d.rewards.gold) parts.push(`+${d.rewards.gold} or`);
+      if (d.rewards.chestEarned) parts.push('🎁 Coffre PVP obtenu !');
+      if (parts.length) showAlert(parts.join(' · '), 'success');
+    } else {
+      showAlert('💀 Défaite... Réessaie !', 'error');
+    }
+
+    // Replay the fight
+    openReplay(d.log, f1, f2, d.playerWon ? null : null, 0);
+
+    // Refresh PVE list
+    const fresh = await api('/api/pve/enemies');
+    _pveData = fresh;
+    renderPve(fresh);
+    // Also refresh profil XP/gold
+    loadProfil();
+  } catch(e) {
+    showAlert(e.message || 'Erreur PVE', 'error');
+    document.querySelectorAll('.pve-diff-btn').forEach(b => b.disabled = (_pveData?.fightsLeft <= 0));
   }
 }
 
