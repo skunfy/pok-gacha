@@ -378,6 +378,14 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="card">
       <div id="energy-bar-mm"></div>
       <div class="card-title">⚡ Matchmaking</div>
+      <!-- Récompenses hebdomadaires ELO -->
+      <div id="weekly-rewards-bar" style="margin-bottom:14px;background:rgba(255,216,77,.05);border:1px solid rgba(255,216,77,.15);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:11px;font-weight:900;color:#ffd84d;margin-bottom:2px">🏆 Récompenses hebdomadaires</div>
+          <div style="font-size:10px;opacity:.5">Chaque lundi — dollax selon ton rang ELO</div>
+        </div>
+        <div id="weekly-reward-preview" style="font-size:12px;font-weight:700;color:#ffd84d"></div>
+      </div>
       <div id="mm-content">
         <div style="text-align:center;padding:30px">
           <div id="mm-status" style="font-size:15px;margin-bottom:16px;opacity:.7">Trouve un adversaire automatiquement</div>
@@ -1141,65 +1149,76 @@ function showAlert(msg, type='error') {
 let _pvpInventory = null;
 
 function renderPvpProgression(f) {
-  // XP PVP : calculer le % dans le niveau actuel
-  function pvpXpForLvl(l) { return Math.floor(100 * Math.pow(l, 1.6)); }
-  const pvpLvl    = f.pvpLevel || 1;
-  const xpInLevel = f.pvpXp || 0;
-  const xpNeeded  = pvpXpForLvl(pvpLvl);
-  const pct       = Math.min(100, Math.round(xpInLevel / xpNeeded * 100));
-  const statsLabels = { force:'Force', agilite:'Agilité', intelligence:'Intelligence', dexterite:'Dextérité' };
-  const statsColors = { force:'#ff6464', agilite:'#33ff99', intelligence:'#c084ff', dexterite:'#4da6ff' };
-  const ptsAvail = f.pvpPtsAvail || 0;
+  var statsLabels = { force:'Force', agilite:'Agilité', intelligence:'Intelligence', dexterite:'Dextérité' };
+  var statsColors = { force:'#ff6464', agilite:'#33ff99', intelligence:'#c084ff', dexterite:'#4da6ff' };
+  var ptsAvail = f.pvpPtsAvail || 0;
 
-  const statsHtml = Object.entries(statsLabels).map(([k, label]) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
-      <div style="width:90px;font-size:11px;opacity:.6">${label}</div>
-      <div style="font-weight:900;color:${statsColors[k]};min-width:28px">${f.pvpStats?.[k] || 5}</div>
-      ${ptsAvail > 0 ? `<button onclick="spendPvpStat('${k}')" style="padding:2px 8px;border:none;border-radius:6px;background:#7f5cff;color:#fff;font-size:11px;font-weight:700;cursor:pointer">+</button>` : ''}
-    </div>
-  `).join('');
+  var statsHtml = Object.entries(statsLabels).map(function(entry) {
+    var k = entry[0], label = entry[1];
+    var btnHtml = ptsAvail > 0
+      ? '<button onclick="spendPvpStat(\'' + k + '\')" style="padding:2px 8px;border:none;border-radius:6px;background:#7f5cff;color:#fff;font-size:11px;font-weight:700;cursor:pointer">+</button>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      + '<div style="width:90px;font-size:11px;opacity:.6">' + label + '</div>'
+      + '<div style="font-weight:900;color:' + statsColors[k] + ';min-width:28px">' + (f.pvpStats && f.pvpStats[k] != null ? f.pvpStats[k] : 5) + '</div>'
+      + btnHtml
+      + '</div>';
+  }).join('');
 
-  // Coffres disponibles (gagnés via PVE toutes les 3 victoires)
-  const chestHtml = f.pvpChests > 0
-    ? `<button onclick="openPveChest()" style="padding:8px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:13px;width:100%">
-        🎁 Ouvrir coffre (${f.pvpChests} dispo)
-      </button>`
-    : `<div style="font-size:11px;opacity:.4;text-align:center">Aucun coffre · Gagne des combats PVE !</div>`;
+  // Barre XP PVE
+  var pveLvl    = f.pveLevel || 1;
+  var pveXpCur  = f.pveXp || 0;
+  var pveXpNeed = f.pveXpNeeded || 1;
+  var pvePct    = pveLvl >= 50 ? 100 : Math.min(100, Math.round(pveXpCur / pveXpNeed * 100));
+  var pveLvlTxt = pveLvl >= 50 ? 'MAX' : String(pveLvl);
+  var pveXpTxt  = pveLvl >= 50 ? 'Niveau maximum !' : (pveXpCur + ' / ' + pveXpNeed + ' XP');
 
-  return `
-    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  // Or PVE
+  var pveGold = f.pveGold || 0;
 
-      <!-- Stats de cara -->
-      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px">
-        <div style="font-size:11px;font-weight:900;opacity:.5;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">
-          Stats PVP ${ptsAvail > 0 ? `<span style="color:#7f5cff;margin-left:6px">${ptsAvail} pt${ptsAvail>1?'s':''} dispo</span>` : ''}
-        </div>
-        ${statsHtml}
-        <div style="margin-top:10px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;opacity:.5;margin-bottom:4px">
-            <span>Niv. PVP ${pvpLvl}</span>
-            <span style="opacity:.35;font-size:9px">XP via combats PVE</span>
-          </div>
-          <div id="pve-xp-bar-profil" style="margin-top:2px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#33ff99;margin-bottom:4px">
-              <span>Niv. PVE <span id="pve-lvl-badge" style="font-weight:900">—</span></span>
-              <span id="pve-xp-txt" style="opacity:.6">— / — XP</span>
-            </div>
-            <div style="height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
-              <div id="pve-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+  // Coffres PVE
+  var chests = f.pvpChests || 0;
+  var chestHtml = chests > 0
+    ? '<button onclick="openPveChest()" style="padding:8px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#ffd84d,#ff9800);color:#000;font-weight:900;cursor:pointer;font-size:12px;width:100%;margin-top:4px">🎁 Ouvrir coffre (' + chests + ' dispo)</button>'
+    : '<div style="font-size:11px;opacity:.35;text-align:center;margin-top:4px">Aucun coffre · Gagne des combats PVE !</div>';
 
-      <!-- Or PVE (dollax) + Coffres PVE -->
-      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center">
-        <div style="font-size:18px;font-weight:900;color:#33ff99">🐉 <span id="profil-money">${f.money||0}</span> <span style="font-size:12px;opacity:.5">Or</span></div>
-        <div style="font-size:10px;opacity:.4;text-align:center;line-height:1.5">Gagné en combattant des ennemis PVE<br>Utilisable pour la Forge</div>
-        ${chestHtml}
-      </div>
+  // Titre stats avec badge points
+  var statsTitleBadge = ptsAvail > 0
+    ? 'Stats PVP <span style="color:#7f5cff;margin-left:6px">' + ptsAvail + ' pt' + (ptsAvail > 1 ? 's' : '') + ' dispo</span>'
+    : 'Stats PVP';
 
-    </div>`;
+  // Ligne restant
+  var restantHtml = pveLvl < 50
+    ? '<div style="font-size:9px;opacity:.35;margin-top:3px;text-align:right">' + (100 - pvePct) + '% restant</div>'
+    : '';
+
+  return '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+
+    // Colonne gauche : stats + barre XP PVE
+    + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px">'
+      + '<div style="font-size:11px;font-weight:900;opacity:.5;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">' + statsTitleBadge + '</div>'
+      + statsHtml
+      + '<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">'
+        + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#33ff99;margin-bottom:5px">'
+          + '<span style="font-weight:700">Niv. PVE ' + pveLvlTxt + '</span>'
+          + '<span style="opacity:.6">' + pveXpTxt + '</span>'
+        + '</div>'
+        + '<div style="height:7px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">'
+          + '<div style="height:100%;width:' + pvePct + '%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>'
+        + '</div>'
+        + restantHtml
+      + '</div>'
+    + '</div>'
+
+    // Colonne droite : or PVE + coffres
+    + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center">'
+      + '<div style="font-size:22px;font-weight:900;color:#33ff99">🐉 ' + pveGold.toLocaleString() + '</div>'
+      + '<div style="font-size:11px;font-weight:700;opacity:.5">Or PVE</div>'
+      + '<div style="font-size:10px;opacity:.35;text-align:center;line-height:1.5">Gagné en combats PVE<br>Dépensé à la Forge</div>'
+      + chestHtml
+    + '</div>'
+
+  + '</div>';
 }
 
 async function loadPvpInventory() {
@@ -1427,7 +1446,7 @@ function showTab(name, ev) {
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
   if (name==='pve') loadPve();
-  if (name==='matchmaking') { refreshEnergyUI(); initMatchmakingTab(); }
+  if (name==='matchmaking') { refreshEnergyUI(); initMatchmakingTab(); loadWeeklyRewards(); }
 }
 
 function rankBadgeHtml(rankInfo, pts) {
@@ -2175,7 +2194,7 @@ async function loadForge() {
   try {
     const [inv, me] = await Promise.all([ api('/api/pvp/inventory'), api('/api/pvp/me') ]);
     _pvpForgeInv  = inv; _pvpInventory = inv;
-    _pvpForgeGold = Number(me.fighter?.money || 0);
+    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
     renderPvpForge();
   } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement forge</div>'; }
 }
@@ -2229,9 +2248,9 @@ function renderPvpForge() {
 
   // ── COL CENTRE ──
   let centerHtml = '<img class="forge-anvil" src="'+FORGE_IMG_PVP+'" alt="Forge" onerror="this.remove()">';
-  centerHtml += '<div style="font-size:13px;font-weight:900;color:#33ff99;text-align:center">🐉 '+gold+' Or</div>';
+  centerHtml += '<div style="font-size:14px;font-weight:900;color:#33ff99;text-align:center">🐉 '+gold.toLocaleString()+' Or PVE</div>';
   if (cost!==null&&item&&!isMax) {
-    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#33ff99':'#ff4444')+'">💰 '+cost+' Or</div>';
+    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#33ff99':'#ff4444')+'">💰 '+cost+' Or PVE</div>';
   } else if (isMax) {
     centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
   } else if (!item) {
@@ -2294,7 +2313,7 @@ async function doPvpForge() {
     if (anvil){anvil.style.transform='scale(1.1) rotate(-5deg)';setTimeout(()=>{anvil.style.transform='';},300);}
     const d=await api('/api/pvp/forge',{method:'POST',body:JSON.stringify({itemId:_pvpForgeSelItem})});
     const [inv,me]=await Promise.all([api('/api/pvp/inventory'),api('/api/pvp/me')]);
-    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.money||0);
+    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.pveGold||0);
     pvpForgeSuccessAnim();
     const msg=d.isMilestone?'⭐ Palier +'+d.newLevel+' ! Nouvelle stat ajoutée !':'✅ Succès ! Équipement amélioré à +'+d.newLevel+' !';
     if (alertEl) alertEl.innerHTML='<div class="alert alert-success">'+msg+'</div>';
@@ -2697,12 +2716,44 @@ async function doPveFight(enemyKey, difficulty) {
   }
 }
 
+
+// ══════════════════════════════════════════════════
+// RÉCOMPENSES HEBDOMADAIRES ELO
+// ══════════════════════════════════════════════════
+const WEEKLY_ELO_TABLE = [
+  { rank:'Bronze',  min:0,    dollax:500   },
+  { rank:'Argent',  min:1200, dollax:1500  },
+  { rank:'Or',      min:1400, dollax:3000  },
+  { rank:'Platine', min:1600, dollax:6000  },
+  { rank:'Diamant', min:1800, dollax:12000 },
+  { rank:'Maître',  min:2000, dollax:25000 },
+];
+
+async function loadWeeklyRewards() {
+  const el = document.getElementById('weekly-reward-preview');
+  if (!el) return;
+  try {
+    const d = await api('/api/pvp/weekly-rewards');
+    const r = d.currentReward;
+    const rows = WEEKLY_ELO_TABLE.map(t => {
+      const isCurrent = t.rank === r.rank;
+      return `<span style="padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;${isCurrent?'background:rgba(255,216,77,.2);color:#ffd84d;':'opacity:.4;'}">
+        ${t.rank}: +${t.dollax.toLocaleString()}
+      </span>`;
+    }).join('');
+    el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">${rows}</div>
+      <div style="font-size:10px;opacity:.5;text-align:right;margin-top:4px">Ton rang actuel : <b style="color:#ffd84d">${r.rank}</b> → +${r.dollax.toLocaleString()} dollax lundi</div>`;
+  } catch(e) { if (el) el.innerHTML = ''; }
+}
+
 // ── INIT ──
 window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
 loadProfil();
 loadEnergy();
-// Charger le niveau PVE dès le départ pour afficher la barre dans le profil
+// Charger le niveau PVE dès le départ
 api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(() => {});
+// Charger les récompenses hebdomadaires
+loadWeeklyRewards();
 </script>
 </body>
 </html>

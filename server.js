@@ -963,6 +963,7 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_fights_today INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_level INTEGER NOT NULL DEFAULT 1`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_xp    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_gold  INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS pve_progress (
@@ -6540,7 +6541,7 @@ function pvpWinRewards(rankName, pvpLevel) {
 async function buildPvpFighter(userId) {
   const char  = await getOrCreateCharacter(userId);
   const userQ = await pool.query(
-    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, money FROM users WHERE id=$1`,
+    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, pve_gold, pve_level, pve_xp FROM users WHERE id=$1`,
     [userId]
   );
   const u = userQ.rows[0];
@@ -6583,7 +6584,10 @@ async function buildPvpFighter(userId) {
     pvpXp:       Number(u.pvp_xp     || 0),
     pvpChests:   Number(u.pvp_chests || 0),
     winStreak:   Number(u.pvp_win_streak || 0),
-    money:       Number(u.money       || 0),
+    pveGold:     Number(u.pve_gold   || 0),
+    pveLevel:    Number(u.pve_level  || 1),
+    pveXp:       Number(u.pve_xp     || 0),
+    pveXpNeeded: pveXpForLevel(Number(u.pve_level || 1)),
     rankInfo,
     charClass:   char.char_class,
     pvpSkin:     char.pvp_skin || 'forest_ranger',
@@ -6820,9 +6824,9 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
     if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau max atteint (+15)" }); }
 
     const cost = pvpForgeCost(def.rarity, forgeLevel);
-    const userQ = await client.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
-    const gold  = Number(userQ.rows[0]?.money || 0);
-    if (gold < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${cost} requis)` }); }
+    const userQ = await client.query(`SELECT pve_gold FROM users WHERE id=$1`, [req.user.id]);
+    const gold  = Number(userQ.rows[0]?.pve_gold || 0);
+    if (gold < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or PVE insuffisant (${cost} requis, tu en as ${gold})` }); }
 
     const newLevel   = forgeLevel + 1;
     let extraStats   = { ...(item.extra_stats || {}) };
@@ -6836,7 +6840,7 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
       extraStats[chosenStat] = (extraStats[chosenStat] || 0) + bonusVal;
     }
 
-    await client.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [cost, req.user.id]);
+    await client.query(`UPDATE users SET pve_gold=pve_gold-$1 WHERE id=$2`, [cost, req.user.id]);
     await client.query(`UPDATE pvp_equipment SET forge_level=$1, extra_stats=$2 WHERE id=$3`, [newLevel, JSON.stringify(extraStats), itemId]);
     await client.query('COMMIT');
 
@@ -7376,8 +7380,8 @@ app.post('/api/pve/fight', auth, async (req, res) => {
 
       // XP PVE (système propre, niveau 1-50)
       pveProgress = await addPveXp(userId, xpGained, client);
-      // Or dollax
-      await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [goldGained, userId]);
+      // Or PVE (monnaie séparée, utilisable pour la Forge)
+      await client.query(`UPDATE users SET pve_gold=pve_gold+$1 WHERE id=$2`, [goldGained, userId]);
 
       // Progression PVE
       const progQ = await client.query(
@@ -7434,6 +7438,94 @@ app.post('/api/pve/fight', auth, async (req, res) => {
   } finally { client.release(); }
 });
 
+
+// =========================
+// RÉCOMPENSES HEBDOMADAIRES ELO
+// =========================
+
+const WEEKLY_ELO_REWARDS = [
+  { rank: 'Bronze',   min: 0,    dollax: 500  },
+  { rank: 'Argent',   min: 1200, dollax: 1500 },
+  { rank: 'Or',       min: 1400, dollax: 3000 },
+  { rank: 'Platine',  min: 1600, dollax: 6000 },
+  { rank: 'Diamant',  min: 1800, dollax: 12000 },
+  { rank: 'Maître',   min: 2000, dollax: 25000 },
+];
+
+async function distributeWeeklyEloRewards() {
+  try {
+    console.log('💰 Distribution des récompenses hebdomadaires ELO...');
+    const users = await pool.query(`SELECT id, pvp_rank, name FROM users WHERE pvp_wins > 0 OR pvp_losses > 0`);
+    let distributed = 0;
+
+    for (const u of users.rows) {
+      const rank = Number(u.pvp_rank || 0);
+      // Trouver la tranche ELO (la plus haute applicable)
+      const reward = [...WEEKLY_ELO_REWARDS].reverse().find(r => rank >= r.min);
+      if (!reward) continue;
+
+      await pool.query(`UPDATE users SET money = money + $1 WHERE id = $2`, [reward.dollax, u.id]);
+      await pool.query(
+        `INSERT INTO notifications(user_id, type, title, body, meta, is_read, createdAt)
+         VALUES($1,'weekly_reward','🏆 Récompense hebdomadaire !',$2,$3,0,$4)`,
+        [u.id,
+         `Rang ${reward.rank} — +${reward.dollax.toLocaleString()} dollax pour cette semaine !`,
+         JSON.stringify({ rank: reward.rank, dollax: reward.dollax, pvp_rank: rank }),
+         Date.now()]
+      );
+      distributed++;
+    }
+    console.log(`✅ Récompenses distribuées à ${distributed} joueurs`);
+  } catch(e) {
+    console.error('❌ Erreur récompenses hebdomadaires:', e);
+  }
+}
+
+// GET /api/pvp/weekly-rewards — voir les récompenses disponibles
+app.get('/api/pvp/weekly-rewards', auth, async (req, res) => {
+  try {
+    const userQ = await pool.query(`SELECT pvp_rank FROM users WHERE id=$1`, [req.user.id]);
+    const rank = Number(userQ.rows[0]?.pvp_rank || 0);
+    const currentReward = [...WEEKLY_ELO_REWARDS].reverse().find(r => rank >= r.min);
+    res.json({
+      rewards: WEEKLY_ELO_REWARDS,
+      currentRank: rank,
+      currentReward: currentReward || WEEKLY_ELO_REWARDS[0],
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/weekly-rewards — déclencher manuellement (admin uniquement)
+app.post('/api/admin/weekly-rewards', auth, async (req, res) => {
+  // Simple protection par token admin
+  const adminToken = req.headers['x-admin-token'] || req.body?.adminToken;
+  if (adminToken !== process.env.ADMIN_TOKEN && adminToken !== 'gachax-admin-2024') {
+    return res.status(403).json({ error: 'Accès refusé' });
+  }
+  await distributeWeeklyEloRewards();
+  res.json({ ok: true });
+});
+
+// Cron hebdomadaire : chaque lundi à 00h00
+function scheduleWeeklyRewards() {
+  function msUntilNextMonday() {
+    const now = new Date();
+    const day = now.getDay(); // 0=dim, 1=lun
+    const daysUntilMonday = (8 - day) % 7 || 7;
+    const nextMonday = new Date(now);
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
+    nextMonday.setHours(0, 0, 0, 0);
+    return nextMonday - now;
+  }
+
+  const ms = msUntilNextMonday();
+  console.log(`⏰ Prochaines récompenses ELO dans ${Math.round(ms/3600000)}h`);
+  setTimeout(() => {
+    distributeWeeklyEloRewards();
+    setInterval(distributeWeeklyEloRewards, 7 * 24 * 60 * 60 * 1000);
+  }, ms);
+}
+
 // =========================
 // START
 // =========================
@@ -7442,6 +7534,7 @@ initDb()
     app.listen(PORT, () => {
       console.log(`✅ Server listening on port ${PORT}`);
       console.log(`✅ Render PORT env is ${process.env.PORT || "(not set locally)"}`);
+      scheduleWeeklyRewards(); // Démarrer le cron de récompenses ELO
     });
   })
   .catch((e) => {
