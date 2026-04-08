@@ -46,7 +46,26 @@ const CLASS_SPRITES = {
     dead: { file:'skeleton_warrior/Dead.png', frames:15, fw:256, fps:7 },
     walk: { file:'skeleton_warrior/Walk.png', frames:24, fw:256, fps:10 },
   },
+  necromancer_of_the_shadow: {
+    idle: { file:'necromancer_of_the_shadow/Idle.png', frames:18, fw:256, fps:7 },
+    run: { file:'necromancer_of_the_shadow/Run.png', frames:12, fw:256, fps:13 },
+    attack1: { file:'necromancer_of_the_shadow/Slashing.png', frames:12, fw:256, fps:10 },
+    attack2: { file:'necromancer_of_the_shadow/Run_Slashing.png', frames:12, fw:256, fps:10 },
+    hurt: { file:'necromancer_of_the_shadow/Hurt.png', frames:12, fw:256, fps:10 },
+    dead: { file:'necromancer_of_the_shadow/Dead.png', frames:15, fw:256, fps:7 },
+    walk: { file:'necromancer_of_the_shadow/Walk.png', frames:24, fw:256, fps:10 },
+  },
+  zombie_villager: {
+    idle: { file:'zombie_villager/Idle.png', frames:18, fw:256, fps:7 },
+    run: { file:'zombie_villager/Run.png', frames:12, fw:256, fps:13 },
+    attack1: { file:'zombie_villager/Slashing.png', frames:12, fw:256, fps:10 },
+    attack2: { file:'zombie_villager/Run_Slashing.png', frames:12, fw:256, fps:10 },
+    hurt: { file:'zombie_villager/Hurt.png', frames:12, fw:256, fps:10 },
+    dead: { file:'zombie_villager/Dead.png', frames:15, fw:256, fps:7 },
+    walk: { file:'zombie_villager/Walk.png', frames:24, fw:256, fps:10 },
+  },
 };
+
 
 // ══ PARAMETRES A CHANGER DANS pvp.html ══
 // const SPRITE_PX   = 320;
