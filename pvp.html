@@ -398,6 +398,47 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .defi-result-banner.win{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.25);color:#33ff99}
 .defi-result-banner.lose{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.2);color:#ff8888}
 
+
+/* ══ FORGE TABS ══ */
+.forge-tabs{display:flex;gap:6px;margin-bottom:14px}
+.forge-tab{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:.15s}
+.forge-tab.active{background:var(--purple);color:#fff;border-color:transparent}
+.forge-tab-section{display:none}
+.forge-tab-section.active{display:block}
+
+/* ══ BRISER ══ */
+.shatter-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:7px;transition:.15s}
+.shatter-item:hover{border-color:rgba(255,100,100,.3)}
+.shatter-item-img{width:48px;height:48px;border-radius:10px;object-fit:contain;flex-shrink:0;background:rgba(255,255,255,.05)}
+.shatter-info{flex:1;min-width:0}
+.shatter-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shatter-rarity{font-size:10px;opacity:.5;margin-top:2px}
+.shatter-reward{font-size:11px;opacity:.6;margin-top:3px}
+.shatter-btn{padding:6px 14px;border:none;border-radius:8px;background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.25);color:#ff8888;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:.15s}
+.shatter-btn:hover{background:rgba(255,80,80,.3)}
+.shatter-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ══ REROLL ══ */
+.rune-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.rune-badge.any{background:rgba(170,170,170,.15);color:#aaa;border:1px solid rgba(170,170,170,.25)}
+.rune-badge.epic{background:rgba(192,132,255,.15);color:#c084ff;border:1px solid rgba(192,132,255,.3)}
+.rune-badge.legendary{background:rgba(255,216,77,.12);color:#ffd84d;border:1px solid rgba(255,216,77,.25)}
+.reroll-stat-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);margin-bottom:6px;transition:.15s;cursor:pointer}
+.reroll-stat-row:hover{border-color:rgba(127,92,255,.4)}
+.reroll-stat-row.selected{border-color:#7f5cff;background:rgba(127,92,255,.1)}
+.reroll-stat-label{flex:1;font-size:12px;font-weight:700}
+.reroll-stat-val{font-size:13px;font-weight:900;min-width:40px;text-align:right}
+.reroll-stat-grade{font-size:11px;font-weight:900;min-width:28px;text-align:center}
+.grade-meter{display:flex;gap:2px;margin-top:4px}
+.grade-pip{width:14px;height:4px;border-radius:2px;background:rgba(255,255,255,.1)}
+.grade-pip.filled{background:currentColor}
+
+/* ══ POPUP REROLL RESULT ══ */
+.reroll-result-popup{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);padding:20px}
+.reroll-result-box{background:#0d0e1f;border-radius:20px;padding:28px;width:min(340px,92vw);text-align:center}
+@keyframes gradeReveal{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.reroll-grade-big{font-size:80px;font-weight:900;animation:gradeReveal .6s cubic-bezier(.175,.885,.32,1.275) forwards}
+
 </style>
 </head>
 <body>
@@ -2300,6 +2341,8 @@ async function loadForge() {
     const [inv, me] = await Promise.all([ api('/api/pvp/inventory'), api('/api/pvp/me') ]);
     _pvpForgeInv  = inv; _pvpInventory = inv;
     _pvpForgeGold = Number(me.fighter?.pveGold || 0);
+    _pvpForgeRunes = me.fighter?.runes || {};
+    _rerollSelItem = null; _rerollSelStat = null;
     renderPvpForge();
   } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement forge</div>'; }
 }
@@ -2376,13 +2419,39 @@ function renderPvpForge() {
           +'<div class="forge-inv-lvl" style="color:'+pvpForgeLevelColor(i.forge_level)+'">'+(i.forge_level>0?'+'+i.forge_level:'')+(i.equipped_slot?' 📌':'')+'</div></div>';
       }).join('');
 
+  // Construire le HTML en utilisant des variables intermédiaires pour éviter les conflits de quotes
+  var shatterHtml  = renderShatterTab(inventory, _pvpForgeGold);
+  var rerollHtml   = renderRerollTab(inventory, _pvpForgeInv ? (_pvpForgeInv.runes || {}) : {}, _pvpForgeGold);
+
+  var tabBtns = '<div class="forge-tabs">'
+    + '<button class="forge-tab active" onclick="switchForgeTab(&quot;upgrade&quot;,this)">⚒️ Améliorer</button>'
+    + '<button class="forge-tab" onclick="switchForgeTab(&quot;shatter&quot;,this)">💥 Briser</button>'
+    + '<button class="forge-tab" onclick="switchForgeTab(&quot;reroll&quot;,this)">🎲 Runes</button>'
+    + '</div>';
+
+  var upgradeTab = '<div id="forge-tab-upgrade" class="forge-tab-section active">'
+    + '<div class="card" style="margin-bottom:12px">'
+    +   '<div class="card-title" style="margin-bottom:16px">⚒️ Forge — coût en Or PVE</div>'
+    +   '<div class="forge-main">'
+    +     '<div class="forge-col-left">'
+    +       '<div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
+    +       itemSlotHtml
+    +     '</div>'
+    +     '<div class="forge-col-center">' + centerHtml + '</div>'
+    +   '</div>'
+    +   '<div id="pvpForgeAlert" style="margin-top:10px"></div>'
+    + '</div>'
+    + '<div class="card"><div class="card-title">🎒 Inventaire</div>'
+    +   '<div class="forge-inv-grid">' + invHtml + '</div>'
+    + '</div>'
+    + '</div>';
+
   el.innerHTML = '<div class="forge-wrap">'
-    + '<div class="card"><div class="card-title" style="margin-bottom:16px">⚒️ Forge — coût en Or</div>'
-    +   '<div class="forge-main"><div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
-    +   itemSlotHtml+'</div><div class="forge-col-center">'+centerHtml+'</div></div>'
-    +   '<div id="pvpForgeAlert" style="margin-top:10px"></div></div>'
-    + '<div class="card"><div class="card-title">🎒 Inventaire — choisir un équipement à forger</div>'
-    +   '<div class="forge-inv-grid">'+invHtml+'</div></div></div>';
+    + tabBtns
+    + upgradeTab
+    + '<div id="forge-tab-shatter" class="forge-tab-section">' + shatterHtml + '</div>'
+    + '<div id="forge-tab-reroll" class="forge-tab-section">'  + rerollHtml  + '</div>'
+    + '</div>';
 }
 
 function selectPvpForgeItem(id) { _pvpForgeSelItem=(_pvpForgeSelItem===id)?null:id; renderPvpForge(); }
@@ -2430,6 +2499,256 @@ async function doPvpForge() {
     if (btn) btn.disabled=false;
     renderPvpForge();
   }
+}
+
+
+// ══ FORGE TABS ══
+var _forgeActiveTab = 'upgrade';
+var _pvpForgeRunes = {};
+
+function switchForgeTab(tab, btn) {
+  _forgeActiveTab = tab;
+  document.querySelectorAll('.forge-tab').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.forge-tab-section').forEach(function(s) { s.classList.remove('active'); });
+  var sec = document.getElementById('forge-tab-' + tab);
+  if (sec) sec.classList.add('active');
+}
+
+// ══ BRISER ══
+const SHATTER_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
+const SHATTER_GOLD = { common:10, rare:25, epic:60, legendary:150 };
+const SHATTER_RUNES_TEXT = {
+  common:    '🪨 1 Rune',
+  rare:      '🪨 2 Runes',
+  epic:      '🪨 1 Rune · 💎 1 Rune Épique',
+  legendary: '💎 1 Rune Épique · ⭐ 1 Rune Légendaire',
+};
+
+function renderShatterTab(inventory, gold) {
+  var items = inventory.filter(function(i) { return !i.equipped_slot; });
+  if (!items.length) {
+    return '<div class="card"><div class="empty" style="padding:24px">Aucun item non équipé à briser.<br>Déséquipe un item d\'abord.</div></div>';
+  }
+
+  var rows = items.map(function(i) {
+    var col = SHATTER_RARITY_COLOR[i.rarity] || '#aaa';
+    var goldGain = SHATTER_GOLD[i.rarity] || 10;
+    var runesText = SHATTER_RUNES_TEXT[i.rarity] || '🪨 1 Rune';
+    var fl = i.forge_level || 0;
+    return '<div class="shatter-item">'
+      + '<img class="shatter-item-img" src="' + esc(i.image||'') + '" onerror="this.style.opacity=\'0.2\'">'
+      + '<div class="shatter-info">'
+        + '<div class="shatter-name">' + esc(i.name||i.item_key||'') + (fl>0?' <span style="color:#ffd84d;font-size:10px">+'+fl+'</span>':'') + '</div>'
+        + '<div class="shatter-rarity" style="color:' + col + '">' + (i.rarity||'').charAt(0).toUpperCase()+(i.rarity||'').slice(1) + '</div>'
+        + '<div class="shatter-reward">💰 +' + goldGain + ' Or PVE · ' + runesText + '</div>'
+      + '</div>'
+      + '<button class="shatter-btn" onclick="doShatter(' + i.id + ',&quot;' + esc(i.name||i.item_key).replace(/"/g,'') + '&quot;)" title="Briser">💥 Briser</button>'
+    + '</div>';
+  }).join('');
+
+  return '<div class="card">'
+    + '<div class="card-title" style="margin-bottom:4px">💥 Briser un item</div>'
+    + '<div style="font-size:11px;opacity:.45;margin-bottom:14px">Brise un item pour récupérer de l\'Or PVE et des Runes de modification. Action irréversible.</div>'
+    + rows
+    + '</div>';
+}
+
+async function doShatter(itemId, itemName) {
+  if (!confirm('Briser ' + itemName + ' ? Cette action est irréversible !')) return;
+  try {
+    const d = await api('/api/pvp/forge/shatter', { method:'POST', body: JSON.stringify({ itemId }) });
+    showAlert('💥 ' + d.itemName + ' brisé ! +' + d.gold + ' Or PVE · ' + Object.entries(d.runes).map(function(e){ return e[1]+'x Rune '+e[0]; }).join(' · '), 'success');
+    // Refresh
+    const [inv, me] = await Promise.all([api('/api/pvp/inventory'), api('/api/pvp/me')]);
+    _pvpForgeInv  = inv;
+    _pvpInventory = inv;
+    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
+    _pvpForgeRunes = me.fighter?.runes || {};
+    renderPvpForge();
+    // Rester sur l'onglet briser
+    setTimeout(function() { switchForgeTab('shatter', document.querySelector('.forge-tab:nth-child(2)')); }, 50);
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
+}
+
+// ══ REROLL ══
+const REROLL_COSTS_CLIENT = {
+  common:    { gold:20,  runeType:'any',       runeQty:2 },
+  rare:      { gold:50,  runeType:'any',       runeQty:3 },
+  epic:      { gold:120, runeType:'epic',      runeQty:1 },
+  legendary: { gold:300, runeType:'legendary', runeQty:1 },
+};
+const RUNE_LABELS = { any:'Rune (toutes)', epic:'Rune Épique', legendary:'Rune Légendaire' };
+const RUNE_COLORS = { any:'#aaa', epic:'#c084ff', legendary:'#ffd84d' };
+
+var _rerollSelItem = null;
+var _rerollSelStat = null;
+
+function renderRerollTab(inventory, runes, gold) {
+  _pvpForgeRunes = runes;
+
+  // Affichage des runes disponibles
+  var runeHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'
+    + Object.entries(RUNE_LABELS).map(function(e) {
+        var type = e[0], label = e[1];
+        var qty = runes[type] || 0;
+        return '<span class="rune-badge ' + type + '">' + (type==='any'?'🪨':type==='epic'?'💎':'⭐') + ' ' + qty + ' ' + label + '</span>';
+      }).join('')
+    + '</div>';
+
+  // Items avec des extra_stats (bonus de palier)
+  var rerollItems = inventory.filter(function(i) {
+    return i.extra_stats && Object.keys(i.extra_stats).length > 0;
+  });
+
+  var itemPickHtml = '';
+  if (!rerollItems.length) {
+    itemPickHtml = '<div class="empty" style="padding:16px">Aucun item avec des stats de palier (+3/+6…).<br>Monte un item au moins au +3 pour débloquer les Runes.</div>';
+  } else {
+    itemPickHtml = '<div style="font-size:11px;font-weight:900;opacity:.45;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Choisir un item</div>'
+      + rerollItems.map(function(i) {
+          var col = SHATTER_RARITY_COLOR[i.rarity] || '#aaa';
+          var sel = _rerollSelItem === i.id;
+          var fl  = i.forge_level || 0;
+          return '<div class="shatter-item" style="cursor:pointer;border-color:' + (sel?'#7f5cff':'') + ';background:' + (sel?'rgba(127,92,255,.08)':'') + '" onclick="selectRerollItem(' + i.id + ')">'
+            + '<img class="shatter-item-img" src="' + esc(i.image||'') + '" onerror="this.style.opacity=\'0.2\'">'
+            + '<div class="shatter-info">'
+              + '<div class="shatter-name">' + esc(i.name||i.item_key||'') + ' <span style="color:#ffd84d;font-size:10px">+' + fl + '</span></div>'
+              + '<div class="shatter-rarity" style="color:' + col + '">' + Object.keys(i.extra_stats||{}).length + ' stat(s) bonus</div>'
+            + '</div>'
+            + (sel ? '<span style="color:#7f5cff;font-size:14px">✓</span>' : '')
+          + '</div>';
+        }).join('');
+  }
+
+  // Panneau de reroll si item sélectionné
+  var rerollPanelHtml = '';
+  if (_rerollSelItem) {
+    var selItem = inventory.find(function(i) { return i.id === _rerollSelItem; });
+    if (selItem && selItem.extra_stats) {
+      var costs = REROLL_COSTS_CLIENT[selItem.rarity] || REROLL_COSTS_CLIENT.common;
+      var canAffordGold = gold >= costs.gold;
+      var canAffordRune = (runes[costs.runeType] || 0) >= costs.runeQty;
+      var canReroll = canAffordGold && canAffordRune;
+
+      var statRows = Object.entries(selItem.extra_stats).filter(function(e) { return e[1] > 0; }).map(function(e) {
+        var k = e[0], v = e[1];
+        var label = PVP_STAT_LABELS[k] || k;
+        var color = PVP_STAT_COLORS[k] || '#aaa';
+        var sel = _rerollSelStat === k;
+        return '<div class="reroll-stat-row' + (sel?' selected':'') + '" onclick="selectRerollStat(&quot;' + k + '&quot;)">'
+          + '<div style="font-size:16px">' + (PVP_STAT_COLORS[k]?'':'🔢') + '</div>'
+          + '<div class="reroll-stat-label" style="color:' + color + '">' + label + '</div>'
+          + '<div class="reroll-stat-val" style="color:' + color + '">+' + v + '</div>'
+          + (sel ? '<div style="font-size:12px;color:#7f5cff">← Sélectionnée</div>' : '')
+        + '</div>';
+      }).join('');
+
+      rerollPanelHtml = '<div class="card" style="margin-top:12px">'
+        + '<div class="card-title" style="margin-bottom:8px">🎲 Choisir la stat à reroller</div>'
+        + '<div style="font-size:11px;opacity:.4;margin-bottom:10px">Clique sur une stat bonus pour la reroller. La valeur sera aléatoire dans une plage définie par la rareté.</div>'
+        + statRows
+        + '<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.03);border-radius:10px;font-size:11px">'
+          + '<div style="font-weight:700;margin-bottom:6px">Coût du reroll</div>'
+          + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+            + '<span style="color:' + (canAffordGold?'#33ff99':'#ff4444') + '">💰 ' + costs.gold + ' Or PVE</span>'
+            + '<span style="color:' + (canAffordRune?RUNE_COLORS[costs.runeType]||'#aaa':'#ff4444') + '">' + costs.runeQty + 'x ' + (RUNE_LABELS[costs.runeType]||costs.runeType) + '</span>'
+          + '</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;margin-top:10px">'
+          + '<button onclick="doRerollPreview()" ' + (!_rerollSelStat||!canReroll?'disabled':'') + ' style="flex:1;padding:10px;border:none;border-radius:10px;background:rgba(127,92,255,.2);border:1px solid rgba(127,92,255,.4);color:#c084ff;font-weight:700;cursor:pointer;font-size:13px">🎲 Prévisualiser</button>'
+          + '<button onclick="doRerollApply()" ' + (!_rerollSelStat||!canReroll?'disabled':'') + ' style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px">✅ Appliquer</button>'
+        + '</div>'
+      + '</div>';
+    }
+  }
+
+  return '<div class="card">'
+    + '<div class="card-title" style="margin-bottom:4px">🎲 Runes de Modification</div>'
+    + '<div style="font-size:11px;opacity:.45;margin-bottom:12px">Utilise des Runes pour reroller la valeur d\'une stat bonus (paliers +3/+6…). La note (F→S) indique la qualité du jet.</div>'
+    + runeHtml
+    + itemPickHtml
+    + rerollPanelHtml
+    + '</div>';
+}
+
+function selectRerollItem(id) {
+  _rerollSelItem = (_rerollSelItem === id) ? null : id;
+  _rerollSelStat = null;
+  renderPvpForge();
+  setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
+}
+function selectRerollStat(stat) {
+  _rerollSelStat = (_rerollSelStat === stat) ? null : stat;
+  renderPvpForge();
+  setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
+}
+
+var _lastRerollResult = null;
+
+async function doRerollPreview() {
+  if (!_rerollSelItem || !_rerollSelStat) return;
+  try {
+    const d = await api('/api/pvp/forge/reroll', { method:'POST', body: JSON.stringify({ itemId: _rerollSelItem, stat: _rerollSelStat, confirm: false }) });
+    _lastRerollResult = d;
+    showRerollResultPopup(d, false);
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
+}
+
+async function doRerollApply() {
+  if (!_rerollSelItem || !_rerollSelStat) return;
+  try {
+    const d = await api('/api/pvp/forge/reroll', { method:'POST', body: JSON.stringify({ itemId: _rerollSelItem, stat: _rerollSelStat, confirm: true }) });
+    showRerollResultPopup(d, true);
+    // Refresh inventaire
+    const [inv, me] = await Promise.all([api('/api/pvp/inventory'), api('/api/pvp/me')]);
+    _pvpForgeInv  = inv; _pvpInventory = inv;
+    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
+    _pvpForgeRunes = me.fighter?.runes || {};
+    _rerollSelStat = null;
+    renderPvpForge();
+    setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
+  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
+}
+
+function showRerollResultPopup(d, applied) {
+  var gradeEmojis = { S:'⭐', A:'✅', B:'🔵', C:'⚪', F:'❌' };
+  var gradeMsg    = { S:'Excellent !', A:'Très bien !', B:'Correct', C:'Passable', F:'Mauvais jet...' };
+  var statLabel   = PVP_STAT_LABELS[d.stat] || d.stat;
+  var statColor   = PVP_STAT_COLORS[d.stat] || '#aaa';
+  var pct         = Math.round((d.val - d.min) / (d.max - d.min) * 100);
+  // Barre de qualité
+  var barColor    = d.color || '#aaa';
+  var grades      = ['F','C','B','A','S'];
+  var thresholds  = [0, 20, 45, 70, 90];
+  var pipHtml = grades.map(function(g, i) {
+    var filled = pct >= thresholds[i];
+    var c = filled ? barColor : 'rgba(255,255,255,.1)';
+    return '<div style="flex:1;height:6px;border-radius:3px;background:' + c + ';transition:background .3s ' + (i*0.08) + 's"></div>';
+  }).join('');
+
+  var overlay = document.createElement('div');
+  overlay.className = 'reroll-result-popup';
+  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = '<div class="reroll-result-box" style="border:2px solid ' + (d.color||'#aaa') + ';box-shadow:0 0 40px ' + (d.color||'#aaa') + '44">'
+    + '<div style="font-size:12px;opacity:.5;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">' + (applied?'Résultat':'Prévisualisation') + '</div>'
+    + '<div style="font-size:12px;font-weight:700;color:' + statColor + ';margin-bottom:16px">' + statLabel + '</div>'
+    + '<div class="reroll-grade-big" style="color:' + (d.color||'#aaa') + '">' + (d.emoji||'') + ' ' + (d.grade||'?') + '</div>'
+    + '<div style="font-size:11px;opacity:.6;margin:8px 0 4px">' + (gradeMsg[d.grade]||'') + '</div>'
+    + '<div style="font-size:32px;font-weight:900;color:' + statColor + ';margin-bottom:8px">+' + d.val + '</div>'
+    + '<div style="font-size:10px;opacity:.4;margin-bottom:12px">Plage : ' + d.min + ' → ' + d.max + ' · Ton jet : ' + pct + '%</div>'
+    + '<div style="display:flex;gap:4px;margin-bottom:18px">' + pipHtml + '</div>'
+    + (applied
+      ? '<div style="font-size:11px;color:#33ff99;margin-bottom:14px">✅ Stat appliquée avec succès !</div>'
+      : '<div style="display:flex;gap:8px;margin-bottom:14px">'
+          + '<button onclick="this.closest(&quot;.reroll-result-popup&quot;).remove();doRerollApply()" style="flex:1;padding:9px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:12px">✅ Appliquer</button>'
+          + '<button onclick="this.closest(&quot;.reroll-result-popup&quot;).remove();doRerollPreview()" style="flex:1;padding:9px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer;font-size:12px">🎲 Reroll</button>'
+        + '</div>'
+    )
+    + '<button onclick="this.closest(&quot;.reroll-result-popup&quot;).remove()" style="width:100%;padding:9px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);cursor:pointer;font-size:12px">Fermer</button>'
+  + '</div>';
+
+  document.body.appendChild(overlay);
 }
 
 // ══ MATCHMAKING ══════════════════════════════════════════
