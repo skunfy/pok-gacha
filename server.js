@@ -6605,12 +6605,10 @@ async function buildPvpFighter(userId) {
     'Bronze':  { atk:40,  hp:200,  def:20,  speed:15, crit_pct:10, crit_dmg:30,  dodge:10, lifesteal:5  },
     'Argent':  { atk:70,  hp:350,  def:35,  speed:25, crit_pct:18, crit_dmg:50,  dodge:15, lifesteal:10 },
     'Or':      { atk:110, hp:550,  def:55,  speed:35, crit_pct:28, crit_dmg:70,  dodge:20, lifesteal:15 },
-    'Platine': { atk:160, hp:800,  def:80,  speed:50, crit_pct:40, crit_dmg:90,  dodge:28, lifesteal:20 },
-    'Diamant': { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
-    'Maître':  { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
   };
-  const cap    = EQ_CAPS[pvpRankName] || EQ_CAPS['Bronze'];
-  const capEq  = (val, key) => Math.min(val, cap[key]);
+  // Platine+ : aucun cap sur les stats d'équipement
+  const cap   = EQ_CAPS[pvpRankName] || null;
+  const capEq = (val, key) => cap ? Math.min(val, cap[key]) : val;
 
   // Stats de base sans équipement (pour les bonus %)
   const baseHp  = Math.round(200 + statB.hp  + pvpLvl * 10);
