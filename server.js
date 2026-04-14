@@ -1,3564 +1,8164 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gachax — PVP</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0b18;--bg2:#0f1020;--bg3:#161728;
-  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
-  --text:#e8eaf6;--muted:rgba(255,255,255,.45);
-  --gold:#ffd84d;--purple:#7f5cff;--red:#ff4444;--green:#33ff99;
-  --bronze:#cd7f32;--silver:#aaa;--platine:#4da6ff;--diamond:#c084ff;--master:#ff6464;
-}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+import express from "express";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
+import pg from "pg";
 
-/* NAV */
-.nav{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
-.nav-title{font-size:17px;font-weight:900;background:linear-gradient(135deg,#7f5cff,#f053c5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.nav-back{font-size:13px;cursor:pointer;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text)}
-.nav-back:hover{background:var(--bg3)}
-.tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-.tab-btn{font-size:12px;font-weight:700;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:.15s}
-.tab-btn.active{background:var(--purple);color:#fff;border-color:transparent}
+const { Pool } = pg;
 
-/* LAYOUT */
-.page{max-width:900px;margin:0 auto;padding:20px 16px}
-.section{display:none}
-.section.active{display:block}
+const app = express();
+app.use(express.json());
 
-/* CARDS */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:18px}
-.card+.card{margin-top:12px}
-.card-title{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;opacity:.4;margin-bottom:14px}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-/* PROFILE */
-.fighter-profile{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-.fighter-avatar{width:64px;height:64px;border-radius:50%;background:var(--bg3);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
-.fighter-avatar-wrap{position:relative;width:80px;height:80px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.fighter-avatar-wrap .fighter-avatar{width:60px;height:60px;border:none;background:var(--bg3);position:relative;z-index:1}
-.fighter-avatar-wrap .rank-frame-img{position:absolute;inset:0;width:80px;height:80px;object-fit:contain;pointer-events:none;z-index:2}
-.fighter-info{flex:1}
-.fighter-name{font-size:18px;font-weight:900;margin-bottom:2px}
-.fighter-meta{font-size:12px;opacity:.5;margin-bottom:6px}
-.rank-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
-.rank-pts{font-size:11px;opacity:.6;margin-left:4px}
-.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-@media(min-width:500px){.stats-grid{grid-template-columns:repeat(4,1fr)}}
-.stat-box{background:var(--bg3);border-radius:10px;padding:10px;text-align:center;border:1px solid var(--border)}
-.stat-box-val{font-size:20px;font-weight:900;margin-bottom:2px}
-.stat-box-label{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
+const PORT = process.env.PORT || 8000;
 
-/* ══ ÉNERGIE ══ */
-.energy-bar-wrap{display:flex;align-items:center;gap:14px;padding:13px 18px;background:rgba(255,184,0,.04);border:1px solid rgba(255,184,0,.12);border-radius:14px;margin-bottom:14px}
-.energy-icon{font-size:18px;flex-shrink:0;opacity:.9}
-.energy-info{flex:1;min-width:0}
-.energy-label{font-size:10px;font-weight:900;opacity:.4;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.energy-track{position:relative;height:10px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
-.energy-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#e6900a,#ffd84d);transition:width .4s ease;position:relative}
-.energy-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.25),transparent);border-radius:999px}
-.energy-segs{position:absolute;inset:0;display:flex;pointer-events:none}
-.energy-seg{flex:1;border-right:2px solid rgba(10,11,24,.5)}
-.energy-seg:last-child{border-right:none}
-.energy-timer{font-size:10px;opacity:.4;margin-top:5px}
-.energy-count{font-size:13px;font-weight:900;color:#ffd84d;white-space:nowrap;flex-shrink:0;text-align:right;line-height:1.3}
+// =========================
+// OFFLINE CARDS (fallback)
+// =========================
 
-/* SEARCH */
-.search-wrap{display:flex;gap:8px;margin-bottom:14px}
-.search-wrap input{flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px}
-.search-wrap input:focus{outline:none;border-color:var(--purple)}
-.search-wrap button{padding:10px 16px;background:var(--purple);border:none;border-radius:10px;color:#fff;font-weight:700;cursor:pointer;font-size:13px}
-.search-wrap button:hover{opacity:.85}
-.user-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:8px;transition:.15s}
-.user-row:hover{border-color:var(--border2)}
-.user-row-avatar{width:40px;height:40px;border-radius:12px;background-color:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.user-row-info{flex:1}
-.user-row-name{font-size:14px;font-weight:700}
-.user-row-rank{font-size:11px;opacity:.5;margin-top:2px}
-.challenge-btn{padding:7px 14px;background:linear-gradient(135deg,#7f5cff,#f053c5);border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0}
-.challenge-btn:hover{opacity:.85}
-.challenge-btn:disabled{opacity:.4;cursor:not-allowed}
+//OFFLINE DRAGON BALL //
 
-/* PENDING */
-.challenge-card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;background:var(--bg3);border:1px solid rgba(255,184,0,.2);margin-bottom:10px}
-.challenge-card-info{flex:1}
-.challenge-card-name{font-size:14px;font-weight:700}
-.challenge-card-sub{font-size:11px;opacity:.5;margin-top:2px}
-.challenge-actions{display:flex;gap:8px}
-.btn-accept{padding:7px 14px;background:#1D9E75;border:none;border-radius:8px;color:#fff;font-weight:800;font-size:12px;cursor:pointer}
-.btn-decline{padding:7px 14px;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-weight:700;font-size:12px;cursor:pointer}
+const OFFLINE_DRAGONBALL_DIR = path.join(__dirname, "data", "dragonball");
+const OFFLINE_DRAGONBALL_CARDS_PATH = path.join(OFFLINE_DRAGONBALL_DIR, "cards.json");
+const OFFLINE_DRAGONBALL_SETS_PATH = path.join(OFFLINE_DRAGONBALL_DIR, "sets.json");
 
-/* ══ LEADERBOARD PODIUM ══ */
-.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:20px;padding:32px 8px 0;margin-bottom:24px}
-.podium-col{display:flex;flex-direction:column;align-items:center;gap:0;cursor:default}
-.podium-rank-icon-top{width:44px;height:44px;object-fit:contain;margin-bottom:6px;filter:drop-shadow(0 0 10px rgba(255,255,255,.2))}
-.podium-avatar-wrap{position:relative;margin-bottom:8px}
-/* avatar utilise background-image comme leaderboard.html */
-.podium-avatar{border-radius:18px;background-color:var(--bg3);background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:28px;border:2px solid rgba(255,255,255,.15);box-shadow:0 18px 50px rgba(0,0,0,.5);position:relative;overflow:hidden;flex-shrink:0}
-/* cadre de rang par dessus l'avatar */
-.podium-rank-frame-img{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);object-fit:contain;pointer-events:none;z-index:2}
-.podium-name{font-size:13px;font-weight:900;text-align:center;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
-.podium-pts{font-size:11px;font-weight:700;opacity:.55;margin-bottom:6px}
-.podium-rank-label{font-size:10px;font-weight:900;display:flex;align-items:center;gap:3px;margin-bottom:8px;opacity:.8}
-.podium-block{border-radius:14px 14px 0 0;width:100px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;letter-spacing:.04em}
-/* tailles par position */
-.podium-1 .podium-avatar{width:90px;height:90px}
-.podium-2 .podium-avatar{width:72px;height:72px}
-.podium-3 .podium-avatar{width:66px;height:66px}
-.podium-1 .podium-avatar{border-color:rgba(255,216,77,.55);box-shadow:0 0 0 2px rgba(255,216,77,.35),0 0 32px rgba(255,216,77,.3),0 18px 50px rgba(0,0,0,.5)}
-.podium-2 .podium-avatar{border-color:rgba(190,205,255,.45);box-shadow:0 0 0 2px rgba(190,205,255,.25),0 0 22px rgba(190,205,255,.2),0 18px 50px rgba(0,0,0,.5)}
-.podium-3 .podium-avatar{border-color:rgba(205,127,50,.5);box-shadow:0 0 0 2px rgba(205,127,50,.3),0 0 22px rgba(205,127,50,.2),0 18px 50px rgba(0,0,0,.5)}
-.podium-1 .podium-block{background:linear-gradient(180deg,rgba(255,216,77,.15),rgba(255,216,77,.04));border:1px solid rgba(255,216,77,.2);height:80px;color:rgba(255,216,77,.8)}
-.podium-2 .podium-block{background:linear-gradient(180deg,rgba(190,205,255,.1),rgba(190,205,255,.03));border:1px solid rgba(190,205,255,.15);height:56px;color:rgba(190,205,255,.7)}
-.podium-3 .podium-block{background:linear-gradient(180deg,rgba(205,127,50,.1),rgba(205,127,50,.03));border:1px solid rgba(205,127,50,.15);height:40px;color:rgba(205,127,50,.7)}
+let offlineDragonballCards = [];
+let offlineDragonballSets = [];
+const offlineDragonballCardsBySet = new Map();
 
-/* LEADERBOARD rows (from rank 4) */
-.lb-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);transition:.15s}
-.lb-row.me{border-color:rgba(127,92,255,.4);background:rgba(127,92,255,.06)}
-.lb-rank-num{font-size:15px;font-weight:900;width:28px;text-align:center;flex-shrink:0}
-.lb-avatar{width:40px;height:40px;border-radius:12px;background-color:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden;border:2px solid rgba(255,255,255,.08)}
-.lb-name{flex:1;font-size:13px;font-weight:700}
-.lb-stats{font-size:11px;opacity:.45;margin-top:2px}
-.lb-pts{font-size:14px;font-weight:900;text-align:right}
-.lb-rank-badge{font-size:10px;opacity:.7;text-align:right}
-
-/* HISTORY */
-.hist-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;margin-bottom:7px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:.15s}
-.hist-row:hover{border-color:var(--border2)}
-.hist-result{font-size:20px;flex-shrink:0}
-.hist-info{flex:1}
-.hist-vs{font-size:13px;font-weight:700}
-.hist-sub{font-size:11px;opacity:.45;margin-top:2px}
-.hist-pts{font-size:13px;font-weight:900;text-align:right}
-
-/* ALERT */
-.alert{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none}
-.alert.error{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.2);color:#ff8888}
-.alert.success{background:rgba(51,255,153,.08);border:1px solid rgba(51,255,153,.2);color:#33ff99}
-.loading{text-align:center;padding:30px;opacity:.4;font-size:13px}
-.empty{text-align:center;padding:24px;opacity:.35;font-size:13px}
-
-/* ── BARRE PROGRESSION RANGS ── */
-.pvp-rank-progress{margin-top:16px;padding:16px 18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px}
-.pvp-rank-progress-title{font-size:11px;font-weight:900;opacity:.4;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
-.pvp-rank-steps{display:flex;align-items:center;gap:0;position:relative;margin-bottom:10px}
-.pvp-rank-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:1}
-.pvp-rank-step-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:2px solid rgba(255,255,255,.08);transition:.2s;overflow:hidden}
-.pvp-rank-step-icon img{width:28px;height:28px;object-fit:contain;opacity:.4;transition:.2s}
-.pvp-rank-step.active .pvp-rank-step-icon{border-color:currentColor;background:rgba(255,255,255,.06);box-shadow:0 0 12px currentColor}
-.pvp-rank-step.active .pvp-rank-step-icon img{opacity:1}
-.pvp-rank-step.done .pvp-rank-step-icon img{opacity:.7}
-.pvp-rank-step.done .pvp-rank-step-icon{border-color:rgba(255,255,255,.25)}
-.pvp-rank-step-name{font-size:9px;font-weight:900;margin-top:4px;opacity:.4;letter-spacing:.03em}
-.pvp-rank-step.active .pvp-rank-step-name{opacity:1}
-.pvp-rank-step.done .pvp-rank-step-name{opacity:.6}
-.pvp-rank-steps::before{content:'';position:absolute;top:18px;left:5%;right:5%;height:3px;background:rgba(255,255,255,.06);border-radius:999px;z-index:0}
-.pvp-rank-line-fill{position:absolute;top:18px;left:5%;height:3px;background:linear-gradient(90deg,#cd7f32,currentColor);border-radius:999px;z-index:0;transition:width .4s ease}
-.pvp-rank-bar-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
-.pvp-rank-bar-bg{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
-.pvp-rank-bar-fill{height:100%;border-radius:999px;transition:width .5s ease}
-.pvp-rank-bar-label{font-size:11px;font-weight:900;white-space:nowrap;min-width:80px;text-align:right}
-.pvp-rank-bar-pts{font-size:10px;opacity:.4;margin-top:3px;text-align:center}
-
-/* ── PROFIL PVP ENRICHI ── */
-.pvp-profil-wrap{display:grid;grid-template-columns:1fr auto 1fr;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:visible;gap:0}
-.pvp-col-left{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 18px;border-right:1px solid rgba(255,255,255,.06)}
-.pvp-col-center{display:flex;flex-direction:column;align-items:center;width:260px;background:rgba(0,0,0,.18);border-radius:0}
-.pvp-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px 18px;border-left:1px solid rgba(255,255,255,.06)}
-.pvp-char-img-wrap{flex:1;display:flex;align-items:flex-end;justify-content:center;padding:8px 0;min-height:260px}
-.pvp-char-img{width:250px;height:340px;object-fit:contain;filter:drop-shadow(0 0 24px var(--pvp-cls-color,#7f5cff))}
-.pvp-char-ph{width:250px;height:340px;display:flex;align-items:center;justify-content:center;font-size:70px;opacity:.3}
-.pvp-class-badge{padding:5px 12px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid;margin:0 0 10px}
-/* Sélecteur de skin */
-.skin-card{
-  background:rgba(255,255,255,.04);
-  border:2px solid rgba(255,255,255,.1);
-  border-radius:10px;
-  padding:8px 4px 6px;
-  cursor:pointer;
-  transition:all .18s ease;
-  display:flex;flex-direction:column;align-items:center;
-}
-.skin-card:hover{
-  background:rgba(var(--sk-color-rgb,127,92,255),.15);
-  border-color:var(--sk-color,#7f5cff);
-  transform:translateY(-2px);
-}
-.skin-card.active{
-  background:color-mix(in srgb, var(--sk-color,#7f5cff) 20%, transparent);
-  border-color:var(--sk-color,#7f5cff);
-  box-shadow:0 0 12px color-mix(in srgb, var(--sk-color,#7f5cff) 40%, transparent);
-}
-.pvp-rank-showcase{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 0 8px;margin-top:4px}
-.pvp-rank-showcase-img{width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(255,255,255,.15));transition:transform .3s}
-.pvp-rank-showcase-img:hover{transform:scale(1.05)}
-.pvp-rank-showcase-label{font-size:20px;font-weight:900;letter-spacing:.04em}
-.pvp-rank-showcase-pts{font-size:13px;opacity:.5}
-.pvp-rank-big{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0 4px}
-.pvp-rank-big img{width:84px;height:84px;object-fit:contain}
-.pvp-rank-big-label{font-size:14px;font-weight:900;margin-top:4px}
-.pvp-rank-big-pts{font-size:12px;opacity:.5}
-.pvp-user-photo-wrap{position:relative;width:96px;height:96px;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.pvp-user-photo-wrap .photo{width:96px;height:96px;border-radius:14px;object-fit:cover;background:var(--bg3);display:block}
-.pvp-user-photo-wrap .frame{position:absolute;inset:-2px;width:100px;height:100px;object-fit:contain;pointer-events:none;z-index:2}
-.pvp-stats-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
-.pvp-stat-mini{background:var(--bg3);border-radius:8px;padding:7px;text-align:center;border:1px solid var(--border)}
-.pvp-stat-mini-val{font-size:20px;font-weight:900;margin-bottom:2px}
-.pvp-stat-mini-lbl{font-size:8px;opacity:.45;text-transform:uppercase;letter-spacing:.05em}
-/* Équipement slots PVP */
-.eq-slot{width:84px;height:84px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.18);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;overflow:visible;flex-shrink:0}
-.eq-slot:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.6);transform:translateY(-2px);box-shadow:0 4px 16px rgba(127,92,255,.25)}
-.eq-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.07);padding:0}
-.eq-slot.filled.legendary{border-color:rgba(255,184,0,.6);background:rgba(255,184,0,.07);box-shadow:0 0 12px rgba(255,184,0,.25)}
-.eq-slot.filled.epic{border-color:rgba(192,132,255,.6);background:rgba(192,132,255,.07);box-shadow:0 0 12px rgba(192,132,255,.25)}
-.eq-slot.filled.rare{border-color:rgba(77,166,255,.6);background:rgba(77,166,255,.07);box-shadow:0 0 10px rgba(77,166,255,.2)}
-.eq-slot.filled:hover{transform:translateY(-2px)}
-.eq-slot-img{width:100%;height:100%;object-fit:contain;border-radius:10px;display:block}
-.eq-slot-empty-icon{font-size:18px;opacity:.25}
-.eq-slot-label{font-size:7px;color:rgba(255,255,255,.3);font-weight:900;letter-spacing:.06em;text-transform:uppercase}
-.eq-slot-unequip{position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:rgba(255,50,50,.9);border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;opacity:0;transition:opacity .15s}
-.eq-slot:hover .eq-slot-unequip{opacity:1}
-.eq-slot-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(6px);background:#0e0f1f;border:1px solid rgba(127,92,255,.45);border-radius:12px;padding:10px 12px;min-width:160px;max-width:200px;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.75);white-space:nowrap}
-.eq-slot:hover .eq-slot-tooltip{opacity:1;transform:translateX(-50%) translateY(0)}
-.eq-slot-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0e0f1f}
-.eq-tooltip-name{font-size:12px;font-weight:900;margin-bottom:3px}
-.eq-tooltip-rarity{font-size:9px;font-weight:800;opacity:.7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-.eq-tooltip-stat{font-size:11px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:5px}
-.eq-tooltip-empty{font-size:11px;opacity:.4;font-style:italic}
-/* Modal inventaire équipement */
-.pvp-inv-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
-.pvp-inv-overlay.show{opacity:1;pointer-events:all}
-.pvp-inv-modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:18px;max-width:360px;width:100%;max-height:70vh;overflow-y:auto}
-.pvp-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:12px}
-.pvp-inv-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:6px;text-align:center;cursor:pointer;transition:all .15s;position:relative}
-.pvp-inv-item:hover{background:rgba(127,92,255,.15);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
-.pvp-inv-item.equipped{border-color:rgba(51,255,153,.4);background:rgba(51,255,153,.05)}
-.pvp-inv-item.legendary{border-color:rgba(255,184,0,.35)}.pvp-inv-item.epic{border-color:rgba(192,132,255,.3)}.pvp-inv-item.rare{border-color:rgba(77,166,255,.3)}
-.pvp-inv-img{width:44px;height:44px;object-fit:contain}
-.pvp-inv-name{font-size:8px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-/* ══ BATTLE LOG & ARENA (AGRANDIE) ══ */
-.battle-log{background:var(--bg2);border-radius:12px;border:1px solid var(--border);padding:12px;height:180px;min-height:180px;overflow-y:auto;margin-bottom:14px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
-.log-line{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted);line-height:1.4}
-.log-line:last-child{border-bottom:none}
-.log-line.crit{color:var(--gold);font-weight:700;font-size:13.5px}
-.log-line.win{color:var(--green);font-weight:700;font-size:14px}
-.log-line.lose{color:var(--red);font-weight:700;font-size:14px}
-.log-line.turn{color:rgba(255,255,255,.25);font-size:10px;padding-top:8px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
-.log-line.dodge{color:#4da6ff;font-style:italic}
-
-.result-banner{text-align:center;padding:18px;border-radius:14px;font-size:17px;font-weight:900;margin-bottom:14px;display:none}
-.result-banner.victory{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.3);color:var(--green);animation:victoryPulse 1s ease-out}
-.result-banner.defeat{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red)}
-/* ── FORGE PVP (clone clan) ── */
-.forge-wrap{display:flex;flex-direction:column;gap:16px}
-.forge-main{display:grid;grid-template-columns:1fr auto 1fr;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;min-height:280px}
-.forge-col-left,.forge-col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 16px}
-.forge-col-left{border-right:1px solid rgba(255,255,255,.06)}
-.forge-col-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;min-width:160px;border-left:1px solid rgba(255,255,255,.06)}
-.forge-anvil{width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(127,92,255,.4));transition:transform .3s}
-.forge-anvil:hover{transform:scale(1.05)}
-.forge-cost{font-size:13px;font-weight:900;color:#ffd84d;text-align:center}
-.forge-rate{font-size:12px;font-weight:800;text-align:center}
-.forge-btn{width:100%;padding:11px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px;transition:.15s}
-.forge-btn:hover:not(:disabled){opacity:.85;transform:translateY(-1px)}
-.forge-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.forge-item-slot{width:130px;height:130px;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.2);border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;overflow:hidden;transition:.2s}
-.forge-item-slot:hover{border-color:rgba(127,92,255,.5);background:rgba(127,92,255,.08)}
-.forge-item-slot.filled{border-style:solid;border-color:rgba(255,255,255,.2);padding:0}
-.forge-item-slot img{width:100%;height:100%;object-fit:contain;border-radius:12px}
-.forge-item-level{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.7);border:1px solid}
-.forge-inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
-.forge-inv-item{display:flex;flex-direction:column;align-items:center;padding:8px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);cursor:pointer;transition:.18s;position:relative}
-.forge-inv-item:hover{background:rgba(127,92,255,.12);border-color:rgba(127,92,255,.4);transform:translateY(-2px)}
-.forge-inv-item.selected{border-color:rgba(127,92,255,.8);background:rgba(127,92,255,.2);box-shadow:0 0 12px rgba(127,92,255,.3)}
-.forge-inv-item.legendary{border-color:rgba(255,184,0,.35)}
-.forge-inv-item.epic{border-color:rgba(192,132,255,.3)}
-.forge-inv-item.rare{border-color:rgba(77,166,255,.3)}
-.forge-inv-img{width:56px;height:56px;object-fit:contain}
-.forge-inv-name{font-size:9px;color:rgba(255,255,255,.65);margin-top:3px;font-weight:900;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center}
-.forge-inv-lvl{font-size:9px;font-weight:900;margin-top:2px}
-.forge-lv3{border-color:rgba(255,255,255,.7)!important;animation:forgeGlowW 2s ease-in-out infinite}
-.forge-lv6{border-color:rgba(77,166,255,.9)!important;animation:forgeGlowB 1.8s ease-in-out infinite}
-.forge-lv9{border-color:rgba(192,132,255,.9)!important;animation:forgeGlowP 1.6s ease-in-out infinite}
-.forge-lv12{border-color:rgba(255,184,0,.9)!important;animation:forgeGlowG 1.4s ease-in-out infinite}
-.forge-lv15{border-width:3px!important;animation:forgeRainbow2 .8s linear infinite}
-@keyframes forgeGlowW{0%,100%{box-shadow:0 0 6px rgba(255,255,255,.4)}50%{box-shadow:0 0 14px rgba(255,255,255,.8)}}
-@keyframes forgeGlowB{0%,100%{box-shadow:0 0 8px rgba(77,166,255,.6)}50%{box-shadow:0 0 20px rgba(77,166,255,1)}}
-@keyframes forgeGlowP{0%,100%{box-shadow:0 0 10px rgba(192,132,255,.7)}50%{box-shadow:0 0 24px rgba(192,132,255,1)}}
-@keyframes forgeGlowG{0%,100%{box-shadow:0 0 12px rgba(255,184,0,.8)}50%{box-shadow:0 0 28px rgba(255,184,0,1)}}
-@keyframes forgeRainbow2{0%{border-color:#ff0000}16%{border-color:#ff8800}33%{border-color:#ffff00}50%{border-color:#00ff88}66%{border-color:#0088ff}83%{border-color:#ff00ff}100%{border-color:#ff0000}}
-@keyframes forgeParticle2{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-30px) scale(0)}}
-/* matchmaking */
-@keyframes mmSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes mmPulse{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:1}}
-@keyframes chestBounce{0%{transform:scale(0) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
-@keyframes chestGlow{0%{opacity:.4;transform:scale(.9)}100%{opacity:.8;transform:scale(1.1)}}
-@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(400px) rotate(720deg)}}
-@keyframes victoryPulse{0%{transform:scale(.92);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
-/* ── Victory / Defeat text animations ── */
-@keyframes vLetterDrop{0%{opacity:0;transform:translateY(-80px) scale(1.4) rotate(-8deg)}60%{transform:translateY(8px) scale(.95) rotate(2deg)}80%{transform:translateY(-4px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0deg)}}
-@keyframes vGlow{0%,100%{text-shadow:0 0 20px currentColor,0 0 60px currentColor}50%{text-shadow:0 0 40px currentColor,0 0 100px currentColor,0 0 160px currentColor}}
-@keyframes vShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
-@keyframes vSlide{0%{opacity:0;transform:translateY(30px)}100%{opacity:1;transform:translateY(0)}}
-@keyframes vFlicker{0%,100%{opacity:1}10%{opacity:.6}30%{opacity:.9}50%{opacity:.5}70%{opacity:.95}}
-@keyframes radioWave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
-@keyframes radioPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,184,0,.4)}70%{box-shadow:0 0 0 8px rgba(255,184,0,0)}}
-@keyframes radioOpen{0%{max-height:0;opacity:0;transform:translateY(10px)}100%{max-height:200px;opacity:1;transform:translateY(0)}}
-.rank-change{font-size:14px;margin-top:6px;opacity:.75;font-weight:700}
-
-/* MODAL REPLAY — plus grande */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px;opacity:0;pointer-events:none;transition:opacity .25s}
-.modal-overlay.show{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:22px;padding:22px;max-width:980px;width:100%;max-height:97vh;overflow-y:auto;overflow-x:hidden;transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column}
-.modal-overlay.show .modal{transform:scale(1)}
-.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:2px 6px;line-height:1}
-.modal-title{font-size:17px;font-weight:900;margin-bottom:16px}
-
-/* ── ARENA SPRITES — AGRANDIE ── */
-.arena-hp-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:12px}
-.arena-hp-block{background:var(--bg3);border-radius:12px;padding:12px 14px;border:1px solid var(--border)}
-.arena-hp-block.right{text-align:right;justify-content:flex-end}
-.arena-hp-name{font-size:14px;font-weight:900;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.arena-hp-bar-bg{background:rgba(255,255,255,.06);border-radius:4px;height:8px;overflow:hidden}
-.arena-hp-bar{height:8px;border-radius:4px;transition:width .4s ease}
-.arena-hp-val{font-size:11px;opacity:.45;margin-top:4px}
-.arena-vs{font-size:16px;font-weight:900;opacity:.25;text-align:center}
-.arena-stage{position:relative;height:560px;background-size:cover;background-position:center bottom;background-repeat:no-repeat;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
-.arena-ground{position:absolute;bottom:0;left:0;right:0;height:36px;background:rgba(255,255,255,.025);border-top:1px solid rgba(255,255,255,.05)}
-.arena-canvas{position:absolute;bottom:36px;image-rendering:pixelated;image-rendering:crisp-edges}
-.dmg-float{position:absolute;font-size:26px;font-weight:900;pointer-events:none;color:#ff6464;opacity:0;transition:none;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 20px rgba(255,100,100,.4)}
-.dmg-float.crit{color:var(--gold);font-size:38px;text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 24px rgba(255,216,0,.6)}
-.dmg-float.anim{animation:dmgPop .9s ease-out forwards}
-@keyframes dmgPop{0%{opacity:1;transform:translateY(0) scale(1.2)}30%{transform:translateY(-20px) scale(1)}100%{opacity:0;transform:translateY(-70px) scale(.8)}}
-
-/* ── VS FLASH au début ── */
-.vs-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0}
-.vs-flash.show{animation:vsFlash .8s ease-out forwards}
-@keyframes vsFlash{0%{opacity:0;transform:scale(2)}30%{opacity:1;transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(.8)}}
-.vs-text{font-size:72px;font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,#ff6464,#ffd84d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(255,100,100,.5))}
-
-/* ══ PVE ══ */
-.pve-enemy-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px}
-.pve-enemy-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.pve-enemy-icon{width:52px;height:52px;border-radius:12px;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
-.pve-enemy-name{font-size:15px;font-weight:900}
-.pve-diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pve-diff-btn{border-radius:12px;border:1px solid var(--border);background:var(--bg3);padding:10px 6px;cursor:pointer;transition:all .18s;text-align:center;position:relative;overflow:hidden}
-.pve-diff-btn:hover:not(:disabled){transform:translateY(-2px);border-color:var(--purple);background:rgba(127,92,255,.1)}
-.pve-diff-btn:disabled{opacity:.5;cursor:not-allowed}
-.pve-diff-btn.easy{--diff-color:#33ff99}
-.pve-diff-btn.medium{--diff-color:#ffd84d}
-.pve-diff-btn.hard{--diff-color:#ff6464}
-.pve-diff-label{font-size:11px;font-weight:900;color:var(--diff-color);margin-bottom:4px}
-.pve-diff-wins{font-size:10px;opacity:.5;margin-top:2px}
-.pve-diff-chest{font-size:10px;color:#ffd84d;margin-top:3px}
-.pve-diff-rewards{font-size:10px;opacity:.6;margin-top:3px}
-.pve-diff-hp{font-size:10px;color:#ff6464;margin-top:2px}
-
-/* ══ RADIO ══ */
-#radio-widget{position:fixed;bottom:20px;left:20px;z-index:9999;display:flex;flex-direction:column;align-items:flex-start;gap:0}
-#radio-btn{width:64px;height:64px;cursor:pointer;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));transition:transform .2s,filter .2s;border:none;background:none;padding:0}
-#radio-btn:hover{transform:scale(1.08);filter:drop-shadow(0 6px 18px rgba(255,184,0,.5))}
-#radio-btn.on{filter:drop-shadow(0 0 14px rgba(255,184,0,.8)) drop-shadow(0 4px 12px rgba(0,0,0,.6));animation:radioPulse 1.8s ease-in-out infinite}
-#radio-panel{background:rgba(10,11,24,.96);border:1px solid rgba(255,184,0,.25);border-radius:14px;padding:12px 14px;margin-bottom:8px;min-width:220px;overflow:hidden;animation:radioOpen .25s ease forwards}
-#radio-panel.hidden{display:none}
-.radio-track{font-size:12px;font-weight:700;color:#ffd84d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;margin-bottom:8px}
-.radio-track-scroll{animation:radioScroll 8s linear infinite}
-@keyframes radioScroll{0%,10%{transform:translateX(0)}90%,100%{transform:translateX(-60%)}}
-.radio-bars{display:flex;align-items:flex-end;gap:2px;height:18px;margin-bottom:8px}
-.radio-bar{width:4px;border-radius:2px;background:#ffd84d;animation:radioWave .6s ease-in-out infinite}
-.radio-bar:nth-child(2){animation-delay:.1s;height:12px}
-.radio-bar:nth-child(3){animation-delay:.2s;height:16px}
-.radio-bar:nth-child(4){animation-delay:.05s;height:10px}
-.radio-bar:nth-child(5){animation-delay:.15s;height:14px}
-.radio-bars.paused .radio-bar{animation-play-state:paused}
-.radio-controls{display:flex;align-items:center;gap:8px}
-.radio-ctrl{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:13px;cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:background .15s}
-.radio-ctrl:hover{background:rgba(255,184,0,.2);border-color:rgba(255,184,0,.4)}
-.radio-ctrl.active{background:rgba(255,184,0,.25);border-color:rgba(255,184,0,.6);color:#ffd84d}
-.radio-vol{flex:1;height:4px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.15);border-radius:999px;outline:none;cursor:pointer}
-.radio-vol::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#ffd84d;cursor:pointer}
-
-
-/* ══ DÉFIS ══ */
-.defi-player-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:7px;transition:.15s}
-.defi-player-row:hover{border-color:var(--border2)}
-.defi-player-row.done{opacity:.45}
-.defi-avatar{width:44px;height:44px;border-radius:12px;background:var(--bg2);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px solid rgba(255,255,255,.08)}
-.defi-info{flex:1;min-width:0}
-.defi-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.defi-rank{font-size:11px;opacity:.5;margin-top:2px}
-.defi-btn{padding:7px 16px;border:none;border-radius:8px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0;transition:.15s}
-.defi-btn:hover{opacity:.85;transform:translateY(-1px)}
-.defi-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
-.defi-result-banner{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;margin-bottom:10px;display:none}
-.defi-result-banner.win{background:rgba(51,255,153,.1);border:1px solid rgba(51,255,153,.25);color:#33ff99}
-.defi-result-banner.lose{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.2);color:#ff8888}
-
-
-/* ══ FORGE TABS ══ */
-.forge-tabs{display:flex;gap:6px;margin-bottom:14px}
-.forge-tab{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;transition:.15s}
-.forge-tab.active{background:var(--purple);color:#fff;border-color:transparent}
-.forge-tab-section{display:none}
-.forge-tab-section.active{display:block}
-
-/* ══ BRISER ══ */
-.shatter-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;background:var(--bg3);border:1px solid var(--border);margin-bottom:7px;transition:.15s}
-.shatter-item:hover{border-color:rgba(255,100,100,.3)}
-.shatter-item-img{width:48px;height:48px;border-radius:10px;object-fit:contain;flex-shrink:0;background:rgba(255,255,255,.05)}
-.shatter-info{flex:1;min-width:0}
-.shatter-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.shatter-rarity{font-size:10px;opacity:.5;margin-top:2px}
-.shatter-reward{font-size:11px;opacity:.6;margin-top:3px}
-.shatter-btn{padding:6px 14px;border:none;border-radius:8px;background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.25);color:#ff8888;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:.15s}
-.shatter-btn:hover{background:rgba(255,80,80,.3)}
-.shatter-btn:disabled{opacity:.35;cursor:not-allowed}
-
-/* ══ REROLL ══ */
-.rune-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
-.rune-badge.any{background:rgba(170,170,170,.15);color:#aaa;border:1px solid rgba(170,170,170,.25)}
-.rune-badge.epic{background:rgba(192,132,255,.15);color:#c084ff;border:1px solid rgba(192,132,255,.3)}
-.rune-badge.legendary{background:rgba(255,216,77,.12);color:#ffd84d;border:1px solid rgba(255,216,77,.25)}
-.reroll-stat-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);margin-bottom:6px;transition:.15s;cursor:pointer}
-.reroll-stat-row:hover{border-color:rgba(127,92,255,.4)}
-.reroll-stat-row.selected{border-color:#7f5cff;background:rgba(127,92,255,.1)}
-.reroll-stat-label{flex:1;font-size:12px;font-weight:700}
-.reroll-stat-val{font-size:13px;font-weight:900;min-width:40px;text-align:right}
-.reroll-stat-grade{font-size:11px;font-weight:900;min-width:28px;text-align:center}
-.grade-meter{display:flex;gap:2px;margin-top:4px}
-.grade-pip{width:14px;height:4px;border-radius:2px;background:rgba(255,255,255,.1)}
-.grade-pip.filled{background:currentColor}
-
-/* ══ POPUP REROLL RESULT ══ */
-.reroll-result-popup{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85);padding:20px}
-.reroll-result-box{background:#0d0e1f;border-radius:20px;padding:28px;width:min(340px,92vw);text-align:center}
-@keyframes gradeReveal{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
-.reroll-grade-big{font-size:80px;font-weight:900;animation:gradeReveal .6s cubic-bezier(.175,.885,.32,1.275) forwards}
-
-</style>
-</head>
-<body>
-
-<nav class="nav">
-  <button class="nav-back" onclick="location.href='/'">← Retour</button>
-  <span class="nav-title">⚔️ PVP</span>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('profil',event)">Mon profil</button>
-    <button class="tab-btn" onclick="showTab('matchmaking',event)" id="matchmaking-tab">⚔️ PVP</button>
-    <button class="tab-btn" onclick="showTab('defis',event)" id="defis-tab">🗡️ Défis</button>
-    <button class="tab-btn" onclick="showTab('pve',event)" id="pve-tab">🐉 PVE</button>
-    <button class="tab-btn" onclick="showTab('classement',event)">Classement</button>
-    <button class="tab-btn" onclick="showTab('historique',event)">Historique</button>
-    <button class="tab-btn" onclick="showTab('forge',event)">⚒️ Forge</button>
-  </div>
-</nav>
-
-<div class="page">
-  <div id="alert-box" class="alert"></div>
-
-  <div id="sec-profil" class="section active">
-    <div class="card">
-      <div id="profil-content"><div class="loading">Chargement...</div></div>
-    </div>
-  </div>
-
-  <div id="sec-matchmaking" class="section">
-
-    <!-- Rang actuel + activité -->
-    <div class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-        <!-- Logo rang -->
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0" id="mm-rank-display">
-          <img id="mm-rank-icon" src="" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,255,255,.2))" onerror="this.remove()">
-          <div id="mm-rank-name" style="font-size:14px;font-weight:900;letter-spacing:.06em"></div>
-          <div id="mm-rank-pts" style="font-size:12px;opacity:.5"></div>
-        </div>
-        <!-- Activité + décroissance ELO -->
-        <div style="flex:1;min-width:180px" id="mm-activity-block"></div>
-      </div>
-    </div>
-
-    <!-- Récompenses hebdomadaires ELO -->
-    <div id="weekly-rewards-bar" style="margin-bottom:12px;background:rgba(255,216,77,.05);border:1px solid rgba(255,216,77,.15);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <div>
-        <div style="font-size:11px;font-weight:900;color:#ffd84d;margin-bottom:2px">🏆 Récompenses hebdomadaires</div>
-        <div style="font-size:10px;opacity:.5">Chaque lundi — dollax selon ton rang ELO</div>
-      </div>
-      <div id="weekly-reward-preview" style="font-size:12px;font-weight:700;color:#ffd84d"></div>
-    </div>
-
-    <div class="card">
-      <div id="mm-content">
-        <div style="text-align:center;padding:24px">
-          <div id="mm-status" style="font-size:15px;margin-bottom:16px;opacity:.7">Matchmaking illimité — aucune énergie requise</div>
-          <button id="mm-btn" onclick="startMatchmaking()" style="padding:14px 32px;border:none;border-radius:14px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;font-size:15px;cursor:pointer;transition:.2s">⚡ Lancer le matchmaking</button>
-          <div id="mm-spinner" style="display:none;margin-top:20px">
-            <div style="font-size:32px;animation:mmSpin 1s linear infinite">⚙️</div>
-            <div style="margin-top:8px;opacity:.5;font-size:13px" id="mm-timer">Recherche en cours...</div>
-            <button onclick="stopMatchmaking()" style="margin-top:12px;padding:8px 20px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;cursor:pointer;font-size:12px">Annuler</button>
-          </div>
-          <div id="mm-found" style="display:none;margin-top:20px"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-
-  <div id="sec-forge" class="section">
-    <div id="forge-content"><div class="loading">Chargement...</div></div>
-  </div>
-  <div id="sec-classement" class="section">
-    <div class="card">
-      <div class="card-title">Classement</div>
-      <div id="lb-content"><div class="loading">Chargement...</div></div>
-    </div>
-  </div>
-
-  <div id="sec-historique" class="section">
-    <div class="card">
-      <div class="card-title">Mes combats récents</div>
-      <div id="hist-content"><div class="loading">Chargement...</div></div>
-    </div>
-  </div>
-
-  <div id="sec-defis" class="section">
-    <div class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-        <div>
-          <div class="card-title" style="margin-bottom:2px">🗡️ Défis — Mode Fantôme</div>
-          <div style="font-size:11px;opacity:.45">Défie les joueurs • Pas de replay • ELO ×½ • 1 défi/joueur/jour</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <div id="defi-left-badge" style="font-size:13px;font-weight:700"></div>
-          <div id="defi-energy-badge" style="font-size:11px;opacity:.6"></div>
-        </div>
-      </div>
-    </div>
-    <div id="defi-content"><div class="loading">Chargement...</div></div>
-  </div>
-
-  <div id="sec-pve" class="section">
-    <div class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin-bottom:0">🐉 Mode PVE</div>
-        <div id="pve-fights-left" style="font-size:13px;font-weight:700;opacity:.7"></div>
-      </div>
-      <div style="font-size:12px;opacity:.45;margin-top:6px">Bats des ennemis pour gagner XP &amp; or · Coffre toutes les 3 victoires · 9 combats/jour</div>
-
-      <!-- Barre XP PVE + Coffres disponibles -->
-      <div style="margin-top:14px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:#33ff99;margin-bottom:5px">
-            <span>Niv. PVE <span id="pve-tab-lvl" style="font-weight:900">—</span></span>
-            <span id="pve-tab-xp" style="opacity:.6">— / — XP</span>
-          </div>
-          <div style="height:7px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
-            <div id="pve-tab-xp-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>
-          </div>
-        </div>
-        <div id="pve-chest-btn-wrap" style="flex-shrink:0"></div>
-      </div>
-    </div>
-    <div id="pve-content"><div class="loading">Chargement...</div></div>
-  </div>
-</div>
-
-<!-- MODAL INVENTAIRE EQUIP PVP -->
-<div class="pvp-inv-overlay" id="pvp-inv-overlay" onclick="if(event.target===this)pvpCloseInv()"></div>
-
-<!-- MODAL REPLAY -->
-<div class="modal-overlay" id="replay-modal" onclick="if(event.target===this) closeReplay()">
-  <div class="modal">
-    <button class="modal-close" onclick="closeReplay()">✕</button>
-    <div class="modal-title" id="replay-title">⚔️ Replay du combat</div>
-
-    <!-- HP bars -->
-    <div class="arena-hp-row">
-      <div class="arena-hp-block" style="display:flex;gap:10px;align-items:center">
-        <div style="position:relative;flex-shrink:0">
-          <div id="rhp-avatar-1" style="width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;border:2px solid rgba(29,158,117,.6);background-size:cover;background-position:center">🧑</div>
-          <img id="rhp-frame-1" src="" style="position:absolute;inset:-7px;width:62px;height:62px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="arena-hp-name" id="rn1">Joueur</div>
-          <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp1" style="width:100%;background:#1D9E75"></div></div>
-          <div class="arena-hp-val" id="rhpv1">-</div>
-        </div>
-      </div>
-      <div class="arena-vs">VS</div>
-      <div class="arena-hp-block right" style="display:flex;gap:10px;align-items:center;flex-direction:row-reverse">
-        <div style="position:relative;flex-shrink:0">
-          <div id="rhp-avatar-2" style="width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;border:2px solid rgba(216,90,48,.6);background-size:cover;background-position:center">🧑</div>
-          <img id="rhp-frame-2" src="" style="position:absolute;inset:-7px;width:62px;height:62px;object-fit:contain;pointer-events:none;display:none" onerror="this.style.display='none'" onload="this.style.display='block'">
-        </div>
-        <div style="flex:1;min-width:0">
-          <div class="arena-hp-name" id="rn2" style="text-align:right">Ennemi</div>
-          <div class="arena-hp-bar-bg"><div class="arena-hp-bar" id="rhp2" style="width:100%;background:#D85A30"></div></div>
-          <div class="arena-hp-val" id="rhpv2" style="text-align:right">-</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stage -->
-    <div class="arena-stage" id="replay-stage">
-      <div class="arena-ground"></div>
-      <canvas class="arena-canvas" id="rc1"></canvas>
-      <canvas class="arena-canvas" id="rc2"></canvas>
-      <div class="dmg-float" id="rdmg1"></div>
-      <div class="dmg-float" id="rdmg2"></div>
-      <div class="vs-flash" id="vs-flash"><div class="vs-text">VS</div></div>
-      <div id="arena-result-overlay" style="position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;border-radius:inherit;">
-        <div id="arena-result-bg" style="position:absolute;inset:0;border-radius:inherit;opacity:0;"></div>
-        <!-- Texte animé Victory/Defeat -->
-        <div id="arena-result-icon" style="font-size:80px;line-height:1;position:relative;z-index:1;transform:scale(0) rotate(-15deg);text-align:center;display:none"></div>
-        <div id="arena-result-word" style="position:relative;z-index:2;display:flex;gap:0;align-items:center;justify-content:center;"></div>
-        <div id="arena-result-label" style="font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:14px;position:relative;z-index:1;opacity:0;"></div>
-        <div id="arena-result-pts" style="font-size:17px;font-weight:700;margin-top:8px;position:relative;z-index:1;opacity:0;"></div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-      <div class="battle-log" id="replay-log"></div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="result-banner" id="replay-result" style="display:none"></div>
-        <button style="width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:14px;margin-top:auto" onclick="closeReplay()">Fermer le combat</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ══════════════════════════════════════════════════
-// SFX — Sons d'attaque par classe
-// ══════════════════════════════════════════════════
-const SFX_PATH = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/sfx/';
-const SFX_MAP = {
-  bloody_alchemist: SFX_PATH + 'hit.mp3',
-  dark_oracle:      SFX_PATH + 'hitsoutient.wav',
-  fallen_angels:    SFX_PATH + 'hit.mp3',
-  forest_ranger:    SFX_PATH + 'hit.mp3',
-  golem:            SFX_PATH + 'hit.mp3',
-  minotaur:         SFX_PATH + 'hit.mp3',
-  reaper_man:       SFX_PATH + 'hit.mp3',
-  valkyrie:         SFX_PATH + 'hit.mp3',
-  // fallback anciens
-  assassin: SFX_PATH + 'hit.mp3',
-  slayer:   SFX_PATH + 'hit.mp3',
-  soutien:  SFX_PATH + 'hitsoutient.wav',
-};
-const sfxCache = {};
-function playSfx(charClass) {
+function loadOfflineDragonball() {
   try {
-    const url = SFX_MAP[charClass] || SFX_MAP.assassin;
-    if (!sfxCache[url]) {
-      sfxCache[url] = new Audio(url);
-      sfxCache[url].volume = 0.45;
+    offlineDragonballCards = [];
+    offlineDragonballSets = [];
+    offlineDragonballCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_DRAGONBALL_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_DRAGONBALL_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineDragonballCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Dragon Ball cards.json found at", OFFLINE_DRAGONBALL_CARDS_PATH);
     }
-    const snd = sfxCache[url].cloneNode();
-    snd.volume = 0.45;
-    snd.play().catch(() => {});
+
+    if (fs.existsSync(OFFLINE_DRAGONBALL_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_DRAGONBALL_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineDragonballSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Dragon Ball sets.json found at", OFFLINE_DRAGONBALL_SETS_PATH);
+    }
+
+    for (const c of offlineDragonballCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineDragonballCardsBySet.has(setId)) {
+        offlineDragonballCardsBySet.set(setId, []);
+      }
+      offlineDragonballCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Dragon Ball sets: ${offlineDragonballSets.length}`);
+    console.log(`📦 Offline Dragon Ball cards: ${offlineDragonballCards.length}`);
+  } catch (e) {
+    console.log("Offline Dragon Ball load error:", e.message);
+  }
+}
+loadOfflineDragonball();
+
+
+function drawOfflineDragonballCard() {
+  if (!offlineDragonballCards?.length) {
+    throw new Error("Offline Dragon Ball pool empty");
+  }
+
+  return offlineDragonballCards[
+    Math.floor(Math.random() * offlineDragonballCards.length)
+  ];
+}
+
+// OFFLINE UNION ARENA //
+
+const OFFLINE_UNIONARENA_DIR = path.join(__dirname, "data", "unionarena");
+const OFFLINE_UNIONARENA_CARDS_PATH = path.join(OFFLINE_UNIONARENA_DIR, "cards.json");
+const OFFLINE_UNIONARENA_SETS_PATH = path.join(OFFLINE_UNIONARENA_DIR, "sets.json");
+
+let offlineUnionArenaCards = [];
+let offlineUnionArenaSets = [];
+const offlineUnionArenaCardsBySet = new Map();
+
+function loadOfflineUnionArena() {
+  try {
+    offlineUnionArenaCards = [];
+    offlineUnionArenaSets = [];
+    offlineUnionArenaCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_UNIONARENA_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_UNIONARENA_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineUnionArenaCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Union Arena cards.json found at", OFFLINE_UNIONARENA_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_UNIONARENA_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_UNIONARENA_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineUnionArenaSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Union Arena sets.json found at", OFFLINE_UNIONARENA_SETS_PATH);
+    }
+
+    for (const c of offlineUnionArenaCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+
+      if (!offlineUnionArenaCardsBySet.has(setId)) {
+        offlineUnionArenaCardsBySet.set(setId, []);
+      }
+      offlineUnionArenaCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Union Arena sets: ${offlineUnionArenaSets.length}`);
+    console.log(`📦 Offline Union Arena cards: ${offlineUnionArenaCards.length}`);
+  } catch (e) {
+    console.log("Offline Union Arena load error:", e.message);
+  }
+}
+loadOfflineUnionArena();
+
+function isValidUnionArenaImage(url) {
+  const u = String(url || "").trim().toLowerCase();
+  if (!u) return false;
+  if (u.includes("dummy.gif")) return false;
+  return true;
+}
+
+function drawOfflineUnionArenaCard() {
+  if (!offlineUnionArenaCards?.length) {
+    throw new Error("Offline Union Arena pool empty");
+  }
+
+  const valid = offlineUnionArenaCards.filter(c =>
+    isValidUnionArenaImage(c?.image) || isValidUnionArenaImage(c?.imageHigh)
+  );
+
+  if (!valid.length) {
+    throw new Error("Offline Union Arena has no valid images");
+  }
+
+  return valid[Math.floor(Math.random() * valid.length)];
+}
+// =========================
+// OFFLINE SENPAI GODDESS HAVEN
+// =========================
+const OFFLINE_SENPAI_DIR = path.join(__dirname, "data", "senpai-goddess-haven");
+const OFFLINE_SENPAI_CARDS_PATH = path.join(OFFLINE_SENPAI_DIR, "cards.json");
+const OFFLINE_SENPAI_SETS_PATH = path.join(OFFLINE_SENPAI_DIR, "sets.json");
+
+let offlineSenpaiCards = [];
+let offlineSenpaiSets = [];
+const offlineSenpaiCardsBySet = new Map();
+
+function loadOfflineSenpai() {
+  try {
+    offlineSenpaiCards = [];
+    offlineSenpaiSets = [];
+    offlineSenpaiCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_SENPAI_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_SENPAI_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineSenpaiCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Senpai Goddess Haven cards.json found at", OFFLINE_SENPAI_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_SENPAI_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_SENPAI_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlineSenpaiSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Senpai Goddess Haven sets.json found at", OFFLINE_SENPAI_SETS_PATH);
+    }
+
+    for (const c of offlineSenpaiCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineSenpaiCardsBySet.has(setId)) {
+        offlineSenpaiCardsBySet.set(setId, []);
+      }
+      offlineSenpaiCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Senpai Goddess Haven sets: ${offlineSenpaiSets.length}`);
+    console.log(`📦 Offline Senpai Goddess Haven cards: ${offlineSenpaiCards.length}`);
+  } catch (e) {
+    console.log("Offline Senpai Goddess Haven load error:", e.message);
+  }
+}
+loadOfflineSenpai();
+
+function drawOfflineSenpaiCard() {
+  if (!offlineSenpaiCards?.length) {
+    throw new Error("Offline Senpai Goddess Haven pool empty");
+  }
+  const valid = offlineSenpaiCards.filter(c => c?.image);
+  if (!valid.length) throw new Error("Senpai Goddess Haven: no valid images");
+  return valid[Math.floor(Math.random() * valid.length)];
+}
+
+// =========================
+// OFFLINE WEISS SCHWARZ
+// =========================
+const OFFLINE_WEISSSCHWARZ_DIR = path.join(__dirname, "data", "weissschwarz");
+const OFFLINE_WEISSSCHWARZ_CARDS_PATH = path.join(OFFLINE_WEISSSCHWARZ_DIR, "cards.json");
+const OFFLINE_WEISSSCHWARZ_SETS_PATH = path.join(OFFLINE_WEISSSCHWARZ_DIR, "sets.json");
+
+let offlineWeissSchwarzCards = [];
+let offlineWeissSchwarzSets = [];
+const offlineWeissSchwarzCardsBySet = new Map();
+
+function loadOfflineWeissSchwarz() {
+  try {
+    offlineWeissSchwarzCards = [];
+    offlineWeissSchwarzSets = [];
+    offlineWeissSchwarzCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_WEISSSCHWARZ_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_WEISSSCHWARZ_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineWeissSchwarzCards = parsed;
+    } else {
+      console.log("📦 No offline Weiss Schwarz cards.json found at", OFFLINE_WEISSSCHWARZ_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_WEISSSCHWARZ_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_WEISSSCHWARZ_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineWeissSchwarzSets = parsed;
+    } else {
+      console.log("📦 No offline Weiss Schwarz sets.json found at", OFFLINE_WEISSSCHWARZ_SETS_PATH);
+    }
+
+    for (const c of offlineWeissSchwarzCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineWeissSchwarzCardsBySet.has(setId)) {
+        offlineWeissSchwarzCardsBySet.set(setId, []);
+      }
+      offlineWeissSchwarzCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Weiss Schwarz sets: ${offlineWeissSchwarzSets.length}`);
+    console.log(`📦 Offline Weiss Schwarz cards: ${offlineWeissSchwarzCards.length}`);
+  } catch (e) {
+    console.log("Offline Weiss Schwarz load error:", e.message);
+  }
+}
+loadOfflineWeissSchwarz();
+
+const WEISSSCHWARZ_R2_BASE = "https://pub-817aabdb96334b768d7f4520c7ac5481.r2.dev";
+
+function drawOfflineWeissSchwarzCard() {
+  if (!offlineWeissSchwarzCards?.length) {
+    throw new Error("Offline Weiss Schwarz pool empty");
+  }
+  const valid = offlineWeissSchwarzCards.filter(c => c?.image);
+  if (!valid.length) throw new Error("Weiss Schwarz: no valid images");
+  const c = valid[Math.floor(Math.random() * valid.length)];
+  return {
+    ...c,
+    image: `${WEISSSCHWARZ_R2_BASE}/${c.image}`,
+    imageHigh: `${WEISSSCHWARZ_R2_BASE}/${c.imageHigh || c.image}`,
+  };
+}
+
+// =========================
+// OFFLINE MAGIC
+// =========================
+const OFFLINE_MAGIC_DIR        = path.join(__dirname, "data", "magic");
+const OFFLINE_MAGIC_CARDS_PATH = path.join(OFFLINE_MAGIC_DIR, "cards.json");
+const OFFLINE_MAGIC_SETS_PATH  = path.join(OFFLINE_MAGIC_DIR, "sets.json");
+
+let offlineMagicCards = [];
+let offlineMagicSets  = [];
+const offlineMagicCardsBySet = new Map();
+
+// URL publique R2 pour les images Magic
+const MAGIC_R2_BASE = "https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev/magic";
+
+function rewriteMagicImageUrl(url, cardId) {
+  if (!url) return url;
+
+  // si déjà sur R2, on garde
+  if (url.startsWith("https://pub-383a4299f072470d88f0b64b2318b52d.r2.dev")) {
+    return url;
+  }
+
+  // si c'est un chemin local généré, on le convertit vers R2
+  const localMatch = url.match(/\/data\/magic\/images\/(.+)$/);
+  if (localMatch) {
+    return `${MAGIC_R2_BASE}/${localMatch[1]}`;
+  }
+
+  // IMPORTANT:
+  // si l'image vient de Scryfall, on la garde telle quelle
+  // au lieu de la convertir en URL R2
+  if (url.includes("scryfall.io") || url.includes("cards.scryfall")) {
+    return url;
+  }
+
+  return url;
+}
+
+function loadOfflineMagic() {
+  try {
+    offlineMagicCards = [];
+    offlineMagicSets  = [];
+    offlineMagicCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_MAGIC_CARDS_PATH)) {
+      const raw    = fs.readFileSync(OFFLINE_MAGIC_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineMagicCards = parsed;
+    } else {
+      console.log("📦 No offline Magic cards.json found at", OFFLINE_MAGIC_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_MAGIC_SETS_PATH)) {
+      const raw    = fs.readFileSync(OFFLINE_MAGIC_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineMagicSets = parsed;
+    } else {
+      console.log("📦 No offline Magic sets.json found at", OFFLINE_MAGIC_SETS_PATH);
+    }
+
+    for (const c of offlineMagicCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineMagicCardsBySet.has(setId)) {
+        offlineMagicCardsBySet.set(setId, []);
+      }
+      offlineMagicCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Magic sets: ${offlineMagicSets.length}`);
+    console.log(`📦 Offline Magic cards: ${offlineMagicCards.length}`);
+  } catch (e) {
+    console.log("Offline Magic load error:", e.message);
+  }
+}
+loadOfflineMagic();
+
+function drawOfflineMagicCard() {
+  if (!offlineMagicCards?.length) {
+    throw new Error("Offline Magic pool empty");
+  }
+  const valid = offlineMagicCards.filter(c => c?.image || c?.imageHigh);
+  if (!valid.length) throw new Error("Magic: no valid images");
+  const c = valid[Math.floor(Math.random() * valid.length)];
+  return {
+    ...c,
+    image:     rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
+    imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
+  };
+}
+
+// =========================
+// OFFLINE POKEMON CATALOG
+// =========================
+// ── BRAINROT TCG ─────────────────────────────────────────────
+const OFFLINE_BRAINROT_DIR        = path.join(__dirname, "data", "brainrot");
+const OFFLINE_BRAINROT_CARDS_PATH = path.join(OFFLINE_BRAINROT_DIR, "cards.json");
+const OFFLINE_BRAINROT_SETS_PATH  = path.join(OFFLINE_BRAINROT_DIR, "sets.json");
+
+let offlineBrainrotCards = [];
+let offlineBrainrotSets  = [];
+const offlineBrainrotCardsBySet = new Map();
+
+function loadOfflineBrainrot() {
+  try {
+    offlineBrainrotCards = [];
+    offlineBrainrotSets  = [];
+    offlineBrainrotCardsBySet.clear();
+    if (fs.existsSync(OFFLINE_BRAINROT_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_BRAINROT_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineBrainrotCards = parsed;
+    }
+    if (fs.existsSync(OFFLINE_BRAINROT_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_BRAINROT_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) offlineBrainrotSets = parsed;
+    }
+    for (const c of offlineBrainrotCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlineBrainrotCardsBySet.has(setId)) offlineBrainrotCardsBySet.set(setId, []);
+      offlineBrainrotCardsBySet.get(setId).push(c);
+    }
+    console.log(`📦 BrainRot sets: ${offlineBrainrotSets.length}, cards: ${offlineBrainrotCards.length}`);
+  } catch(e) { console.log("BrainRot load error:", e.message); }
+}
+loadOfflineBrainrot();
+
+function drawOfflineBrainrotCard() {
+  if (!offlineBrainrotCards?.length) throw new Error("BrainRot pool empty");
+  const c = offlineBrainrotCards[Math.floor(Math.random() * offlineBrainrotCards.length)];
+  return {
+    cardId: c.cardId || null, setId: c.setId || null, localId: c.localId || null,
+    name: c.name || "Unknown", set: c.set || "BrainRot", rarity: c.rarity || "",
+    image: c.image || null, imageHigh: c.imageHigh || c.image || null
+  };
+}
+
+const FORCE_OFFLINE = process.env.FORCE_OFFLINE === "1";
+
+const OFFLINE_POKEMON_DIR = path.join(__dirname, "data", "pokemon");
+const OFFLINE_POKEMON_CARDS_PATH = path.join(OFFLINE_POKEMON_DIR, "cards.json");
+const OFFLINE_POKEMON_SETS_PATH = path.join(OFFLINE_POKEMON_DIR, "sets.json");
+
+let offlinePokemonCards = [];
+let offlinePokemonSets = [];
+const offlinePokemonCardsBySet = new Map();
+
+function loadOfflinePokemon() {
+  try {
+    offlinePokemonCards = [];
+    offlinePokemonSets = [];
+    offlinePokemonCardsBySet.clear();
+
+    if (fs.existsSync(OFFLINE_POKEMON_CARDS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_POKEMON_CARDS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlinePokemonCards = parsed;
+      }
+    } else {
+      console.log("📦 No offline Pokémon cards.json found at", OFFLINE_POKEMON_CARDS_PATH);
+    }
+
+    if (fs.existsSync(OFFLINE_POKEMON_SETS_PATH)) {
+      const raw = fs.readFileSync(OFFLINE_POKEMON_SETS_PATH, "utf-8");
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        offlinePokemonSets = parsed;
+      }
+    } else {
+      console.log("📦 No offline Pokémon sets.json found at", OFFLINE_POKEMON_SETS_PATH);
+    }
+
+    for (const c of offlinePokemonCards) {
+      const setId = String(c?.setId || "").trim();
+      if (!setId) continue;
+      if (!offlinePokemonCardsBySet.has(setId)) {
+        offlinePokemonCardsBySet.set(setId, []);
+      }
+      offlinePokemonCardsBySet.get(setId).push(c);
+    }
+
+    console.log(`📦 Offline Pokémon sets: ${offlinePokemonSets.length}`);
+    console.log(`📦 Offline Pokémon cards: ${offlinePokemonCards.length}`);
+  } catch (e) {
+    console.log("Offline Pokémon load error:", e.message);
+  }
+}
+loadOfflinePokemon();
+
+console.log(`🧩 FORCE_OFFLINE=${FORCE_OFFLINE ? "ON" : "OFF"}`);
+// =========================
+// STATIC
+// =========================
+app.use(express.static(__dirname));
+app.use(
+  "/data",
+  express.static(path.join(__dirname, "data"), {
+    setHeaders(res) {
+      res.setHeader("Cache-Control", "no-store");
+    },
+  })
+);
+
+// =========================
+// POSTGRES
+// =========================
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("❌ Missing env DATABASE_URL");
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+async function initDb() {
+  const client = await pool.connect();
+  try {
+    const r = await client.query("select now() as now");
+    console.log("✅ Postgres connected:", r.rows[0].now);
+  } finally {
+    client.release();
+  }
+
+  // =========================
+  // TABLES DE BASE
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      code TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      friendCode TEXT UNIQUE,
+      money INTEGER NOT NULL DEFAULT 0,
+      lastPay BIGINT NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS collection (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
+      game TEXT, -- ✅ présent sur DB neuve
+      name TEXT NOT NULL,
+      setName TEXT NOT NULL,
+      image TEXT NOT NULL,
+      grade INTEGER NOT NULL,
+      mint INTEGER NOT NULL DEFAULT 0,
+      count INTEGER NOT NULL DEFAULT 1,
+      lastAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, idKey)
+    );
+
+    CREATE TABLE IF NOT EXISTS pulls (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      game TEXT, -- ✅ présent sur DB neuve
+      name TEXT NOT NULL,
+      setName TEXT NOT NULL,
+      image TEXT NOT NULL,
+      grade INTEGER NOT NULL,
+      mint INTEGER NOT NULL DEFAULT 0,
+      at BIGINT NOT NULL
+    );
+  `);
+
+  // =========================
+  // COLONNES PROFIL (SAFE)
+  // =========================
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS avatar TEXT,
+    ADD COLUMN IF NOT EXISTS bio TEXT,
+    ADD COLUMN IF NOT EXISTS banner TEXT;
+  `);
+
+  // =========================
+  // XP (SAFE, une seule fois)
+  // =========================
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS xp BIGINT;
+  `);
+  await pool.query(`UPDATE users SET xp = 0 WHERE xp IS NULL;`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN xp SET DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ALTER COLUMN xp SET NOT NULL;`);
+
+  // =========================
+  // FRIENDS
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS friends (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      friend_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      createdAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, friend_user_id)
+    );
+  `);
+
+  // =========================
+  // MARKET
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS market_listings (
+      id SERIAL PRIMARY KEY,
+      seller_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
+      game TEXT, -- ✅ présent sur DB neuve
+      name TEXT NOT NULL,
+      setName TEXT NOT NULL,
+      image TEXT NOT NULL,
+      grade INTEGER NOT NULL,
+      mint INTEGER NOT NULL DEFAULT 0,
+      price INTEGER NOT NULL,
+      qty INTEGER NOT NULL,
+      createdAt BIGINT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_market_listings_created
+    ON market_listings(createdAt DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_market_listings_seller
+    ON market_listings(seller_user_id);
+  `);
+
+  // =========================
+  // NOTIFICATIONS
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      meta JSONB,
+      is_read INTEGER NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_time
+    ON notifications(user_id, createdAt DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+    ON notifications(user_id, is_read);
+  `);
+
+  // =========================
+  // FAVORITES
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS favorites (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      idKey TEXT NOT NULL,
+      createdAt BIGINT NOT NULL,
+      PRIMARY KEY(user_id, idKey)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_favorites_user
+    ON favorites(user_id);
+  `);
+
+  // =========================
+  // MIGRATION SAFE: game column (DB déjà existante)
+  // =========================
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS game TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS game TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS game TEXT;`);
+
+  // défaut pour l'existant
+  await pool.query(`UPDATE collection SET game='pokemon' WHERE game IS NULL;`);
+  await pool.query(`UPDATE pulls SET game='pokemon' WHERE game IS NULL;`);
+  await pool.query(`UPDATE market_listings SET game='pokemon' WHERE game IS NULL;`);
+
+  // ✅ imageHigh (zoom HD)
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS imageHigh TEXT;`);
+
+    // ✅ Binder fields (MARKET)
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE market_listings ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
+
+    // ✅ Binder fields (Pokémon)
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
+  // grades_json : tableau JSON des grades de chaque exemplaire ex: [3,7,7,5]
+  // Permet de calculer le vrai prix de vente par exemplaire (pas le meilleur grade)
+  await pool.query(`ALTER TABLE collection ADD COLUMN IF NOT EXISTS grades_json TEXT;`);
+
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS cardId TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS setId TEXT;`);
+  await pool.query(`ALTER TABLE pulls ADD COLUMN IF NOT EXISTS localId TEXT;`);
+
+  // =========================
+  // TICKETS & DOLLAX
+  // =========================
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS tickets INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS lastTicketPay BIGINT NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS dollax BIGINT NOT NULL DEFAULT 0;`);
+  // Donner 10 tickets de départ aux anciens comptes qui n'en ont pas encore
+  // Donner 10 tickets de départ et initialiser le timer pour les nouveaux comptes
+  await pool.query(`UPDATE users SET tickets = 10, lastTicketPay = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000 WHERE tickets = 0 AND lastTicketPay = 0;`);
+  // Initialiser lastTicketPay pour les comptes qui ont des tickets mais pas de timer
+  await pool.query(`UPDATE users SET lastTicketPay = EXTRACT(EPOCH FROM NOW())::BIGINT * 1000 WHERE lastTicketPay = 0;`);
+
+  // =========================
+  // CLANS
+  // =========================
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clans (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      tag TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      logo TEXT DEFAULT '',
+      banner_color TEXT DEFAULT '#7f5cff',
+      leader_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      xp BIGINT NOT NULL DEFAULT 0,
+      bank BIGINT NOT NULL DEFAULT 0,
+      createdAt BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_members (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      role TEXT NOT NULL DEFAULT 'member',
+      damage_total BIGINT NOT NULL DEFAULT 0,
+      joined_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_chat (
+      id SERIAL PRIMARY KEY,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      username TEXT NOT NULL,
+      avatar TEXT DEFAULT '',
+      message TEXT NOT NULL,
+      createdAt BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clan_chat_clan ON clan_chat(clan_id, createdAt DESC)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_boss (
+      id SERIAL PRIMARY KEY,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      name TEXT NOT NULL DEFAULT 'Démon Obscur',
+      hp_max INTEGER NOT NULL DEFAULT 50000,
+      hp_current INTEGER NOT NULL DEFAULT 50000,
+      reward BIGINT NOT NULL DEFAULT 5000,
+      defeated INTEGER NOT NULL DEFAULT 0,
+      started_at BIGINT NOT NULL DEFAULT 0,
+      defeated_at BIGINT DEFAULT NULL
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_boss_damage (
+      id SERIAL PRIMARY KEY,
+      boss_id INTEGER NOT NULL REFERENCES clan_boss(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      damage INTEGER NOT NULL DEFAULT 0,
+      at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_missions (
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mission_key TEXT NOT NULL,
+      progress INTEGER NOT NULL DEFAULT 0,
+      goal INTEGER NOT NULL DEFAULT 1,
+      completed INTEGER NOT NULL DEFAULT 0,
+      date_key TEXT NOT NULL,
+      PRIMARY KEY(clan_id, user_id, mission_key, date_key)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS daily_chest_claimed (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      date_key TEXT NOT NULL,
+      reward_type TEXT NOT NULL,
+      reward_detail TEXT NOT NULL,
+      claimed_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, date_key)
+    )
+  `);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS level INTEGER NOT NULL DEFAULT 1;`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS talent_points INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_talents (
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      talent_key TEXT NOT NULL,
+      level INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(clan_id, talent_key)
+    )
+  `);
+
+  // Nouvelles colonnes pour le système de raid
+  await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS boss_key TEXT DEFAULT 'arakas'`);
+  await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS expires_at BIGINT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clan_boss ADD COLUMN IF NOT EXISTS failed INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_arakas TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_myntalis TEXT DEFAULT NULL`);
+  await pool.query(`ALTER TABLE clans ADD COLUMN IF NOT EXISTS last_raid_xenos TEXT DEFAULT NULL`);
+  // Stock de dégâts par membre (persist en DB)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clan_raid_stock (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      clan_id INTEGER NOT NULL REFERENCES clans(id) ON DELETE CASCADE,
+      boss_id INTEGER NOT NULL REFERENCES clan_boss(id) ON DELETE CASCADE,
+      stock INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, boss_id)
+    )
+  `);
+
+  // Tables pour le système de cartes de raid
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_raid_cards (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      card_key TEXT NOT NULL,
+      obtained_at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_raid_deck (
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      slot INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 5),
+      card_key TEXT NOT NULL,
+      PRIMARY KEY(user_id, slot)
+    )
+  `);
+
+  // === SYSTÈME PERSONNAGE ===
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_character (
+      user_id INTEGER NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      char_xp   BIGINT NOT NULL DEFAULT 0,
+      char_level INTEGER NOT NULL DEFAULT 1,
+      stat_force       INTEGER NOT NULL DEFAULT 0,
+      stat_agilite     INTEGER NOT NULL DEFAULT 0,
+      stat_intelligence INTEGER NOT NULL DEFAULT 0,
+      stat_dexterite   INTEGER NOT NULL DEFAULT 0,
+      points_available INTEGER NOT NULL DEFAULT 0,
+      char_class TEXT DEFAULT NULL
+    )
+  `);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS char_class TEXT DEFAULT NULL`);
+
+  // Table équipements
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_equipment (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      equip_key TEXT NOT NULL,
+      obtained_at BIGINT NOT NULL DEFAULT 0,
+      equipped_slot TEXT DEFAULT NULL
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_player_equipment_user ON player_equipment(user_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pulls_user_game    ON pulls(user_id, game)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pulls_user_at      ON pulls(user_id, at DESC)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_collection_user_game  ON collection(user_id, game)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_collection_user_idkey ON collection(user_id, idKey)`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS raid_drops_recap (
+      id SERIAL PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      boss_id    INTEGER NOT NULL,
+      boss_name  TEXT NOT NULL DEFAULT '',
+      boss_key   TEXT NOT NULL DEFAULT '',
+      victory    INTEGER NOT NULL DEFAULT 1,
+      cards      JSONB NOT NULL DEFAULT '[]'::jsonb,
+      equipment  JSONB NOT NULL DEFAULT '[]'::jsonb,
+      materials  JSONB NOT NULL DEFAULT '[]'::jsonb,
+      char_level_up JSONB DEFAULT NULL,
+      seen       INTEGER NOT NULL DEFAULT 0,
+      created_at BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_raid_drops_recap_user ON raid_drops_recap(user_id, seen)`);
+
+  // PVP
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_battles (
+      id           SERIAL PRIMARY KEY,
+      challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      opponent_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status        TEXT NOT NULL DEFAULT 'pending',
+      winner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      log           JSONB NOT NULL DEFAULT '[]'::jsonb,
+      challenger_rank_before INTEGER NOT NULL DEFAULT 1000,
+      opponent_rank_before   INTEGER NOT NULL DEFAULT 1000,
+      rank_change   INTEGER NOT NULL DEFAULT 0,
+      created_at    BIGINT NOT NULL DEFAULT 0,
+      accepted_at   BIGINT DEFAULT NULL
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_challenger ON pvp_battles(challenger_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_opponent   ON pvp_battles(opponent_id)`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_rank INTEGER NOT NULL DEFAULT 1000`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_losses INTEGER NOT NULL DEFAULT 0`);
+
+  // ═══ SYSTEME PVP SEPARE ═══
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_xp         INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_gold        INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_win_streak  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_chests        INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins_today    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_wins_day_key  TEXT    NOT NULL DEFAULT ''`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_equipment (
+      id            SERIAL PRIMARY KEY,
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      item_key      TEXT NOT NULL,
+      forge_level   INTEGER NOT NULL DEFAULT 0,
+      extra_stats   JSONB NOT NULL DEFAULT '{}'::jsonb,
+      equipped_slot TEXT DEFAULT NULL,
+      obtained_at   BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pvp_equipment_user ON pvp_equipment(user_id)`);
+
+  // File d'attente matchmaking
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_queue (
+      user_id   INTEGER NOT NULL PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      pvp_rank  INTEGER NOT NULL DEFAULT 1000,
+      joined_at BIGINT  NOT NULL DEFAULT 0
+    )
+  `);
+
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_level        INTEGER NOT NULL DEFAULT 1`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_xp           INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_pts_avail    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_force       INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_agilite     INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_intelligence INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE player_character ADD COLUMN IF NOT EXISTS pvp_stat_dexterite   INTEGER NOT NULL DEFAULT 5`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy INTEGER DEFAULT 100`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pvp_energy_last_refill BIGINT DEFAULT 0`);
+  await pool.query(`UPDATE users SET pvp_energy=100, pvp_energy_last_refill=${Date.now()} WHERE pvp_energy IS NULL OR pvp_energy_last_refill=0`);
+  await pool.query(`ALTER TABLE player_equipment ADD COLUMN IF NOT EXISTS forge_level INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS player_materials (
+      user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mat_key  TEXT NOT NULL,
+      quantity INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, mat_key)
+    )
+  `);
+
+
+  // =========================
+  // PVE — Tables
+  // =========================
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_fights_today INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_level INTEGER NOT NULL DEFAULT 1`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_xp    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_gold  INTEGER NOT NULL DEFAULT 0`);
+  // Runes de modification (une par type de stat)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS runes JSONB NOT NULL DEFAULT '{}'::jsonb`);
+  // Coffres PVE par rareté (séparés du coffre PVP)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_common    INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_rare      INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_epic      INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_legendary INTEGER NOT NULL DEFAULT 0`);
+  // Matchmaking activity tracking + décroissance ELO Diamant+
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_games_today  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_day_key      TEXT    NOT NULL DEFAULT ''`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_game_buffer  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS elo_decay_last  TEXT    NOT NULL DEFAULT ''`);
+  // Défis (mode fantôme)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_today   INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_day_key TEXT    NOT NULL DEFAULT ''`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pvp_defi_log (
+      id            SERIAL PRIMARY KEY,
+      challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      opponent_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      winner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      rank_change   INTEGER NOT NULL DEFAULT 0,
+      day_key       TEXT NOT NULL,
+      fought_at     BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_defi_log_challenger ON pvp_defi_log(challenger_id, day_key)`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_day_key TEXT NOT NULL DEFAULT ''`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pve_progress (
+      user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      enemy_key   TEXT NOT NULL,
+      difficulty  TEXT NOT NULL,
+      wins        INTEGER NOT NULL DEFAULT 0,
+      last_fought_at BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY(user_id, enemy_key, difficulty)
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_pve_progress_user ON pve_progress(user_id)`);
+
+  console.log("✅ Postgres DB ready");
+}
+  
+
+// =========================
+// HELPERS
+// =========================
+  
+  async function fetchJson(url){
+    const r = await fetch(url);
+    if(!r.ok) return null;
+    return await r.json().catch(()=> null);
+  }
+
+  async function getTcgDexCardsListFRorEN(){
+    const fr = await fetchJson("https://api.tcgdex.net/v2/fr/cards");
+    if(Array.isArray(fr) && fr.length) return { lang:"fr", list: fr };
+
+    const en = await fetchJson("https://api.tcgdex.net/v2/en/cards");
+    if(Array.isArray(en) && en.length) return { lang:"en", list: en };
+
+    return { lang:"", list: [] };
+  }
+
+  async function getTcgDexCardDetailFRorEN(id){
+    const fr = await fetchJson(`https://api.tcgdex.net/v2/fr/cards/${encodeURIComponent(id)}`);
+    if(fr && fr.id) return { lang:"fr", card: fr };
+
+    const en = await fetchJson(`https://api.tcgdex.net/v2/en/cards/${encodeURIComponent(id)}`);
+    if(en && en.id) return { lang:"en", card: en };
+
+    return { lang:"", card: null };
+  }
+
+
+
+function randCode(len = 6) {
+  return String(Math.floor(Math.random() * Math.pow(10, len))).padStart(len, "0");
+}
+
+function randToken() {
+  return crypto.randomBytes(24).toString("hex");
+}
+
+function drawOfflinePokemonCard() {
+  if (!offlinePokemonCards?.length) {
+    throw new Error("Offline Pokémon pool empty");
+  }
+
+  return offlinePokemonCards[
+    Math.floor(Math.random() * offlinePokemonCards.length)
+  ];
+}
+
+function randFriendCode() {
+  const s = crypto.randomBytes(4).toString("hex").toUpperCase();
+  return s.slice(0, 4) + "-" + s.slice(4, 8);
+}
+
+// ── GRADES JSON helpers ─────────────────────────────────────
+// Parse le tableau de grades stocké en DB
+function parseGrades(gradesJson, count) {
+  try {
+    const arr = JSON.parse(gradesJson || "[]");
+    if (Array.isArray(arr) && arr.length) return arr.map(Number);
+  } catch {}
+  // Fallback pour les anciennes cartes sans grades_json : répéter le grade connu
+  return Array(Math.max(1, Number(count) || 1)).fill(0);
+}
+
+// Calcule le prix total pour vendre qty exemplaires
+// On vend en priorité les moins bons grades (sauf si on a le meilleur)
+function sellPriceForGrades(gradesArr, qty, mint) {
+  // Trier du moins bon au meilleur
+  const sorted = [...gradesArr].sort((a, b) => a - b);
+  // Prendre les qty premiers (les moins bons)
+  const toSell = sorted.slice(0, qty);
+  let total = 0;
+  for (const g of toSell) {
+    total += sellPriceFor(g, mint && g === Math.max(...gradesArr));
+  }
+  return total;
+}
+
+// Retire qty grades du tableau (les moins bons en premier)
+function removeGrades(gradesArr, qty) {
+  const sorted = [...gradesArr].sort((a, b) => a - b);
+  sorted.splice(0, qty);
+  return sorted;
+}
+
+function sellPriceFor(grade, mint){
+  if (mint) return 5;
+  const g = Number(grade) || 0;
+  if (g >= 10) return 4;
+  if (g >= 7) return 3;
+  if (g >= 5) return 2;
+  return 1;
+}
+
+async function notify(userId, type, title, body, meta = null) {
+  await pool.query(
+    `INSERT INTO notifications (user_id, type, title, body, meta, is_read, createdAt)
+     VALUES ($1,$2,$3,$4,$5,0,$6)`,
+    [userId, type, title, body, meta ? JSON.stringify(meta) : null, Date.now()]
+  );
+}
+
+function getGame(req){
+  const g = String(req.query.game || "pokemon").toLowerCase();
+  if (g === "onepiece") return "onepiece";
+  if (g === "lorcana") return "lorcana";
+  if (g === "dragonball") return "dragonball";
+  if (g === "unionarena") return "unionarena";
+  if (g === "senpaigodesshaven") return "senpaigodesshaven";
+  if (g === "weissschwarz") return "weissschwarz";
+  if (g === "magic") return "magic";
+  if (g === "brainrot") return "brainrot";
+  return "pokemon";
+}
+
+function parseIdKeyServer(idKey){
+  const p = String(idKey || "").split("__");
+  return {
+    game:    p[0] || "",
+    setId:   p[1] || "",
+    localId: p[2] || "",
+    cardId:  p[3] || ""
+  };
+}
+
+function levelForXp(xp){
+  const x = Math.max(0, Number(xp) || 0);
+  // courbe simple: lvl 1 -> 0 xp, lvl 2 -> 100 xp, lvl 3 -> 300 xp, etc.
+  // (100 * (lvl-1)^2)
+  return Math.floor(Math.sqrt(x / 100)) + 1;
+}
+
+// ===========================
+// SYSTÈME PERSONNAGE
+// ===========================
+
+// XP nécessaire pour atteindre un niveau (lvl 1 = 0, lvl 60 = max)
+const CHAR_MAX_LEVEL = 60;
+
+// XP total cumulé pour passer du lvl 1 au lvl N
+// Courbe progressive : chaque niveau demande 200 * (lvl-1) XP supplémentaires
+function charXpForLevel(lvl) {
+  lvl = Math.max(1, Math.min(lvl, CHAR_MAX_LEVEL));
+  // Somme de 200*(0 + 1 + 2 + ... + (lvl-2)) = 200 * (lvl-1)*(lvl-2)/2
+  return lvl <= 1 ? 0 : 100 * (lvl - 1) * (lvl - 2) + 200 * (lvl - 1);
+}
+
+function charLevelForXp(xp) {
+  xp = Math.max(0, Number(xp) || 0);
+  let lvl = 1;
+  while (lvl < CHAR_MAX_LEVEL && xp >= charXpForLevel(lvl + 1)) lvl++;
+  return lvl;
+}
+
+// XP perso gagné par raid vaincu selon le boss
+const CHAR_XP_PER_RAID = {
+  arakas_easy: 400,
+  arakas_hard: 1000,
+  myntalis_easy: 2500,
+  myntalis_hard: 6000,
+  xenos_easy: 15000,
+  xenos_hard: 35000,
+};
+
+// Récupère ou crée le profil personnage
+async function getOrCreateCharacter(userId) {
+  const q = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
+  if (q.rows.length) return q.rows[0];
+  await pool.query(`INSERT INTO player_character(user_id) VALUES($1) ON CONFLICT DO NOTHING`, [userId]);
+  return (await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId])).rows[0];
+}
+
+// Ajoute de l'XP perso et gère les montées de niveau
+async function addCharXp(userId, xpGain) {
+  const char = await getOrCreateCharacter(userId);
+  if (Number(char.char_level) >= CHAR_MAX_LEVEL) return char; // déjà max
+
+  const newXp = Number(char.char_xp) + xpGain;
+  const newLevel = charLevelForXp(newXp);
+  const oldLevel = Number(char.char_level);
+  const levelsGained = Math.max(0, newLevel - oldLevel);
+  const newPoints = Number(char.points_available) + levelsGained;
+
+  await pool.query(`
+    UPDATE player_character
+    SET char_xp=$1, char_level=$2, points_available=$3
+    WHERE user_id=$4
+  `, [newXp, newLevel, newPoints, userId]);
+
+  return { ...char, char_xp: newXp, char_level: newLevel, points_available: newPoints, levelsGained };
+}
+
+// Définition des classes, bonus passifs et multiplicateurs de stat
+const CHAR_CLASSES = {
+  slayer: {
+    label: 'Slayer',
+    passive_dmg_bonus:   10,
+    passive_crit:         0,
+    passive_intel_bonus:  0,
+    passive_first_attack: 0,
+    color: '#ff6464',
+    desc: 'Maître du combat direct. +10% DMG permanents.',
+    // Multiplicateurs par stat (base × mult = bonus final %)
+    scale: { force: 2.0, agilite: 0.8, intelligence: 0.4, dexterite: 1.5 },
+    // Stat primaire/secondaire pour affichage
+    primary: ['force'],
+    secondary: ['dexterite'],
+  },
+  assassin: {
+    label: 'Assassin',
+    passive_dmg_bonus:   0,
+    passive_crit:        8,
+    passive_intel_bonus: 0,
+    passive_first_attack: 15,
+    color: '#c084ff',
+    desc: 'Frappe vite et fort. +8% Crit et +15% 1ère frappe.',
+    scale: { force: 0.6, agilite: 2.0, intelligence: 0.5, dexterite: 2.0 },
+    primary: ['agilite', 'dexterite'],
+    secondary: [],
+  },
+  soutien: {
+    label: 'Soutien',
+    passive_dmg_bonus:   5,
+    passive_crit:        3,
+    passive_intel_bonus: 12,
+    passive_first_attack: 0,
+    color: '#4da6ff',
+    desc: 'Explosif en fin de combat. +12% DMG quand boss < 50% HP.',
+    scale: { force: 0.5, agilite: 1.2, intelligence: 2.5, dexterite: 0.8 },
+    primary: ['intelligence'],
+    secondary: ['agilite'],
+  },
+};
+
+// Base rate par stat (sans classe)
+const STAT_BASE_RATE = { force: 0.5, agilite: 0.4, intelligence: 0.6, dexterite: 0.5 };
+
+// Calcule le multiplicateur effectif d'une stat pour une classe
+function statEffectiveRate(statName, charClass) {
+  const base = STAT_BASE_RATE[statName] || 0.5;
+  const scale = CHAR_CLASSES[charClass]?.scale?.[statName] ?? 1.0;
+  return base * scale;
+}
+
+// Calcule les bonus de stats perso pour le raid (stats × scale de classe + passif)
+function charStatBonus(char, bossHpPct) {
+  const force        = Number(char?.stat_force || 0);
+  const agilite      = Number(char?.stat_agilite || 0);
+  const intelligence = Number(char?.stat_intelligence || 0);
+  const dexterite    = Number(char?.stat_dexterite || 0);
+  const charClass    = char?.char_class || null;
+  const cls          = CHAR_CLASSES[charClass] || null;
+
+  const passive_dmg   = cls?.passive_dmg_bonus   || 0;
+  const passive_crit  = cls?.passive_crit         || 0;
+  const passive_intel = cls?.passive_intel_bonus  || 0;
+  const passive_first = cls?.passive_first_attack || 0;
+
+  return {
+    dmg_bonus:    force        * statEffectiveRate('force',        charClass) + passive_dmg,
+    crit:         agilite      * statEffectiveRate('agilite',      charClass) + passive_crit,
+    clan_dmg:     intelligence * statEffectiveRate('intelligence', charClass) + passive_intel,
+    first_attack: dexterite    * statEffectiveRate('dexterite',   charClass) + passive_first,
+  };
+}
+
+function xpForOpen(grade){
+  if (grade === 10) return 100;
+  if (grade >= 8) return 50;
+  if (grade >= 5) return 25;
+  return 10;
+}
+
+
+function xpForSell(unitPrice, qty){
+  // logique simple: tu gagnes autant d'XP que d'argent (ou *2 si tu veux)
+  return Math.max(1, (Number(unitPrice) || 1) * (Number(qty) || 1));
+}
+
+async function imageUrlWorks(url) {
+  if (!url) return false;
+  try {
+    const r = await fetchWithTimeout(url, 2000);
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+function uniqueStrings(arr) {
+  return [...new Set(arr.map(x => String(x || "").trim()).filter(Boolean))];
+}
+
+ function getTcgdexSerieCandidates(setId, card = null) {
+  const s = String(setId || "").trim().toLowerCase();
+  if (!s) return [];
+
+  const fromCardSerie =
+    card?.set?.serie?.id ||
+    card?.set?.serieId ||
+    card?.set?.serie ||
+    null;
+
+  const specialMap = {
+    basep: "base",
+    bwp: "bw",
+    xyp: "xy",
+    smp: "sm",
+    swshp: "swsh",
+    svp: "sv",
+    hgssp: "hgss",
+    np: "bw",
+    dvp: "dp",
+  };
+
+  const strippedTrailingDigits = s.replace(/[0-9]+$/g, "");
+  const strippedLeadingDigits  = s.replace(/^[0-9]+/g, "");
+
+  const inferredByPrefix =
+    s.startsWith("dp")   ? "dp" :
+    s.startsWith("pl")   ? "pl" :
+    s.startsWith("hgss") ? "hgss" :
+    s.startsWith("bw")   ? "bw" :
+    s.startsWith("xy")   ? "xy" :
+    s.startsWith("sm")   ? "sm" :
+    s.startsWith("swsh") ? "swsh" :
+    s.startsWith("sv")   ? "sv" :
+    s.startsWith("ex")   ? "ex" :
+    s.startsWith("neo")  ? "neo" :
+    s.startsWith("base") ? "base" :
+    null;
+
+  return [...new Set([
+    fromCardSerie,
+    specialMap[s],
+    inferredByPrefix,
+    strippedTrailingDigits,
+    strippedLeadingDigits,
+    s
+  ].map(x => String(x || "").trim()).filter(Boolean))];
+}
+
+const tcgdexImageCache = new Map();
+
+async function firstWorkingTcgdexImages(setId, localId, card = null) {
+  const key = `${String(setId || "").trim()}__${String(localId || "").trim()}`;
+  if (!setId || !localId) return null;
+
+  if (tcgdexImageCache.has(key)) {
+    return tcgdexImageCache.get(key);
+  }
+
+  const langs = ["fr", "en"];
+  const series = getTcgdexSerieCandidates(setId, card);
+
+  for (const lang of langs) {
+    for (const serie of series) {
+      const low = `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/low.webp`;
+      const high = `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/high.webp`;
+
+      try {
+        const r = await fetchWithTimeout(low, 2500);
+        if (r.ok) {
+          const found = { image: low, imageHigh: high, lang, serie };
+          tcgdexImageCache.set(key, found);
+          return found;
+        }
+      } catch {}
+    }
+  }
+
+  tcgdexImageCache.set(key, null);
+  return null;
+}
+
+// =========================
+// CATALOGUE ÉQUIPEMENTS
+// =========================
+const EQ_R2 = "https://pub-20dca79c351248edbe98e95c38baaafc.r2.dev";
+
+const EQUIPMENT = {
+  // ─── COMMUNS ───
+  sword1_c:   { key:'sword1_c',   name:'Épée du Novice',        slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/sword1.png`,   dmg_bonus:5,  crit:0,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  dagger1_c:  { key:'dagger1_c',  name:'Dague de Lune',         slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/dagger1.png`,  dmg_bonus:0,  crit:0,  first_attack:8,  clan_dmg:0,  clan_crit:0 },
+  staff1_c:   { key:'staff1_c',   name:'Bâton des Racines',     slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/staff1.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:0 },
+  armor1_c:   { key:'armor1_c',   name:'Tunique du Voyageur',   slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor1.png`,   dmg_bonus:0,  crit:4,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  armor2_c:   { key:'armor2_c',   name:'Robe du Disciple',      slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:3 },
+  armor3_c:   { key:'armor3_c',   name:'Plastron de Fer',       slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor3.png`,   dmg_bonus:7,  crit:0,  first_attack:4,  clan_dmg:0,  clan_crit:0 },
+  botte1_c:   { key:'botte1_c',   name:'Bottes du Marcheur',    slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/Botte1.png`,   dmg_bonus:0,  crit:0,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  botte2_c:   { key:'botte2_c',   name:'Chaussons du Sage',     slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:0 },
+  botte3_c:   { key:'botte3_c',   name:'Bottes du Chasseur',    slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte3.png`,   dmg_bonus:0,  crit:3,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  head1_c:    { key:'head1_c',    name:'Capuche de l\'Ombre',   slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head1.png`,    dmg_bonus:0,  crit:4,  first_attack:2,  clan_dmg:0,  clan_crit:0 },
+  head2_c:    { key:'head2_c',    name:'Chapeau du Mage',       slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head2.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:3 },
+  head3_c:    { key:'head3_c',    name:'Heaume du Guerrier',    slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head3.png`,    dmg_bonus:5,  crit:0,  first_attack:3,  clan_dmg:0,  clan_crit:0 },
+  ring1_c:    { key:'ring1_c',    name:'Anneau Brut',           slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring1.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:3,  clan_crit:0 },
+  ring2_c:    { key:'ring2_c',    name:'Anneau de Clairvoyance',slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring2.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:4,  clan_crit:3 },
+  ring3_c:    { key:'ring3_c',    name:'Anneau d\'Argent',      slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring3.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:2,  clan_crit:3 },
+
+  // ─── RARES ───
+  sword1_r:   { key:'sword1_r',   name:'Lame Céleste',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/sword1.png`,     dmg_bonus:10, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  dagger1_r:  { key:'dagger1_r',  name:'Croc de Jade',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/dagger1.png`,    dmg_bonus:0,  crit:12, first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  staff1_r:   { key:'staff1_r',   name:'Sceptre des Marées',    slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/staff1.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:9,  clan_crit:5 },
+  armor1_r:   { key:'armor1_r',   name:'Veste du Rôdeur',       slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor1.png`,     dmg_bonus:0,  crit:7,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  armor2_r:   { key:'armor2_r',   name:'Robe des Anciens',      slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:6 },
+  armor3_r:   { key:'armor3_r',   name:'Cuirasse du Conquérant',slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor3.png`,     dmg_bonus:12, crit:0,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  botte1_r:   { key:'botte1_r',   name:'Bottes du Dueliste',    slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte1r.png`,    dmg_bonus:0,  crit:7,  first_attack:0,  clan_dmg:5,  clan_crit:0 },
+  botte2_r:   { key:'botte2_r',   name:'Bottes du Héraut',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte2r.png`,    dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:4 },
+  botte3_r:   { key:'botte3_r',   name:'Grèves de Fer Noir',    slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte3r.png`,    dmg_bonus:10, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  head1_r:    { key:'head1_r',    name:'Masque du Fantôme',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head1.png`,      dmg_bonus:0,  crit:8,  first_attack:6,  clan_dmg:0,  clan_crit:0 },
+  head2_r:    { key:'head2_r',    name:'Capuche du Druide',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:9,  clan_crit:6 },
+  head3_r:    { key:'head3_r',    name:'Heaume du Paladin',     slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head3.png`,      dmg_bonus:12, crit:0,  first_attack:5,  clan_dmg:0,  clan_crit:0 },
+  ring1_r:    { key:'ring1_r',    name:'Anneau de Feu',         slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring1.png`,      dmg_bonus:5,  crit:8,  first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_r:    { key:'ring2_r',    name:'Anneau du Crépuscule',  slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:8,  clan_crit:6 },
+  ring3_r:    { key:'ring3_r',    name:'Anneau Mystique',       slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring3.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:5,  clan_crit:7 },
+
+  // ─── ÉPIQUES ───
+  sword1_e:   { key:'sword1_e',   name:'Lame des Runes',        slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/sword1.png`,     dmg_bonus:18, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  dagger1_e:  { key:'dagger1_e',  name:'Pointe de l\'Éclipse',  slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/dagger1.png`,    dmg_bonus:0,  crit:20, first_attack:12, clan_dmg:0,  clan_crit:0 },
+  staff1_e:   { key:'staff1_e',   name:'Sceptre du Chaos',      slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/staff1.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:16, clan_crit:10 },
+  armor1_e:   { key:'armor1_e',   name:'Manteau de l\'Éclaireur',slot:'armor', rarity:'epic',      image:`${EQ_R2}/epic/armor1.png`,     dmg_bonus:0,  crit:14, first_attack:10, clan_dmg:0,  clan_crit:0 },
+  armor2_e:   { key:'armor2_e',   name:'Toge des Abysses',      slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:15, clan_crit:10 },
+  armor3_e:   { key:'armor3_e',   name:'Armure du Titan',       slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor3.png`,     dmg_bonus:20, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  botte1_e:   { key:'botte1_e',   name:'Bottes du Traqueur',    slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte1.png`,     dmg_bonus:0,  crit:12, first_attack:0,  clan_dmg:8,  clan_crit:0 },
+  botte2_e:   { key:'botte2_e',   name:'Bottes de l\'Éclair',   slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte2.png`,     dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:14, clan_crit:8 },
+  botte3_e:   { key:'botte3_e',   name:'Grèves du Colosse',     slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte3.png`,     dmg_bonus:18, crit:0,  first_attack:8,  clan_dmg:0,  clan_crit:0 },
+  head1_e:    { key:'head1_e',    name:'Voile du Néant',        slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head1.png`,      dmg_bonus:0,  crit:14, first_attack:10, clan_dmg:0,  clan_crit:0 },
+  head2_e:    { key:'head2_e',    name:'Capuche de l\'Arcane',  slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:16, clan_crit:10 },
+  head3_e:    { key:'head3_e',    name:'Heaume du Suzerain',    slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head3.png`,      dmg_bonus:20, crit:0,  first_attack:10, clan_dmg:0,  clan_crit:0 },
+  ring1_e:    { key:'ring1_e',    name:'Anneau du Sang',        slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring1.png`,      dmg_bonus:10, crit:14, first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_e:    { key:'ring2_e',    name:'Anneau des Abysses',    slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring2.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:15, clan_crit:10 },
+  ring3_e:    { key:'ring3_e',    name:'Anneau de l\'Œil',      slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring3.png`,      dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:10, clan_crit:12 },
+
+  // ─── LÉGENDAIRES ───
+  sword1_l:   { key:'sword1_l',   name:'Croc du Démon',         slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/sword1.png`,  dmg_bonus:30, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  dagger1_l:  { key:'dagger1_l',  name:'Serres du Néant',       slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/dagger1.png`, dmg_bonus:0,  crit:35, first_attack:20, clan_dmg:0,  clan_crit:0 },
+  staff1_l:   { key:'staff1_l',   name:'Sceptre de l\'Astre',   slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/staff1.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  armor1_l:   { key:'armor1_l',   name:'Cuirasse de l\'Archange',slot:'armor', rarity:'legendary', image:`${EQ_R2}/legendaire/armor1.png`,  dmg_bonus:0,  crit:25, first_attack:18, clan_dmg:0,  clan_crit:0 },
+  armor2_l:   { key:'armor2_l',   name:'Toge de l\'Empereur',   slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor2.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  armor3_l:   { key:'armor3_l',   name:'Armure du Dragon',      slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor3.png`,  dmg_bonus:35, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  botte1_l:   { key:'botte1_l',   name:'Bottes du Portail',     slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte1.png`,  dmg_bonus:0,  crit:22, first_attack:0,  clan_dmg:15, clan_crit:0 },
+  botte2_l:   { key:'botte2_l',   name:'Bottes de l\'Inferno',  slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte2.png`,  dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:25, clan_crit:15 },
+  botte3_l:   { key:'botte3_l',   name:'Sabots de l\'Apocalypse',slot:'boots', rarity:'legendary', image:`${EQ_R2}/legendaire/botte3.png`,  dmg_bonus:32, crit:0,  first_attack:15, clan_dmg:0,  clan_crit:0 },
+  head1_l:    { key:'head1_l',    name:'Masque du Seigneur',    slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head1.png`,   dmg_bonus:0,  crit:25, first_attack:18, clan_dmg:0,  clan_crit:0 },
+  head2_l:    { key:'head2_l',    name:"Capuche du Faucheur",   slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  head3_l:    { key:'head3_l',    name:'Heaume du Conquérant',  slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head3.png`,   dmg_bonus:35, crit:0,  first_attack:18, clan_dmg:0,  clan_crit:0 },
+  ring1_l:    { key:'ring1_l',    name:'Anneau du Dragon',      slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring1.png`,   dmg_bonus:18, crit:25, first_attack:0,  clan_dmg:0,  clan_crit:0 },
+  ring2_l:    { key:'ring2_l',    name:'Anneau de l\'Éternité', slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring2.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:28, clan_crit:18 },
+  ring3_l:    { key:'ring3_l',    name:'Anneau du Vide',        slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring3.png`,   dmg_bonus:0,  crit:0,  first_attack:0,  clan_dmg:18, clan_crit:22 },
+};
+
+// ═══════════════════════════════════════════════════════════
+// Drop équipement — uniquement sur Myntalis
+function randBetween(min, max) {
+  return min + Math.floor(Math.random() * (max - min + 1));
+}
+
+async function dropEquipment(userId, bossKey, difficulty) {
+  const allKeys = Object.keys(EQUIPMENT);
+
+  function pickRarity(rarity) {
+    const available = allKeys.filter(k => EQUIPMENT[k].rarity === rarity);
+    if (!available.length) return null;
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  const drops = [];
+
+  if (bossKey === 'arakas') {
+    // Arakas : commun garanti + rare 40%
+    const common = pickRarity('common');
+    if (common) drops.push(common);
+    if (Math.random() < 0.40) {
+      const rare = pickRarity('rare');
+      if (rare) drops.push(rare);
+    }
+  } else if (bossKey === 'myntalis') {
+    // Myntalis : rare garanti + epic 40% + legendary 10%
+    const rare = pickRarity('rare');
+    if (rare) drops.push(rare);
+    if (Math.random() < 0.40) {
+      const epic = pickRarity('epic');
+      if (epic) drops.push(epic);
+    }
+    if (Math.random() < 0.10) {
+      const leg = pickRarity('legendary');
+      if (leg) drops.push(leg);
+    }
+  } else {
+    // Xenos ou autre : tous rarities
+    const common = pickRarity('common');
+    if (common) drops.push(common);
+    if (Math.random() < 0.60) { const rare = pickRarity('rare'); if (rare) drops.push(rare); }
+    if (Math.random() < 0.25) { const epic = pickRarity('epic'); if (epic) drops.push(epic); }
+    if (Math.random() < 0.08) { const leg  = pickRarity('legendary'); if (leg) drops.push(leg); }
+  }
+
+  const now = Date.now();
+  for (const key of drops) {
+    await pool.query(
+      `INSERT INTO player_equipment(user_id, equip_key, obtained_at) VALUES($1,$2,$3)`,
+      [userId, key, now]
+    );
+  }
+  return drops.map(k => EQUIPMENT[k]);
+}
+
+async function dropMaterials(userId, bossKey, difficulty) {
+  // Quantités selon boss + difficulté (100% de drop garanti, seule la quantité varie)
+  let drops = []; // [{ matKey, qty }]
+
+  if (bossKey === 'arakas') {
+    if (difficulty === 'easy') {
+      // 1-10 fer, 1-5 azurite
+      drops = [
+        { matKey: 'fer',     qty: randBetween(1, 10) },
+        { matKey: 'azurite', qty: randBetween(1, 5)  },
+      ];
+    } else { // hard
+      // 1-15 fer, 1-10 azurite
+      drops = [
+        { matKey: 'fer',     qty: randBetween(1, 15) },
+        { matKey: 'azurite', qty: randBetween(1, 10) },
+      ];
+    }
+  } else if (bossKey === 'myntalis') {
+    if (difficulty === 'easy') {
+      // 1-15 azurite, 1-10 quartz, 1-5 topaze
+      drops = [
+        { matKey: 'azurite', qty: randBetween(1, 15) },
+        { matKey: 'quartz',  qty: randBetween(1, 10) },
+        { matKey: 'topaze',  qty: randBetween(1, 5)  },
+      ];
+    } else { // hard
+      // 1-20 azurite, 1-15 quartz, 1-10 topaze
+      drops = [
+        { matKey: 'azurite', qty: randBetween(1, 20) },
+        { matKey: 'quartz',  qty: randBetween(1, 15) },
+        { matKey: 'topaze',  qty: randBetween(1, 10) },
+      ];
+    }
+  } else if (bossKey === 'xenos') {
+    // Xenos : toutes rarités en grandes quantités
+    drops = [
+      { matKey: 'fer',     qty: randBetween(5, 20)  },
+      { matKey: 'azurite', qty: randBetween(5, 20)  },
+      { matKey: 'quartz',  qty: randBetween(3, 15)  },
+      { matKey: 'topaze',  qty: randBetween(1, 10)  },
+    ];
+  }
+
+  for (const { matKey, qty } of drops) {
+    await pool.query(`
+      INSERT INTO player_materials(user_id, mat_key, quantity) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, mat_key) DO UPDATE SET quantity = player_materials.quantity + $3
+    `, [userId, matKey, qty]);
+  }
+  return drops;
+}
+
+
+
+// ----- PAY LOOP (server-side) -----
+const PAY_AMOUNT = 10;
+const PAY_EVERY_MS = 15 * 60 * 1000;
+
+// ----- TICKETS -----
+const TICKET_AMOUNT   = 1;
+const TICKET_EVERY_MS = 1 * 60 * 60 * 1000; // 1 ticket toutes les 1h
+const TICKET_CAP      = 999;                  // max 999 tickets stockés
+
+async function applyPayForUser(userId) {
+  const { rows } = await pool.query(`SELECT money, lastPay FROM users WHERE id=$1`, [userId]);
+  const u = rows[0];
+  if (!u) return;
+
+  const now = Date.now();
+  const last = Number(u.lastpay ?? u.lastPay ?? 0) || now;
+  const delta = Math.max(0, now - last);
+  const ticks = Math.floor(delta / PAY_EVERY_MS);
+
+  if (ticks > 0) {
+    // Bonus dollax clan
+    let payAmount = PAY_AMOUNT;
+    try {
+      const bonus = await getClanBonusForUser(userId);
+      if (bonus) payAmount += bonus.dollaxBonus;
+    } catch(e) {}
+
+    const add = ticks * payAmount;
+    const newLast = last + ticks * PAY_EVERY_MS;
+    await pool.query(
+      `UPDATE users SET money = money + $1, lastPay=$2 WHERE id=$3`,
+      [add, newLast, userId]
+    );
+  }
+}
+
+// ----- TICKET LOOP (server-side) -----
+async function applyTicketsForUser(userId) {
+  const { rows } = await pool.query(`SELECT tickets, lastTicketPay FROM users WHERE id=$1`, [userId]);
+  const u = rows[0];
+  if (!u) return;
+
+  const now     = Date.now();
+  const tickets = Number(u.tickets || 0);
+  if (tickets >= TICKET_CAP) return;
+
+  const last = Number(u.lastticketpay ?? u.lastTicketPay ?? 0);
+  if (last === 0) {
+    await pool.query(`UPDATE users SET lastTicketPay=$1 WHERE id=$2`, [now, userId]);
+    return;
+  }
+
+  // Bonus ticket clan (réduction du cooldown)
+  let ticketEvery = TICKET_EVERY_MS;
+  try {
+    const bonus = await getClanBonusForUser(userId);
+    if (bonus) ticketEvery = Math.max(40 * 60 * 1000, TICKET_EVERY_MS - bonus.ticketReduction);
+  } catch(e) {}
+
+  const delta = Math.max(0, now - last);
+  const ticks = Math.floor(delta / ticketEvery);
+
+  if (ticks > 0) {
+    const add     = Math.min(ticks * TICKET_AMOUNT, TICKET_CAP - tickets);
+    const newLast = last + ticks * ticketEvery;
+    await pool.query(
+      `UPDATE users SET tickets = LEAST(tickets + $1, $2), lastTicketPay=$3 WHERE id=$4`,
+      [add, TICKET_CAP, newLast, userId]
+    );
+  }
+}
+
+// ----- AUTH -----
+async function auth(req, res, next) {
+  const h = req.headers.authorization || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  const token = m?.[1];
+  if (!token) return res.status(401).json({ error: "Missing token" });
+
+  const { rows } = await pool.query(`SELECT id, name FROM users WHERE token=$1`, [token]);
+  const u = rows[0];
+  if (!u) return res.status(401).json({ error: "Invalid token" });
+
+  req.user = u;
+  next();
+}
+
+// ----- HTTP fetch with timeout -----
+async function fetchWithTimeout(url, ms = 20000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+// =========================
+// BINDER CACHE (SETS + SET_CARDS)
+// =========================
+ // =========================
+// BINDER CACHE (SETS + SET_CARDS)
+// =========================
+const SETS_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
+const SET_CARDS_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+
+let setsCache = { at: 0, list: [] };     // cache liste des sets
+const setCardsCache = new Map();         // setId -> { at, cards }
+
+async function getPokemonSetsCached() {
+  const now = Date.now();
+  if (setsCache.list.length && now - setsCache.at < SETS_TTL_MS) {
+    return setsCache.list;
+  }
+
+  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/sets", 20000);
+  if (!r.ok) throw new Error("TCGdex sets failed");
+
+  const list = await r.json().catch(() => []);
+  const clean = Array.isArray(list) ? list : [];
+
+  setsCache = { at: now, list: clean };
+  return clean;
+}
+
+async function getPokemonSetCardsCached(setId) {
+  const now = Date.now();
+  const cached = setCardsCache.get(setId);
+
+  if (cached?.cards?.length && now - cached.at < SET_CARDS_TTL_MS) {
+    return cached.cards;
+  }
+
+  async function fetchSet(lang) {
+    const r = await fetchWithTimeout(
+      `https://api.tcgdex.net/v2/${lang}/sets/${encodeURIComponent(setId)}`,
+      20000
+    );
+    if (!r.ok) return null;
+
+    const data = await r.json().catch(() => null);
+    const cards = Array.isArray(data?.cards) ? data.cards : [];
+    if (!cards.length) return null;
+
+    return {
+      lang,
+      serieId: data?.serie?.id || null,
+      cards
+    };
+  }
+
+  let result = await fetchSet("fr");
+  if (!result) result = await fetchSet("en");
+
+  const safe = result || { lang: "fr", serieId: null, cards: [] };
+
+  setCardsCache.set(setId, { at: now, cards: safe });
+  return safe;
+}
+// =========================
+// TCGDEX PERF: CACHE LIST + CACHE DETAILS
+// =========================
+const CARDS_LIST_TTL_MS = 6 * 60 * 60 * 1000; // 6h
+const CARD_DETAIL_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+let cardsBriefCache = { at: 0, list: [] };
+const cardDetailCache = new Map();
+
+async function getCardsBriefList() {
+  const now = Date.now();
+  if (cardsBriefCache.list.length && now - cardsBriefCache.at < CARDS_LIST_TTL_MS) {
+    return cardsBriefCache.list;
+  }
+
+  const r = await fetchWithTimeout("https://api.tcgdex.net/v2/fr/cards", 20000);
+  if (!r.ok) throw new Error("TCGdex list failed");
+
+  const list = await r.json().catch(() => null);
+  if (!Array.isArray(list) || !list.length) throw new Error("TCGdex list empty");
+
+  cardsBriefCache = { at: now, list };
+  console.log(`🌐 cached cards list: ${list.length} items`);
+  return list;
+}
+
+async function getCardDetailById(id, preferredLang = "fr") {
+  const now = Date.now();
+  const key = `${preferredLang}:${id}`;
+  const cached = cardDetailCache.get(key);
+  if (cached && now - cached.at < CARD_DETAIL_TTL_MS) return cached.data;
+
+  async function fetchCard(lang) {
+    const r = await fetchWithTimeout(`https://api.tcgdex.net/v2/${lang}/cards/${encodeURIComponent(id)}`, 20000);
+    if (!r.ok) return null;
+    return await r.json().catch(() => null);
+  }
+
+  // ✅ try preferred lang, then english
+  let data = await fetchCard(preferredLang);
+  if (!data) data = await fetchCard("en");
+
+  if (!data) throw new Error("TCGdex detail failed");
+
+  cardDetailCache.set(key, { at: now, data });
+  return data;
+}
+
+// =========================
+// LORCANA (LORCAST) ONLINE CACHE
+// =========================
+const LORCANA_BASE = "https://api.lorcast.com/v0"; // docs: Lorcast API :contentReference[oaicite:1]{index=1}
+const LORCANA_SETS_TTL_MS  = 6 * 60 * 60 * 1000;   // 6h
+const LORCANA_CARDS_TTL_MS = 6 * 60 * 60 * 1000;   // 6h (par set)
+
+let lorSetsCache = { at: 0, list: [] };
+const lorSetCardsCache = new Map(); // code -> {at, list}
+
+async function getLorcanaSets(){
+  const now = Date.now();
+  if (lorSetsCache.list.length && now - lorSetsCache.at < LORCANA_SETS_TTL_MS) {
+    return lorSetsCache.list;
+  }
+
+  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets`, 20000);
+  if (!r.ok) throw new Error(`LORCAST sets failed HTTP ${r.status}`);
+
+  const data = await r.json().catch(()=> null);
+
+  // ✅ /sets -> { results: [...] }
+  const list = Array.isArray(data) ? data : (data?.results || []);
+  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST sets empty");
+
+  lorSetsCache = { at: now, list };
+  console.log(`🌐 cached Lorcana sets: ${list.length}`);
+  return list;
+}
+
+async function getLorcanaCardsForSet(code){
+  const now = Date.now();
+  const cached = lorSetCardsCache.get(code);
+  if (cached?.list?.length && now - cached.at < LORCANA_CARDS_TTL_MS) return cached.list;
+
+  const r = await fetchWithTimeout(`${LORCANA_BASE}/sets/${encodeURIComponent(code)}/cards`, 20000);
+  if (!r.ok) throw new Error("LORCAST set cards failed HTTP " + r.status);
+
+  const json = await r.json().catch(()=> null);
+  const list = Array.isArray(json) ? json : (json?.data || json?.cards || []);
+  if (!Array.isArray(list) || !list.length) throw new Error("LORCAST set cards empty");
+
+  lorSetCardsCache.set(code, { at: now, list });
+  return list;
+}
+
+function pickImageLorcana(card){
+  const u = card?.image_uris?.digital || card?.image_uris || null;
+
+  // ✅ on évite "small" comme image principale (souvent trop petite)
+  const low  = u?.normal || u?.large || u?.small || null;
+  const high = u?.large  || u?.normal || u?.small || null;
+
+  return { low, high };
+}
+
+// =========================
+// ONE PIECE (OPTCG) ONLINE CACHE
+// =========================
+const OP_LIST_TTL_MS = 6 * 60 * 60 * 1000;      // 6h
+const OP_DETAIL_TTL_MS = 24 * 60 * 60 * 1000;   // 24h
+
+let opBriefCache = { at: 0, list: [] };
+const opDetailCache = new Map();
+
+async function getOpBriefList() {
+  const now = Date.now();
+  if (opBriefCache.list.length && now - opBriefCache.at < OP_LIST_TTL_MS) {
+    return opBriefCache.list;
+  }
+
+  const r = await fetchWithTimeout("https://optcgapi.com/api/allSetCards/", 20000);
+  if (!r.ok) throw new Error("OPTCG list failed");
+
+  const list = await r.json().catch(() => null);
+  if (!Array.isArray(list) || !list.length) throw new Error("OPTCG list empty");
+
+  opBriefCache = { at: now, list };
+  console.log(`🌐 cached One Piece list: ${list.length} cards`);
+  return list;
+}
+
+async function getOpCardDetail(cardId) {
+  const now = Date.now();
+  const cached = opDetailCache.get(cardId);
+  if (cached && now - cached.at < OP_DETAIL_TTL_MS) return cached.data;
+
+  const r = await fetchWithTimeout(
+    `https://optcgapi.com/api/sets/card/${encodeURIComponent(cardId)}/`,
+    20000
+  );
+  if (!r.ok) throw new Error("OPTCG detail failed");
+
+  const data = await r.json().catch(() => null);
+  if (!data) throw new Error("OPTCG detail invalid");
+
+  // ✅ l’API renvoie souvent un ARRAY -> on prend une variante (random)
+  const picked = Array.isArray(data)
+    ? (data[Math.floor(Math.random() * data.length)] || data[0])
+    : data;
+
+  opDetailCache.set(cardId, { at: now, data: picked });
+  return picked;
+}
+
+// Essayez plusieurs clés possibles (API peut varier selon les cartes)
+function pickFirst(obj, keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+// =========================
+// IMAGE URL NORMALIZATION
+// low.webp pour afficher vite, high.webp pour zoom
+// =========================
+function buildTcgdexAsset(urlBaseOrWithExt, quality = "low", ext = "webp") {
+  if (!urlBaseOrWithExt || typeof urlBaseOrWithExt !== "string") return null;
+
+  const u = urlBaseOrWithExt.replace(/\/$/, "");
+
+  if (/\.(png|jpe?g|webp)(\?|$)/i.test(u)) return u;
+  if (/(\/low|\/high)$/i.test(u)) return `${u}.${ext}`;
+
+  return `${u}/${quality}.${ext}`;
+}
+
+function normalizeImageField(imageField, quality = "low", ext = "webp") {
+  if (!imageField) return null;
+
+  let base = imageField;
+  if (typeof imageField === "object") {
+    base =
+      imageField[quality] ||
+      imageField.high ||
+      imageField.low ||
+      imageField.large ||
+      imageField.medium ||
+      imageField.small ||
+      imageField.url ||
+      null;
+  }
+  if (typeof base !== "string") return null;
+
+  return buildTcgdexAsset(base, quality, ext);
+}
+
+function tcgdexAssetUrl(lang, setId, localId, quality = "low", ext = "webp") {
+  if (!setId || !localId) return null;
+
+  let serie;
+
+  // cas spéciaux
+  if (setId === "basep") serie = "base";
+  else serie = setId.replace(/[0-9]+$/, "");
+
+  return `https://assets.tcgdex.net/${lang}/${serie}/${setId}/${localId}/${quality}.${ext}`;
+}
+
+// =========================
+// DRAW CARD
+// =========================
+// =========================
+// DRAW CARD (MULTI GAME)
+// =========================
+async function drawCard(game) {
+
+  // ----- ONE PIECE ONLINE -----
+  if (game === "onepiece") {
+    const list = await getOpBriefList();
+
+    // On tente plusieurs fois de trouver une carte valide avec image
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const pick = list[Math.floor(Math.random() * list.length)] || {};
+
+      const cardId =
+        pickFirst(pick, ["card_set_id", "cardSetId", "card_id", "cardId", "id"]) ||
+        null;
+
+      if (!cardId) continue;
+
+      let d;
+      try {
+        d = await getOpCardDetail(cardId); // déjà array-safe
+      } catch {
+        continue;
+      }
+
+      const image =
+        pickFirst(d, ["card_image", "image_url", "imageUrl", "image", "img"]) ||
+        pickFirst(pick, ["card_image", "image_url", "imageUrl", "image", "img"]);
+
+      const name =
+        pickFirst(d, ["card_name", "name", "cardName", "title"]) ||
+        pickFirst(pick, ["card_name", "name", "cardName", "title"]) ||
+        "Unknown";
+
+      const setName =
+        pickFirst(d, ["set_name", "setName", "set", "series"]) ||
+        pickFirst(pick, ["set_name", "setName", "set", "series"]) ||
+        "One Piece";
+
+      if (!image) continue;
+
+      // ✅ binder-friendly ids (setId / localId)
+      const setId =
+        pickFirst(d, ["set_id", "setId", "set_code", "setCode"]) ||
+        pickFirst(pick, ["set_id", "setId", "set_code", "setCode"]) ||
+        setName ||
+        "onepiece";
+
+      const localId =
+        pickFirst(d, ["card_number", "number", "localId", "local_id"]) ||
+        pickFirst(pick, ["card_number", "number", "localId", "local_id"]) ||
+        "";
+
+      console.log("🌐 source=OPTCG (working)");
+
+      return {
+        cardId,                      // ✅
+        setId,                       // ✅
+        localId: String(localId || ""), // ✅
+        name,
+        set: setName,
+        rarity: pickFirst(d, ["rarity"]) || "",
+        image,
+        imageHigh: image
+      };
+    }
+
+    throw new Error("One Piece: impossible de trouver une carte avec image");
+  }
+  
+
+  // ----- LORCANA ONLINE (LORCAST) -----
+if (game === "lorcana") {
+  // ✅ IMPORTANT: on récupère les sets UNE seule fois (pas de shadow "const sets" dans le loop)
+  const sets = await getLorcanaSets();
+
+  // On tente plusieurs sets si jamais une réponse est vide
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const s = sets[Math.floor(Math.random() * sets.length)] || {};
+
+    const setCode =
+      pickFirst(s, ["code", "set_code", "setCode", "id"]) ||
+      null;
+
+    if (!setCode) continue;
+
+    let cards;
+    try {
+      cards = await getLorcanaCardsForSet(setCode);
+    } catch {
+      continue;
+    }
+
+    if (!Array.isArray(cards) || !cards.length) continue;
+
+    // On tente plusieurs cartes dans ce set pour être sûr d'avoir une image
+    for (let pickTry = 0; pickTry < 12; pickTry++) {
+      const c = cards[Math.floor(Math.random() * cards.length)] || {};
+
+      const name =
+        pickFirst(c, ["name", "card_name", "title"]) || "Unknown";
+
+      const setName =
+        pickFirst(s, ["name", "set_name"]) ||
+        pickFirst(c, ["set_name", "setName"]) ||
+        `Set ${setCode}`;
+
+      const rarity = pickFirst(c, ["rarity"]) || "";
+
+      const { low, high } = pickImageLorcana(c);
+      if (!low) continue;
+
+      // ✅ binder-friendly ids (setId / localId / cardId)
+      const cardId =
+        pickFirst(c, ["id", "card_id", "cardId", "uuid"]) ||
+        null;
+
+      const setId = String(setCode || "lorcana");
+
+      const localId =
+        pickFirst(c, ["collector_number", "collectorNumber", "number", "card_number", "localId", "local_id"]) ||
+        "";
+
+      console.log("🌐 source=LORCAST");
+
+      return {
+        cardId,                        // ✅
+        setId,                         // ✅
+        localId: String(localId || ""),// ✅
+        name,
+        set: setName,
+        rarity,
+        image: low,
+        imageHigh: high || low
+      };
+    }
+  }
+
+  throw new Error("Lorcana: impossible de trouver une carte avec image");
+}
+
+  //DBZ//
+
+  if (game === "dragonball") {
+  const c = drawOfflineDragonballCard();
+  console.log("📦 source=OFFLINE_DRAGONBALL");
+  return c;
+}
+// UNION ARENA //
+if (game === "unionarena") {
+  const c = drawOfflineUnionArenaCard();
+
+  const img =
+    isValidUnionArenaImage(c.imageHigh) ? c.imageHigh :
+    isValidUnionArenaImage(c.image) ? c.image :
+    null;
+
+  if (!img) {
+    throw new Error("Union Arena: image invalide");
+  }
+
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.set || c.setName || c.series || "Union Arena",
+    image: img,
+    imageHigh: img
+  };
+}
+// MAGIC //
+if (game === "magic") {
+  const c = drawOfflineMagicCard();
+  return {
+    cardId:   c.cardId   || null,
+    setId:    c.setId    || null,
+    localId:  c.localId  || null,
+    name:     c.name     || "Unknown",
+    set:      c.setName  || "Magic",
+    image:    c.image    || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
+// SENPAI GODDESS HAVEN //
+if (game === "senpaigodesshaven") {
+  const c = drawOfflineSenpaiCard();
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.setName || "Senpai Goddess Haven",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
+// WEISS SCHWARZ //
+if (game === "weissschwarz") {
+  const c = drawOfflineWeissSchwarzCard();
+  return {
+    cardId: c.cardId || null,
+    setId: c.setId || null,
+    localId: c.localId || null,
+    name: c.name || "",
+    set: c.setName || "Weiss Schwarz",
+    image: c.image || null,
+    imageHigh: c.imageHigh || c.image || null
+  };
+}
+// BRAINROT //
+if (game === "brainrot") {
+  const c = drawOfflineBrainrotCard();
+  console.log("📦 source=OFFLINE_BRAINROT");
+  return c;
+}
+  // ----- POKEMON OFFLINE / ONLINE (TCGDEX) -----
+  if (FORCE_OFFLINE) {
+    const c = drawOfflinePokemonCard();
+    console.log("📦 source=OFFLINE_POKEMON");
+    return c;
+  }
+
+const MAX_TRIES = 6;
+
+for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+  let list;
+  try {
+    list = await getCardsBriefList();
+  } catch {
+    list = null;
+  }
+  if (!list?.length) break;
+
+  const pick = list[Math.floor(Math.random() * list.length)];
+  if (!pick?.id) continue;
+
+  let c;
+  try {
+    c = await getCardDetailById(pick.id);
+  } catch {
+    continue;
+  }
+
+  const setId = c.set?.id || null;
+  const localId = String(c.localId || "").trim();
+
+  const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+  const highFromApi = normalizeImageField(c.image, "high", "webp");
+
+  let low = lowFromApi;
+  let high = highFromApi;
+
+  if (!low && setId && localId) {
+    const found = await firstWorkingTcgdexImages(setId, localId, c);
+    if (found) {
+      low = found.image;
+      high = found.imageHigh;
+      console.log(`🌐 source=TCGDEX assets lang=${found.lang} serie=${found.serie} set=${setId}`);
+    }
+  }
+
+  if (!low) continue;
+
+  console.log(`🌐 source=TCGDEX set=${setId}`);
+
+  return {
+    cardId: c.id || pick.id,
+    setId,
+    localId,
+    name: c.name || pick.name || "Unknown",
+    set: c.set?.name || c.set?.id || "Unknown",
+    rarity: c.rarity || "",
+    image: low,
+    imageHigh: high || low,
+  };
+}
+
+if (offlinePokemonCards?.length) {
+  const c = drawOfflinePokemonCard();
+  console.log("📦 source=OFFLINE_POKEMON_FALLBACK");
+  return c;
+}
+
+throw new Error("No card available (TCGdex + offline empty)");
+}
+// ----- GRADES -----
+function rollGrade() {
+  const r = Math.random();
+  if (r < 0.02) return 10;
+  if (r < 0.10) return 9;
+  if (r < 0.20) return 8;
+  if (r < 0.34) return 7;
+  if (r < 0.52) return 6;
+  if (r < 0.70) return 5;
+  if (r < 0.82) return 4;
+  if (r < 0.91) return 3;
+  if (r < 0.97) return 2;
+  return 1;
+}
+
+function rollMintForGrade(grade) {
+  if (grade !== 10) return 0;
+  return Math.random() < 1 / 3 ? 1 : 0;
+}
+
+const COST_ONE = 5;
+const COST_FIVE = COST_ONE * 5;
+
+// =========================
+// CLAN LEVEL & TALENTS
+// =========================
+
+// XP requis pour chaque niveau de clan
+function xpForClanLevel(level) {
+  // niveau 1→2: 500 XP, 2→3: 1200 XP, progression exponentielle
+  return Math.floor(500 * Math.pow(1.6, level - 1));
+}
+
+function clanLevelForXp(xp) {
+  let lvl = 1;
+  let total = 0;
+  while (true) {
+    const needed = xpForClanLevel(lvl);
+    if (total + needed > xp) break;
+    total += needed;
+    lvl++;
+    if (lvl >= 50) break;
+  }
+  return lvl;
+}
+
+// Définition des talents
+const TALENT_DEFS = {
+  dollax_bonus: {
+    label: "Revenu Dollax",
+    description: "Augmente les dollax gagnés toutes les 15min",
+    icon: "🪙",
+    maxLevel: 10,
+    // coût en points par niveau (1,2,3,4,5,6,7,8,9,10)
+    costs: [1,2,3,4,5,6,7,8,9,10],
+    // bonus par niveau: base=10, +2 par niveau → max = 30
+    bonusPerLevel: 2,
+    baseValue: 10,
+    unit: "dollax/15min",
+  },
+  ticket_speed: {
+    label: "Regen Tickets",
+    description: "Réduit le temps entre chaque ticket",
+    icon: "🎫",
+    maxLevel: 10,
+    costs: [1,2,3,4,5,6,7,8,9,10],
+    // base=3600000ms (1h), réduit de 8min par niveau → min=40min
+    reductionPerLevel: 8 * 60 * 1000,
+    baseValue: 60 * 60 * 1000,
+    unit: "cooldown",
+  },
+};
+
+async function getClanTalents(clanId) {
+  const { rows } = await pool.query(`SELECT talent_key, level FROM clan_talents WHERE clan_id=$1`, [clanId]);
+  const result = {};
+  for (const key of Object.keys(TALENT_DEFS)) {
+    result[key] = rows.find(r => r.talent_key === key)?.level || 0;
+  }
+  return result;
+}
+
+async function getClanBonusForUser(userId) {
+  // Retourne les bonus actifs si le joueur est dans un clan
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return null;
+    const talents = await getClanTalents(m.clan_id);
+    const dollaxBonus = talents.dollax_bonus * TALENT_DEFS.dollax_bonus.bonusPerLevel;
+    const ticketReduction = talents.ticket_speed * TALENT_DEFS.ticket_speed.reductionPerLevel;
+    return { dollaxBonus, ticketReduction, clanId: m.clan_id };
+  } catch(e) { return null; }
+}
+
+// Vérifier et appliquer le level up du clan après gain XP
+async function checkClanLevelUp(clanId) {
+  const cQ = await pool.query(`SELECT xp, level, talent_points FROM clans WHERE id=$1`, [clanId]);
+  const clan = cQ.rows[0];
+  if (!clan) return;
+
+  const newLevel = clanLevelForXp(Number(clan.xp));
+  const oldLevel = Number(clan.level);
+
+  if (newLevel > oldLevel) {
+    const pointsGained = newLevel - oldLevel;
+    await pool.query(`UPDATE clans SET level=$1, talent_points=talent_points+$2 WHERE id=$3`,
+      [newLevel, pointsGained, clanId]);
+    // Notifier tous les membres
+    const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1`, [clanId]);
+    for (const m of members.rows) {
+      await pool.query(
+        `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Clan Level Up !',$2,NULL,0,$3)`,
+        [m.user_id, `Votre clan est passé niveau ${newLevel} ! +${pointsGained} point(s) de talent à distribuer.`, Date.now()]
+      );
+    }
+  }
+}
+
+// =========================
+// CLANS — HELPERS
+// =========================
+
+const CLAN_MISSIONS_DEF = [
+  { key: "open_cards",   label: "Ouvrir des cartes",         goal: 50, xpClan: 300,  bankReward: 50  },
+  { key: "sell_cards",   label: "Vendre des cartes",         goal: 10, xpClan: 200,  bankReward: 40  },
+  { key: "buy_market",   label: "Acheter au marché",         goal: 1,  xpClan: 150,  bankReward: 30  },
+  { key: "get_mint",     label: "Obtenir une carte MINT",    goal: 1,  xpClan: 150, bankReward: 100 },
+  { key: "get_grade10",  label: "Obtenir un grade 10",       goal: 1,  xpClan: 100,  bankReward: 75  },
+  { key: "send_message", label: "Envoyer un message clan",   goal: 1,  xpClan: 50,  bankReward: 10  },
+  { key: "login_daily",  label: "Se connecter aujourd'hui",  goal: 1,  xpClan: 100,  bankReward: 25  },
+  { key: "raid_boss",    label: "Vaincre le boss de raid",   goal: 1,  xpClan: 1000, bankReward: 500 },
+];
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+function dmgForCard(grade, mint) {
+  let base = 5;
+  if (grade >= 10) base = 100;
+  else if (grade >= 7) base = 40;
+  else if (grade >= 5) base = 20;
+  else base = 5;
+  return mint ? base * 2 : base;
+}
+
+// Définition fixe des boss disponibles (3 boss × 2 difficultés)
+const RAID_BOSSES = {
+  arakas_easy: {
+    key: 'arakas_easy', bossKey: 'arakas',
+    name: 'Arakas', difficulty: 'easy', diffLabel: '🟢 Facile',
+    image: '/Boss1.gif',
+    hp_max: 100000,
+    reward: 5000, xpReward: 1000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 1,
+  },
+  arakas_hard: {
+    key: 'arakas_hard', bossKey: 'arakas',
+    name: 'Arakas', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss1.gif',
+    hp_max: 100000,
+    reward: 10000, xpReward: 2000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 1,
+  },
+  myntalis_easy: {
+    key: 'myntalis_easy', bossKey: 'myntalis',
+    name: 'Myntalis', difficulty: 'easy', diffLabel: '🟢 Facile',
+    image: '/Boss2.gif',
+    hp_max: 500000,
+    reward: 20000, xpReward: 4000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 3,
+  },
+  myntalis_hard: {
+    key: 'myntalis_hard', bossKey: 'myntalis',
+    name: 'Myntalis', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss2.gif',
+    hp_max: 500000,
+    reward: 50000, xpReward: 8000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 3,
+  },
+  xenos_easy: {
+    key: 'xenos_easy', bossKey: 'xenos',
+    name: 'Xenos', difficulty: 'easy', diffLabel: '🟢 Facile',
+    image: '/Boss3.gif',
+    hp_max: 2000000,
+    reward: 50000, xpReward: 25000,
+    duration: 4 * 60 * 60 * 1000,
+    cooldownDays: 7,
+  },
+  xenos_hard: {
+    key: 'xenos_hard', bossKey: 'xenos',
+    name: 'Xenos', difficulty: 'hard', diffLabel: '🔴 Hardcore',
+    image: '/Boss3.gif',
+    hp_max: 2000000,
+    reward: 100000, xpReward: 50000,
+    duration: 1 * 60 * 60 * 1000,
+    cooldownDays: 7,
+  },
+};
+
+// Retourne la date UTC courante
+function todayUTC() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+// Vérifie si le cooldown d'un boss est écoulé
+async function checkBossCooldown(clanId, bossKey, cooldownDays) {
+  const col = `last_raid_${bossKey}`;
+  const cQ = await pool.query(`SELECT ${col} FROM clans WHERE id=$1`, [clanId]);
+  const lastDate = cQ.rows[0]?.[col];
+  if (!lastDate) return true; // jamais fait
+
+  const last = new Date(lastDate + 'T00:00:00Z');
+  const now = new Date();
+  const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+  return diffDays >= cooldownDays;
+}
+
+// Marque un boss comme lancé aujourd'hui
+async function markBossCooldown(clanId, bossKey) {
+  const col = `last_raid_${bossKey}`;
+  await pool.query(`UPDATE clans SET ${col}=$1 WHERE id=$2`, [todayUTC(), clanId]);
+}
+
+async function getMyMembership(userId) {
+  const r = await pool.query(`SELECT cm.*, c.id as cid FROM clan_members cm JOIN clans c ON c.id=cm.clan_id WHERE cm.user_id=$1`, [userId]);
+  return r.rows[0] || null;
+}
+
+async function progressMission(clanId, userId, missionKey, amount=1) {
+  const dk = todayKey();
+  const def = CLAN_MISSIONS_DEF.find(m => m.key === missionKey);
+  if (!def) return;
+
+  await pool.query(`
+    INSERT INTO clan_missions(clan_id,user_id,mission_key,progress,goal,completed,date_key)
+    VALUES($1,$2,$3,0,$4,0,$5)
+    ON CONFLICT(clan_id,user_id,mission_key,date_key) DO NOTHING
+  `, [clanId, userId, missionKey, def.goal, dk]);
+
+  const upd = await pool.query(`
+    UPDATE clan_missions
+    SET progress = LEAST(progress + $1, goal)
+    WHERE clan_id=$2 AND user_id=$3 AND mission_key=$4 AND date_key=$5 AND completed=0
+    RETURNING progress, goal
+  `, [amount, clanId, userId, missionKey, dk]);
+
+  if (!upd.rows.length) return;
+  const { progress, goal } = upd.rows[0];
+
+  if (progress >= goal) {
+    await pool.query(`UPDATE clan_missions SET completed=1 WHERE clan_id=$1 AND user_id=$2 AND mission_key=$3 AND date_key=$4`, [clanId, userId, missionKey, dk]);
+    await pool.query(`UPDATE clans SET xp=xp+$1, bank=bank+$2 WHERE id=$3`, [def.xpClan, def.bankReward, clanId]);
+    await checkClanLevelUp(clanId).catch(() => {});
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Mission clan complétée !',$2,NULL,0,$3)`,
+      [userId, `Mission "${def.label}" accomplie ! +${def.xpClan} XP clan, +${def.bankReward} dollax banque.`, Date.now()]
+    );
+  }
+}
+
+
+async function clanHookOpen(userId, grade, mint) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    await progressMission(m.clan_id, userId, 'open_cards');
+    if (mint) await progressMission(m.clan_id, userId, 'get_mint');
+    if (grade >= 10) await progressMission(m.clan_id, userId, 'get_grade10');
+    // Ajouter dégâts au stock si raid actif
+    await _addToRaidStock(m.clan_id, userId, dmgForCard(grade, Boolean(mint)));
+  } catch(e) { console.error("clanHookOpen error:", e.message); }
+}
+
+// Ajoute des dégâts au stock du joueur si un raid est actif
+async function _addToRaidStock(clanId, userId, dmg) {
+  const bQ = await pool.query(`SELECT id FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [clanId]);
+  if (!bQ.rows.length) return;
+  const bossId = bQ.rows[0].id;
+  await pool.query(`
+    INSERT INTO clan_raid_stock(user_id, clan_id, boss_id, stock) VALUES($1,$2,$3,$4)
+    ON CONFLICT(user_id, boss_id) DO UPDATE SET stock = clan_raid_stock.stock + $4
+  `, [userId, clanId, bossId, dmg]);
+}
+
+// Traite plusieurs cartes d'un coup de façon atomique (open x5)
+async function clanHookOpenMulti(userId, cards) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+
+    for (const card of cards) {
+      await progressMission(m.clan_id, userId, 'open_cards');
+      if (card.mint) await progressMission(m.clan_id, userId, 'get_mint');
+      if (card.grade >= 10) await progressMission(m.clan_id, userId, 'get_grade10');
+    }
+
+    // Ajouter total dégâts au stock
+    const totalDmg = cards.reduce((sum, c) => sum + dmgForCard(c.grade, Boolean(c.mint)), 0);
+    if (totalDmg > 0) await _addToRaidStock(m.clan_id, userId, totalDmg);
+  } catch(e) { console.error("clanHookOpenMulti error:", e.message); }
+}
+
+
+async function clanHookSell(userId, qty) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    for (let i = 0; i < qty; i++) await progressMission(m.clan_id, userId, 'sell_cards');
   } catch(e) {}
 }
 
-// ══════════════════════════════════════════════════
-// CONFIG SPRITES
-// ══════════════════════════════════════════════════
-const SPRITE_PATH = '/spritesheet/';
-const ENEMY_SPRITE_PATH = '/ennemie spritesheet/';
+async function clanHookBuy(userId) {
+  try {
+    const m = await getMyMembership(userId);
+    if (!m) return;
+    await progressMission(m.clan_id, userId, 'buy_market');
+  } catch(e) {}
+}
 
-// Icônes fallback si le sprite ne se charge pas
-const PVE_ENEMY_ICONS_SPRITE = {
-  goblin:'👺', orc:'👹', skeleton_warrior:'💀', ogre:'🗿',
-  zombie_villager:'🧟', golem:'🪨', necromancer_of_the_shadow:'🧙'
-};
 
-// Sprites des ennemis PVE (dossier séparé)
-// Les spritesheets sont des bandes horizontales: fw = largeur d'une frame
-// On essaie plusieurs noms possibles via getEnemyImg (fallback auto en minuscules)
-const ENEMY_SPRITES = {
-  goblin: {
-    idle:    { file:'goblin/Idle.png',    frames:18,  fw:256, fps:36  },
-    run:     { file:'goblin/Run.png',    frames:12,  fw:256, fps:24  },
-    attack1: { file:'goblin/Slashing.png',  frames:12,  fw:256, fps:24 },
-    attack2: { file:'goblin/Kicking.png',  frames:12,  fw:256, fps:24 },
-    hurt:    { file:'goblin/Hurt.png',    frames:12,  fw:256, fps:24  },
-    dead:    { file:'goblin/Dead.png',    frames:15,  fw:256, fps:30  },
-    walk:    { file:'goblin/Walk.png',    frames:24,  fw:256, fps:48  },
-  },
-  skeleton_warrior: {
-    idle:    { file:'skeleton_warrior/Idle.png',    frames:18,  fw:256, fps:36  },
-    run:     { file:'skeleton_warrior/Run.png',    frames:12,  fw:256, fps:24  },
-    attack1: { file:'skeleton_warrior/Slashing.png',  frames:12,  fw:256, fps:24 },
-    attack2: { file:'skeleton_warrior/Run_Slashing.png',  frames:12,  fw:256, fps:24 },
-    hurt:    { file:'skeleton_warrior/Hurt.png',    frames:12,  fw:256, fps:24  },
-    dead:    { file:'skeleton_warrior/Dead.png',    frames:15,  fw:256, fps:30  },
-    walk:    { file:'skeleton_warrior/Walk.png',    frames:24,  fw:256, fps:48  },
-  },
-  orc: {
-    idle:    { file:'orc/Idle.png',       frames:18,  fw:256, fps:36  },
-    run:     { file:'orc/Run.png',       frames:12,  fw:256, fps:24  },
-    attack1: { file:'orc/Slashing.png',     frames:12,  fw:256, fps:24 },
-    attack2: { file:'orc/Run_Slashing.png',     frames:12,  fw:256, fps:24 },
-    hurt:    { file:'orc/Hurt.png',       frames:12,  fw:256, fps:24  },
-    dead:    { file:'orc/Dead.png',       frames:15,  fw:256, fps:30  },
-    walk:    { file:'orc/Walk.png',       frames:24,  fw:256, fps:48  },
-  },
-  zombie_villager: {
-    idle:    { file:'zombie_villager/Idle.png',    frames:18,  fw:256, fps:36 },
-    run:     { file:'zombie_villager/Run.png',    frames:12,  fw:256, fps:24  },
-    attack1: { file:'zombie_villager/Slashing.png',  frames:12,  fw:256, fps:24  },
-    attack2: { file:'zombie_villager/Kicking.png',  frames:12,  fw:256, fps:24  },
-    hurt:    { file:'zombie_villager/Hurt.png',    frames:12,  fw:256, fps:24  },
-    dead:    { file:'zombie_villager/Dead.png',    frames:15,  fw:256, fps:30  },
-    walk:    { file:'zombie_villager/Walk.png',    frames:24,  fw:256, fps:48  },
-  },
-  ogre: {
-    idle:    { file:'ogre/Idle.png',      frames:18,  fw:256, fps:5  },
-    run:     { file:'ogre/Run.png',      frames:12,  fw:256, fps:24  },
-    attack1: { file:'ogre/Slashing.png',    frames:12,  fw:256, fps:24  },
-    attack2: { file:'ogre/Run_Slashing.png',    frames:12,  fw:256, fps:24  },
-    hurt:    { file:'ogre/Hurt.png',      frames:12,  fw:256, fps:24 },
-    dead:    { file:'ogre/Dead.png',      frames:15,  fw:256, fps:30  },
-    walk:    { file:'ogre/Walk.png',      frames:24,  fw:256, fps:48  },
-  },
-  golem: {
-    idle:    { file:'golem/Idle.png',     frames:18,  fw:256, fps:36  },
-    run:     { file:'golem/Run.png',     frames:12,  fw:256, fps:24  },
-    attack1: { file:'golem/Slashing.png',   frames:12,  fw:256, fps:24  },
-    attack2: { file:'golem/Run_Slashing.png',   frames:12,  fw:256, fps:24  },
-    hurt:    { file:'golem/Hurt.png',     frames:12,  fw:256, fps:24  },
-    dead:    { file:'golem/Dead.png',     frames:15,  fw:256, fps:30  },
-    walk:    { file:'golem/Walk.png',     frames:24,  fw:256, fps:48  },
-  },
-  necromancer_of_the_shadow: {
-    idle:    { file:'necromancer_of_the_shadow/Idle.png',    frames:18,  fw:256, fps:36  },
-    run:     { file:'necromancer_of_the_shadow/Run.png',    frames:12,  fw:256, fps:24  },
-    attack1: { file:'necromancer_of_the_shadow/Slashing.png',  frames:12,  fw:256, fps:24 },
-    attack2: { file:'necromancer_of_the_shadow/Run_Slashing.png',  frames:12,  fw:256, fps:24 },
-    hurt:    { file:'necromancer_of_the_shadow/Hurt.png',    frames:12,  fw:256, fps:24  },
-    dead:    { file:'necromancer_of_the_shadow/Dead.png',    frames:15,  fw:256, fps:30  },
-    walk:    { file:'necromancer_of_the_shadow/Walk.png',    frames:24,  fw:256, fps:48  },
-  },
-};
 
-// Cache séparé pour les sprites ennemis
-const ENEMY_IMG_CACHE = {};
-function getEnemyImg(src) {
-  if (!ENEMY_IMG_CACHE[src]) {
-    const img = new Image();
-    // Essayer d'abord avec la casse exacte, puis fallback minuscule
-    img.src = ENEMY_SPRITE_PATH + src;
-    img.onerror = function() {
-      // Essayer variantes: Death→Dead, minuscules
-      const alt = src.includes('Death.png') ? src.replace('Death.png', 'Dead.png')
-                : src.includes('Dead.png')  ? src.replace('Dead.png', 'Death.png')
-                : src.replace(/([A-Z])/g, m => m.toLowerCase());
-      if (alt !== src) { this.onerror = null; this.src = ENEMY_SPRITE_PATH + alt; }
-    };
-    ENEMY_IMG_CACHE[src] = img;
+// =========================
+// ROUTES
+// =========================
+app.post("/api/login", async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  const code = String(req.body?.code || "").trim();
+  if (!name) return res.status(400).json({ error: "Pseudo requis" });
+
+  const now = Date.now();
+  const existing = await pool.query(`SELECT id, code, token FROM users WHERE name=$1`, [name]);
+  const u = existing.rows[0];
+
+  // Nouveau compte
+  if (!u) {
+    const newCode = randCode(6);
+    const token = randToken();
+    const friendCode = randFriendCode();
+
+    await pool.query(
+      `INSERT INTO users (name, code, token, friendCode, money, lastPay, createdAt)
+       VALUES ($1,$2,$3,$4,0,$5,$6)`,
+      [name, newCode, token, friendCode, now, now]
+    );
+
+    return res.json({ token, isNew: true, code: newCode, friendCode });
   }
-  return ENEMY_IMG_CACHE[src];
-}
 
-const CLASS_SPRITES = {
-  bloody_alchemist: {
-    idle:    { file:'bloody_alchemist/Idle.png',         frames:18, fw:256, fps:36  },
-    run:     { file:'bloody_alchemist/Run.png',          frames:12, fw:256, fps:24 },
-    attack1: { file:'bloody_alchemist/Slashing.png',     frames:12, fw:256, fps:24 },
-    attack2: { file:'bloody_alchemist/Run_Slashing.png', frames:12, fw:256, fps:24 },
-    hurt:    { file:'bloody_alchemist/Hurt.png',         frames:12, fw:256, fps:24 },
-    dead:    { file:'bloody_alchemist/Dead.png',         frames:15, fw:256, fps:30  },
-    walk:    { file:'bloody_alchemist/Walk.png',         frames:24, fw:256, fps:48 },
-  },
-  dark_oracle: {
-    idle:    { file:'dark_oracle/Idle.png',              frames:18, fw:256, fps:36  },
-    run:     { file:'dark_oracle/Run.png',               frames:12, fw:256, fps:24 },
-    attack1: { file:'dark_oracle/Slashing.png',          frames:12, fw:256, fps:24 },
-    attack2: { file:'dark_oracle/Run_Slashing.png',      frames:12, fw:256, fps:24 },
-    hurt:    { file:'dark_oracle/Hurt.png',              frames:12, fw:256, fps:24 },
-    dead:    { file:'dark_oracle/Dead.png',              frames:15, fw:256, fps:30  },
-    walk:    { file:'dark_oracle/Walk.png',              frames:24, fw:256, fps:48 },
-  },
-  fallen_angels: {
-    idle:    { file:'fallen_angels/Idle.png',            frames:18, fw:256, fps:36  },
-    run:     { file:'fallen_angels/Run.png',             frames:12, fw:256, fps:24 },
-    attack1: { file:'fallen_angels/Slashing.png',        frames:12, fw:256, fps:24 },
-    attack2: { file:'fallen_angels/Run_Slashing.png',    frames:12, fw:256, fps:24 },
-    hurt:    { file:'fallen_angels/Hurt.png',            frames:12, fw:256, fps:24 },
-    dead:    { file:'fallen_angels/Dead.png',            frames:15, fw:256, fps:30  },
-    walk:    { file:'fallen_angels/Walk.png',            frames:24, fw:256, fps:48 },
-  },
-  forest_ranger: {
-    idle:    { file:'forest_ranger/Idle.png',            frames:18, fw:256, fps:36  },
-    run:     { file:'forest_ranger/Run.png',             frames:12, fw:256, fps:24 },
-    attack1: { file:'forest_ranger/Shooting.png',        frames:12, fw:256, fps:24 },
-    attack2: { file:'forest_ranger/Kicking.png',         frames:12, fw:256, fps:24 },
-    hurt:    { file:'forest_ranger/Hurt.png',            frames:12, fw:256, fps:24 },
-    dead:    { file:'forest_ranger/Dead.png',            frames:15, fw:256, fps:30  },
-    walk:    { file:'forest_ranger/Walk.png',            frames:24, fw:256, fps:48 },
-  },
-  golem: {
-    idle:    { file:'golem/Idle.png',                    frames:18, fw:256, fps:36  },
-    run:     { file:'golem/Run.png',                     frames:12, fw:256, fps:24 },
-    attack1: { file:'golem/Slashing.png',                frames:12, fw:256, fps:24 },
-    attack2: { file:'golem/Kicking.png',                 frames:12, fw:256, fps:24 },
-    hurt:    { file:'golem/Hurt.png',                    frames:12, fw:256, fps:24 },
-    dead:    { file:'golem/Dead.png',                    frames:15, fw:256, fps:30  },
-    walk:    { file:'golem/Walk.png',                    frames:24, fw:256, fps:48 },
-  },
-  minotaur: {
-    idle:    { file:'minotaur/Idle.png',                 frames:18, fw:256, fps:36  },
-    run:     { file:'minotaur/Run.png',                  frames:12, fw:256, fps:24 },
-    attack1: { file:'minotaur/Slashing.png',             frames:12, fw:256, fps:24 },
-    attack2: { file:'minotaur/Run_Slashing.png',         frames:12, fw:256, fps:24 },
-    hurt:    { file:'minotaur/Hurt.png',                 frames:12, fw:256, fps:24 },
-    dead:    { file:'minotaur/Dead.png',                 frames:15, fw:256, fps:30  },
-    walk:    { file:'minotaur/Walk.png',                 frames:24, fw:256, fps:48 },
-  },
-  reaper_man: {
-    idle:    { file:'reaper_man/Idle.png',               frames:18, fw:256, fps:36  },
-    run:     { file:'reaper_man/Run.png',                frames:12, fw:256, fps:24 },
-    attack1: { file:'reaper_man/Slashing.png',           frames:12, fw:256, fps:24 },
-    attack2: { file:'reaper_man/Run_Slashing.png',       frames:12, fw:256, fps:24 },
-    hurt:    { file:'reaper_man/Hurt.png',               frames:12, fw:256, fps:24 },
-    dead:    { file:'reaper_man/Dead.png',               frames:15, fw:256, fps:30  },
-    walk:    { file:'reaper_man/Walk.png',               frames:24, fw:256, fps:48 },
-  },
-  valkyrie: {
-    idle:    { file:'valkyrie/Idle.png',                 frames:18, fw:256, fps:36  },
-    run:     { file:'valkyrie/Run.png',                  frames:12, fw:256, fps:24 },
-    attack1: { file:'valkyrie/Slashing.png',             frames:12, fw:256, fps:24 },
-    attack2: { file:'valkyrie/Run_Slashing.png',         frames:12, fw:256, fps:24 },
-    hurt:    { file:'valkyrie/Hurt.png',                 frames:12, fw:256, fps:24 },
-    dead:    { file:'valkyrie/Dead.png',                 frames:15, fw:256, fps:30  },
-    walk:    { file:'valkyrie/Walk.png',                 frames:24, fw:256, fps:48 },
-  },
-};
+  // Compte existant -> code obligatoire
+  if (!code || code !== u.code) {
+    return res.status(401).json({ error: "Code incorrect" });
+  }
 
-const DEFAULT_CLASS = 'forest_ranger';
-const IMG_CACHE = {};
-function getImg(src) {
-  if (!IMG_CACHE[src]) { const img = new Image(); img.src = SPRITE_PATH + src; IMG_CACHE[src] = img; }
-  return IMG_CACHE[src];
-}
-const NEW_SKINS = ['bloody_alchemist','dark_oracle','fallen_angels','forest_ranger','golem','minotaur','reaper_man','valkyrie'];
-Object.entries(CLASS_SPRITES)
-  .filter(([k]) => NEW_SKINS.includes(k))
-  .forEach(([,cls]) => Object.values(cls).forEach(a => getImg(a.file)));
+  return res.json({ token: u.token, isNew: false });
+});
 
-// Précharger les sprites ennemis PVE
-Object.values(ENEMY_SPRITES).forEach(cls => Object.values(cls).forEach(a => getEnemyImg(a.file)));
+app.get("/api/me", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+  await applyTicketsForUser(req.user.id);
 
-// ══════════════════════════════════════════════════
-// MOTEUR D'ANIMATION ARENA — sprites plus grands
-// ══════════════════════════════════════════════════
-const SPRITE_PX   = 310;  // taille affichage en combat
-const SPRITE_PX_W = Math.round(SPRITE_PX * (256 + 16) / 256);
-const P1_HOME_PX  = 20;
+  const userQ = await pool.query(
+  `SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`,
+  [req.user.id]
+);
+  const u = userQ.rows[0];
 
-let arenaState = null;
-let arenaRaf   = null;
-let arenaLastT = 0;
-// On stocke les classes des fighters pour les SFX
-let f1Class = 'forest_ranger';
-let f2Class = 'forest_ranger';
-
-function initArena(cls1, cls2, maxHp1, maxHp2, name1, name2, avatar1, avatar2, rankInfo1, rankInfo2, isEnemy2) {
-  if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
-  arenaState = null;
-  f1Class = cls1 || 'forest_ranger';
-  f2Class = cls2 || 'forest_ranger';
-
-  const FRAME_W = 256, FRAME_H = 256, CANVAS_PAD = 8;
-  const CANVAS_W = FRAME_W + CANVAS_PAD * 2;
-  const CANVAS_H = FRAME_H;
-
-  ['rc1','rc2'].forEach(id => {
-    const c = document.getElementById(id);
-    if (!c) return;
-    c.width  = CANVAS_W;
-    c.height = CANVAS_H;
-    c.style.height = SPRITE_PX + 'px';
-    c.style.width  = Math.round(SPRITE_PX * CANVAS_W / CANVAS_H) + 'px';
-    c.style.imageRendering = 'auto';  // smooth pour les sprites haute res
-    // Désactiver le lissage pour garder la netteté
-    const ctx2 = c.getContext('2d');
-    if (ctx2) { ctx2.imageSmoothingEnabled = true; ctx2.imageSmoothingQuality = 'high'; }
-  });
-
-  const sw = (document.getElementById('replay-stage')||{offsetWidth:700}).offsetWidth;
-  const p2Home = sw - P1_HOME_PX - SPRITE_PX_W;
-
-  arenaState = {
-    f1: { cls: cls1||DEFAULT_CLASS, x: P1_HOME_PX, anim:'idle', frame:0, tick:0, flip:false, freezeOnEnd:false, isEnemy:false },
-    f2: { cls: cls2||DEFAULT_CLASS, x: p2Home,      anim:'idle', frame:0, tick:0, flip:true,  freezeOnEnd:false, isEnemy:isEnemy2||false },
-  };
-
-  updateArenaHp(1, maxHp1, maxHp1);
-  updateArenaHp(2, maxHp2, maxHp2);
-  document.getElementById('rn1').textContent = name1;
-  document.getElementById('rn2').textContent = name2;
-
-  ['1','2'].forEach(n => {
-    const av = n==='1' ? avatar1 : avatar2;
-    const ri = n==='1' ? rankInfo1 : rankInfo2;
-    const el = document.getElementById('rhp-avatar-'+n);
-    if (!el) return;
-    if (av) {
-      el.style.backgroundImage = `url('${av}')`;
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
-      el.textContent = '';
+  // si ancien compte sans friendCode
+  let friendCode = u?.friendcode || u?.friendCode || null;
+  if (!friendCode) {
+    friendCode = randFriendCode();
+    for (let i = 0; i < 3; i++) {
+      try {
+        await pool.query(`UPDATE users SET friendCode=$1 WHERE id=$2`, [friendCode, req.user.id]);
+        break;
+      } catch {
+        friendCode = randFriendCode();
+      }
     }
-    const frameEl = document.getElementById('rhp-frame-'+n);
-    if (frameEl && ri && RANK_FRAMES[ri.name]) frameEl.src = RANK_FRAMES[ri.name];
-  });
-  arenaLastT = 0;
-  arenaRaf = requestAnimationFrame(arenaLoop);
-}
-
-function stopArena() {
-  if (arenaRaf) { cancelAnimationFrame(arenaRaf); arenaRaf = null; }
-  arenaState = null;
-}
-
-function arenaLoop(ts) {
-  if (!arenaState) return;
-  const dt = Math.min(arenaLastT ? ts - arenaLastT : 16, 50);
-  arenaLastT = ts;
-  tickAndDraw('rc1', arenaState.f1, dt);
-  tickAndDraw('rc2', arenaState.f2, dt);
-  placeCanvas('rc1', arenaState.f1.x);
-  placeCanvas('rc2', arenaState.f2.x);
-  arenaRaf = requestAnimationFrame(arenaLoop);
-}
-
-function getAnimDef(f) {
-  // Si c'est un ennemi PVE, utiliser ENEMY_SPRITES
-  if (f.isEnemy && ENEMY_SPRITES[f.cls]) {
-    const sprites = ENEMY_SPRITES[f.cls];
-    return sprites[f.anim] || sprites.idle;
   }
-  const sprites = CLASS_SPRITES[f.cls] || CLASS_SPRITES[DEFAULT_CLASS];
-  return sprites[f.anim] || sprites.idle;
+
+  // stats pulls
+  const statsQ = await pool.query(
+    `
+    SELECT
+      COUNT(*)::int AS total,
+      SUM(CASE WHEN grade BETWEEN 1 AND 4 THEN 1 ELSE 0 END)::int AS w,
+      SUM(CASE WHEN grade BETWEEN 5 AND 6 THEN 1 ELSE 0 END)::int AS b,
+      SUM(CASE WHEN grade BETWEEN 7 AND 9 THEN 1 ELSE 0 END)::int AS v,
+      SUM(CASE WHEN grade = 10 THEN 1 ELSE 0 END)::int AS g10,
+      SUM(CASE WHEN mint = 1 THEN 1 ELSE 0 END)::int AS mint
+    FROM pulls
+    WHERE user_id=$1
+    `,
+    [req.user.id]
+  );
+
+  const s = statsQ.rows[0] || {};
+
+  const clanBonus = await getClanBonusForUser(req.user.id).catch(() => null);
+  const payRate = PAY_AMOUNT + (clanBonus?.dollaxBonus || 0);
+
+  res.setHeader('Cache-Control', 'private, max-age=10');
+  res.json({
+    name: u?.name,
+    money: u?.money || 0,
+    friendCode,
+    total: s.total || 0,
+    w: s.w || 0,
+    b: s.b || 0,
+    v: s.v || 0,
+    g10: s.g10 || 0,
+    mint: s.mint || 0,
+    xp: Number(u?.xp || 0),
+    level: levelForXp(u?.xp || 0),
+    avatar: u?.avatar || "",
+    tickets: Number(u?.tickets || 0),
+    dollax:  Number(u?.money  || 0),
+    payRate,
+  });
+});
+app.post("/api/open", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+
+  const game = getGame(req);
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // paiement atomique
+    const payQ = await client.query(
+      `UPDATE users
+       SET money = money - $1
+       WHERE id = $2
+         AND money >= $1
+       RETURNING money`,
+      [COST_ONE, req.user.id]
+    );
+
+    if (!payQ.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de Dollax" });
+    }
+
+    const moneyAfterPay = Number(payQ.rows[0].money || 0);
+
+    let c;
+    try {
+      c = await drawCard(game);
+    } catch (e) {
+      console.error("❌ drawCard failed:", { game, message: e?.message, stack: e?.stack });
+      await client.query("ROLLBACK");
+      return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
+    }
+
+    const grade = rollGrade();
+    const mint = rollMintForGrade(grade);
+    const now = Date.now();
+    const xpAdd = xpForOpen(grade);
+
+    const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
+
+    // Vérifier si la carte est déjà dans la collection
+    const existsQ = await client.query(
+      `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+      [req.user.id, idKey]
+    );
+    const isNew = existsQ.rows.length === 0;
+
+    await client.query(
+      `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+      [xpAdd, req.user.id]
+    );
+
+    await client.query(
+      `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [
+        req.user.id,
+        game,
+        c.cardId || null,
+        c.setId || null,
+        c.localId || null,
+        c.name,
+        c.set,
+        c.image,
+        c.imageHigh || c.image,
+        grade,
+        mint,
+        now,
+      ]
+    );
+
+    // Récupérer le grades_json existant pour l'enrichir
+    const existingQ = await client.query(
+      `SELECT grades_json, count FROM collection WHERE user_id=$1 AND idKey=$2`,
+      [req.user.id, idKey]
+    );
+    const existingRow = existingQ.rows[0];
+    const existingGrades = existingRow
+      ? parseGrades(existingRow.grades_json, existingRow.count)
+      : [];
+    const newGrades = JSON.stringify([...existingGrades, grade]);
+
+    await client.query(
+      `
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13,$14)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + 1,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId),
+        grades_json = $14
+      `,
+      [
+        req.user.id,
+        idKey,
+        game,
+        c.cardId || null,
+        c.setId || null,
+        c.localId || null,
+        c.name,
+        c.set,
+        c.image,
+        c.imageHigh || c.image,
+        grade,
+        mint,
+        now,
+        newGrades,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    // Clan hooks (fire and forget)
+    clanHookOpen(req.user.id, grade, Boolean(mint)).catch(() => {});
+
+    return res.json({
+      money: moneyAfterPay,
+      xpAdd,
+      card: {
+        idKey,
+        game,
+        name: c.name,
+        set: c.set,
+        cardId: c.cardId || null,
+        setId: c.setId || null,
+        localId: c.localId || null,
+        image: c.image,
+        imageHigh: c.imageHigh || c.image,
+        grade,
+        mint: Boolean(mint),
+        isNew,
+      },
+    });
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch {}
+    console.error("❌ /api/open failed:", e);
+    return res.status(500).json({ error: "Open failed" });
+  } finally {
+    client.release();
+  }
+});
+
+
+app.post("/api/open_multi", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+
+  const game = getGame(req);
+  const amount = Math.max(1, Math.min(5, Number(req.body?.amount || 5) | 0));
+  const totalCost = COST_ONE * amount;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // paiement atomique
+    const payQ = await client.query(
+      `UPDATE users
+       SET money = money - $1
+       WHERE id = $2
+         AND money >= $1
+       RETURNING money`,
+      [totalCost, req.user.id]
+    );
+
+    if (!payQ.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de Dollax" });
+    }
+
+    const moneyAfterPay = Number(payQ.rows[0].money || 0);
+
+    const now = Date.now();
+    const pulls = [];
+    let xpTotal = 0;
+
+    for (let i = 0; i < amount; i++) {
+      let c;
+      try {
+        c = await drawCard(game);
+      } catch (e) {
+        console.error("❌ drawCard failed in /api/open_multi:", e);
+        await client.query("ROLLBACK");
+        return res.status(502).json({ error: e?.message || "Erreur image (réessaie)" });
+      }
+
+      const grade = rollGrade();
+      const mint = rollMintForGrade(grade);
+      const xpAdd = xpForOpen(grade);
+      xpTotal += xpAdd;
+
+      const idKey = `${game}__${c.setId || "unknown"}__${c.localId || "0"}__${c.cardId || "unknown"}`;
+
+      const existsQ2 = await client.query(
+        `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
+      const isNew = existsQ2.rows.length === 0;
+
+      await client.query(
+        `INSERT INTO pulls (user_id, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [
+          req.user.id,
+          game,
+          c.cardId || null,
+          c.setId || null,
+          c.localId || null,
+          c.name,
+          c.set,
+          c.image,
+          c.imageHigh || c.image,
+          grade,
+          mint,
+          now + i
+        ]
+      );
+
+      // grades_json pour open_multi
+      const existingQM = await client.query(
+        `SELECT grades_json, count FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
+      const existingRowM = existingQM.rows[0];
+      const existingGradesM = existingRowM
+        ? parseGrades(existingRowM.grades_json, existingRowM.count)
+        : [];
+      const newGradesM = JSON.stringify([...existingGradesM, grade]);
+
+      await client.query(
+        `
+        INSERT INTO collection
+          (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt, grades_json)
+        VALUES
+          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,1,$13,$14)
+        ON CONFLICT (user_id, idKey)
+        DO UPDATE SET
+          count = collection.count + 1,
+          grade = GREATEST(collection.grade, EXCLUDED.grade),
+          mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+          imageHigh = COALESCE(EXCLUDED.imageHigh, collection.imageHigh),
+          lastAt = EXCLUDED.lastAt,
+          cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+          setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+          localId= COALESCE(collection.localId,EXCLUDED.localId),
+          grades_json = $14
+        `,
+        [
+          req.user.id,
+          idKey,
+          game,
+          c.cardId || null,
+          c.setId || null,
+          c.localId || null,
+          c.name,
+          c.set,
+          c.image,
+          c.imageHigh || c.image,
+          grade,
+          mint,
+          now + i,
+          newGradesM,
+        ]
+      );
+
+      pulls.push({
+        idKey,
+        game,
+        name: c.name,
+        set: c.set,
+        cardId: c.cardId || null,
+        setId: c.setId || null,
+        localId: c.localId || null,
+        image: c.image,
+        imageHigh: c.imageHigh || c.image,
+        grade,
+        mint: Boolean(mint),
+        isNew,
+        xpAdd
+      });
+    }
+
+    await client.query(
+      `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+      [xpTotal, req.user.id]
+    );
+
+    await client.query("COMMIT");
+
+    // Clan hook groupé pour toutes les cartes (atomique, évite les race conditions)
+    clanHookOpenMulti(req.user.id, pulls).catch(() => {});
+
+    return res.json({
+      ok: true,
+      money: moneyAfterPay,
+      xpAdd: xpTotal,
+      pulls
+    });
+  } catch (e) {
+    try { await client.query("ROLLBACK"); } catch {}
+    console.error("❌ /api/open_multi failed:", e);
+    return res.status(500).json({ error: "Open multi failed" });
+  } finally {
+    client.release();
+  }
+});
+
+
+// Route proxy pour extraction couleurs — contourne le CORS pour collection.html
+app.get("/api/foil_colors", auth, async (req, res) => {
+  const url = String(req.query.url || "").trim();
+  if (!url || !/^https?:\/\//.test(url)) {
+    return res.json({ colors: null });
+  }
+  try {
+    const colors = await extractFoilColors(url);
+    return res.json({ colors: colors || null });
+  } catch {
+    return res.json({ colors: null });
+  }
+});
+
+app.get("/api/collection", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+  const game = getGame(req);
+
+  // COALESCE(image, imageHigh) : certaines cartes n'ont que imageHigh en base
+  const items = await pool.query(
+    `SELECT idKey, game, cardId, setId, localId, name, setName,
+            COALESCE(image, imageHigh) AS image,
+            grade, mint, count, lastAt
+     FROM collection
+     WHERE user_id=$1 AND game=$2
+     ORDER BY lastAt DESC`,
+    [req.user.id, game]
+  );
+  const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+
+  // Jamais de cache public sur une collection personnelle
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.json({
+    money: me.rows[0]?.money || 0,
+    items: items.rows.map((x) => {
+      const itemGame = x.game || game;
+      const cardId   = x.cardid || x.cardId || null;
+      const rawImage = x.image;
+      const image    = itemGame === "magic" ? rewriteMagicImageUrl(rawImage, cardId) : rawImage;
+      return {
+        idKey:   x.idkey   || x.idKey,
+        game:    itemGame,
+        name:    x.name,
+        set:     x.setname || x.setName,
+        cardId,
+        setId:   x.setid   || x.setId   || null,
+        localId: x.localid || x.localId || null,
+        image,   // basse résolution seulement — imageHigh chargé au zoom
+        grade:   x.grade,
+        mint:    Boolean(x.mint),
+        count:   x.count,
+        lastAt:  Number(x.lastat || x.lastAt),
+      };
+    })
+  });
+});
+
+// GET /api/collection/imagehigh — imageHigh d'une carte (chargée uniquement au zoom)
+app.get("/api/collection/imagehigh", auth, async (req, res) => {
+  const game  = getGame(req);
+  const idKey = req.query.idKey;
+  if (!idKey) return res.status(400).json({ error: 'idKey requis' });
+  const q = await pool.query(
+    `SELECT image, imageHigh, grades_json FROM collection WHERE user_id=$1 AND idKey=$2 AND game=$3`,
+    [req.user.id, idKey, game]
+  );
+  if (!q.rows.length) return res.status(404).json({ error: 'Carte introuvable' });
+  const x      = q.rows[0];
+  const cardId = idKey;
+  const raw    = x.imagehigh || x.imageHigh || x.image;
+  const imageHigh = game === 'magic' ? rewriteMagicImageUrl(raw, cardId) : raw;
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+  res.json({ imageHigh, gradesJson: x.grades_json || null });
+});
+
+app.get("/api/sets", auth, async (req, res) => {
+  const game = getGame(req);
+
+  try {
+    // ===== POKEMON =====
+    if (game === "pokemon") {
+    if (FORCE_OFFLINE && offlinePokemonSets.length) {
+      return res.json({
+        sets: offlinePokemonSets.map(s => ({
+          id: s.id,
+          name: s.name
+        }))
+      });
+    }
+
+    const list = await getPokemonSetsCached();
+    return res.json({ sets: list.map(s => ({ id: s.id, name: s.name })) });
+  }
+
+    // ===== MAGIC =====
+    if (game === "magic") {
+
+  const bySet = new Map();
+
+  for (const c of offlineMagicCards) {
+
+    const setId = String(c.setId || "").trim();
+    const setName = String(c.setName || setId).trim();
+
+    if (!setId) continue;
+
+    if (!bySet.has(setId)) {
+      bySet.set(setId, {
+        id: setId,
+        name: setName
+      });
+    }
+  }
+
+  return res.json({
+    sets: Array.from(bySet.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { numeric: true })
+    )
+  });
+
 }
 
-function tickAndDraw(id, f, dt) {
-  const canvas = document.getElementById(id);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const a   = getAnimDef(f);
-  // Utiliser le bon cache selon si c'est un ennemi ou un joueur
-  const img = (f.isEnemy && ENEMY_SPRITES[f.cls]) ? getEnemyImg(a.file) : getImg(a.file);
-  if (!img.complete || !img.naturalWidth) {
-    // Fallback: dessiner l'icône emoji de l'ennemi si le sprite ne charge pas
-    if (f.isEnemy) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = Math.round(canvas.height * 0.55) + 'px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(PVE_ENEMY_ICONS_SPRITE[f.cls] || '👾', canvas.width / 2, canvas.height / 2);
+    // ===== LORCANA =====
+    if (game === "lorcana") {
+      const list = await getLorcanaSets();
+      // lorcast: code + name
+      return res.json({
+        sets: list.map(s => ({
+          id: String(s.code || s.id || ""),
+          name: String(s.name || s.code || "Set")
+        })).filter(s => s.id)
+      });
+    }
+
+    // ===== ONE PIECE =====
+    if (game === "onepiece") {
+      const list = await getOpBriefList();
+
+      // on fabrique des "sets" à partir des champs existants
+      const map = new Map();
+      for (const c of list) {
+        const setName = pickFirst(c, ["set_name", "setName", "set", "series"]) || "One Piece";
+        const setId   = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || setName;
+        const id = String(setId);
+        if (!map.has(id)) map.set(id, { id, name: String(setName) });
+      }
+
+      return res.json({ sets: Array.from(map.values()).sort((a,b)=>a.name.localeCompare(b.name)) });
+    }
+
+    // DRAGON BALL //
+
+    if (game === "dragonball") {
+      const bySet = new Map();
+
+      for (const c of offlineDragonballCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.set || c?.setName || setId).trim() || setId
+          });
+        }
+      }
+
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+
+      return res.json({ sets });
+    }
+
+    if (game === "unionarena") {
+  const bySet = new Map();
+
+  for (const c of offlineUnionArenaCards) {
+    const setId = String(c?.setId || "").trim();
+    if (!setId) continue;
+
+    if (!bySet.has(setId)) {
+      bySet.set(setId, {
+        id: setId,
+        name: String(c?.set || c?.setName || setId).trim() || setId
+      });
+    }
+  }
+
+  const sets = Array.from(bySet.values()).sort((a, b) =>
+    a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+  );
+
+  return res.json({ sets });
+}
+
+    if (game === "senpaigodesshaven") {
+      const bySet = new Map();
+      for (const c of offlineSenpaiCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.setName || setId).trim() || setId
+          });
+        }
+      }
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+      return res.json({ sets });
+    }
+
+    if (game === "weissschwarz") {
+      const bySet = new Map();
+      for (const c of offlineWeissSchwarzCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) {
+          bySet.set(setId, {
+            id: setId,
+            name: String(c?.setName || setId).trim() || setId
+          });
+        }
+      }
+      const sets = Array.from(bySet.values()).sort((a, b) =>
+        a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: "base" })
+      );
+      return res.json({ sets });
+    }
+
+
+    if (game === "brainrot") {
+      if (offlineBrainrotSets.length)
+        return res.json({ sets: offlineBrainrotSets.map(s => ({ id: s.id, name: s.name })) });
+      const bySet = new Map();
+      for (const c of offlineBrainrotCards) {
+        const setId = String(c?.setId || "").trim();
+        if (!setId) continue;
+        if (!bySet.has(setId)) bySet.set(setId, { id: setId, name: String(c?.set || setId) });
+      }
+      return res.json({ sets: Array.from(bySet.values()) });
+    }
+
+    return res.json({ sets: [] });
+  } catch (e) {
+    return res.status(502).json({ error: "sets failed" });
+  }
+});
+
+  app.get("/api/set_cards", auth, async (req, res) => {
+    const game = getGame(req);
+    const setId = String(req.query.setId || "").trim();
+    if (!setId) return res.status(400).json({ error: "Missing setId" });
+
+    try {
+
+    
+    // ===== POKEMON =====
+    if (game === "pokemon") {
+    if (FORCE_OFFLINE && offlinePokemonCards.length) {
+      const cards = offlinePokemonCardsBySet.get(setId) || [];
+
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image || null,
+          imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
+
+    const data = await getPokemonSetCardsCached(setId);
+    const cards = Array.isArray(data.cards) ? data.cards : [];
+
+    const out = [];
+    for (const c of cards) {
+      const localId = String(c.localId || "").trim();
+
+      const lowFromApi  = normalizeImageField(c.image, "low", "webp");
+      const highFromApi = normalizeImageField(c.image, "high", "webp");
+
+      let low = lowFromApi;
+      let high = highFromApi;
+
+      if (!low && setId && localId) {
+        const found = await firstWorkingTcgdexImages(setId, localId, c);
+        if (found) {
+          low = found.image;
+          high = found.imageHigh;
+        } else {
+          console.log(`❌ no image found for set=${setId} localId=${localId} cardId=${c.id || ""}`);
+        }
+      }
+
+      out.push({
+        cardId: c.id,
+        localId,
+        name: c.name || "",
+        image: low || null,
+        imageHigh: high || low || null
+      });
+    }
+
+    return res.json({
+      setId,
+      cards: out
+    });
+  }
+      
+    // DRAGON BALL //
+    if (game === "dragonball") {
+  const cards = offlineDragonballCardsBySet.get(setId) || [];
+
+  return res.json({
+    setId,
+    cards: cards.map(c => ({
+      cardId: c.cardId || "",
+      localId: String(c.localId || ""),
+      name: c.name || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    }))
+  });
+}
+//UNION ARENA //
+    if (game === "unionarena") {
+
+  const rawCards = offlineUnionArenaCardsBySet.get(setId) || [];
+
+  console.log("------ UNION ARENA DEBUG ------");
+  console.log("setId =", setId);
+  console.log("raw cards count =", rawCards.length);
+
+  const cards = rawCards;
+
+  console.log("final cards count =", cards.length);
+  console.log("-------------------------------");
+
+  return res.json({
+    setId,
+    cards: cards.map(c => ({
+      cardId: c.cardId || "",
+      localId: String(c.localId || ""),
+      name: c.name || "",
+      image: c.image || null,
+      imageHigh: c.imageHigh || c.image || null
+    }))
+  });
+}
+    // SENPAI GODDESS HAVEN //
+    if (game === "senpaigodesshaven") {
+      const cards = offlineSenpaiCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image || null,
+          imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
+    // WEISS SCHWARZ //
+    if (game === "weissschwarz") {
+      const cards = offlineWeissSchwarzCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "",
+          localId: String(c.localId || ""),
+          name: c.name || "",
+          image: c.image ? `${WEISSSCHWARZ_R2_BASE}/${c.image}` : null,
+          imageHigh: c.imageHigh ? `${WEISSSCHWARZ_R2_BASE}/${c.imageHigh}` : (c.image ? `${WEISSSCHWARZ_R2_BASE}/${c.image}` : null)
+        }))
+      });
+    }
+    // BRAINROT //
+    if (game === "brainrot") {
+      const cards = offlineBrainrotCardsBySet.get(setId) || [];
+      return res.json({
+        setId,
+        cards: cards.map(c => ({
+          cardId: c.cardId || "", localId: String(c.localId || ""),
+          name: c.name || "", image: c.image || null, imageHigh: c.imageHigh || c.image || null
+        }))
+      });
+    }
+
+    // ===== MAGIC =====
+    if (game === "magic") {
+
+  const cards = offlineMagicCards
+    .filter(c => c.setId === setId)
+    .map(c => ({
+      cardId: c.cardId,
+      localId: c.localId,
+      name: c.name,
+      image: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId),
+      imageHigh: rewriteMagicImageUrl(c.imageHigh || c.image, c.cardId)
+    }));
+
+  return res.json({ setId, cards });
+
+}
+
+    // ===== LORCANA =====
+    if (game === "lorcana") {
+      const cards = await getLorcanaCardsForSet(setId);
+      const out = cards.map(c => {
+        const { low, high } = pickImageLorcana(c);
+        const cardId  = String(c.id || c.card_id || c.uuid || "");
+        const localId = String(c.collector_number || c.number || c.card_number || "");
+        return {
+          cardId,
+          localId,
+          name: String(c.name || ""),
+          image: low || null,
+          imageHigh: high || low || null,
+        };
+      }).filter(x => x.cardId);
+
+      return res.json({ setId, cards: out });
+    }
+
+    // ===== ONE PIECE =====
+    if (game === "onepiece") {
+      const list = await getOpBriefList();
+
+      const out = list
+        .filter(c => {
+          const sId = pickFirst(c, ["set_id", "setId", "set_code", "setCode", "series_id"]) || (pickFirst(c, ["set_name","setName","set","series"]) || "One Piece");
+          return String(sId) === setId;
+        })
+        .map(c => {
+          const cardId  = pickFirst(c, ["card_set_id","cardSetId","card_id","cardId","id"]) || "";
+          const localId = pickFirst(c, ["card_number","number","collector_number","collectorNumber"]) || "";
+          const name    = pickFirst(c, ["card_name","name","title"]) || "";
+          const image   = pickFirst(c, ["card_image","image_url","imageUrl","image","img"]) || null;
+
+          return {
+            cardId: String(cardId),
+            localId: String(localId),
+            name: String(name),
+            image,
+            imageHigh: image
+          };
+        })
+        .filter(x => x.cardId);
+
+      return res.json({ setId, cards: out });
+    }
+
+    return res.json({ setId, cards: [] });
+  } catch (e) {
+    return res.status(502).json({ error: "set_cards failed" });
+  }
+});
+
+app.get("/api/pulls", auth, async (req, res) => {
+  const game = getGame(req);
+
+  const rows = await pool.query(
+    `SELECT game, cardId, name, setName, image, imageHigh, grade, mint, at
+     FROM pulls
+     WHERE user_id=$1 AND game=$2
+     ORDER BY at DESC
+     LIMIT 80`,
+    [req.user.id, game]
+  );
+
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.json({
+    pulls: rows.rows.map((r) => {
+      const itemGame = r.game || game;
+      const cardId = r.cardid || r.cardId || null;
+
+      const image =
+        itemGame === "magic"
+          ? rewriteMagicImageUrl(r.image, cardId)
+          : r.image;
+
+      const imageHigh =
+        itemGame === "magic"
+          ? rewriteMagicImageUrl(r.imagehigh || r.imageHigh || r.image, cardId)
+          : (r.imagehigh || r.imageHigh || null);
+
+      return {
+        name: r.name,
+        set: r.setname || r.setName,
+        image,
+        imageHigh,
+        grade: r.grade,
+        mint: Boolean(r.mint),
+        at: Number(r.at),
+      };
+    }),
+  });
+});
+
+app.post("/api/sell", auth, async (req, res) => {
+  const idKey = String(req.body?.idKey || "");
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const itemQ = await client.query(
+      `SELECT count, grade, mint, grades_json FROM collection
+       WHERE user_id=$1 AND idKey=$2
+       FOR UPDATE`,
+      [req.user.id, idKey]
+    );
+
+    const it = itemQ.rows[0];
+    if (!it) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Not owned" });
+    }
+
+    const owned = Number(it.count) || 0;
+    if (owned < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité insuffisante" });
+    }
+
+    // Calcul du prix réel avec les vrais grades de chaque exemplaire
+    const gradesArr = parseGrades(it.grades_json, owned);
+    const isMint = Number(it.mint) === 1;
+    const total = sellPriceForGrades(gradesArr, qty, isMint);
+    const unitPrice = Math.round(total / qty); // pour l'affichage
+
+    // Mettre à jour le grades_json en retirant les grades vendus
+    const remainingGrades = removeGrades(gradesArr, qty);
+    // Le nouveau grade affiché = le meilleur restant
+    const newBestGrade = remainingGrades.length ? Math.max(...remainingGrades) : it.grade;
+
+    if (owned === qty) {
+      await client.query(
+        `DELETE FROM collection WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey]
+      );
     } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      await client.query(
+        `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty, JSON.stringify(remainingGrades), newBestGrade]
+      );
     }
-    return;
+
+    // money
+    await client.query(
+      `UPDATE users SET money = money + $1 WHERE id=$2`,
+      [total, req.user.id]
+    );
+
+    // xp
+    const xpAdd = xpForSell(unitPrice, qty);
+    await client.query(
+      `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+      [xpAdd, req.user.id]
+    );
+
+    await client.query("COMMIT");
+
+    const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
+    res.json({
+      ok: true,
+      money: me.rows[0]?.money || 0,
+      xp: Number(me.rows[0]?.xp || 0),
+      unitPrice,
+      total,
+      xpAdd
+    });
+
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Sell failed" });
+  } finally {
+    client.release();
+  }
+});
+// SELL BULK//
+
+app.post("/api/sell_bulk", auth, async (req, res) => {
+  const items = Array.isArray(req.body?.items) ? req.body.items : [];
+  const clean = items
+    .map(x => ({
+      idKey: String(x?.idKey || ""),
+      qty: Math.max(1, Number(x?.qty || 1) | 0),
+    }))
+    .filter(x => x.idKey);
+
+  if (!clean.length) return res.status(400).json({ error: "Empty selection" });
+  if (clean.length > 200) return res.status(400).json({ error: "Too many items" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const keys = clean.map(x => x.idKey);
+
+    const q = await client.query(
+      `SELECT idKey, count, grade, mint, grades_json
+       FROM collection
+       WHERE user_id=$1 AND idKey = ANY($2::text[])
+       FOR UPDATE`,
+      [req.user.id, keys]
+    );
+
+    const byKey = new Map(q.rows.map(r => [r.idkey || r.idKey, r]));
+
+    let total = 0;
+    let xpTotal = 0;
+
+    // 1) check + compute totals avec les vrais grades
+    for (const it of clean) {
+      const row = byKey.get(it.idKey);
+      if (!row) continue; // Carte pas en DB → ignorer silencieusement
+
+      const owned = Number(row.count) || 0;
+      // ✅ PROTECTION : sell_bulk ne vend jamais le dernier exemplaire d'une carte
+      // (évite de vider la collection si désync client/serveur)
+      const maxSellable = Math.max(0, owned - 1);
+      it.qty = Math.min(it.qty, maxSellable);
+      if (it.qty <= 0) continue;
+
+      const gradesArr = parseGrades(row.grades_json, owned);
+      const isMint = Number(row.mint) === 1;
+      const itemTotal = sellPriceForGrades(gradesArr, it.qty, isMint);
+      total += itemTotal;
+      xpTotal += xpForSell(Math.round(itemTotal / it.qty), it.qty);
+    }
+
+    // Filtrer les items avec qty > 0 après ajustement
+    const cleanFinal = clean.filter(it => it.qty > 0 && byKey.has(it.idKey));
+    if (!cleanFinal.length) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Aucune carte valide à vendre" });
+    }
+
+    // 2) update/remove cards avec mise à jour des grades
+    for (const it of cleanFinal) {
+      const row = byKey.get(it.idKey);
+      const owned = Number(row.count) || 0;
+      const gradesArr = parseGrades(row.grades_json, owned);
+      const remainingGrades = removeGrades(gradesArr, it.qty);
+      const newBestGrade = remainingGrades.length ? Math.max(...remainingGrades) : row.grade;
+
+      if (owned === it.qty) {
+        await client.query(
+          `DELETE FROM collection WHERE user_id=$1 AND idKey=$2`,
+          [req.user.id, it.idKey]
+        );
+      } else {
+        await client.query(
+          `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+          [req.user.id, it.idKey, it.qty, JSON.stringify(remainingGrades), newBestGrade]
+        );
+      }
+    }
+
+    // 3) add money + xp
+    await client.query(
+      `UPDATE users SET money = money + $1 WHERE id=$2`,
+      [total, req.user.id]
+    );
+
+    if (xpTotal > 0) {
+      await client.query(
+        `UPDATE users SET xp = xp + $1 WHERE id=$2`,
+        [xpTotal, req.user.id]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    // Clan hook vente
+    const totalQty = cleanFinal.reduce((s, it) => s + it.qty, 0);
+    clanHookSell(req.user.id, totalQty).catch(() => {});
+
+    const me = await pool.query(`SELECT money, xp FROM users WHERE id=$1`, [req.user.id]);
+    res.json({
+      ok: true,
+      money: me.rows[0]?.money || 0,
+      xp: Number(me.rows[0]?.xp || 0),
+      total,
+      xpTotal
+    });
+
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Sell bulk failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// =========================
+// FRIENDS ROUTES
+// =========================
+app.post("/api/friends/add", auth, async (req, res) => {
+  const friendCode = String(req.body?.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const qFriend = await pool.query(`SELECT id, name, friendCode FROM users WHERE friendCode=$1`, [
+    friendCode,
+  ]);
+  const friend = qFriend.rows[0];
+  if (!friend) return res.status(404).json({ error: "Ami introuvable" });
+
+  if (friend.id === req.user.id) {
+    return res.status(400).json({ error: "Tu ne peux pas t'ajouter toi-même" });
   }
 
-  f.tick += dt;
-  const ms = 1000 / a.fps;
-  if (f.tick >= ms) {
-    f.tick -= ms;
-    if (f.freezeOnEnd && f.frame >= a.frames - 1) { f.frame = a.frames - 1; }
-    else { f.frame = (f.frame + 1) % a.frames; }
-  }
+  await pool.query(
+    `INSERT INTO friends (user_id, friend_user_id, createdAt)
+     VALUES ($1,$2,$3)
+     ON CONFLICT DO NOTHING`,
+    [req.user.id, friend.id, Date.now()]
+  );
 
-  const FRAME_W = a.fw || 256;
-  const FRAME_H = a.fh || 256;
-  // Upscale pour remplir le canvas en hauteur
-  const dstH = canvas.height;
-  const dstW = Math.round(dstH * FRAME_W / FRAME_H);
-  const dx   = Math.floor((canvas.width - dstW) / 2);
-  const dy   = 0;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.save();
-  if (f.flip) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
-  ctx.drawImage(img, f.frame * FRAME_W, 0, FRAME_W, FRAME_H, dx, dy, dstW, dstH);
-  ctx.restore();
-}
-
-function placeCanvas(id, x) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.left  = Math.round(x) + 'px';
-  el.style.right = 'auto';
-}
-
-function setAnim(fid, anim) {
-  if (!arenaState) return;
-  const f = fid === 1 ? arenaState.f1 : arenaState.f2;
-  if (f.anim === anim && anim !== 'dead' && anim !== 'hurt') return;
-  f.anim = anim; f.frame = 0; f.tick = 0;
-  f.freezeOnEnd = (anim === 'dead');
-}
-function setFighterAnim(fid, anim) { setAnim(fid, anim); }
-
-function updateArenaHp(fid, hp, maxHp) {
-  const pct = Math.max(0, Math.round(hp / maxHp * 100));
-  const bar = document.getElementById('rhp' + fid);
-  const val = document.getElementById('rhpv' + fid);
-  if (!bar || !val) return;
-  bar.style.width      = pct + '%';
-  bar.style.background = pct < 25 ? '#E24B4A' : pct < 50 ? '#EF9F27' : (fid===1 ? '#1D9E75' : '#D85A30');
-  val.textContent      = Math.max(0, hp) + ' / ' + maxHp;
-}
-
-function spawnDmg(fid, dmg, isCrit) {
-  const el = document.getElementById('rdmg' + fid);
-  if (!el || !arenaState) return;
-  const f   = fid === 1 ? arenaState.f1 : arenaState.f2;
-  const cx  = Math.round(f.x + SPRITE_PX_W / 2) - 30;
-  el.textContent = (isCrit ? '💥 CRIT ' : '') + '-' + dmg;
-  el.className   = 'dmg-float' + (isCrit ? ' crit' : '');
-  el.style.cssText = 'left:'+cx+'px;right:auto;bottom:120px;opacity:0;transform:translateY(0);transition:none';
-  void el.offsetWidth;
-  el.classList.add('anim');
-  setTimeout(() => { el.className = 'dmg-float'; }, 950);
-}
-
-function flashHit(fid) {
-  const id = fid === 1 ? 'rc1' : 'rc2';
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.transition = 'none';
-  el.style.filter = 'brightness(3.5) saturate(0)';
-  setTimeout(() => { el.style.transition = 'filter .3s ease'; el.style.filter = ''; }, 90);
-}
-
-function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function showVsFlash() {
-  const el = document.getElementById('vs-flash');
-  if (!el) return;
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 900);
-}
-
-function approachCenter(speed) {
-  return new Promise(resolve => {
-    if (!arenaState) { resolve(); return; }
-    const f1 = arenaState.f1;
-    const f2 = arenaState.f2;
-    const sw = (document.getElementById('replay-stage')||{offsetWidth:700}).offsetWidth;
-    const cx = sw / 2;
-    const GAP = 6;
-    const t1  = Math.floor(cx - SPRITE_PX_W - GAP / 2);
-    const t2  = Math.ceil(cx + GAP / 2);
-    arenaState.f1FightX = t1;
-    arenaState.f2FightX = t2;
-
-    setAnim(1, 'run'); setAnim(2, 'run');
-    f1.anim = 'run'; f1.frame = 0; f1.tick = 0; f1.freezeOnEnd = false;
-    f2.anim = 'run'; f2.frame = 0; f2.tick = 0; f2.freezeOnEnd = false;
-
-    let last = performance.now();
-    function step(ts) {
-      const dt = Math.min(ts - last, 50); last = ts;
-      if (!arenaState) { resolve(); return; }
-      const d = speed * dt / 1000;
-      f1.x = Math.min(t1, f1.x + d);
-      f2.x = Math.max(t2, f2.x - d);
-      if (f1.x >= t1 && f2.x <= t2) { f1.x = t1; f2.x = t2; resolve(); return; }
-      requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
+  res.json({
+    ok: true,
+    friend: { name: friend.name, friendCode: friend.friendcode || friend.friendCode },
   });
-}
+});
 
-// ══════════════════════════════════════════════════
-// APP
-// ══════════════════════════════════════════════════
-const TOKEN_KEY = 'gacha_token_v1';
-const TOKEN = localStorage.getItem(TOKEN_KEY);
-if (!TOKEN) location.href = '/login.html';
+app.get("/api/friends", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `
+    SELECT u.name, u.friendCode
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1
+    ORDER BY u.name ASC
+    `,
+    [req.user.id]
+  );
 
-const RANK_COLORS = { Bronze:'#cd7f32', Argent:'#aaa', Or:'#ffd84d', Platine:'#4da6ff', Diamant:'#c084ff', Maître:'#ff6464' };
-const RANK_IMG_PATH = '/ranking/';
-const PVP_RANKS_DEF = [
-  { name:'Bronze',  min:0,    max:1199, color:'#cd7f32' },
-  { name:'Argent',  min:1200, max:1399, color:'#aaa'    },
-  { name:'Or',      min:1400, max:1599, color:'#ffd84d' },
-  { name:'Platine', min:1600, max:1799, color:'#4da6ff' },
-  { name:'Diamant', min:1800, max:1999, color:'#c084ff' },
-  { name:'Maître',  min:2000, max:9999, color:'#ff6464' },
-];
-const RANK_ICONS = {
-  Bronze:  RANK_IMG_PATH + 'bronze.png',
-  Argent:  RANK_IMG_PATH + 'silver.png',
-  Or:      RANK_IMG_PATH + 'gold.png',
-  Platine: RANK_IMG_PATH + 'platine.png',
-  Diamant: RANK_IMG_PATH + 'diamant.png',
-  Maître:  RANK_IMG_PATH + 'master.png',
-};
-const RANK_FRAMES = {
-  Bronze:  RANK_IMG_PATH + 'cadrebronze.png',
-  Argent:  RANK_IMG_PATH + 'cadresilver.png',
-  Or:      RANK_IMG_PATH + 'cadregold.png',
-  Platine: RANK_IMG_PATH + 'cadreplatine.png',
-  Diamant: RANK_IMG_PATH + 'cadrediamant.png',
-  Maître:  RANK_IMG_PATH + 'cadremaster.png',
-};
-const CLASS_EMOJI = { slayer:'⚔️', assassin:'🗡️', soutien:'🛡️' };
+  res.json({
+    friends: rows.map((r) => ({
+      name: r.name,
+      friendCode: r.friendcode || r.friendCode,
+    })),
+  });
+});
 
-// ══════════════════════════════════════════════════
-// SYSTÈME D'ÉNERGIE (100 max, -10 par combat, +10/h)
-// ══════════════════════════════════════════════════
-const ENERGY_MAX      = 100;
-const ENERGY_PER_DUEL = 10;
-const ENERGY_REGEN_MS = 60 * 60 * 1000; // 1h par tranche de 10
+app.get("/api/friends/:friendCode/collection", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
 
-let energyState = null;  // { current, lastRefill }
-let energyTimerInterval = null;
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
 
-function computeEnergy(state) {
-  if (!state) return ENERGY_MAX;
-  const elapsed = Date.now() - state.lastRefill;
-  const regenTranches = Math.floor(elapsed / ENERGY_REGEN_MS);
-  return Math.min(ENERGY_MAX, state.current + regenTranches * ENERGY_PER_DUEL);
-}
+  const game = getGame(req); // ✅ pokemon / onepiece
 
-function energyTimerText(state) {
-  if (!state) return '';
-  const current = computeEnergy(state);
-  if (current >= ENERGY_MAX) return 'Énergie pleine !';
-  const elapsed = Date.now() - state.lastRefill;
-  const nextRegen = ENERGY_REGEN_MS - (elapsed % ENERGY_REGEN_MS);
-  const m = Math.floor(nextRegen / 60000);
-  const s = Math.floor((nextRegen % 60000) / 1000);
-  return `+10 dans ${m}m${s.toString().padStart(2,'0')}s`;
-}
+  // autorisation : seulement si c’est dans ta liste d’amis
+  const q = await pool.query(
+    `
+    SELECT u.id
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1 AND u.friendCode=$2
+    `,
+    [req.user.id, friendCode]
+  );
 
-function buildEnergyHtml(state) {
-  const current = computeEnergy(state);
-  const pct = Math.round(current / ENERGY_MAX * 100);
-  const timer = energyTimerText(state);
-  const totalSegs = ENERGY_MAX / ENERGY_PER_DUEL; // 10 segments
+  const friend = q.rows[0];
+  if (!friend) return res.status(403).json({ error: "Pas dans tes amis" });
 
-  let segsHtml = '';
-  for (let i = 0; i < totalSegs; i++) segsHtml += `<div class="energy-seg"></div>`;
+  const items = await pool.query(
+    `
+    SELECT idKey, game, name, setName, image, grade, mint, count, lastAt
+    FROM collection
+    WHERE user_id=$1 AND game=$2
+    ORDER BY lastAt DESC
+    LIMIT 200
+    `,
+    [friend.id, game]
+  );
 
-  const fillColor = current <= 0 ? '#ff4444' : current < 30 ? '#ff8c00' : '#ffd84d';
+  res.json({
+    items: items.rows.map((x) => ({
+      idKey: x.idkey || x.idKey,
+      game: x.game || game,
+      name: x.name,
+      setName: x.setname || x.setName,
+      image: x.image,
+      grade: x.grade,
+      mint: Boolean(x.mint),
+      count: x.count,
+      lastAt: Number(x.lastat || x.lastAt),
+    })),
+  });
+});
+// =========================
+// MARKETPLACE ROUTES
+// =========================
 
-  return `<div class="energy-bar-wrap">
-    <div class="energy-icon">⚡</div>
-    <div class="energy-info">
-      <div class="energy-label">Énergie PVP</div>
-      <div class="energy-track">
-        <div class="energy-fill" style="width:${pct}%;background:linear-gradient(90deg,${current<30?'#e6400a':'#e6900a'},${fillColor})"></div>
-        <div class="energy-segs">${segsHtml}</div>
-      </div>
-      <div class="energy-timer">${timer}</div>
-    </div>
-    <div class="energy-count">
-      <span style="font-size:20px;color:${fillColor}">${current}</span><span style="opacity:.4;font-size:11px"> / ${ENERGY_MAX}</span>
-      <div style="font-size:10px;opacity:.4;margin-top:1px">−${ENERGY_PER_DUEL} par duel</div>
-    </div>
-  </div>`;
-}
+// GET market listings
+// =========================
+// MARKETPLACE ROUTES (MULTI GAME OK)
+// =========================
 
-async function loadEnergy() {
+// GET market listings
+// ── /api/market/boot — charge me + clés de collection (allégé) ──
+app.get("/api/market/boot", auth, async (req, res) => {
   try {
-    const d = await api('/api/pvp/energy');
-    energyState = { current: d.energy, lastRefill: d.lastRefill || Date.now() };
+    // 1. applyPay une seule fois
+    await applyPayForUser(req.user.id);
+    await applyTicketsForUser(req.user.id);
+
+    // 2. Toutes les requêtes en parallèle
+    // ⚡ On ne charge plus que idKey + cardId + count (au lieu de toute la collection)
+    //    Le market n'a besoin que de ça pour les filtres "possédée" et le badge vert.
+    const [userQ, statsQ, collQ, clanBonus] = await Promise.all([
+      pool.query(`SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`, [req.user.id]),
+      pool.query(`SELECT COUNT(*)::int AS total,
+        SUM(CASE WHEN grade BETWEEN 1 AND 4 THEN 1 ELSE 0 END)::int AS w,
+        SUM(CASE WHEN grade BETWEEN 5 AND 6 THEN 1 ELSE 0 END)::int AS b,
+        SUM(CASE WHEN grade BETWEEN 7 AND 9 THEN 1 ELSE 0 END)::int AS v,
+        SUM(CASE WHEN grade = 10 THEN 1 ELSE 0 END)::int AS g10,
+        SUM(CASE WHEN mint = 1 THEN 1 ELSE 0 END)::int AS mint
+        FROM pulls WHERE user_id=$1`, [req.user.id]),
+      pool.query(`SELECT idKey, cardId, count FROM collection WHERE user_id=$1`, [req.user.id]),
+      getClanBonusForUser(req.user.id).catch(() => null),
+    ]);
+
+    const u = userQ.rows[0];
+    const st = statsQ.rows[0] || {};
+    const payRate = PAY_AMOUNT + (clanBonus?.dollaxBonus || 0);
+
+    let friendCode = u?.friendcode || u?.friendCode || null;
+    if (!friendCode) {
+      friendCode = randFriendCode();
+      for (let i = 0; i < 3; i++) {
+        try { await pool.query(`UPDATE users SET friendCode=$1 WHERE id=$2`, [friendCode, req.user.id]); break; }
+        catch { friendCode = randFriendCode(); }
+      }
+    }
+
+    // On renvoie uniquement les clés nécessaires aux filtres côté client
+    const ownedKeys = collQ.rows.map(x => ({
+      idKey: x.idkey || x.idKey,
+      cardId: x.cardid || x.cardId || null,
+      count: x.count,
+    }));
+
+    res.json({
+      me: {
+        name: u?.name, money: u?.money || 0, friendCode,
+        total: st.total || 0, w: st.w || 0, b: st.b || 0, v: st.v || 0,
+        g10: st.g10 || 0, mint: st.mint || 0,
+        xp: Number(u?.xp || 0), level: levelForXp(u?.xp || 0),
+        avatar: u?.avatar || "", tickets: Number(u?.tickets || 0),
+        dollax: Number(u?.money || 0), payRate,
+      },
+      // collection.items est remplacé par ownedKeys, plus léger (~10x moins de données)
+      collection: { items: ownedKeys },
+    });
   } catch(e) {
-    // fallback local
-    const saved = localStorage.getItem('pvp_energy_state');
-    if (saved) { try { energyState = JSON.parse(saved); } catch {} }
-    else energyState = { current: ENERGY_MAX, lastRefill: Date.now() };
+    res.status(500).json({ error: e.message });
   }
-  refreshEnergyUI();
-  clearInterval(energyTimerInterval);
-  energyTimerInterval = setInterval(refreshEnergyUI, 5000);
-}
+});
 
-function refreshEnergyUI() {
-  // Barre énergie retirée du matchmaking — énergie visible dans l'onglet Défis
-}
+app.get("/api/market", auth, async (req, res) => {
+  const q = String(req.query.search || "").toLowerCase().trim();
+  const sort = String(req.query.sort || "recent");
+  const game = getGame(req);
+  const page = Math.max(1, Number(req.query.page || 1) | 0);
+  const limit = 50;
+  const offset = (page - 1) * limit;
 
-function hasEnoughEnergy() {
-  if (!energyState) return true;
-  return computeEnergy(energyState) >= ENERGY_PER_DUEL;
-}
+  // Filtres côté serveur
+  const mintOnly  = req.query.mintOnly  === "1";
+  const hideMine  = req.query.hideMine  === "1";
+  const gradeMin  = Math.max(0, Number(req.query.gradeMin  || 0) | 0);
+  const priceMax  = Math.max(0, Number(req.query.priceMax  || 0) | 0);
 
-// ══════════════════════════════════════════════════
+  // hideOwned : sous-requête SQL directe, pas besoin d'envoyer les clés depuis le client
+  const hideOwned = req.query.hideOwned === "1";
 
-function getPvpRankInfo(pts) {
-  return PVP_RANKS_DEF.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS_DEF[0];
-}
+  const params = [game];
+  let where = `WHERE m.game = $1`;
 
-function buildRankProgressHtml(pts) {
-  const rankInfo = getPvpRankInfo(pts);
-  const rankIdx  = PVP_RANKS_DEF.indexOf(rankInfo);
-  const isLast   = rankIdx === PVP_RANKS_DEF.length - 1;
-  const rangeSize  = isLast ? 1000 : (rankInfo.max - rankInfo.min + 1);
-  const inRange    = Math.max(0, pts - rankInfo.min);
-  const pctInRank  = isLast ? Math.min(100, Math.round(inRange / rangeSize * 100)) : Math.round(inRange / rangeSize * 100);
-  const nextRank   = PVP_RANKS_DEF[rankIdx + 1];
-  const ptsToNext  = isLast ? null : (rankInfo.max + 1 - pts);
-  const stepsHtml = PVP_RANKS_DEF.map((r, i) => {
-    const state = i < rankIdx ? 'done' : i === rankIdx ? 'active' : '';
-    const icon  = RANK_ICONS[r.name] ? `<img src="${RANK_ICONS[r.name]}" alt="${r.name}">` : '';
-    return `<div class="pvp-rank-step ${state}" style="color:${r.color}">
-      <div class="pvp-rank-step-icon">${icon}</div>
-      <div class="pvp-rank-step-name">${r.name}</div>
-    </div>`;
-  }).join('');
-  const stepPct = rankIdx / (PVP_RANKS_DEF.length - 1) * 90 + 5;
-  const linePct = stepPct + pctInRank * (90 / (PVP_RANKS_DEF.length - 1)) / 100;
-  const barLabel = isLast ? 'Rang max !' : (ptsToNext + ' pts pour ' + nextRank.name);
-  const maxLabel = isLast ? '∞' : fmtPts(rankInfo.max + 1) + ' pts';
-  return '<div class="pvp-rank-progress">'
-    + '<div class="pvp-rank-progress-title">Progression de rang</div>'
-    + '<div class="pvp-rank-steps" style="--rank-color:' + rankInfo.color + '">'
-    + stepsHtml
-    + '<div class="pvp-rank-line-fill" style="width:' + Math.min(linePct,95) + '%;color:' + rankInfo.color + '"></div>'
-    + '</div>'
-    + '<div class="pvp-rank-bar-wrap">'
-    + '<div style="font-size:11px;opacity:.5;min-width:54px">' + fmtPts(rankInfo.min) + ' pts</div>'
-    + '<div style="flex:1">'
-    + '<div class="pvp-rank-bar-bg"><div class="pvp-rank-bar-fill" style="width:' + pctInRank + '%;background:' + rankInfo.color + '"></div></div>'
-    + '<div class="pvp-rank-bar-pts">' + fmtPts(pts) + ' pts · ' + barLabel + '</div>'
-    + '</div>'
-    + '<div style="font-size:11px;opacity:.5;min-width:54px;text-align:right">' + maxLabel + '</div>'
-    + '</div>'
-    + '</div>';
-}
+  if (q) {
+    params.push(`%${q}%`);
+    where += ` AND (LOWER(m.name) LIKE $${params.length} OR LOWER(m.setName) LIKE $${params.length})`;
+  }
 
-let myData = null;
-let replayBusy = false;
+  if (mintOnly) {
+    where += ` AND m.mint = 1`;
+  }
 
-async function api(path, opts={}) {
-  const r = await fetch(path, { ...opts, headers: { ...(opts.headers||{}), Authorization:'Bearer '+TOKEN, 'Content-Type':'application/json' } });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || 'HTTP '+r.status);
-  return d;
-}
+  if (hideMine) {
+    params.push(req.user.id);
+    where += ` AND m.seller_user_id != $${params.length}`;
+  }
 
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtPts(n) { return Number(n||0).toLocaleString(); }
-function timeAgo(ts) {
-  const s = Math.floor((Date.now()-ts)/1000);
-  if (s < 60) return 'à l\'instant';
-  if (s < 3600) return Math.floor(s/60)+'min';
-  if (s < 86400) return Math.floor(s/3600)+'h';
-  return Math.floor(s/86400)+'j';
-}
+  if (gradeMin > 0) {
+    params.push(gradeMin);
+    where += ` AND m.grade >= $${params.length}`;
+  }
 
-function showAlert(msg, type='error') {
-  const el = document.getElementById('alert-box');
-  el.textContent = msg; el.className = 'alert '+type; el.style.display='block';
-  setTimeout(() => el.style.display='none', 4000);
-}
+  if (priceMax > 0) {
+    params.push(priceMax);
+    where += ` AND m.price <= $${params.length}`;
+  }
 
+  if (hideOwned) {
+    params.push(req.user.id);
+    where += ` AND m.idKey NOT IN (SELECT idKey FROM collection WHERE user_id=$${params.length})`;
+  }
 
-// ══ PVP PROGRESSION & INVENTAIRE ════════════════════════
-let _pvpInventory = null;
+  let order = "m.createdAt DESC";
+  if (sort === "price") order = "m.price ASC, m.createdAt DESC";
+  if (sort === "grade") order = "m.grade DESC, m.createdAt DESC";
+  if (sort === "name") order = "m.name ASC, m.createdAt DESC";
 
-function renderPvpProgression(f) {
-  var statsLabels = { force:'Force', agilite:'Agilité', intelligence:'Intelligence', dexterite:'Dextérité' };
-  var statsColors = { force:'#ff6464', agilite:'#33ff99', intelligence:'#c084ff', dexterite:'#4da6ff' };
-  var ptsAvail = f.pvpPtsAvail || 0;
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*) AS total FROM market_listings m JOIN users u ON u.id = m.seller_user_id ${where}`,
+    [...params]
+  );
+  const total = Number(countRows[0]?.total || 0);
+  const totalPages = Math.ceil(total / limit);
 
-  var statsHtml = Object.entries(statsLabels).map(function(entry) {
-    var k = entry[0], label = entry[1];
-    var btnHtml = ptsAvail > 0
-      ? '<button onclick="spendPvpStat(\'' + k + '\')" style="padding:2px 8px;border:none;border-radius:6px;background:#7f5cff;color:#fff;font-size:11px;font-weight:700;cursor:pointer">+</button>'
-      : '';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-      + '<div style="width:90px;font-size:11px;opacity:.6">' + label + '</div>'
-      + '<div style="font-weight:900;color:' + statsColors[k] + ';min-width:28px">' + (f.pvpStats && f.pvpStats[k] != null ? f.pvpStats[k] : 5) + '</div>'
-      + btnHtml
-      + '</div>';
-  }).join('');
+  const queryParams = [...params, limit, offset];
+  const limitIdx = queryParams.length - 1;
+  const offsetIdx = queryParams.length;
 
-  // Barre XP PVE
-  var pveLvl    = f.pveLevel || 1;
-  var pveXpCur  = f.pveXp || 0;
-  var pveXpNeed = f.pveXpNeeded || 1;
-  var pvePct    = pveLvl >= 50 ? 100 : Math.min(100, Math.round(pveXpCur / pveXpNeed * 100));
-  var pveLvlTxt = pveLvl >= 50 ? 'MAX' : String(pveLvl);
-  var pveXpTxt  = pveLvl >= 50 ? 'Niveau maximum !' : (pveXpCur + ' / ' + pveXpNeed + ' XP');
+  const { rows } = await pool.query(
+    `
+    SELECT 
+      m.id,
+      m.seller_user_id AS "sellerUserId",
+      u.name AS "sellerName",
+      m.idKey,
+      m.game,
+      m.name,
+      m.setName,
+      m.image,
+      m.grade,
+      m.mint,
+      m.price,
+      m.qty,
+      m.createdAt
+    FROM market_listings m
+    JOIN users u ON u.id = m.seller_user_id
+    ${where}
+    ORDER BY ${order}
+    LIMIT $${limitIdx} OFFSET $${offsetIdx}
+    `,
+    queryParams
+  );
 
-  // Or PVE
-  var pveGold = f.pveGold || 0;
+  res.json({
+    listings: rows.map((r) => ({
+      ...r,
+      game: r.game || "pokemon",
+      mint: Boolean(r.mint),
+      idKey: r.idkey || r.idKey,
+      setName: r.setname || r.setName,
+      sellerName: r.sellerName || r.sellername,
+    })),
+    page,
+    totalPages,
+    total,
+  });
+});
 
-  // Coffres PVE par rareté
-  var pveChests = f.pveChests || {};
-  var chestDefs = [
-    { type:'common',    label:'Commun',    img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png',    col:'#aaa',    count: pveChests.common    || 0 },
-    { type:'rare',      label:'Rare',      img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png',      col:'#4da6ff', count: pveChests.rare      || 0 },
-    { type:'epic',      label:'Épique',    img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png',      col:'#c084ff', count: pveChests.epic      || 0 },
-    { type:'legendary', label:'Légend.',   img:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png',col:'#ffd84d', count: pveChests.legendary || 0 },
-  ];
-  var totalChests = chestDefs.reduce(function(s, c) { return s + c.count; }, 0);
-  var chestsHtmlItems = chestDefs.map(function(c) {
-    if (c.count <= 0) return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;opacity:.25">'
-      + '<img src="' + c.img + '" style="width:36px;height:36px;object-fit:contain;filter:grayscale(1)" onerror="this.remove()">'
-      + '<div style="font-size:9px">' + c.label + '</div></div>';
-    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer" onclick="openPveChest(\'' + c.type + '\')">'
-      + '<div style="position:relative">'
-      + '<img src="' + c.img + '" style="width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 6px ' + c.col + ')" onerror="this.remove()">'
-      + '<div style="position:absolute;top:-5px;right:-5px;background:' + c.col + ';color:#000;border-radius:999px;font-size:10px;font-weight:900;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 3px">' + c.count + '</div>'
-      + '</div>'
-      + '<div style="font-size:9px;font-weight:700;color:' + c.col + '">' + c.label + '</div></div>';
-  }).join('');
-  var chestHtml = totalChests > 0
-    ? '<div style="display:flex;justify-content:space-around;width:100%;margin-top:6px;gap:4px">' + chestsHtmlItems + '</div>'
-      + '<div style="font-size:10px;opacity:.4;text-align:center;margin-top:6px">Ouvrir coffre</div>'
-    : '<div style="font-size:11px;opacity:.35;text-align:center;margin-top:6px">Aucun coffre · Gagne des combats PVE !</div>';
+// POST create listing
+app.post("/api/market/list", auth, async (req, res) => {
+  const idKey = String(req.body?.idKey || "");
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  const price = Math.max(1, Number(req.body?.price || 1) | 0);
 
-  // Titre stats avec badge points
-  var statsTitleBadge = ptsAvail > 0
-    ? 'Stats PVP <span style="color:#7f5cff;margin-left:6px">' + ptsAvail + ' pt' + (ptsAvail > 1 ? 's' : '') + ' dispo</span>'
-    : 'Stats PVP';
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
 
-  // Ligne restant
-  var restantHtml = pveLvl < 50
-    ? '<div style="font-size:9px;opacity:.35;margin-top:3px;text-align:right">' + (100 - pvePct) + '% restant</div>'
-    : '';
+  // game vient de l'idKey (game__...__...__...)
+  const gameFromKey = String(idKey.split("__")[0] || "pokemon").toLowerCase();
+  const safeGame =
+    gameFromKey === "onepiece" ? "onepiece" :
+    gameFromKey === "lorcana" ? "lorcana" :
+    gameFromKey === "dragonball" ? "dragonball" :
+    gameFromKey === "unionarena" ? "unionarena" :
+    gameFromKey === "senpaigodesshaven" ? "senpaigodesshaven" :
+    gameFromKey === "weissschwarz" ? "weissschwarz" :
+    gameFromKey === "magic" ? "magic" :
+    gameFromKey === "brainrot" ? "brainrot" :
+    "pokemon";
 
-  return '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-
-    // Colonne gauche : stats + barre XP PVE
-    + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px">'
-      + '<div style="font-size:11px;font-weight:900;opacity:.5;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">' + statsTitleBadge + '</div>'
-      + statsHtml
-      + '<div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,.04)">'
-        + '<div style="display:flex;justify-content:space-between;font-size:10px;color:#33ff99;margin-bottom:5px">'
-          + '<span style="font-weight:700">Niv. PVE ' + pveLvlTxt + '</span>'
-          + '<span style="opacity:.6">' + pveXpTxt + '</span>'
-        + '</div>'
-        + '<div style="height:7px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">'
-          + '<div style="height:100%;width:' + pvePct + '%;background:linear-gradient(90deg,#1D9E75,#33ff99);border-radius:999px;transition:width .4s ease"></div>'
-        + '</div>'
-        + restantHtml
-      + '</div>'
-    + '</div>'
-
-    // Colonne droite : or PVE + coffres
-    + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center">'
-      + '<div style="font-size:22px;font-weight:900;color:#33ff99">🐉 ' + pveGold.toLocaleString() + '</div>'
-      + '<div style="font-size:11px;font-weight:700;opacity:.5">Or PVE</div>'
-      + '<div style="font-size:10px;opacity:.35;text-align:center;line-height:1.5">Gagné en combats PVE<br>Dépensé à la Forge</div>'
-      + chestHtml
-    + '</div>'
-
-  + '</div>';
-}
-
-async function loadPvpInventory() {
-  const wrap = document.getElementById('pvp-inventory-wrap');
-  if (!wrap) return;
+  const client = await pool.connect();
   try {
-    const d = await api('/api/pvp/inventory');
-    _pvpInventory = d;
-    renderPvpInventoryUI(d, wrap);
-  } catch(e) { if (wrap) wrap.innerHTML = '<div style="font-size:12px;opacity:.4">Erreur chargement</div>'; }
+    await client.query("BEGIN");
+
+    // ✅ On récupère aussi cardId/setId/localId/imageHigh depuis la collection
+    const cQ = await client.query(
+      `SELECT game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, grades_json
+       FROM collection
+       WHERE user_id=$1 AND idKey=$2
+       FOR UPDATE`,
+      [req.user.id, idKey]
+    );
+
+    const it = cQ.rows[0];
+    if (!it) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Not owned" });
+    }
+    if (Number(it.count) < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité insuffisante" });
+    }
+
+    // ✅ Mettre à jour grades_json lors de la mise en vente
+    const gradesArrList = parseGrades(it.grades_json, Number(it.count));
+    const remainingGradesList = removeGrades(gradesArrList, qty);
+    const newBestGradeList = remainingGradesList.length ? Math.max(...remainingGradesList) : it.grade;
+
+    // retire de la collection
+    if (Number(it.count) === qty) {
+      await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [
+        req.user.id,
+        idKey,
+      ]);
+    } else {
+      await client.query(
+        `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty, JSON.stringify(remainingGradesList), newBestGradeList]
+      );
+    }
+
+    const now = Date.now();
+
+    // ✅ On stocke tout dans market_listings (y compris binder ids + imageHigh)
+    const ins = await client.query(
+      `INSERT INTO market_listings
+        (seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, price, qty, createdAt)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       RETURNING id`,
+      [
+        req.user.id,
+        idKey,
+        it.game || safeGame,
+        it.cardid || it.cardId || null,
+        it.setid  || it.setId  || null,
+        it.localid|| it.localId|| null,
+        it.name,
+        it.setname || it.setName,
+        it.image,
+        it.imagehigh || it.imageHigh || it.image,
+        it.grade,
+        it.mint ? 1 : 0,
+        price,
+        qty,
+        now,
+      ]
+    );
+
+    await client.query("COMMIT");
+    res.json({ ok: true, listingId: ins.rows[0].id });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Market list failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// POST buy listing
+app.post("/api/market/buy", auth, async (req, res) => {
+  await applyPayForUser(req.user.id);
+
+  const listingId = Number(req.body?.listingId || 0) | 0;
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  if (!listingId) return res.status(400).json({ error: "Missing listingId" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // ✅ On récupère aussi binder ids + imageHigh
+    const lQ = await client.query(
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, grade, mint, price, qty
+       FROM market_listings
+       WHERE id=$1
+       FOR UPDATE`,
+      [listingId]
+    );
+
+    const l = lQ.rows[0];
+    if (!l) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Listing introuvable" });
+    }
+    if (Number(l.qty) < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Plus assez en stock" });
+    }
+    if (Number(l.seller_user_id) === Number(req.user.id)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Tu ne peux pas acheter ta propre vente" });
+    }
+
+    // lock buyer money
+    const bQ = await client.query(`SELECT money FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const buyerMoney = Number(bQ.rows[0]?.money ?? 0);
+    const total = Number(l.price) * qty;
+
+    if (buyerMoney < total) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de Pokédollars" });
+    }
+
+    // move money
+    await client.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [total, req.user.id]);
+    await client.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [total, l.seller_user_id]);
+
+    const now = Date.now();
+
+    // ✅ Fallback parse si jamais vieux listing sans colonnes
+    const key = String(l.idkey || l.idKey || "");
+    const ids = parseIdKeyServer(key);
+
+    const gameFinal = (l.game || ids.game || "pokemon");
+    const cardIdFinal  = (l.cardid  || l.cardId  || ids.cardId  || null);
+    const setIdFinal   = (l.setid   || l.setId   || ids.setId   || null);
+    const localIdFinal = (l.localid || l.localId || ids.localId || null);
+
+    const imageHighFinal = (l.imagehigh || l.imageHigh || l.image);
+
+    // ✅ remet en collection AVEC binder fields + imageHigh
+    await client.query(
+      `
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + EXCLUDED.count,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        imageHigh = COALESCE(collection.imageHigh, EXCLUDED.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId)
+      `,
+      [
+        req.user.id,
+        key,
+        gameFinal,
+        cardIdFinal,
+        setIdFinal,
+        localIdFinal,
+        l.name,
+        l.setname || l.setName,
+        l.image,
+        imageHighFinal,
+        l.grade,
+        l.mint ? 1 : 0,
+        qty,
+        now,
+      ]
+    );
+
+    // update/remove listing stock
+    if (Number(l.qty) === qty) {
+      await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
+    } else {
+      await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
+    }
+
+    await client.query("COMMIT");
+
+    // Clan hook achat
+    clanHookBuy(req.user.id).catch(() => {});
+
+    // notif vendeur (hors transaction)
+    await notify(
+      l.seller_user_id,
+      "sale",
+      "💰 Vente réussie !",
+      `${qty}× ${l.name} vendu pour ${total}💵`
+    );
+
+    const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    res.json({ ok: true, money: me.rows[0]?.money || 0 });
+
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Buy failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// GET my listings
+app.get("/api/market/mine", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `
+    SELECT 
+      m.id,
+      m.seller_user_id AS "sellerUserId",
+      u.name AS "sellerName",
+      m.idKey,
+      m.game,
+      m.name,
+      m.setName,
+      m.image,
+      m.grade,
+      m.mint,
+      m.price,
+      m.qty,
+      m.createdAt
+    FROM market_listings m
+    JOIN users u ON u.id = m.seller_user_id
+    WHERE m.seller_user_id = $1
+    ORDER BY m.createdAt DESC
+    LIMIT 200
+    `,
+    [req.user.id]
+  );
+
+  res.json({
+    listings: rows.map((r) => ({
+      ...r,
+      game: r.game || "pokemon",
+      mint: Boolean(r.mint),
+      idKey: r.idkey || r.idKey,
+      setName: r.setname || r.setName,
+      sellerName: r.sellerName || r.sellername,
+    })),
+  });
+});
+
+// POST cancel listing (return cards to seller)
+app.post("/api/market/cancel", auth, async (req, res) => {
+  const listingId = Number(req.body?.listingId || 0) | 0;
+  const qty = Math.max(1, Number(req.body?.qty || 1) | 0);
+  if (!listingId) return res.status(400).json({ error: "Missing listingId" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const lQ = await client.query(
+      `SELECT id, seller_user_id, idKey, game, cardId, setId, localId, name, setName, image, grade, mint, qty
+       FROM market_listings
+       WHERE id=$1
+       FOR UPDATE`,
+      [listingId]
+    );
+    const l = lQ.rows[0];
+
+    if (!l) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Listing introuvable" });
+    }
+    if (Number(l.seller_user_id) !== Number(req.user.id)) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({ error: "Interdit" });
+    }
+    if (Number(l.qty) < qty) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Quantité invalide" });
+    }
+
+    const now = Date.now();
+
+    const key = String(l.idkey || l.idKey || "");
+    const ids = parseIdKeyServer(key);
+
+    const gameFinal = (l.game || ids.game || "pokemon");
+    const cardIdFinal  = (l.cardid  || l.cardId  || ids.cardId  || null);
+    const setIdFinal   = (l.setid   || l.setId   || ids.setId   || null);
+    const localIdFinal = (l.localid || l.localId || ids.localId || null);
+    const imageHighFinal = (l.imagehigh || l.imageHigh || l.image);
+
+    await client.query(
+      `
+      INSERT INTO collection
+        (user_id, idKey, game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, lastAt)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      ON CONFLICT (user_id, idKey)
+      DO UPDATE SET
+        count = collection.count + EXCLUDED.count,
+        grade = GREATEST(collection.grade, EXCLUDED.grade),
+        mint  = CASE WHEN collection.mint = 1 OR EXCLUDED.mint = 1 THEN 1 ELSE 0 END,
+        imageHigh = COALESCE(collection.imageHigh, EXCLUDED.imageHigh),
+        lastAt = EXCLUDED.lastAt,
+        cardId = COALESCE(collection.cardId, EXCLUDED.cardId),
+        setId  = COALESCE(collection.setId,  EXCLUDED.setId),
+        localId= COALESCE(collection.localId,EXCLUDED.localId)
+      `,
+      [
+        req.user.id,
+        key,
+        gameFinal,
+        cardIdFinal,
+        setIdFinal,
+        localIdFinal,
+        l.name,
+        l.setname || l.setName,
+        l.image,
+        imageHighFinal,
+        l.grade,
+        l.mint ? 1 : 0,
+        qty,
+        now,
+      ]
+    );
+
+    if (Number(l.qty) === qty) {
+      await client.query(`DELETE FROM market_listings WHERE id=$1`, [listingId]);
+    } else {
+      await client.query(`UPDATE market_listings SET qty = qty - $2 WHERE id=$1`, [listingId, qty]);
+    }
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Cancel failed" });
+  } finally {
+    client.release();
+  }
+});
+
+// GET notifications (latest)
+app.get("/api/notifications", auth, async (req, res) => {
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20) | 0));
+  const onlyUnread = String(req.query.unread || "") === "1";
+
+  const { rows } = await pool.query(
+    `
+    SELECT id, type, title, body, meta, is_read, createdAt
+    FROM notifications
+    WHERE user_id=$1
+      ${onlyUnread ? "AND is_read=0" : ""}
+    ORDER BY createdAt DESC
+    LIMIT ${limit}
+    `,
+    [req.user.id]
+  );
+
+  const unreadQ = await pool.query(
+    `SELECT COUNT(*)::int AS c FROM notifications WHERE user_id=$1 AND is_read=0`,
+    [req.user.id]
+  );
+
+  res.setHeader('Cache-Control', 'private, max-age=10');
+  res.json({
+    unread: unreadQ.rows[0]?.c || 0,
+    notifications: rows.map(r => ({
+      id: r.id,
+      type: r.type,
+      title: r.title,
+      body: r.body,
+      meta: r.meta,
+      isRead: Boolean(r.is_read),
+      createdAt: Number(r.createdat || r.createdAt),
+    }))
+  });
+});
+
+// POST mark as read
+app.post("/api/notifications/read", auth, async (req, res) => {
+  const id = Number(req.body?.id || 0) | 0;
+  if (!id) return res.status(400).json({ error: "Missing id" });
+
+  await pool.query(
+    `UPDATE notifications SET is_read=1 WHERE user_id=$1 AND id=$2`,
+    [req.user.id, id]
+  );
+
+  res.json({ ok: true });
+});
+
+// POST mark all as read
+app.post("/api/notifications/read_all", auth, async (req, res) => {
+  await pool.query(
+    `UPDATE notifications SET is_read=1 WHERE user_id=$1`,
+    [req.user.id]
+  );
+  res.json({ ok: true });
+});
+
+app.get("/api/profile/me", auth, async (req, res) => {
+  const uQ = await pool.query(
+    `SELECT name, friendCode, avatar, bio, banner, xp FROM users WHERE id=$1`,
+    [req.user.id]
+  );
+  const u = uQ.rows[0];
+
+  const favQ = await pool.query(
+    `
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint, c.game
+    FROM favorites f
+    JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
+    WHERE f.user_id=$1
+    ORDER BY f.createdAt DESC
+    LIMIT 12
+    `,
+    [req.user.id]
+  );
+
+  const xp = Number(u?.xp || 0);
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
+    favorites: favQ.rows.map(r => ({
+      idKey: r.idkey || r.idKey,
+      game: r.game || "pokemon",
+      name: r.name,
+      setName: r.setname || r.setName,
+      image: r.image,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+    }))
+  });
+});
+
+app.post("/api/profile/update", auth, async (req, res) => {
+  const avatar = String(req.body?.avatar || "").trim();
+  const bio = String(req.body?.bio || "").trim().slice(0, 140); // limite safe
+  const banner = String(req.body?.banner || "").trim().slice(0, 500);
+
+  await pool.query(
+  `UPDATE users SET avatar=$1, bio=$2, banner=$3 WHERE id=$4`,
+  [avatar || null, bio || null, banner || null, req.user.id]
+);
+
+  res.json({ ok: true });
+});
+
+app.post("/api/favorites/toggle", auth, async (req, res) => {
+  const idKey = String(req.body?.idKey || "");
+  if (!idKey) return res.status(400).json({ error: "Missing idKey" });
+
+  // vérif que la carte est bien à toi
+  const own = await pool.query(
+    `SELECT 1 FROM collection WHERE user_id=$1 AND idKey=$2`,
+    [req.user.id, idKey]
+  );
+  if (!own.rows[0]) return res.status(404).json({ error: "Not owned" });
+
+  const exists = await pool.query(
+    `SELECT 1 FROM favorites WHERE user_id=$1 AND idKey=$2`,
+    [req.user.id, idKey]
+  );
+
+  if (exists.rows[0]) {
+    await pool.query(`DELETE FROM favorites WHERE user_id=$1 AND idKey=$2`, [req.user.id, idKey]);
+    return res.json({ ok: true, isFav: false });
+  } else {
+    // limite à 12 favoris
+    const cnt = await pool.query(`SELECT COUNT(*)::int AS c FROM favorites WHERE user_id=$1`, [req.user.id]);
+    if ((cnt.rows[0]?.c || 0) >= 12) return res.status(400).json({ error: "Max 12 favoris" });
+
+    await pool.query(
+      `INSERT INTO favorites (user_id, idKey, createdAt) VALUES ($1,$2,$3)`,
+      [req.user.id, idKey, Date.now()]
+    );
+    return res.json({ ok: true, isFav: true });
+  }
+});
+
+app.get("/api/profile/:friendCode", auth, async (req, res) => {
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const q = await pool.query(
+    `
+    SELECT u.id, u.name, u.friendCode, u.avatar, u.bio, u.banner, u.xp
+    FROM friends f
+    JOIN users u ON u.id = f.friend_user_id
+    WHERE f.user_id=$1 AND u.friendCode=$2
+    `,
+    [req.user.id, friendCode]
+  );
+
+  const u = q.rows[0];
+  if (!u) return res.status(403).json({ error: "Pas dans tes amis" });
+
+  const favQ = await pool.query(
+    `
+    SELECT c.idKey, c.name, c.setName, c.image, c.grade, c.mint, c.game
+    FROM favorites f
+    JOIN collection c ON c.user_id=f.user_id AND c.idKey=f.idKey
+    WHERE f.user_id=$1
+    ORDER BY f.createdAt DESC
+    LIMIT 12
+    `,
+    [u.id]
+  );
+
+  const xp = Number(u?.xp || 0);
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
+    favorites: favQ.rows.map(r => ({
+      idKey: r.idkey || r.idKey,
+      game: r.game || "pokemon",
+      name: r.name,
+      setName: r.setname || r.setName,
+      image: r.image,
+      grade: r.grade,
+      mint: Boolean(r.mint),
+    }))
+  });
+});
+
+// =========================
+// LEADERBOARD XP
+// =========================
+app.get("/api/leaderboard/xp", auth, async (req, res) => {
+  const limit = Math.min(100, Math.max(5, Number(req.query.limit || 50) | 0));
+
+  // Top joueurs
+  const topQ = await pool.query(
+  `
+  SELECT u.id, u.name, u.xp, u.avatar, u.friendCode,
+         c.tag AS clan_tag, c.name AS clan_name
+  FROM users u
+  LEFT JOIN clan_members cm ON cm.user_id = u.id
+  LEFT JOIN clans c ON c.id = cm.clan_id
+  ORDER BY u.xp DESC, u.createdAt ASC, u.id ASC
+  LIMIT $1
+  `,
+  [limit]
+);
+
+  // Rang du joueur connecté (global)
+  const meRankQ = await pool.query(
+    `
+    SELECT r.rnk
+    FROM (
+      SELECT id, RANK() OVER (ORDER BY xp DESC, createdAt ASC, id ASC) AS rnk
+      FROM users
+    ) r
+    WHERE r.id = $1
+    `,
+    [req.user.id]
+  );
+
+  const top = topQ.rows.map((u, i) => ({
+    rank: i + 1,
+    name: u.name,
+    xp: Number(u.xp || 0),
+    level: levelForXp(u.xp || 0),
+    avatar: u.avatar || "",
+    friendCode: u.friendcode || u.friendCode || "",
+    clanTag: u.clan_tag || "",
+    clanName: u.clan_name || ""
+}));
+
+  res.setHeader('Cache-Control', 'private, max-age=60');
+  res.setHeader('Cache-Control', 'private, max-age=60');
+  res.json({
+    top,
+    me: {
+      rank: Number(meRankQ.rows[0]?.rnk || 0),
+    }
+  });
+});
+
+// =========================
+// TICKETS
+// =========================
+
+// GET solde tickets + dollax + temps avant prochain ticket
+app.get("/api/tickets", auth, async (req, res) => {
+  await applyTicketsForUser(req.user.id);
+  const { rows } = await pool.query(
+    `SELECT tickets, money, lastTicketPay FROM users WHERE id=$1`,
+    [req.user.id]
+  );
+  const u = rows[0];
+  const tickets       = Number(u?.tickets || 0);
+  const dollax        = Number(u?.money   || 0);
+  const lastTicketPay = Number(u?.lastticketpay ?? u?.lastTicketPay ?? 0);
+  const now           = Date.now();
+
+  // Calcul du prochain ticket
+  let nextTicketInMs = 0;
+  if (tickets < TICKET_CAP) {
+    const elapsed = now - lastTicketPay;
+    const remaining = TICKET_EVERY_MS - (elapsed % TICKET_EVERY_MS);
+    nextTicketInMs = remaining;
+  }
+
+  res.json({ tickets, dollax, nextTicketInMs, ticketCap: TICKET_CAP });
+});
+
+// POST jouer la slot machine
+app.post("/api/slots/spin", auth, async (req, res) => {
+  const bet = Math.max(1, Math.min(1000, Number(req.body?.bet) | 0));
+
+  await applyTicketsForUser(req.user.id);
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Vérifier et déduire les tickets
+    const uQ = await client.query(
+      `SELECT tickets, money FROM users WHERE id=$1 FOR UPDATE`,
+      [req.user.id]
+    );
+    const u = uQ.rows[0];
+    if (!u || Number(u.tickets) < bet) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de tickets" });
+    }
+
+    // Tirage pondéré (même proba que côté client)
+    const SYMBOLS = [
+      { id:"diamant", weight:4  },  // ultra rare  ×5000
+      { id:"star",    weight:6  },  // très rare   ×1000
+      { id:"cards",   weight:15  },  // rare        ×400
+      { id:"heart",   weight:20 },  // peu commun  ×250
+      { id:"dollax",  weight:25 },  // commun      ×150
+      { id:"thunder", weight:30 },  // commun      ×80
+    ];
+    const MULTS = { diamant:5000, star:1000, cards:400, heart:250, dollax:150, thunder:80 };
+    const POOL  = SYMBOLS.flatMap(s => Array(s.weight).fill(s.id));
+    const rand  = () => POOL[Math.floor(Math.random() * POOL.length)];
+    const result    = [rand(), rand(), rand()];
+    const [a,b,c]   = result;
+
+    let gain = 0;
+    let winType = "none";
+    if (a === b && b === c) {
+      gain    = bet * (MULTS[a] ?? 20);
+      winType = a === "diamant" ? "jackpot" : "triple";
+    } else if (a === b || b === c || a === c) {
+      gain    = bet * 15;
+      winType = "pair";
+    }
+
+    // Mettre à jour DB
+    await client.query(
+      `UPDATE users SET tickets = tickets - $1, money = money + $2 WHERE id=$3`,
+      [bet, gain, req.user.id]
+    );
+    await client.query("COMMIT");
+
+    // Retourner résultat + nouveau solde
+    const newQ = await pool.query(
+      `SELECT tickets, money FROM users WHERE id=$1`,
+      [req.user.id]
+    );
+    res.json({
+      result,
+      gain,
+      winType,
+      tickets: Number(newQ.rows[0]?.tickets || 0),
+      dollax:  Number(newQ.rows[0]?.money   || 0),
+    });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    console.error("Slots spin error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally {
+    client.release();
+  }
+});
+
+// =========================
+// PROFILE PUBLIC (for leaderboard)
+// Accessible to everyone (auth required)
+// =========================
+app.get("/api/profile_public/:friendCode", async (req, res) => {
+  const friendCode = String(req.params.friendCode || "").trim().toUpperCase();
+  if (!friendCode) return res.status(400).json({ error: "Missing friendCode" });
+
+  const uQ = await pool.query(
+    `SELECT id, name, friendCode, avatar, bio, banner, xp
+     FROM users
+     WHERE friendCode=$1
+     LIMIT 1`,
+    [friendCode]
+  );
+
+  const u = uQ.rows[0];
+  if (!u) return res.status(404).json({ error: "Profil introuvable" });
+
+  const [pQ, oQ, lQ, dQ, uAQ, sGQ, mQ, wSQ] = await Promise.all([
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='pokemon'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='onepiece'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='lorcana'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='dragonball'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='unionarena'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='senpaigodesshaven'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='magic'`, [u.id]),
+    pool.query(`SELECT COALESCE(SUM(count),0)::int AS total FROM collection WHERE user_id=$1 AND game='weissschwarz'`, [u.id]),
+  ]);
+
+  const pokemon = pQ.rows[0]?.total || 0;
+  const onepiece = oQ.rows[0]?.total || 0;
+  const lorcana = lQ.rows[0]?.total || 0;
+  const dragonball = dQ.rows[0]?.total || 0;
+  const unionarena = uAQ.rows[0]?.total || 0;
+  const senpaigodesshaven = sGQ.rows[0]?.total || 0;
+  const magic = mQ.rows[0]?.total || 0;
+  const weissschwarz = wSQ.rows[0]?.total || 0;
+
+  const xp = Number(u?.xp || 0);
+
+  res.json({
+    name: u.name,
+    friendCode: u.friendcode || u.friendCode,
+    avatar: u.avatar || "",
+    bio: u.bio || "",
+    banner: u.banner || "",
+    xp,
+    level: levelForXp(xp),
+    stats: {
+    pokemon,
+    onepiece,
+    lorcana,
+    dragonball,
+    unionarena,
+    senpaigodesshaven,
+    magic,
+    weissschwarz,
+    total: pokemon + onepiece + lorcana + dragonball + unionarena + senpaigodesshaven + magic + weissschwarz
+  }
+  });
+});
+
+// =========================
+// CLANS — ROUTES
+// =========================
+
+// GET /api/clan/list — liste des clans
+app.get("/api/clan/list", auth, async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT c.id, c.name, c.tag, c.description, c.logo, c.banner_color, c.xp, c.bank,
+           u.name as leader_name,
+           (SELECT COUNT(*) FROM clan_members WHERE clan_id=c.id) as members
+    FROM clans c JOIN users u ON u.id=c.leader_id
+    ORDER BY c.xp DESC
+    LIMIT 50
+  `);
+  res.json({ clans: rows });
+});
+
+// GET /api/clan/me — mon clan (tout en parallèle)
+app.get("/api/clan/me", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.json({ clan: null });
+
+  const now = Date.now();
+
+  // Tout en parallèle
+  const [cQ, membersQ, bossQ] = await Promise.all([
+    pool.query(`SELECT c.*, u.name as leader_name FROM clans c JOIN users u ON u.id=c.leader_id WHERE c.id=$1`, [m.clan_id]),
+    pool.query(`SELECT cm.role, cm.damage_total, cm.joined_at, cm.user_id, u.name, u.avatar, u.xp, pc.char_class FROM clan_members cm JOIN users u ON u.id=cm.user_id LEFT JOIN player_character pc ON pc.user_id=cm.user_id WHERE cm.clan_id=$1 ORDER BY cm.damage_total DESC`, [m.clan_id]),
+    pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]),
+  ]);
+
+  const boss = bossQ.rows[0] || null;
+  let bossData = null;
+
+  if (boss) {
+    // Fixer expires_at si manquant (anciens boss)
+    let expiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+    if (!expiresAt && boss.started_at) {
+      expiresAt = Number(boss.started_at) + 4 * 60 * 60 * 1000;
+      await pool.query(`UPDATE clan_boss SET expires_at=$1 WHERE id=$2`, [expiresAt, boss.id]);
+    }
+
+    // Vérifier expiration
+    if (expiresAt && now > expiresAt) {
+      await pool.query(`UPDATE clan_boss SET failed=1 WHERE id=$1`, [boss.id]);
+      bossData = null;
+    } else {
+      const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+
+      // Leaderboard + stock en parallèle
+      const [dmgQ, stockQ] = await Promise.all([
+        pool.query(`SELECT u.name, SUM(d.damage) as total FROM clan_boss_damage d JOIN users u ON u.id=d.user_id WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10`, [boss.id]),
+        pool.query(`SELECT stock FROM clan_raid_stock WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]),
+      ]);
+
+      bossData = {
+        ...boss,
+        image: def.image,
+        name: def.name,
+        expires_at: expiresAt,
+        leaderboard: dmgQ.rows,
+        myStock: Number(stockQ.rows[0]?.stock || 0),
+        timeLeft: expiresAt ? Math.max(0, expiresAt - now) : null,
+      };
+    }
+  }
+
+  res.json({
+    clan: cQ.rows[0],
+    myRole: m.role,
+    members: membersQ.rows,
+    boss: bossData,
+    availableBosses: !bossData ? Object.values(RAID_BOSSES) : null,
+  });
+});
+
+// POST /api/clan/create
+app.post("/api/clan/create", auth, async (req, res) => {
+  const existing = await getMyMembership(req.user.id);
+  if (existing) return res.status(400).json({ error: "Tu es déjà dans un clan" });
+
+  const name  = String(req.body?.name || "").trim().slice(0, 30);
+  const tag   = String(req.body?.tag  || "").trim().toUpperCase().slice(0, 5);
+  const desc  = String(req.body?.description || "").trim().slice(0, 200);
+  const color = String(req.body?.banner_color || "#7f5cff").trim();
+  const logo  = String(req.body?.logo || "").trim().slice(0, 500);
+
+  if (!name || !tag) return res.status(400).json({ error: "Nom et tag requis" });
+
+  const CLAN_COST = 1000;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Vérifier et déduire les 1000 dollax
+    const moneyQ = await client.query(
+      `UPDATE users SET money = money - $1 WHERE id=$2 AND money >= $1 RETURNING money`,
+      [CLAN_COST, req.user.id]
+    );
+    if (!moneyQ.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Pas assez de dollax (1 000 requis)" });
+    }
+
+    const cQ = await client.query(`
+      INSERT INTO clans(name,tag,description,logo,banner_color,leader_id,xp,bank,createdAt)
+      VALUES($1,$2,$3,$4,$5,$6,0,0,$7) RETURNING *
+    `, [name, tag, desc, logo, color, req.user.id, Date.now()]);
+    const clan = cQ.rows[0];
+    await client.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'leader',$3)`, [req.user.id, clan.id, Date.now()]);
+    // Pas de boss automatique — les raids se lancent manuellement
+    await client.query("COMMIT");
+    res.json({ ok: true, clan });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    if (e.code === '23505') return res.status(400).json({ error: "Ce nom de clan est déjà pris" });
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
+});
+
+// POST /api/clan/join
+app.post("/api/clan/join", auth, async (req, res) => {
+  const existing = await getMyMembership(req.user.id);
+  if (existing) return res.status(400).json({ error: "Tu es déjà dans un clan" });
+
+  const clanId = Number(req.body?.clanId) | 0;
+  if (!clanId) return res.status(400).json({ error: "clanId manquant" });
+
+  const cQ = await pool.query(`SELECT id FROM clans WHERE id=$1`, [clanId]);
+  if (!cQ.rows.length) return res.status(404).json({ error: "Clan introuvable" });
+
+  const count = await pool.query(`SELECT COUNT(*) FROM clan_members WHERE clan_id=$1`, [clanId]);
+  if (Number(count.rows[0].count) >= 4) return res.status(400).json({ error: "Clan complet (max 4)" });
+
+  await pool.query(`INSERT INTO clan_members(user_id,clan_id,role,joined_at) VALUES($1,$2,'member',$3)`, [req.user.id, clanId, Date.now()]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/leave
+app.post("/api/clan/leave", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(400).json({ error: "Tu n'es dans aucun clan" });
+  if (m.role === 'leader') return res.status(400).json({ error: "Le meneur doit d'abord transférer la direction" });
+  await pool.query(`DELETE FROM clan_members WHERE user_id=$1`, [req.user.id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/kick — meneur/officier seulement
+app.post("/api/clan/kick", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || !['leader','officer'].includes(m.role)) return res.status(403).json({ error: "Non autorisé" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  if (!targetId || targetId === req.user.id) return res.status(400).json({ error: "Cible invalide" });
+
+  const tQ = await pool.query(`SELECT role FROM clan_members WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+  if (!tQ.rows.length) return res.status(404).json({ error: "Membre introuvable" });
+  if (tQ.rows[0].role === 'leader') return res.status(403).json({ error: "Impossible d'exclure le meneur" });
+
+  await pool.query(`DELETE FROM clan_members WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/promote
+app.post("/api/clan/promote", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const newRole  = String(req.body?.role || "officer");
+  if (!['officer','member'].includes(newRole)) return res.status(400).json({ error: "Rôle invalide" });
+
+  await pool.query(`UPDATE clan_members SET role=$1 WHERE user_id=$2 AND clan_id=$3`, [newRole, targetId, m.clan_id]);
+  res.json({ ok: true });
+});
+
+// POST /api/clan/transfer — transférer la direction
+app.post("/api/clan/transfer", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`UPDATE clan_members SET role='leader' WHERE user_id=$1 AND clan_id=$2`, [targetId, m.clan_id]);
+    await client.query(`UPDATE clan_members SET role='officer' WHERE user_id=$1`, [req.user.id]);
+    await client.query(`UPDATE clans SET leader_id=$1 WHERE id=$2`, [targetId, m.clan_id]);
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur" });
+  } finally { client.release(); }
+});
+
+// POST /api/clan/bank/distribute — distribuer des dollax
+app.post("/api/clan/bank/distribute", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const targetId = Number(req.body?.userId) | 0;
+  const amount   = Math.max(1, Number(req.body?.amount) | 0);
+
+  const cQ = await pool.query(`SELECT bank FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+  // need transaction
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const bankQ = await client.query(`SELECT bank FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+    if (Number(bankQ.rows[0].bank) < amount) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Banque insuffisante" }); }
+    await client.query(`UPDATE clans SET bank=bank-$1 WHERE id=$2`, [amount, m.clan_id]);
+    await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [amount, targetId]);
+    await client.query("COMMIT");
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','Don du meneur',$2,NULL,0,$3)`,
+      [targetId, `Tu as reçu ${amount} dollax de la banque du clan !`, Date.now()]
+    );
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur" });
+  } finally { client.release(); }
+});
+
+// GET /api/clan/chat
+app.get("/api/clan/chat", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const { rows } = await pool.query(`
+    SELECT id, user_id, username, avatar, message, createdAt
+    FROM clan_chat WHERE clan_id=$1
+    ORDER BY createdAt DESC LIMIT 50
+  `, [m.clan_id]);
+
+  res.json({ messages: rows.reverse() });
+});
+
+// POST /api/clan/chat
+app.post("/api/clan/chat", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const message = String(req.body?.message || "").trim().slice(0, 300);
+  if (!message) return res.status(400).json({ error: "Message vide" });
+
+  const uQ = await pool.query(`SELECT name, avatar FROM users WHERE id=$1`, [req.user.id]);
+  const u = uQ.rows[0];
+
+  await pool.query(`INSERT INTO clan_chat(clan_id,user_id,username,avatar,message,createdAt) VALUES($1,$2,$3,$4,$5,$6)`,
+    [m.clan_id, req.user.id, u.name, u.avatar || '', message, Date.now()]);
+
+  // Nettoyer les vieux messages (garder 100 max)
+  await pool.query(`DELETE FROM clan_chat WHERE clan_id=$1 AND id NOT IN (SELECT id FROM clan_chat WHERE clan_id=$1 ORDER BY createdAt DESC LIMIT 100)`, [m.clan_id]);
+
+  // Mission chat
+  await progressMission(m.clan_id, req.user.id, 'send_message');
+
+  res.json({ ok: true });
+});
+
+// GET /api/clan/missions
+app.get("/api/clan/missions", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const dk = todayKey();
+  // Initialiser les missions du jour si pas encore fait
+  for (const def of CLAN_MISSIONS_DEF) {
+    await pool.query(`
+      INSERT INTO clan_missions(clan_id,user_id,mission_key,progress,goal,completed,date_key)
+      VALUES($1,$2,$3,0,$4,0,$5)
+      ON CONFLICT(clan_id,user_id,mission_key,date_key) DO NOTHING
+    `, [m.clan_id, req.user.id, def.key, def.goal, dk]);
+  }
+
+  // Mission login_daily — auto-compléter à la connexion
+  await progressMission(m.clan_id, req.user.id, 'login_daily');
+
+  const { rows } = await pool.query(`
+    SELECT mission_key, progress, goal, completed
+    FROM clan_missions WHERE clan_id=$1 AND user_id=$2 AND date_key=$3
+  `, [m.clan_id, req.user.id, dk]);
+
+  const missions = CLAN_MISSIONS_DEF.map(def => {
+    const row = rows.find(r => r.mission_key === def.key);
+    return { ...def, progress: row?.progress || 0, completed: row?.completed || 0 };
+  });
+
+  res.json({ missions, dateKey: dk });
+});
+
+// GET /api/clan/missions/chest-status
+app.get("/api/clan/missions/chest-status", auth, async (req, res) => {
+  try {
+    const dk = todayKey();
+    const q = await pool.query(
+      `SELECT reward_type, reward_detail FROM daily_chest_claimed WHERE user_id=$1 AND date_key=$2`,
+      [req.user.id, dk]
+    );
+    res.json({ claimed: q.rows.length > 0, reward: q.rows[0] || null });
+  } catch(e) {
+    res.json({ claimed: false, reward: null });
+  }
+});
+
+// POST /api/clan/missions/claim-chest
+app.post("/api/clan/missions/claim-chest", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.status(403).json({ error: "Non membre" });
+
+    const dk = todayKey();
+    const userId = req.user.id;
+
+    // Déjà réclamé ?
+    const alreadyQ = await pool.query(
+      `SELECT 1 FROM daily_chest_claimed WHERE user_id=$1 AND date_key=$2`,
+      [userId, dk]
+    );
+    if (alreadyQ.rows.length) {
+      return res.status(400).json({ error: "Coffre déjà réclamé aujourd'hui !" });
+    }
+
+    // Toutes les missions complétées ?
+    const missQ = await pool.query(
+      `SELECT COUNT(*) as total, SUM(completed) as done FROM clan_missions WHERE clan_id=$1 AND user_id=$2 AND date_key=$3`,
+      [m.clan_id, userId, dk]
+    );
+    const total = parseInt(missQ.rows[0]?.total || 0);
+    const done  = parseInt(missQ.rows[0]?.done  || 0);
+    if (total < 8 || done < 8) {
+      return res.status(400).json({ error: "Toutes les missions doivent être complétées !" });
+    }
+
+    // Loot table (poids sur 100)
+    const LOOT_TABLE = [
+      { id:'d500',  weight:20, type:'money',     detail:'500',       label:'500 Dollax'            },
+      { id:'d1000', weight:15, type:'money',     detail:'1000',      label:'1 000 Dollax'           },
+      { id:'cardC', weight:20, type:'card',      detail:'common',    label:'Carte Commune'          },
+      { id:'cardR', weight:14, type:'card',      detail:'rare',      label:'Carte Rare'             },
+      { id:'cardE', weight:10, type:'card',      detail:'epic',      label:'Carte Épique'           },
+      { id:'cardL', weight:3,  type:'card',      detail:'legendary', label:'Carte Légendaire'       },
+      { id:'eqC',   weight:10, type:'equipment', detail:'common',    label:'Équipement Commun'      },
+      { id:'eqR',   weight:7,  type:'equipment', detail:'rare',      label:'Équipement Rare'        },
+      { id:'eqE',   weight:4,  type:'equipment', detail:'epic',      label:'Équipement Épique'      },
+      { id:'eqL',   weight:2,  type:'equipment', detail:'legendary', label:'Équipement Légendaire'  },
+    ];
+
+    const totalWeight = LOOT_TABLE.reduce((a, l) => a + l.weight, 0);
+    let rand = Math.random() * totalWeight;
+    let loot = LOOT_TABLE[0];
+    for (const l of LOOT_TABLE) { rand -= l.weight; if (rand <= 0) { loot = l; break; } }
+
+    let rewardLabel = loot.label;
+    let rewardImage = null;
+    let rewardRarity = loot.detail;
+
+    if (loot.type === 'money') {
+      const amount = parseInt(loot.detail);
+      await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [amount, userId]);
+      rewardLabel = `+${amount} Dollax`;
+
+    } else if (loot.type === 'card') {
+      // Récupérer les cartes déjà possédées
+      const ownedQ = await pool.query(
+        `SELECT DISTINCT card_key FROM player_raid_cards WHERE user_id=$1`,
+        [userId]
+      );
+      const ownedKeys = new Set(ownedQ.rows.map(r => r.card_key));
+
+      // Filtrer les cartes de la rareté tirée que le joueur ne possède pas encore
+      const allCards = Object.values(RAID_CARDS).filter(c => c.rarity === loot.detail);
+      const newCards = allCards.filter(c => !ownedKeys.has(c.key));
+
+      if (newCards.length) {
+        // Donner une carte non possédée
+        const card = newCards[Math.floor(Math.random() * newCards.length)];
+        await pool.query(
+          `INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`,
+          [userId, card.key, Date.now()]
+        );
+        rewardLabel = card.name;
+        rewardImage = card.image;
+        rewardRarity = card.rarity;
+      } else {
+        // Toutes les cartes de cette rareté sont déjà possédées → compensation en dollax
+        const compensation = loot.detail === 'legendary' ? 1000
+                           : loot.detail === 'epic'      ? 500
+                           : loot.detail === 'rare'      ? 250
+                           : 100;
+        await pool.query(`UPDATE users SET money = money + $1 WHERE id=$2`, [compensation, userId]);
+        rewardLabel = `+${compensation} Dollax (collection complète !)`;
+        rewardImage = null;
+        rewardRarity = loot.detail;
+        loot = { ...loot, type: 'money' };
+      }
+
+    } else if (loot.type === 'equipment') {
+      const allEq = Object.values(EQUIPMENT).filter(e => e.rarity === loot.detail);
+      if (allEq.length) {
+        const eq = allEq[Math.floor(Math.random() * allEq.length)];
+        await pool.query(
+          `INSERT INTO player_equipment(user_id, equip_key, obtained_at) VALUES($1,$2,$3)`,
+          [userId, eq.key, Date.now()]
+        );
+        rewardLabel = eq.name;
+        rewardImage = eq.image;
+        rewardRarity = eq.rarity;
+      }
+    }
+
+    await pool.query(
+      `INSERT INTO daily_chest_claimed(user_id, date_key, reward_type, reward_detail, claimed_at) VALUES($1,$2,$3,$4,$5)`,
+      [userId, dk, loot.type, loot.detail, Date.now()]
+    );
+
+    res.json({ ok: true, reward: { type: loot.type, label: rewardLabel, image: rewardImage, rarity: rewardRarity } });
+
+  } catch(e) {
+    console.error("claim-chest error:", e);
+    res.status(500).json({ error: "Erreur serveur : " + e.message });
+  }
+});
+
+// GET /api/clan/raid/mydrops — récap drops non vus
+app.get("/api/clan/raid/mydrops", auth, async (req, res) => {
+  try {
+    const q = await pool.query(
+      `SELECT * FROM raid_drops_recap WHERE user_id=$1 AND seen=0 ORDER BY created_at DESC LIMIT 1`,
+      [req.user.id]
+    );
+    if (!q.rows.length) return res.json({ recap: null });
+    const row = q.rows[0];
+    await pool.query(`UPDATE raid_drops_recap SET seen=1 WHERE id=$1`, [row.id]);
+    res.json({
+      recap: {
+        victory: row.victory === 1,
+        bossName: row.boss_name,
+        bossKey: row.boss_key,
+        cards: row.cards || [],
+        equipment: row.equipment || [],
+        materials: row.materials || [],
+        charLevelUp: row.char_level_up || null,
+      }
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/clan/boss — état du raid en cours
+app.get("/api/clan/boss", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const now = Date.now();
+  // Expirer seulement les boss avec expires_at défini
+  await pool.query(`UPDATE clan_boss SET failed=1 WHERE clan_id=$1 AND defeated=0 AND failed=0 AND expires_at IS NOT NULL AND expires_at < $2`, [m.clan_id, now]);
+
+  const bQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  if (!bQ.rows.length) {
+    // Calculer les cooldowns par boss
+    const clanQ = await pool.query(`SELECT last_raid_arakas, last_raid_myntalis, last_raid_xenos FROM clans WHERE id=$1`, [m.clan_id]);
+    const clan = clanQ.rows[0] || {};
+    const bossGroups = ['arakas','myntalis','xenos'];
+    const cooldowns = {};
+    for (const bk of bossGroups) {
+      const lastCol = clan[`last_raid_${bk}`];
+      if (!lastCol) { cooldowns[bk] = { available: true, daysLeft: 0 }; continue; }
+      const last = new Date(lastCol + 'T00:00:00Z');
+      const diffDays = Math.floor((Date.now() - last) / (1000 * 60 * 60 * 24));
+      const def = Object.values(RAID_BOSSES).find(d => d.bossKey === bk && d.difficulty === 'easy');
+      const cooldown = def?.cooldownDays || 1;
+      cooldowns[bk] = { available: diffDays >= cooldown, daysLeft: Math.max(0, cooldown - diffDays) };
+    }
+    return res.json({ boss: null, availableBosses: Object.values(RAID_BOSSES), cooldowns });
+  }
+
+  const boss = bQ.rows[0];
+  // Fallback image : utilise boss_key si dispo, sinon Boss1.gif par défaut
+  const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+  const bossImage = def.image;
+  const bossName = boss.name || def.name;
+
+  // Si ancien boss sans expires_at → on met quand même un timer fictif de 4h depuis started_at
+  let expiresAt = boss.expires_at ? Number(boss.expires_at) : null;
+  if (!expiresAt && boss.started_at) {
+    expiresAt = Number(boss.started_at) + 4 * 60 * 60 * 1000;
+    // Sauvegarder pour cohérence
+    await pool.query(`UPDATE clan_boss SET expires_at=$1 WHERE id=$2`, [expiresAt, boss.id]);
+  }
+
+  const dmgQ = await pool.query(`
+    SELECT u.name, SUM(d.damage) as total
+    FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+    WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10
+  `, [boss.id]);
+
+  const myDmg = await pool.query(`SELECT COALESCE(SUM(damage),0) as total FROM clan_boss_damage WHERE boss_id=$1 AND user_id=$2`, [boss.id, req.user.id]);
+
+  const stockQ = await pool.query(`SELECT stock FROM clan_raid_stock WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]);
+  const myStock = Number(stockQ.rows[0]?.stock || 0);
+
+  res.json({
+    boss: { ...boss, image: bossImage, name: bossName, expires_at: expiresAt },
+    leaderboard: dmgQ.rows,
+    myDamage: Number(myDmg.rows[0].total),
+    myStock,
+    timeLeft: expiresAt ? Math.max(0, expiresAt - now) : null,
+  });
+});
+
+// POST /api/clan/raid/start — lancer un raid (meneur/officier)
+app.post("/api/clan/raid/start", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || !['leader','officer'].includes(m.role)) return res.status(403).json({ error: "Meneur ou officier seulement" });
+
+  const bossKey = String(req.body?.bossKey || '');
+  const def = RAID_BOSSES[bossKey];
+  if (!def) return res.status(400).json({ error: "Boss invalide" });
+
+  // Vérif: pas déjà un raid actif
+  const active = await pool.query(`SELECT id FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0`, [m.clan_id]);
+  if (active.rows.length) return res.status(400).json({ error: "Un raid est déjà en cours !" });
+
+  // Vérif cooldown par boss (arakas=1j, myntalis=3j, xenos=7j)
+  const canStart = await checkBossCooldown(m.clan_id, def.bossKey, def.cooldownDays);
+  if (!canStart) {
+    const cooldownMsg = def.cooldownDays === 1 ? 'demain' : def.cooldownDays === 3 ? 'dans 3 jours' : 'dans 7 jours';
+    return res.status(400).json({ error: `Ce boss est en cooldown. Revenez ${cooldownMsg} !` });
+  }
+
+  const now = Date.now();
+  const expiresAt = now + def.duration;
+  const durationLabel = def.duration >= 4 * 3600000 ? '4h' : '1h';
+
+  const newBoss = await pool.query(`
+    INSERT INTO clan_boss(clan_id, name, boss_key, hp_max, hp_current, reward, started_at, expires_at)
+    VALUES($1,$2,$3,$4,$4,$5,$6,$7) RETURNING *
+  `, [m.clan_id, def.name, def.key, def.hp_max, def.reward, now, expiresAt]);
+
+  await markBossCooldown(m.clan_id, def.bossKey);
+
+  // Notifier les membres
+  const members = await pool.query(`SELECT user_id FROM clan_members WHERE clan_id=$1 AND user_id!=$2`, [m.clan_id, req.user.id]);
+  for (const mbr of members.rows) {
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⚔️ Raid lancé !',$2,NULL,0,$3)`,
+      [mbr.user_id, `Raid ${def.diffLabel} contre ${def.name} lancé ! ${durationLabel} pour le vaincre.`, now]
+    );
+  }
+
+  res.json({ ok: true, boss: newBoss.rows[0] });
+});
+
+// POST /api/clan/raid/attack — dépenser son stock de dégâts sur le boss
+app.post("/api/clan/raid/attack", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const bQ = await client.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1 FOR UPDATE`, [m.clan_id]);
+    if (!bQ.rows.length) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Pas de raid actif" }); }
+
+    const boss = bQ.rows[0];
+
+    // Vérif expiration
+    if (boss.expires_at && Date.now() > boss.expires_at) {
+      await client.query(`UPDATE clan_boss SET failed=1 WHERE id=$1`, [boss.id]);
+      await client.query("COMMIT");
+      return res.status(400).json({ error: "Le raid a expiré !" });
+    }
+
+    // Récupérer le stock
+    const stockQ = await client.query(`SELECT stock FROM clan_raid_stock WHERE user_id=$1 AND boss_id=$2 FOR UPDATE`, [req.user.id, boss.id]);
+    const stock = Number(stockQ.rows[0]?.stock || 0);
+    if (stock <= 0) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Pas de dégâts stockés !" }); }
+
+    // Appliquer les bonus du deck
+    const hpPct = Math.round((boss.hp_current / boss.hp_max) * 100);
+    const deckBonus = await calcDeckBonus(req.user.id, hpPct, m.clan_id).catch(() => ({ dmg_bonus:0, crit:0, first_attack:0 }));
+    const isFirstAttack = stock === Number(stockQ.rows[0]?.stock || 0); // toujours vrai ici = première frappe
+    const { dmg: finalDmg, crit: isCrit } = applyDeckToStock(stock, deckBonus, true);
+
+    // Vider le stock
+    await client.query(`UPDATE clan_raid_stock SET stock=0 WHERE user_id=$1 AND boss_id=$2`, [req.user.id, boss.id]);
+
+    const newHp = Math.max(0, boss.hp_current - finalDmg);
+    await client.query(`UPDATE clan_boss SET hp_current=$1 WHERE id=$2`, [newHp, boss.id]);
+    await client.query(`INSERT INTO clan_boss_damage(boss_id,user_id,damage,at) VALUES($1,$2,$3,$4)`, [boss.id, req.user.id, finalDmg, Date.now()]);
+    await client.query(`UPDATE clan_members SET damage_total=damage_total+$1 WHERE user_id=$2`, [finalDmg, req.user.id]);
+
+    let defeated = false;
+    const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+
+    if (newHp <= 0) {
+      await client.query(`UPDATE clan_boss SET defeated=1, defeated_at=$1 WHERE id=$2`, [Date.now(), boss.id]);
+      await client.query(`DELETE FROM clan_raid_stock WHERE boss_id=$1`, [boss.id]);
+
+      const contributors = await client.query(`SELECT user_id, SUM(damage) as dmg FROM clan_boss_damage WHERE boss_id=$1 GROUP BY user_id ORDER BY dmg DESC`, [boss.id]);
+      const nbContribs = contributors.rows.length;
+
+      if (nbContribs > 0) {
+        const equalShare = Math.floor(boss.reward / nbContribs);
+        const topDmgUserId = contributors.rows[0].user_id;
+        const TOP_BONUS = 1000;
+
+        for (const c of contributors.rows) {
+          const isTop = c.user_id === topDmgUserId;
+          const reward = equalShare + (isTop ? TOP_BONUS : 0);
+          await client.query(`UPDATE users SET money=money+$1 WHERE id=$2`, [reward, c.user_id]);
+          await client.query(
+            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','🏆 Boss vaincu !',$2,NULL,0,$3)`,
+            [c.user_id, `${def.name} vaincu ! Tu reçois ${equalShare} dollax${isTop ? ` + 1 000 dollax (top dégâts) 🏅` : ''}.`, Date.now()]
+          );
+        }
+      }
+      await client.query(`UPDATE clans SET xp=xp+$1 WHERE id=$2`, [def.xpReward || 1000, m.clan_id]);
+      defeated = true;
+    }
+
+    await client.query("COMMIT");
+
+    if (defeated) {
+      await checkClanLevelUp(m.clan_id).catch(() => {});
+      const contribs = await pool.query(`SELECT DISTINCT user_id FROM clan_boss_damage WHERE boss_id=$1`, [boss.id]);
+      const charXpGain = CHAR_XP_PER_RAID[boss.boss_key] || 200;
+      for (const c of contribs.rows) {
+        await progressMission(m.clan_id, c.user_id, 'raid_boss').catch(() => {});
+
+        // Cartes (arakas + xenos)
+        let cardDrops = [];
+        if (def.bossKey === 'arakas' || def.bossKey === 'xenos') {
+          cardDrops = await dropRaidCards(c.user_id).catch(() => []);
+        }
+
+        // Equipements
+        let eqDrops = [];
+        if (def.bossKey === 'myntalis' || def.bossKey === 'xenos' || def.bossKey === 'arakas') {
+          eqDrops = await dropEquipment(c.user_id, def.bossKey, def.difficulty).catch(() => []);
+        }
+
+        // Materiaux (100% garanti)
+        const matDropsRaw = await dropMaterials(c.user_id, def.bossKey, def.difficulty).catch(() => []);
+        const matDropsFmt = matDropsRaw.map(d => ({
+          matKey: d.matKey, qty: d.qty,
+          name: { fer:'Fer', azurite:'Azurite', quartz:'Quartz', topaze:'Topaze' }[d.matKey] || d.matKey,
+          image: `https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/${d.matKey}.png`,
+        }));
+
+        // XP personnage
+        const charResult = await addCharXp(c.user_id, charXpGain).catch(() => null);
+        let charLevelUp = null;
+        if (charResult?.levelsGained > 0) {
+          charLevelUp = { level: charResult.char_level, points: charResult.levelsGained };
+          await pool.query(
+            `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'clan','⬆️ Niveau atteint !',$2,NULL,0,$3)`,
+            [c.user_id, `Ton personnage passe au niveau ${charResult.char_level} !`, Date.now()]
+          );
+        }
+
+        // Stocker le recap pour chaque participant (vu au prochain polling)
+        await pool.query(`
+          INSERT INTO raid_drops_recap(user_id, boss_id, boss_name, boss_key, victory, cards, equipment, materials, char_level_up, seen, created_at)
+          VALUES($1,$2,$3,$4,1,$5,$6,$7,$8,0,$9)
+        `, [
+          c.user_id, boss.id, def.name || boss.name, def.bossKey || boss.boss_key,
+          JSON.stringify(cardDrops), JSON.stringify(eqDrops), JSON.stringify(matDropsFmt),
+          charLevelUp ? JSON.stringify(charLevelUp) : null,
+          Date.now(),
+        ]).catch(() => {});
+      }
+    }
+
+    const newBossQ = await pool.query(`SELECT * FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+    const dmgQ = await pool.query(`SELECT u.name, SUM(d.damage) as total FROM clan_boss_damage d JOIN users u ON u.id=d.user_id WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 10`, [boss.id]);
+
+    res.json({ ok: true, damage: finalDmg, rawStock: stock, isCrit, defeated, newHp, boss: newBossQ.rows[0] || null, leaderboard: dmgQ.rows });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    console.error("Raid attack error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
+});
+
+
+
+// GET /api/clan/raid/banner — bannière raid pour index et open5
+app.get("/api/clan/raid/banner", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.json({ active: false });
+
+    const now = Date.now();
+    const bQ = await pool.query(
+      `SELECT id, name, boss_key, hp_current, hp_max FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`,
+      [m.clan_id]
+    );
+    if (!bQ.rows.length) return res.json({ active: false });
+
+    const boss = bQ.rows[0];
+    const def = RAID_BOSSES[boss.boss_key] || RAID_BOSSES.arakas;
+
+    const topQ = await pool.query(
+      `SELECT u.name, SUM(d.damage) as total
+       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+       WHERE d.boss_id=$1 GROUP BY u.name ORDER BY total DESC LIMIT 3`,
+      [boss.id]
+    );
+
+    res.json({
+      active: true,
+      bossName: def.name,
+      hpPct: Math.round((boss.hp_current / boss.hp_max) * 100),
+      top3: topQ.rows.map(r => ({ name: r.name, total: Number(r.total) })),
+    });
+  } catch(e) { res.json({ active: false }); }
+});
+
+// GET /api/clan/raid/last — dernier raid terminé (vaincu ou échoué)
+app.get("/api/clan/raid/last", auth, async (req, res) => {
+  try {
+    const m = await getMyMembership(req.user.id);
+    if (!m) return res.status(403).json({ error: "Non membre" });
+
+    // Dernier raid terminé (defeated=1 ou failed=1)
+    const bQ = await pool.query(
+      `SELECT * FROM clan_boss WHERE clan_id=$1 AND (defeated=1 OR failed=1) ORDER BY id DESC LIMIT 1`,
+      [m.clan_id]
+    );
+    if (!bQ.rows.length) return res.json({ raid: null });
+
+    const boss = bQ.rows[0];
+    const def = RAID_BOSSES[boss.boss_key] || Object.values(RAID_BOSSES)[0];
+
+    // Dégâts par joueur
+    const dmgQ = await pool.query(
+      `SELECT u.name, u.avatar, SUM(d.damage) as total
+       FROM clan_boss_damage d JOIN users u ON u.id=d.user_id
+       WHERE d.boss_id=$1 GROUP BY u.name, u.avatar ORDER BY total DESC`,
+      [boss.id]
+    );
+
+    // Durée du raid (seulement si vaincu)
+    let durationMs = null;
+    if (Number(boss.defeated) === 1 && boss.defeated_at && boss.started_at) {
+      durationMs = Number(boss.defeated_at) - Number(boss.started_at);
+    }
+
+    const totalDmg = dmgQ.rows.reduce((acc, r) => acc + Number(r.total), 0);
+
+    res.json({
+      raid: {
+        bossName:  boss.name || def.name,
+        bossKey:   boss.boss_key,
+        image:     def.image,
+        defeated:  Number(boss.defeated) === 1,
+        durationMs,
+        startedAt:  Number(boss.started_at),
+        defeatedAt: boss.defeated_at ? Number(boss.defeated_at) : null,
+        hpMax:   boss.hp_max,
+        reward:  boss.reward,
+        players: dmgQ.rows.map(r => ({
+          name:   r.name,
+          avatar: r.avatar,
+          total:  Number(r.total),
+          pct:    totalDmg > 0 ? Math.round((Number(r.total) / totalDmg) * 100) : 0,
+        })),
+        totalDmg,
+        mvp: dmgQ.rows[0]?.name || null,
+      }
+    });
+  } catch(e) {
+    console.error("GET /api/clan/raid/last:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// ===========================
+// API PERSONNAGE
+// ===========================
+
+
+async function getEquipmentBonus(userId) {
+  const { rows } = await pool.query(
+    `SELECT equip_key, forge_level FROM player_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    [userId]
+  );
+
+  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0, clan_crit = 0;
+  for (const r of rows) {
+    const eq = EQUIPMENT[r.equip_key];
+    if (!eq) continue;
+    // Appliquer le multiplicateur de forge (+10% par niveau)
+    const forgeMult = 1 + ((r.forge_level || 0) * 0.10);
+    dmg_bonus    += Math.round((eq.dmg_bonus    || 0) * forgeMult * 10) / 10;
+    crit         += Math.round((eq.crit         || 0) * forgeMult * 10) / 10;
+    first_attack += Math.round((eq.first_attack || 0) * forgeMult * 10) / 10;
+    clan_dmg     += Math.round((eq.clan_dmg     || 0) * forgeMult * 10) / 10;
+    clan_crit    += Math.round((eq.clan_crit    || 0) * forgeMult * 10) / 10;
+  }
+  return { dmg_bonus, crit, first_attack, clan_dmg, clan_crit };
 }
 
-function renderPvpInventoryUI(d, wrap) {
-  const slots = ['weapon','armor','boots','head','ring'];
-  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol Vie%' };
+// GET /api/character — profil perso de l'utilisateur connecté
+app.get("/api/character", auth, async (req, res) => {
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    const lvl  = Number(char.char_level);
+    const xp   = Number(char.char_xp);
+    const xpCurrent = xp - charXpForLevel(lvl);
+    const xpNext = lvl < CHAR_MAX_LEVEL ? charXpForLevel(lvl + 1) - charXpForLevel(lvl) : 0;
+    const charClass = char.char_class || null;
+    const cls = CHAR_CLASSES[charClass] || null;
+
+    // Taux effectif par stat selon la classe
+    const rates = {
+      force:        statEffectiveRate('force',        charClass),
+      agilite:      statEffectiveRate('agilite',      charClass),
+      intelligence: statEffectiveRate('intelligence', charClass),
+      dexterite:    statEffectiveRate('dexterite',    charClass),
+    };
+
+    // Bonus d'équipement
+    const eqBonus = await getEquipmentBonus(req.user.id);
+
+    // Bonus stats perso
+    const statDmg        = Number(char.stat_force)        * rates.force;
+    const statCrit       = Number(char.stat_agilite)      * rates.agilite;
+    const statIntel      = Number(char.stat_intelligence) * rates.intelligence;
+    const statFirstAtk   = Number(char.stat_dexterite)    * rates.dexterite;
+
+    // Total cumulé (stats + passif classe + équipement)
+    const totalBonus = {
+      dmg_bonus:    Math.round((statDmg    + (cls?.passive_dmg_bonus   || 0) + eqBonus.dmg_bonus)    * 10) / 10,
+      crit:         Math.round((statCrit   + (cls?.passive_crit        || 0) + eqBonus.crit)          * 10) / 10,
+      clan_dmg:     Math.round((statIntel  + (cls?.passive_intel_bonus || 0) + eqBonus.clan_dmg)      * 10) / 10,
+      first_attack: Math.round((statFirstAtk + (cls?.passive_first_attack || 0) + eqBonus.first_attack) * 10) / 10,
+      clan_crit:    Math.round(eqBonus.clan_crit * 10) / 10,
+    };
+
+    res.json({
+      char_level: lvl,
+      char_xp:    xp,
+      xp_current_level: xpCurrent,
+      xp_for_next:      xpNext,
+      xp_pct: xpNext > 0 ? Math.min(100, Math.round((xpCurrent / xpNext) * 100)) : 100,
+      stat_force:        Number(char.stat_force),
+      stat_agilite:      Number(char.stat_agilite),
+      stat_intelligence: Number(char.stat_intelligence),
+      stat_dexterite:    Number(char.stat_dexterite),
+      points_available:  Number(char.points_available),
+      max_level: CHAR_MAX_LEVEL,
+      char_class: charClass,
+      class_label: cls?.label || null,
+      class_color: cls?.color || null,
+      class_desc:  cls?.desc  || null,
+      class_primary:   cls?.primary   || [],
+      class_secondary: cls?.secondary || [],
+      stat_rates: rates,
+      class_passive: cls ? {
+        dmg_bonus:    cls.passive_dmg_bonus,
+        crit:         cls.passive_crit,
+        clan_dmg:     cls.passive_intel_bonus,
+        first_attack: cls.passive_first_attack,
+      } : null,
+      classes_def: CHAR_CLASSES,
+      equipment_bonus: eqBonus,
+      total_bonus: totalBonus,
+      bonus_preview: {
+        dmg_bonus:    statDmg    + (cls?.passive_dmg_bonus   || 0),
+        crit:         statCrit   + (cls?.passive_crit        || 0),
+        clan_dmg:     statIntel  + (cls?.passive_intel_bonus || 0),
+        first_attack: statFirstAtk + (cls?.passive_first_attack || 0),
+      }
+    });
+  } catch(e) {
+    console.error("GET /api/character:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/class — choisir ou changer de classe
+app.post("/api/character/class", auth, async (req, res) => {
+  const CLASS_CHANGE_COST = 1000; // dollax pour changer (gratuit si pas encore de classe)
+  const newClass = req.body?.char_class;
+  if (!CHAR_CLASSES[newClass]) return res.status(400).json({ error: "Classe invalide" });
+
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    const alreadyHasClass = !!char.char_class;
+
+    if (alreadyHasClass && char.char_class === newClass) {
+      return res.status(400).json({ error: "Tu as déjà cette classe" });
+    }
+
+    if (alreadyHasClass) {
+      // Coût de changement
+      const userQ = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+      const money = Number(userQ.rows[0]?.money || 0);
+      if (money < CLASS_CHANGE_COST) {
+        return res.status(400).json({ error: `Changer de classe coûte ${CLASS_CHANGE_COST} dollax` });
+      }
+      await pool.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [CLASS_CHANGE_COST, req.user.id]);
+    }
+
+    await pool.query(`UPDATE player_character SET char_class=$1 WHERE user_id=$2`, [newClass, req.user.id]);
+    res.json({ ok: true, char_class: newClass, cost: alreadyHasClass ? CLASS_CHANGE_COST : 0 });
+  } catch(e) {
+    console.error("POST /api/character/class:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/allocate — dépenser un point dans une stat
+app.post("/api/character/allocate", auth, async (req, res) => {
+  const stat = req.body?.stat;
+  const validStats = ['stat_force', 'stat_agilite', 'stat_intelligence', 'stat_dexterite'];
+  if (!validStats.includes(stat)) return res.status(400).json({ error: "Stat invalide" });
+
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    if (Number(char.points_available) < 1) return res.status(400).json({ error: "Pas de points disponibles" });
+
+    await pool.query(
+      `UPDATE player_character SET ${stat}=${stat}+1, points_available=points_available-1 WHERE user_id=$1`,
+      [req.user.id]
+    );
+    const updated = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [req.user.id]);
+    const c = updated.rows[0];
+    res.json({
+      ok: true,
+      stat,
+      new_value: Number(c[stat]),
+      points_available: Number(c.points_available),
+    });
+  } catch(e) {
+    console.error("POST /api/character/allocate:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// POST /api/character/reset — réinitialiser les stats (coût : 500 dollax)
+app.post("/api/character/reset", auth, async (req, res) => {
+  const RESET_COST = 500;
+  try {
+    const char = await getOrCreateCharacter(req.user.id);
+    const userQ = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
+    const money = Number(userQ.rows[0]?.money || 0);
+    if (money < RESET_COST) return res.status(400).json({ error: `Reset coûte ${RESET_COST} dollax` });
+
+    const totalStats = Number(char.stat_force) + Number(char.stat_agilite) + Number(char.stat_intelligence) + Number(char.stat_dexterite);
+    const totalPoints = totalStats + Number(char.points_available);
+
+    await pool.query(`UPDATE users SET money=money-$1 WHERE id=$2`, [RESET_COST, req.user.id]);
+    await pool.query(`
+      UPDATE player_character
+      SET stat_force=0, stat_agilite=0, stat_intelligence=0, stat_dexterite=0, points_available=$1
+      WHERE user_id=$2
+    `, [totalPoints, req.user.id]);
+
+    res.json({ ok: true, points_available: totalPoints, cost: RESET_COST });
+  } catch(e) {
+    console.error("POST /api/character/reset:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// GET /api/clan/leaderboard
+app.get("/api/clan/leaderboard", auth, async (req, res) => {
+  const { rows } = await pool.query(`
+    SELECT c.id, c.name, c.tag, c.xp, c.level, c.banner_color,
+           (SELECT COUNT(*) FROM clan_members WHERE clan_id=c.id) as members,
+           u.name as leader_name
+    FROM clans c JOIN users u ON u.id=c.leader_id
+    ORDER BY c.xp DESC LIMIT 20
+  `);
+  res.json({ clans: rows });
+});
+
+// GET /api/clan/talents — talents du clan + infos niveau
+app.get("/api/clan/talents", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.status(403).json({ error: "Non membre" });
+
+  const cQ = await pool.query(`SELECT xp, level, talent_points FROM clans WHERE id=$1`, [m.clan_id]);
+  const clan = cQ.rows[0];
+
+  const talents = await getClanTalents(m.clan_id);
+
+  const currentLevel = Number(clan.level);
+  const nextLevelXp = xpForClanLevel(currentLevel);
+  let xpIntoLevel = Number(clan.xp);
+  for (let i = 1; i < currentLevel; i++) xpIntoLevel -= xpForClanLevel(i);
+
+  const talentDefs = Object.entries(TALENT_DEFS).map(([key, def]) => ({
+    key,
+    ...def,
+    currentLevel: talents[key] || 0,
+    costNext: def.costs[talents[key] || 0] || null,
+    maxReached: (talents[key] || 0) >= def.maxLevel,
+    currentBonus: key === 'dollax_bonus'
+      ? `+${(talents[key] || 0) * def.bonusPerLevel} dollax/15min`
+      : `Cooldown: ${Math.round((def.baseValue - (talents[key] || 0) * def.reductionPerLevel) / 60000)}min`,
+    nextBonus: (talents[key] || 0) < def.maxLevel ? (
+      key === 'dollax_bonus'
+        ? `+${((talents[key] || 0) + 1) * def.bonusPerLevel} dollax/15min`
+        : `Cooldown: ${Math.round((def.baseValue - ((talents[key] || 0) + 1) * def.reductionPerLevel) / 60000)}min`
+    ) : null,
+  }));
+
+  res.json({
+    clanLevel: currentLevel,
+    talentPoints: Number(clan.talent_points),
+    xpIntoLevel: Math.max(0, xpIntoLevel),
+    nextLevelXp,
+    talents: talentDefs,
+    myRole: m.role,
+  });
+});
+
+// POST /api/clan/talents/upgrade — dépenser un point de talent (meneur/officier)
+app.post("/api/clan/talents/upgrade", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || !['leader','officer'].includes(m.role)) return res.status(403).json({ error: "Meneur ou officier seulement" });
+
+  const key = String(req.body?.key || "");
+  const def = TALENT_DEFS[key];
+  if (!def) return res.status(400).json({ error: "Talent invalide" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const cQ = await client.query(`SELECT talent_points FROM clans WHERE id=$1 FOR UPDATE`, [m.clan_id]);
+    const points = Number(cQ.rows[0].talent_points);
+
+    const tQ = await client.query(`SELECT level FROM clan_talents WHERE clan_id=$1 AND talent_key=$2`, [m.clan_id, key]);
+    const currentTalentLevel = tQ.rows[0]?.level || 0;
+
+    if (currentTalentLevel >= def.maxLevel) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Niveau maximum atteint" });
+    }
+
+    const cost = def.costs[currentTalentLevel];
+    if (points < cost) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: `Pas assez de points (${cost} requis)` });
+    }
+
+    await client.query(`UPDATE clans SET talent_points=talent_points-$1 WHERE id=$2`, [cost, m.clan_id]);
+    await client.query(`
+      INSERT INTO clan_talents(clan_id, talent_key, level) VALUES($1,$2,1)
+      ON CONFLICT(clan_id, talent_key) DO UPDATE SET level=clan_talents.level+1
+    `, [m.clan_id, key]);
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch(e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally { client.release(); }
+});
+
+// =========================
+// CARTES DE RAID
+// =========================
+
+
+const DECK_R2 = "https://pub-027debf53a354fc0ba5821eb8ebb73c9.r2.dev";
+
+const RAID_CARDS = {
+  // ⚔️ SLAYER
+  slayer_1:  { key:'slayer_1',  name:'Lame Brute',          type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_1.png`,  dmg_bonus:5,  crit:0,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_2:  { key:'slayer_2',  name:'Rage Primaire',        type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_2.png`,  dmg_bonus:4,  crit:3,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_3:  { key:'slayer_3',  name:'Frappe Lourde',        type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_3.png`,  dmg_bonus:7,  crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_4:  { key:'slayer_4',  name:'Instinct Guerrier',    type:'slayer',  rarity:'common',    image:`${DECK_R2}/slayer_4.png`,  dmg_bonus:3,  crit:0,  first_attack:4,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_5:  { key:'slayer_5',  name:'Exécuteur',            type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_5.png`,  dmg_bonus:10, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_6:  { key:'slayer_6',  name:'Brise-Armure',         type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_6.png`,  dmg_bonus:8,  crit:0,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:'slayer_dmg_3' },
+  slayer_7:  { key:'slayer_7',  name:'Sang-Froid',           type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_7.png`,  dmg_bonus:6,  crit:6,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_8:  { key:'slayer_8',  name:'Cyclone de Lames',     type:'slayer',  rarity:'rare',      image:`${DECK_R2}/slayer_8.png`,  dmg_bonus:0,  crit:0,  first_attack:12, hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_9:  { key:'slayer_9',  name:'Déchireur',            type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_9.png`,  dmg_bonus:15, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_10: { key:'slayer_10', name:'Fureur Sauvage',       type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_10.png`, dmg_bonus:10, crit:8,  first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:null },
+  slayer_11: { key:'slayer_11', name:'Lame du Néant',        type:'slayer',  rarity:'epic',      image:`${DECK_R2}/slayer_11.png`, dmg_bonus:6,  crit:0,  first_attack:15, hp_threshold:50,   hp_above:true,  team_synergy:null },
+  slayer_12: { key:'slayer_12', name:'Dévastateur Éternel',  type:'slayer',  rarity:'legendary', image:`${DECK_R2}/slayer_12.png`, dmg_bonus:18, crit:24, first_attack:0,  hp_threshold:50,   hp_above:true,  team_synergy:null },
+
+  // 🛡️ SOUTIEN
+  soutien_1:  { key:'soutien_1',  name:'Bouclier Fragile',      type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_1.png`,  dmg_bonus:0,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'ally_dmg_2' },
+  soutien_2:  { key:'soutien_2',  name:'Cri de Guerre',          type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_2.png`,  dmg_bonus:1.5, crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_3:  { key:'soutien_3',  name:'Présence Apaisante',     type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_3.png`,  dmg_bonus:0,   crit:1.5, first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_crit' },
+  soutien_4:  { key:'soutien_4',  name:'Aura Protectrice',       type:'soutien', rarity:'common',    image:`${DECK_R2}/soutien_4.png`,  dmg_bonus:0,   crit:0,   first_attack:2.5, hp_threshold:null, hp_above:false, team_synergy:'clan_first_attack' },
+  soutien_5:  { key:'soutien_5',  name:'Stratège',               type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_5.png`,  dmg_bonus:3,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_6:  { key:'soutien_6',  name:'Amplificateur',          type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_6.png`,  dmg_bonus:0,   crit:2.5, first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_crit_2soutien' },
+  soutien_7:  { key:'soutien_7',  name:'Bannière de Gloire',     type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_7.png`,  dmg_bonus:4,   crit:0,   first_attack:0,   hp_threshold:50,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+  soutien_8:  { key:'soutien_8',  name:'Écho de Puissance',      type:'soutien', rarity:'rare',      image:`${DECK_R2}/soutien_8.png`,  dmg_bonus:2.5, crit:0,   first_attack:2.5, hp_threshold:null, hp_above:false, team_synergy:'clan_dmg_and_first' },
+  soutien_9:  { key:'soutien_9',  name:'Grand Stratège',         type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_9.png`,  dmg_bonus:5,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg' },
+  soutien_10: { key:'soutien_10', name:'Aura de Domination',     type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_10.png`, dmg_bonus:2.5, crit:3.5, first_attack:0,   hp_threshold:30,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+  soutien_11: { key:'soutien_11', name:'Lien Sacré',             type:'soutien', rarity:'epic',      image:`${DECK_R2}/soutien_11.png`, dmg_bonus:4,   crit:0,   first_attack:0,   hp_threshold:null, hp_above:false, team_synergy:'clan_dmg_slayer_assassin' },
+  soutien_12: { key:'soutien_12', name:"Gardien de l'Alliance",  type:'soutien', rarity:'legendary', image:`${DECK_R2}/soutien_12.png`, dmg_bonus:6,   crit:2.5, first_attack:0,   hp_threshold:20,   hp_above:false, team_synergy:'clan_dmg_low_hp' },
+
+  // 🗡️ ASSASSIN
+  assassin_1:  { key:'assassin_1',  name:'Frappe Éclair',        type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_1.png`,  dmg_bonus:0,  crit:0,  first_attack:8,  hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_2:  { key:'assassin_2',  name:'Ombre Furtive',        type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_2.png`,  dmg_bonus:4,  crit:0,  first_attack:4,  hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_3:  { key:'assassin_3',  name:'Lame Empoisonnée',     type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_3.png`,  dmg_bonus:4,  crit:3,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_4:  { key:'assassin_4',  name:'Instinct Chasseur',    type:'assassin', rarity:'common',    image:`${DECK_R2}/assassin_4.png`,  dmg_bonus:6,  crit:0,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_5:  { key:'assassin_5',  name:'Frappe Mortelle',      type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_5.png`,  dmg_bonus:0,  crit:6,  first_attack:10, hp_threshold:null, hp_above:false, team_synergy:null },
+  assassin_6:  { key:'assassin_6',  name:'Danse des Lames',      type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_6.png`,  dmg_bonus:8,  crit:0,  first_attack:8,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_7:  { key:'assassin_7',  name:'Ombre Tranchante',     type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_7.png`,  dmg_bonus:0,  crit:12, first_attack:0,  hp_threshold:null, hp_above:false, team_synergy:'crit_if_soutien' },
+  assassin_8:  { key:'assassin_8',  name:'Venin Corrosif',       type:'assassin', rarity:'rare',      image:`${DECK_R2}/assassin_8.png`,  dmg_bonus:10, crit:0,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_9:  { key:'assassin_9',  name:'Exécution Parfaite',   type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_9.png`,  dmg_bonus:0,  crit:8,  first_attack:15, hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_10: { key:'assassin_10', name:'Lame Fantôme',         type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_10.png`, dmg_bonus:12, crit:6,  first_attack:0,  hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_11: { key:'assassin_11', name:'Rupture',              type:'assassin', rarity:'epic',      image:`${DECK_R2}/assassin_11.png`, dmg_bonus:10, crit:0,  first_attack:10, hp_threshold:50,   hp_above:false, team_synergy:null },
+  assassin_12: { key:'assassin_12', name:'Ombre de la Mort',     type:'assassin', rarity:'legendary', image:`${DECK_R2}/assassin_12.png`, dmg_bonus:15, crit:12, first_attack:20, hp_threshold:50,   hp_above:false, team_synergy:null },
+};
+
+// Calcul des bonus du deck d'un joueur + synergies clan
+async function calcDeckBonus(userId, bossHpPct, clanId) {
+  const deckQ = await pool.query(
+    `SELECT card_key FROM player_raid_deck WHERE user_id=$1 ORDER BY slot`,
+    [userId]
+  );
+  const cards = deckQ.rows.map(r => RAID_CARDS[r.card_key]).filter(Boolean);
+
+  // Récupérer les decks des autres membres du clan
+  const allDecksQ = await pool.query(`
+    SELECT prd.card_key FROM player_raid_deck prd
+    JOIN clan_members cm ON cm.user_id = prd.user_id
+    WHERE cm.clan_id=$1 AND prd.user_id!=$2
+  `, [clanId, userId]);
+  const allyClanCards = allDecksQ.rows.map(r => RAID_CARDS[r.card_key]).filter(Boolean);
+  const allClanCards = [...cards, ...allyClanCards];
+
+  // Déterminer les types présents dans le clan
+  const clanTypes = new Set(allClanCards.map(c => c.type));
+  const soutienCount = allClanCards.filter(c => c.type === 'soutien').length;
+  const hasSoutienInClan = clanTypes.has('soutien');
+
+  let dmg_bonus = 0, crit = 0, first_attack = 0, clan_dmg = 0;
+
+  for (const card of cards) {
+    // Vérif condition HP
+    let conditionMet = true;
+    if (card.hp_threshold !== null) {
+      if (card.hp_above && bossHpPct <= card.hp_threshold) conditionMet = false;
+      if (!card.hp_above && bossHpPct >= card.hp_threshold) conditionMet = false;
+    }
+    if (!conditionMet) continue;
+
+    dmg_bonus += card.dmg_bonus || 0;
+    crit += card.crit || 0;
+    first_attack += card.first_attack || 0;
+  }
+
+  // Bonus des cartes Soutien des alliés (effets clan)
+  for (const card of allyClanCards) {
+    if (card.type !== 'soutien') continue;
+
+    let conditionMet = true;
+    if (card.hp_threshold !== null) {
+      if (card.hp_above && bossHpPct <= card.hp_threshold) conditionMet = false;
+      if (!card.hp_above && bossHpPct >= card.hp_threshold) conditionMet = false;
+    }
+    if (!conditionMet) continue;
+
+    switch(card.team_synergy) {
+      case 'clan_dmg':        dmg_bonus += card.dmg_bonus; break;
+      case 'clan_crit':       crit += card.crit; break;
+      case 'clan_first_attack': first_attack += card.first_attack; break;
+      case 'clan_dmg_low_hp': dmg_bonus += card.dmg_bonus; break;
+      case 'clan_dmg_and_first': dmg_bonus += card.dmg_bonus; first_attack += card.first_attack; break;
+      case 'ally_dmg_2':      dmg_bonus += 2; break;
+      case 'clan_dmg_slayer_assassin':
+        if (clanTypes.has('slayer') && clanTypes.has('assassin')) dmg_bonus += card.dmg_bonus;
+        break;
+      case 'clan_crit_2soutien':
+        crit += card.crit;
+        if (soutienCount >= 2) crit += 1.5;
+        break;
+    }
+  }
+
+  // Synergies propres à la carte du joueur
+  for (const card of cards) {
+    switch(card.team_synergy) {
+      case 'slayer_dmg_3':
+        const slayerCount = allClanCards.filter(c => c.type === 'slayer').length;
+        dmg_bonus += 3 * Math.max(0, slayerCount - 1);
+        break;
+      case 'crit_if_soutien':
+        if (hasSoutienInClan) crit += 5;
+        break;
+      case 'clan_dmg_slayer_assassin':
+        if (clanTypes.has('slayer') && clanTypes.has('assassin')) dmg_bonus += card.dmg_bonus;
+        break;
+    }
+  }
+
+  // === BONUS STATS PERSONNAGE ===
+  const charQ = await pool.query(`SELECT * FROM player_character WHERE user_id=$1`, [userId]);
+  const char = charQ.rows[0] || null;
+  const statBonus = charStatBonus(char, bossHpPct);
+  dmg_bonus    += statBonus.dmg_bonus || 0;
+  crit         += statBonus.crit      || 0;
+  first_attack += statBonus.first_attack || 0;
+  clan_dmg     += statBonus.clan_dmg  || 0; // Intelligence → DMG clan
+
+  // === BONUS ÉQUIPEMENT ===
+  const eqBonus = await getEquipmentBonus(userId);
+  dmg_bonus    += eqBonus.dmg_bonus;
+  crit         += eqBonus.crit;
+  first_attack += eqBonus.first_attack;
+  // clan_dmg et clan_crit s'appliquent comme bonus de soutien
+  dmg_bonus    += eqBonus.clan_dmg;
+  crit         += eqBonus.clan_crit;
+
+  // Fusionner clan_dmg dans dmg_bonus (les deux augmentent les dégâts perso)
+  dmg_bonus += clan_dmg;
+
+  return {
+    dmg_bonus: Math.round(dmg_bonus * 10) / 10,
+    crit: Math.round(crit * 10) / 10,
+    first_attack: Math.round(first_attack * 10) / 10,
+    cards,
+    charStatBonus: statBonus,
+    equipmentBonus: eqBonus,
+  };
+}
+
+// Appliquer les bonus au stock de dégâts
+function applyDeckToStock(stock, bonus, isFirstAttack) {
+  let dmg = stock;
+  let multiplier = 1 + (bonus.dmg_bonus / 100);
+  if (isFirstAttack) multiplier += (bonus.first_attack / 100);
+
+  dmg = Math.floor(dmg * multiplier);
+
+  // Crit
+  if (bonus.crit > 0 && Math.random() * 100 < bonus.crit) {
+    dmg = Math.floor(dmg * 2);
+    return { dmg, crit: true };
+  }
+  return { dmg, crit: false };
+}
+
+// Drop cartes après boss vaincu
+
+async function dropRaidCards(userId) {
+  // Récupérer les cartes déjà possédées
+  const owned = await pool.query(`SELECT DISTINCT card_key FROM player_raid_cards WHERE user_id=$1`, [userId]);
+  const ownedKeys = new Set(owned.rows.map(r => r.card_key));
+
+  const allKeys = Object.keys(RAID_CARDS);
+  const drops = [];
+
+  function pickRarity(rarity) {
+    const available = allKeys.filter(k => RAID_CARDS[k].rarity === rarity && !ownedKeys.has(k));
+    if (!available.length) return null; // toutes déjà possédées
+    return available[Math.floor(Math.random() * available.length)];
+  }
+
+  // 1 commune garantie (si pas déjà toutes possédées)
+  const common = pickRarity('common');
+  if (common) drops.push(common);
+
+  // 50% rare
+  if (Math.random() < 0.50) {
+    const rare = pickRarity('rare');
+    if (rare) drops.push(rare);
+  }
+  // 20% épique
+  if (Math.random() < 0.20) {
+    const epic = pickRarity('epic');
+    if (epic) drops.push(epic);
+  }
+  // 5% légendaire
+  if (Math.random() < 0.05) {
+    const leg = pickRarity('legendary');
+    if (leg) drops.push(leg);
+  }
+
+  const now = Date.now();
+  for (const key of drops) {
+    await pool.query(`INSERT INTO player_raid_cards(user_id, card_key, obtained_at) VALUES($1,$2,$3)`, [userId, key, now]);
+  }
+  return drops.map(k => RAID_CARDS[k]);
+}
+
+// =========================
+// ÉQUIPEMENT — ROUTES
+// =========================
+
+// ===================================================
+// FORGE
+// ===================================================
+const FORGE_GITHUB = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge';
+
+const MATERIALS = {
+  fer:     { key:'fer',    name:'Fer',            rarity:'common',    image:`${FORGE_GITHUB}/fer.png`,     desc:'Obtenu en détruisant un équipement Commun' },
+  azurite: { key:'azurite',name:'Azurite',        rarity:'rare',      image:`${FORGE_GITHUB}/azurite.png`, desc:'Obtenu en détruisant un équipement Rare' },
+  quartz:  { key:'quartz', name:'Quartz',         rarity:'epic',      image:`${FORGE_GITHUB}/quartz.png`,  desc:'Obtenu en détruisant un équipement Épique' },
+  topaze:  { key:'topaze', name:'Topaze',         rarity:'legendary', image:`${FORGE_GITHUB}/topaze.png`,  desc:'Obtenu en détruisant un équipement Légendaire' },
+};
+
+// Matériau requis selon rareté de l'item + coût dollax + taux réussite par forge level
+function forgeRequirements(rarity, forgeLevel) {
+  const next = forgeLevel + 1;
+
+  // Matériau = rareté de l'item
+  const matKey = { common:'fer', rare:'azurite', epic:'quartz', legendary:'topaze' }[rarity] || 'fer';
+
+  // Quantité croissante avec le niveau (1-5 → 1-5 mat, 6-10 → 2-6 mat, 11-15 → 3-7 mat)
+  const matQty = Math.ceil(next / 3);
+
+  // Coût et taux de réussite selon le palier de forge
+  let cost, successRate;
+  if (next <= 5)       { cost = 200 * next;               successRate = 100; }
+  else if (next <= 9)  { cost = 1250 + 500 * (next - 5);  successRate = 75;  }
+  else if (next <= 12) { cost = 5000 + 1250 * (next - 10);successRate = 50;  }
+  else                 { cost = 10000 + 2000 * (next - 13);successRate = 25;  }
+
+  return { matKey, matQty, cost, successRate };
+}
+
+// Destruction : matériaux obtenus selon rareté
+function destroyYield(rarity) {
+  const map = { common:'fer', rare:'azurite', epic:'quartz', legendary:'topaze' };
+  const qty = rarity === 'legendary' ? 1 : rarity === 'epic' ? 1 : rarity === 'rare' ? 2 : 2;
+  return { matKey: map[rarity] || 'fer', qty };
+}
+
+// Calcul des stats forgées (+10% des stats de base par niveau, ×2.5 à +15)
+function forgedStats(def, forgeLevel) {
+  const mult = 1 + (forgeLevel * 0.10);
+  return {
+    dmg_bonus:    Math.round(def.dmg_bonus    * mult * 10) / 10,
+    crit:         Math.round(def.crit         * mult * 10) / 10,
+    first_attack: Math.round(def.first_attack * mult * 10) / 10,
+    clan_dmg:     Math.round(def.clan_dmg     * mult * 10) / 10,
+    clan_crit:    Math.round(def.clan_crit    * mult * 10) / 10,
+  };
+}
+
+// GET /api/forge — inventaire + matériaux
+app.get("/api/forge", auth, async (req, res) => {
+  try {
+    const [eqQ, matQ] = await Promise.all([
+      pool.query(`SELECT id, equip_key, forge_level, equipped_slot FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`, [req.user.id]),
+      pool.query(`SELECT mat_key, quantity FROM player_materials WHERE user_id=$1`, [req.user.id]),
+    ]);
+    const inventory = eqQ.rows.map(r => {
+      const def = EQUIPMENT[r.equip_key] || {};
+      return { id: r.id, equip_key: r.equip_key, forge_level: r.forge_level || 0, equipped_slot: r.equipped_slot, ...def, ...forgedStats(def, r.forge_level || 0) };
+    });
+    const materials = {};
+    for (const m of matQ.rows) materials[m.mat_key] = parseInt(m.quantity);
+    res.json({ inventory, materials, materialDefs: Object.values(MATERIALS) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/forge/upgrade — améliorer un item
+app.post("/api/forge/upgrade", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const itemId = parseInt(req.body?.id) || 0;
+    const userId = req.user.id;
+
+    const itemQ = await client.query(`SELECT id, equip_key, forge_level FROM player_equipment WHERE id=$1 AND user_id=$2`, [itemId, userId]);
+    const item = itemQ.rows[0];
+    if (!item) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+
+    const forgeLevel = item.forge_level || 0;
+    if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau maximum atteint !" }); }
+
+    const def = EQUIPMENT[item.equip_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+
+    const { matKey, matQty, cost, successRate } = forgeRequirements(def.rarity, forgeLevel);
+
+    // Vérifier matériaux
+    const matQ = await client.query(`SELECT quantity FROM player_materials WHERE user_id=$1 AND mat_key=$2`, [userId, matKey]);
+    const owned = parseInt(matQ.rows[0]?.quantity || 0);
+    if (owned < matQty) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Il te faut ${matQty} ${MATERIALS[matKey]?.name} (tu en as ${owned})` }); }
+
+    // Vérifier dollax
+    const userQ = await client.query(`SELECT money FROM users WHERE id=$1`, [userId]);
+    if (Number(userQ.rows[0]?.money || 0) < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Il te faut ${cost} dollax` }); }
+
+    // Déduire matériaux + dollax
+    await client.query(`UPDATE player_materials SET quantity = quantity - $1 WHERE user_id=$2 AND mat_key=$3`, [matQty, userId, matKey]);
+    await client.query(`UPDATE users SET money = money - $1 WHERE id=$2`, [cost, userId]);
+
+    // Jet de chance
+    const success = Math.random() * 100 < successRate;
+    if (success) {
+      await client.query(`UPDATE player_equipment SET forge_level = forge_level + 1 WHERE id=$1`, [itemId]);
+    }
+
+    await client.query('COMMIT');
+    const newLevel = success ? forgeLevel + 1 : forgeLevel;
+    res.json({ ok: true, success, newLevel, itemId });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// POST /api/forge/destroy — détruire un item pour matériaux
+app.post("/api/forge/destroy", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const itemId = parseInt(req.body?.id) || 0;
+    const userId = req.user.id;
+
+    const itemQ = await client.query(`SELECT id, equip_key, equipped_slot FROM player_equipment WHERE id=$1 AND user_id=$2`, [itemId, userId]);
+    const item = itemQ.rows[0];
+    if (!item) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+    if (item.equipped_slot) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Déséquipe l'item avant de le détruire !" }); }
+
+    const def = EQUIPMENT[item.equip_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+
+    const { matKey, qty } = destroyYield(def.rarity);
+
+    await client.query(`DELETE FROM player_equipment WHERE id=$1`, [itemId]);
+    await client.query(`
+      INSERT INTO player_materials(user_id, mat_key, quantity) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, mat_key) DO UPDATE SET quantity = player_materials.quantity + $3
+    `, [userId, matKey, qty]);
+
+    await client.query('COMMIT');
+    res.json({ ok: true, matKey, qty, matName: MATERIALS[matKey]?.name });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// ===================================================
+// GET /api/equipment — inventaire + équipés
+app.get("/api/equipment", auth, async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT id, equip_key, obtained_at, equipped_slot, forge_level FROM player_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
+    [req.user.id]
+  );
+
+  // Construire l'inventaire avec les données du catalogue
+  const inventory = rows.map(r => ({
+    id: r.id,
+    equip_key: r.equip_key,
+    equipped_slot: r.equipped_slot,
+    obtained_at: Number(r.obtained_at),
+    ...(EQUIPMENT[r.equip_key] || { name: r.equip_key, rarity: 'common', slot: 'weapon' }),
+    forge_level: r.forge_level || 0,
+  }));
 
   // Slots équipés
-  const equippedHtml = slots.map(slot => {
-    const item = d.equipped[slot];
-    const slotIcon = { weapon:'⚔️', armor:'🛡️', boots:'👢', head:'🪖', ring:'💍' }[slot];
-    if (!item) return `<div style="width:60px;height:60px;border:2px dashed rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;opacity:.4">${slotIcon}</div>`;
-    const col = rarityColor[item.rarity] || '#aaa';
-    const fl  = item.forge_level || 0;
-    return `<div onclick="showPvpItemDetail(${item.id})" style="width:60px;height:60px;border:2px solid ${col};border-radius:10px;cursor:pointer;position:relative;overflow:hidden;background:rgba(255,255,255,.06)">
-      <img src="${esc(item.image||'')}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">
-      ${fl>0?`<div style="position:absolute;bottom:0;right:0;font-size:9px;font-weight:900;background:#000;color:${fl>=15?'#ff44aa':fl>=12?'#ffd84d':fl>=9?'#c084ff':'#4da6ff'};padding:1px 3px;border-radius:3px 0 0 0">+${fl}</div>`:''}
-    </div>`;
-  }).join('');
-
-  // Inventaire
-  const invHtml = d.inventory.filter(i => !i.equipped_slot).map(item => {
-    const col = rarityColor[item.rarity] || '#aaa';
-    const fl  = item.forge_level || 0;
-    const mainStats = Object.entries(statLabels)
-      .filter(([s]) => (item[s]||0) > 0)
-      .slice(0,2)
-      .map(([s,l]) => `${l}:+${item[s]}`)
-      .join(' ');
-    return `<div onclick="showPvpItemDetail(${item.id})" style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid ${col}33;cursor:pointer;margin-bottom:6px;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='rgba(255,255,255,.04)'">
-      <img src="${esc(item.image||'')}" style="width:36px;height:36px;object-fit:contain;border-radius:6px" onerror="this.style.display='none'">
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:700;color:${col}">${esc(item.name||item.item_key)} ${fl>0?`<span style="font-size:10px">+${fl}</span>`:''}</div>
-        <div style="font-size:10px;opacity:.5">${mainStats}</div>
-      </div>
-      <button onclick="event.stopPropagation();equipPvpItem(${item.id})" style="padding:4px 8px;border:none;border-radius:6px;background:#7f5cff;color:#fff;font-size:10px;font-weight:700;cursor:pointer">Équiper</button>
-    </div>`;
-  }).join('');
-
-  wrap.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">${equippedHtml}</div>
-    ${d.inventory.filter(i=>!i.equipped_slot).length ? invHtml : '<div style="font-size:12px;opacity:.4;text-align:center">Inventaire vide — gagne des coffres en combat !</div>'}`;
-}
-
-function showPvpItemDetail(itemId) {
-  const item = _pvpInventory?.inventory?.find(i => i.id === itemId);
-  if (!item) return;
-  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-  const statLabels = { atk:'Attaque', def:'Défense', hp:'PV', speed:'Vitesse', crit_pct:'Crit %', crit_dmg:'Dégâts Crit %', dodge:'Esquive %', lifesteal:'Vol de vie %' };
-  const col = rarityColor[item.rarity] || '#aaa';
-  const fl  = item.forge_level || 0;
-  const nextCost = fl < 15 ? pvpForgeCostClient(item.rarity, fl) : null;
-  const isMilestone = fl < 15 && [2,5,8,11,14].includes(fl); // prochain palier
-
-  const statsHtml = Object.entries(statLabels)
-    .filter(([s]) => (item[s]||0) > 0)
-    .map(([s,l]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="opacity:.6">${l}</span><span style="font-weight:700;color:${col}">+${item[s]}</span></div>`)
-    .join('');
-
-  const extraHtml = Object.entries(item.extra_stats||{}).map(([s,v]) =>
-    `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="opacity:.6">${statLabels[s]||s} <span style="color:#ffd84d;font-size:9px">FORGE</span></span><span style="font-weight:700;color:#ffd84d">+${v}</span></div>`
-  ).join('');
-
-  const forgeBtn = nextCost !== null
-    ? `<button onclick="forgePvpItem(${item.id})" style="width:100%;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px">
-        ⚒️ Améliorer +${fl+1} — ${nextCost} Or
-        ${isMilestone ? '<div style="font-size:10px;opacity:.8">⭐ Nouvelle ligne de stat au prochain palier !</div>' : ''}
-      </button>`
-    : `<div style="text-align:center;font-size:12px;opacity:.4">Niveau maximum atteint (+15)</div>`;
-
-  const equipBtn = item.equipped_slot
-    ? `<button onclick="unequipPvpItem(${item.id})" style="width:100%;padding:8px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;cursor:pointer;margin-bottom:8px">Déséquiper</button>`
-    : `<button onclick="equipPvpItem(${item.id})" style="width:100%;padding:8px;border:none;border-radius:10px;background:#7f5cff;color:#fff;font-weight:700;cursor:pointer;margin-bottom:8px">Équiper</button>`;
-
-  // Créer/afficher un modal simple
-  let modal = document.getElementById('pvp-item-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'pvp-item-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-    modal.onclick = e => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
+  const equipped = {};
+  for (const item of inventory) {
+    if (item.equipped_slot) equipped[item.equipped_slot] = item;
   }
-  modal.innerHTML = `<div style="background:#0d0e1f;border:1px solid ${col};border-radius:16px;padding:20px;width:min(340px,95vw);max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-weight:900;color:${col}">${esc(item.name||item.item_key)}</div>
-      <button onclick="document.getElementById('pvp-item-modal').remove()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer">✕</button>
-    </div>
-    <div style="text-align:center;font-size:11px;color:${col};margin-bottom:10px">${item.rarity?.toUpperCase()} • +${fl} Forge</div>
-    <img src="${esc(item.image||'')}" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 12px" onerror="this.style.display='none'">
-    <div style="margin-bottom:10px">${statsHtml}${extraHtml}</div>
-    ${equipBtn}
-    ${forgeBtn}
-  </div>`;
+
+  res.setHeader('Cache-Control', 'private, max-age=15');
+  res.json({ inventory, equipped, catalogue: Object.values(EQUIPMENT) });
+});
+
+// POST /api/equipment/equip — équiper ou déséquiper
+app.post("/api/equipment/equip", auth, async (req, res) => {
+  const itemId = Number(req.body?.id || 0) | 0;
+  const unequip = req.body?.unequip === true;
+
+  if (!itemId) return res.status(400).json({ error: "Missing id" });
+
+  // Vérifier que l'item appartient au joueur
+  const itemQ = await pool.query(
+    `SELECT id, equip_key, equipped_slot FROM player_equipment WHERE id=$1 AND user_id=$2`,
+    [itemId, req.user.id]
+  );
+  const item = itemQ.rows[0];
+  if (!item) return res.status(404).json({ error: "Item introuvable" });
+
+  const def = EQUIPMENT[item.equip_key];
+  if (!def) return res.status(400).json({ error: "Item invalide" });
+
+  if (unequip) {
+    // Déséquiper
+    await pool.query(`UPDATE player_equipment SET equipped_slot=NULL WHERE id=$1`, [itemId]);
+    return res.json({ ok: true, action: 'unequipped' });
+  }
+
+  // Déséquiper l'item déjà en place sur ce slot
+  await pool.query(
+    `UPDATE player_equipment SET equipped_slot=NULL WHERE user_id=$1 AND equipped_slot=$2`,
+    [req.user.id, def.slot]
+  );
+
+  // Équiper le nouvel item
+  await pool.query(
+    `UPDATE player_equipment SET equipped_slot=$1 WHERE id=$2`,
+    [def.slot, itemId]
+  );
+
+  res.json({ ok: true, action: 'equipped', slot: def.slot });
+});
+
+// Helper : récupère les bonus d'équipement d'un joueur
+
+// GET /api/raid/cards — inventaire + deck du joueur
+app.get("/api/raid/cards", auth, async (req, res) => {
+  const [cardsQ, deckQ] = await Promise.all([
+    pool.query(`SELECT id, card_key, obtained_at FROM player_raid_cards WHERE user_id=$1 ORDER BY obtained_at DESC`, [req.user.id]),
+    pool.query(`SELECT slot, card_key FROM player_raid_deck WHERE user_id=$1 ORDER BY slot`, [req.user.id]),
+  ]);
+
+  const cards = cardsQ.rows.map(r => ({ id: r.id, ...RAID_CARDS[r.card_key], obtained_at: r.obtained_at })).filter(r => r.key);
+  const deck = Array(5).fill(null);
+  deckQ.rows.forEach(r => { deck[r.slot - 1] = { slot: r.slot, ...RAID_CARDS[r.card_key] }; });
+
+  res.json({ cards, deck, catalogue: Object.values(RAID_CARDS) });
+});
+
+// POST /api/raid/deck — mettre une carte dans le deck
+app.post("/api/raid/deck", auth, async (req, res) => {
+  const slot = Number(req.body?.slot);
+  const cardKey = String(req.body?.card_key || "");
+
+  if (slot < 1 || slot > 5) return res.status(400).json({ error: "Slot invalide (1-5)" });
+
+  // Vérifier que le joueur possède la carte
+  if (cardKey) {
+    const owns = await pool.query(`SELECT id FROM player_raid_cards WHERE user_id=$1 AND card_key=$2 LIMIT 1`, [req.user.id, cardKey]);
+    if (!owns.rows.length) return res.status(400).json({ error: "Tu ne possèdes pas cette carte" });
+
+    const card = RAID_CARDS[cardKey];
+    if (!card) return res.status(400).json({ error: "Carte invalide" });
+
+    // Max 1 légendaire par deck
+    if (card.rarity === 'legendary') {
+      const deckQ = await pool.query(`SELECT card_key FROM player_raid_deck WHERE user_id=$1`, [req.user.id]);
+      const hasLeg = deckQ.rows.some(r => r.card_key !== cardKey && RAID_CARDS[r.card_key]?.rarity === 'legendary');
+      if (hasLeg) return res.status(400).json({ error: "1 légendaire max par deck !" });
+    }
+
+    // Pas de doublon dans le deck
+    const dupQ = await pool.query(`SELECT slot FROM player_raid_deck WHERE user_id=$1 AND card_key=$2 AND slot!=$3`, [req.user.id, cardKey, slot]);
+    if (dupQ.rows.length) return res.status(400).json({ error: "Cette carte est déjà dans ton deck !" });
+
+    await pool.query(`
+      INSERT INTO player_raid_deck(user_id, slot, card_key) VALUES($1,$2,$3)
+      ON CONFLICT(user_id, slot) DO UPDATE SET card_key=$3
+    `, [req.user.id, slot, cardKey]);
+  } else {
+    // Vider le slot
+    await pool.query(`DELETE FROM player_raid_deck WHERE user_id=$1 AND slot=$2`, [req.user.id, slot]);
+  }
+
+  res.json({ ok: true });
+});
+
+// GET /api/raid/bonus — bonus actifs du deck pour le raid en cours
+app.get("/api/raid/bonus", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m) return res.json({ bonus: null, noClan: true });
+
+  const bQ = await pool.query(`SELECT hp_current, hp_max FROM clan_boss WHERE clan_id=$1 AND defeated=0 AND failed=0 ORDER BY id DESC LIMIT 1`, [m.clan_id]);
+  const boss = bQ.rows[0];
+  const hpPct = boss ? Math.round((boss.hp_current / boss.hp_max) * 100) : 100;
+
+  const bonus = await calcDeckBonus(req.user.id, hpPct, m.clan_id);
+  res.json({ bonus, hpPct });
+});
+
+// Hook: progresser missions quand on ouvre des cartes
+// Appelé depuis /api/open et /api/open_multi
+
+// POST /api/clan/dissolve — dissoudre le clan (meneur seulement)
+app.post("/api/clan/dissolve", auth, async (req, res) => {
+  const m = await getMyMembership(req.user.id);
+  if (!m || m.role !== 'leader') return res.status(403).json({ error: "Meneur seulement" });
+
+  const confirm = String(req.body?.confirm || "");
+  if (confirm !== "DISSOUDRE") return res.status(400).json({ error: "Confirmation invalide" });
+
+  try {
+    // Cascade supprime tout grâce aux ON DELETE CASCADE
+    await pool.query(`DELETE FROM clans WHERE id=$1`, [m.clan_id]);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error("Dissolve clan error:", e);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+
+// =========================
+// PVP — ÉNERGIE
+// =========================
+
+const PVP_ENERGY_MAX      = 100;
+const PVP_ENERGY_PER_DUEL = 10;
+const PVP_ENERGY_REGEN_MS = 60 * 60 * 1000; // +10 par heure
+
+async function getPvpEnergy(userId) {
+  const r = await pool.query(
+    `SELECT pvp_energy, pvp_energy_last_refill FROM users WHERE id=$1`, [userId]
+  );
+  if (!r.rows.length) return { energy: PVP_ENERGY_MAX, lastRefill: Date.now() };
+  let energy     = Number(r.rows[0].pvp_energy ?? PVP_ENERGY_MAX);
+  let lastRefill = Number(r.rows[0].pvp_energy_last_refill ?? Date.now());
+  const tranches = Math.floor((Date.now() - lastRefill) / PVP_ENERGY_REGEN_MS);
+  if (tranches > 0) {
+    energy = Math.min(PVP_ENERGY_MAX, energy + tranches * PVP_ENERGY_PER_DUEL);
+    lastRefill += tranches * PVP_ENERGY_REGEN_MS;
+    await pool.query(
+      `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`,
+      [energy, lastRefill, userId]
+    );
+  }
+  return { energy, lastRefill };
 }
 
-function pvpForgeCostClient(rarity, forgeLevel) {
-  const next = forgeLevel + 1;
-  const base = { common:15, rare:35, epic:80, legendary:200 }[rarity] || 15;
-  const mult = next<=3?1:next<=6?2:next<=9?3:next<=12?5:8;
+async function consumePvpEnergy(userId) {
+  const { energy, lastRefill } = await getPvpEnergy(userId);
+  if (energy < PVP_ENERGY_PER_DUEL)
+    throw new Error(`⚡ Énergie insuffisante — il te faut ${PVP_ENERGY_PER_DUEL} points (tu en as ${energy}).`);
+  await pool.query(
+    `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`,
+    [energy - PVP_ENERGY_PER_DUEL, lastRefill, userId]
+  );
+}
+
+// GET /api/pvp/energy
+app.get("/api/pvp/energy", auth, async (req, res) => {
+  try {
+    const { energy, lastRefill } = await getPvpEnergy(req.user.id);
+    res.json({ energy, lastRefill, max: PVP_ENERGY_MAX, costPerDuel: PVP_ENERGY_PER_DUEL });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// =========================
+// PVP — SYSTÈME DE RANG
+// =========================
+
+const PVP_RANKS = [
+  { name: 'Bronze',   min: 0,    max: 1199, color: '#cd7f32', icon: '🥉' },
+  { name: 'Argent',   min: 1200, max: 1399, color: '#aaa',    icon: '🥈' },
+  { name: 'Or',       min: 1400, max: 1599, color: '#ffd84d', icon: '🥇' },
+  { name: 'Platine',  min: 1600, max: 1799, color: '#4da6ff', icon: '💠' },
+  { name: 'Diamant',  min: 1800, max: 1999, color: '#c084ff', icon: '💎' },
+  { name: 'Maître',   min: 2000, max: 9999, color: '#ff6464', icon: '👑' },
+];
+
+function getRankInfo(pts) {
+  return PVP_RANKS.find(r => pts >= r.min && pts <= r.max) || PVP_RANKS[0];
+}
+
+// Calcul ELO — K variable selon écart de rang
+// Faible bat fort → gagne beaucoup | Fort bat faible → gagne peu
+function calcElo(winnerRank, loserRank) {
+  const diff = Math.abs(winnerRank - loserRank);
+  const K = diff >= 400 ? 48 : diff >= 200 ? 40 : diff >= 100 ? 36 : 32;
+  const expected = 1 / (1 + Math.pow(10, (loserRank - winnerRank) / 400));
+  return Math.round(K * (1 - expected));
+}
+
+// Reset mensuel : perd max 2 rangs (200 pts par rang)
+async function monthlyRankReset() {
+  const users = await pool.query(`SELECT id, pvp_rank FROM users WHERE pvp_rank > 1000`);
+  for (const u of users.rows) {
+    const rank = Number(u.pvp_rank);
+    const rankIdx = PVP_RANKS.findIndex(r => rank >= r.min && rank <= r.max);
+    const targetIdx = Math.max(0, rankIdx - 2);
+    const newRank = Math.max(PVP_RANKS[targetIdx].min, rank - 400);
+    await pool.query(`UPDATE users SET pvp_rank=$1, pvp_wins=0, pvp_losses=0 WHERE id=$2`, [newRank, u.id]);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEME PVP SEPARE — Items, Forge, Coffres, Stats
+// ═══════════════════════════════════════════════════════════
+
+function pvpXpForLevel(lvl) {
+  return Math.floor(100 * Math.pow(lvl, 1.6));
+}
+
+function pvpStatBonus(char) {
+  const force  = Number(char.pvp_stat_force       || 5);
+  const agi    = Number(char.pvp_stat_agilite     || 5);
+  const intel  = Number(char.pvp_stat_intelligence|| 5);
+  const dex    = Number(char.pvp_stat_dexterite   || 5);
+  return {
+    atk:      force  * 3,
+    hp:       force  * 20,
+    speed:    agi    * 2 + dex * 1,
+    dodge:    agi    * 0.8,
+    crit_pct: intel  * 0.6,
+    crit_dmg: intel  * 1.0,
+    lifesteal:dex    * 0.3,
+    def:      0,
+  };
+}
+
+// ── Items PVP ──
+const PVP_ITEMS = {
+  // ─── COMMUNS ───
+  pvp_sword_c:  { key:'pvp_sword_c',  name:'Épée Rouillée',          slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/sword1.png`,      atk:12, def:0,  hp:0,   speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_dagger_c: { key:'pvp_dagger_c', name:'Dague Ébréchée',          slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/dagger1.png`,     atk:6,  def:0,  hp:0,   speed:3,  crit_pct:2,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_staff_c:  { key:'pvp_staff_c',  name:'Bâton Fendu',             slot:'weapon', rarity:'common',    image:`${EQ_R2}/commun/staff1.png`,      atk:8,  def:0,  hp:20,  speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor_c:  { key:'pvp_armor_c',  name:'Tunique Usée',            slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor1.png`,      atk:0,  def:8,  hp:40,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor2_c: { key:'pvp_armor2_c', name:'Plastron de Fer',         slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor3.png`,      atk:0,  def:12, hp:20,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_armor3_c: { key:'pvp_armor3_c', name:'Robe du Disciple',        slot:'armor',  rarity:'common',    image:`${EQ_R2}/commun/armor2.png`,      atk:0,  def:5,  hp:30,  speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_boots_c:  { key:'pvp_boots_c',  name:'Bottes Rafistolées',      slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/Botte1.png`,      atk:0,  def:0,  hp:0,   speed:5,  crit_pct:0,   crit_dmg:0,   dodge:2,  lifesteal:0 },
+  pvp_boots2_c: { key:'pvp_boots2_c', name:'Chaussons du Sage',       slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte2.png`,      atk:0,  def:2,  hp:15,  speed:3,  crit_pct:0,   crit_dmg:0,   dodge:1,  lifesteal:0 },
+  pvp_boots3_c: { key:'pvp_boots3_c', name:'Bottes du Marcheur',      slot:'boots',  rarity:'common',    image:`${EQ_R2}/commun/botte3.png`,      atk:0,  def:0,  hp:0,   speed:6,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm_c:   { key:'pvp_helm_c',   name:'Casque Cabossé',          slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head1.png`,       atk:0,  def:6,  hp:30,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm2_c:  { key:'pvp_helm2_c',  name:'Chapeau du Mage',         slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head2.png`,       atk:0,  def:3,  hp:20,  speed:0,  crit_pct:2,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm3_c:  { key:'pvp_helm3_c',  name:'Heaume du Guerrier',      slot:'head',   rarity:'common',    image:`${EQ_R2}/commun/head3.png`,       atk:4,  def:5,  hp:10,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_ring_c:   { key:'pvp_ring_c',   name:'Anneau Terne',            slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring1.png`,       atk:4,  def:0,  hp:0,   speed:0,  crit_pct:1,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_ring2_c:  { key:'pvp_ring2_c',  name:'Anneau de Clairvoyance',  slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring2.png`,       atk:0,  def:0,  hp:20,  speed:2,  crit_pct:0,   crit_dmg:0,   dodge:1,  lifesteal:0 },
+  pvp_ring3_c:  { key:'pvp_ring3_c',  name:"Anneau d'Argent",        slot:'ring',   rarity:'common',    image:`${EQ_R2}/commun/ring3.png`,       atk:2,  def:2,  hp:10,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  // ─── RARES ───
+  pvp_sword_r:  { key:'pvp_sword_r',  name:'Lame du Dueliste',        slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/sword1.png`,        atk:22, def:0,  hp:0,   speed:0,  crit_pct:3,   crit_dmg:10,  dodge:0,  lifesteal:0 },
+  pvp_dagger_r: { key:'pvp_dagger_r', name:'Croc de Vipère',          slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/dagger1.png`,       atk:14, def:0,  hp:0,   speed:6,  crit_pct:5,   crit_dmg:15,  dodge:0,  lifesteal:0 },
+  pvp_staff_r:  { key:'pvp_staff_r',  name:'Sceptre des Marées',      slot:'weapon', rarity:'rare',      image:`${EQ_R2}/rare/staff1.png`,        atk:12, def:0,  hp:30,  speed:0,  crit_pct:2,   crit_dmg:8,   dodge:0,  lifesteal:2 },
+  pvp_armor_r:  { key:'pvp_armor_r',  name:'Cuirasse du Rôdeur',      slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor1.png`,        atk:0,  def:16, hp:80,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_armor2_r: { key:'pvp_armor2_r', name:'Robe des Anciens',        slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor2.png`,        atk:0,  def:10, hp:60,  speed:0,  crit_pct:3,   crit_dmg:0,   dodge:0,  lifesteal:2 },
+  pvp_armor3_r: { key:'pvp_armor3_r', name:'Cuirasse du Conquérant',  slot:'armor',  rarity:'rare',      image:`${EQ_R2}/rare/armor3.png`,        atk:0,  def:22, hp:50,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_boots_r:  { key:'pvp_boots_r',  name:'Bottes du Chasseur',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte1r.png`,       atk:0,  def:0,  hp:0,   speed:10, crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_boots2_r: { key:'pvp_boots2_r', name:'Bottes du Héraut',        slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte2r.png`,       atk:0,  def:4,  hp:30,  speed:7,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_boots3_r: { key:'pvp_boots3_r', name:'Grèves de Fer Noir',      slot:'boots',  rarity:'rare',      image:`${EQ_R2}/rare/botte3r.png`,       atk:4,  def:6,  hp:0,   speed:5,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:0 },
+  pvp_helm_r:   { key:'pvp_helm_r',   name:'Masque du Fantôme',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head1.png`,         atk:0,  def:10, hp:40,  speed:0,  crit_pct:4,   crit_dmg:0,   dodge:2,  lifesteal:0 },
+  pvp_helm2_r:  { key:'pvp_helm2_r',  name:'Capuche du Druide',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head2.png`,         atk:0,  def:6,  hp:50,  speed:0,  crit_pct:2,   crit_dmg:10,  dodge:0,  lifesteal:0 },
+  pvp_helm3_r:  { key:'pvp_helm3_r',  name:'Heaume du Paladin',       slot:'head',   rarity:'rare',      image:`${EQ_R2}/rare/head3.png`,         atk:0,  def:14, hp:60,  speed:0,  crit_pct:0,   crit_dmg:0,   dodge:0,  lifesteal:2 },
+  pvp_ring_r:   { key:'pvp_ring_r',   name:'Anneau de Feu',           slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring1.png`,         atk:10, def:0,  hp:0,   speed:0,  crit_pct:4,   crit_dmg:12,  dodge:0,  lifesteal:0 },
+  pvp_ring2_r:  { key:'pvp_ring2_r',  name:'Anneau du Crépuscule',    slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring2.png`,         atk:0,  def:4,  hp:30,  speed:3,  crit_pct:0,   crit_dmg:0,   dodge:3,  lifesteal:0 },
+  pvp_ring3_r:  { key:'pvp_ring3_r',  name:'Anneau Mystique',         slot:'ring',   rarity:'rare',      image:`${EQ_R2}/rare/ring3.png`,         atk:5,  def:0,  hp:20,  speed:0,  crit_pct:2,   crit_dmg:8,   dodge:0,  lifesteal:1 },
+  // ─── ÉPIQUES ───
+  pvp_sword_e:  { key:'pvp_sword_e',  name:'Lame des Runes',          slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/sword1.png`,        atk:35, def:0,  hp:0,   speed:0,  crit_pct:5,   crit_dmg:20,  dodge:0,  lifesteal:3 },
+  pvp_dagger_e: { key:'pvp_dagger_e', name:"Pointe de l'Éclipse",    slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/dagger1.png`,       atk:22, def:0,  hp:0,   speed:12, crit_pct:10,  crit_dmg:30,  dodge:0,  lifesteal:0 },
+  pvp_staff_e:  { key:'pvp_staff_e',  name:'Sceptre du Chaos',        slot:'weapon', rarity:'epic',      image:`${EQ_R2}/epic/staff1.png`,        atk:18, def:0,  hp:60,  speed:0,  crit_pct:7,   crit_dmg:18,  dodge:0,  lifesteal:4 },
+  pvp_armor_e:  { key:'pvp_armor_e',  name:'Armure du Conquérant',    slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor3.png`,        atk:0,  def:28, hp:150, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_armor2_e: { key:'pvp_armor2_e', name:'Toge des Abysses',        slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor2.png`,        atk:0,  def:18, hp:120, speed:0,  crit_pct:4,   crit_dmg:0,   dodge:0,  lifesteal:4 },
+  pvp_armor3_e: { key:'pvp_armor3_e', name:"Manteau de l'Éclaireur", slot:'armor',  rarity:'epic',      image:`${EQ_R2}/epic/armor1.png`,        atk:0,  def:22, hp:100, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:8,  lifesteal:0 },
+  pvp_boots_e:  { key:'pvp_boots_e',  name:"Bottes de l'Éclair",     slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte2.png`,        atk:0,  def:0,  hp:0,   speed:18, crit_pct:0,   crit_dmg:0,   dodge:10, lifesteal:0 },
+  pvp_boots2_e: { key:'pvp_boots2_e', name:'Grèves du Colosse',       slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte3.png`,        atk:0,  def:10, hp:60,  speed:10, crit_pct:0,   crit_dmg:0,   dodge:5,  lifesteal:0 },
+  pvp_boots3_e: { key:'pvp_boots3_e', name:'Bottes du Traqueur',      slot:'boots',  rarity:'epic',      image:`${EQ_R2}/epic/botte1.png`,        atk:4,  def:0,  hp:0,   speed:14, crit_pct:3,   crit_dmg:0,   dodge:6,  lifesteal:0 },
+  pvp_helm_e:   { key:'pvp_helm_e',   name:'Voile du Néant',          slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head1.png`,         atk:0,  def:16, hp:80,  speed:0,  crit_pct:8,   crit_dmg:20,  dodge:0,  lifesteal:0 },
+  pvp_helm2_e:  { key:'pvp_helm2_e',  name:"Capuche de l'Arcane",    slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head2.png`,         atk:0,  def:12, hp:100, speed:0,  crit_pct:5,   crit_dmg:15,  dodge:0,  lifesteal:3 },
+  pvp_helm3_e:  { key:'pvp_helm3_e',  name:'Heaume du Suzerain',      slot:'head',   rarity:'epic',      image:`${EQ_R2}/epic/head3.png`,         atk:0,  def:24, hp:120, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:4,  lifesteal:0 },
+  pvp_ring_e:   { key:'pvp_ring_e',   name:'Anneau du Sang',          slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring1.png`,         atk:18, def:0,  hp:0,   speed:0,  crit_pct:8,   crit_dmg:25,  dodge:0,  lifesteal:4 },
+  pvp_ring2_e:  { key:'pvp_ring2_e',  name:'Anneau des Abysses',      slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring2.png`,         atk:0,  def:8,  hp:60,  speed:5,  crit_pct:3,   crit_dmg:10,  dodge:4,  lifesteal:0 },
+  pvp_ring3_e:  { key:'pvp_ring3_e',  name:"Anneau de l'Œil",        slot:'ring',   rarity:'epic',      image:`${EQ_R2}/epic/ring3.png`,         atk:10, def:0,  hp:30,  speed:0,  crit_pct:6,   crit_dmg:20,  dodge:0,  lifesteal:3 },
+  // ─── LÉGENDAIRES ───
+  pvp_sword_l:  { key:'pvp_sword_l',  name:'Croc du Démon',           slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/sword1.png`,  atk:55, def:0,  hp:0,   speed:0,  crit_pct:8,   crit_dmg:35,  dodge:0,  lifesteal:6 },
+  pvp_dagger_l: { key:'pvp_dagger_l', name:'Serres du Néant',         slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/dagger1.png`, atk:35, def:0,  hp:0,   speed:20, crit_pct:15,  crit_dmg:50,  dodge:0,  lifesteal:0 },
+  pvp_staff_l:  { key:'pvp_staff_l',  name:"Sceptre de l'Astre",     slot:'weapon', rarity:'legendary', image:`${EQ_R2}/legendaire/staff1.png`,  atk:28, def:0,  hp:100, speed:0,  crit_pct:12,  crit_dmg:40,  dodge:0,  lifesteal:8 },
+  pvp_armor_l:  { key:'pvp_armor_l',  name:'Armure du Dragon',        slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor3.png`,  atk:0,  def:45, hp:250, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:8,  lifesteal:5 },
+  pvp_armor2_l: { key:'pvp_armor2_l', name:"Toge de l'Empereur",     slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor2.png`,  atk:0,  def:30, hp:200, speed:0,  crit_pct:6,   crit_dmg:15,  dodge:0,  lifesteal:8 },
+  pvp_armor3_l: { key:'pvp_armor3_l', name:"Cuirasse de l'Archange", slot:'armor',  rarity:'legendary', image:`${EQ_R2}/legendaire/armor1.png`,  atk:0,  def:38, hp:180, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:12, lifesteal:0 },
+  pvp_boots_l:  { key:'pvp_boots_l',  name:'Bottes du Portail',       slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte1.png`,  atk:0,  def:0,  hp:0,   speed:28, crit_pct:0,   crit_dmg:0,   dodge:18, lifesteal:0 },
+  pvp_boots2_l: { key:'pvp_boots2_l', name:"Bottes de l'Inferno",    slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte2.png`,  atk:0,  def:8,  hp:80,  speed:18, crit_pct:0,   crit_dmg:0,   dodge:10, lifesteal:5 },
+  pvp_boots3_l: { key:'pvp_boots3_l', name:"Sabots de l'Apocalypse", slot:'boots',  rarity:'legendary', image:`${EQ_R2}/legendaire/botte3.png`,  atk:8,  def:0,  hp:0,   speed:22, crit_pct:5,   crit_dmg:15,  dodge:8,  lifesteal:0 },
+  pvp_helm_l:   { key:'pvp_helm_l',   name:'Masque du Seigneur',      slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head1.png`,   atk:0,  def:28, hp:150, speed:0,  crit_pct:12,  crit_dmg:30,  dodge:0,  lifesteal:0 },
+  pvp_helm2_l:  { key:'pvp_helm2_l',  name:"Capuche du Faucheur",     slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head2.png`,   atk:0,  def:20, hp:180, speed:0,  crit_pct:8,   crit_dmg:25,  dodge:0,  lifesteal:6 },
+  pvp_helm3_l:  { key:'pvp_helm3_l',  name:'Heaume du Conquérant',    slot:'head',   rarity:'legendary', image:`${EQ_R2}/legendaire/head3.png`,   atk:0,  def:35, hp:200, speed:0,  crit_pct:0,   crit_dmg:0,   dodge:6,  lifesteal:4 },
+  pvp_ring_l:   { key:'pvp_ring_l',   name:'Anneau du Dragon',        slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring1.png`,   atk:28, def:0,  hp:0,   speed:0,  crit_pct:15,  crit_dmg:40,  dodge:0,  lifesteal:8 },
+  pvp_ring2_l:  { key:'pvp_ring2_l',  name:"Anneau de l'Éternité",   slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring2.png`,   atk:0,  def:12, hp:100, speed:8,  crit_pct:8,   crit_dmg:20,  dodge:5,  lifesteal:0 },
+  pvp_ring3_l:  { key:'pvp_ring3_l',  name:'Anneau du Vide',          slot:'ring',   rarity:'legendary', image:`${EQ_R2}/legendaire/ring3.png`,   atk:15, def:0,  hp:50,  speed:0,  crit_pct:10,  crit_dmg:30,  dodge:0,  lifesteal:6 },
+};
+
+// Stats bonus possibles par palier de forge
+const PVP_FORGE_BONUS_POOL = ['atk','def','hp','speed','crit_pct','crit_dmg','dodge','lifesteal'];
+const PVP_FORGE_MILESTONES = [3, 6, 9, 12, 15];
+
+function pvpForgeBonusValue(stat, rarity, milestone) {
+  const base = { common: 1, rare: 1.5, epic: 2.5, legendary: 4 }[rarity] || 1;
+  const tier  = PVP_FORGE_MILESTONES.indexOf(milestone) + 1;
+  const statMult = { hp: 15, atk: 2, def: 2, speed: 1.5, crit_pct: 0.8, crit_dmg: 1.5, dodge: 0.8, lifesteal: 0.5 }[stat] || 1;
+  return Math.round(base * tier * statMult * 10) / 10;
+}
+
+function pvpForgeCost(rarity, forgeLevel) {
+  const next   = forgeLevel + 1;
+  const base   = { common: 15, rare: 35, epic: 80, legendary: 200 }[rarity] || 15;
+  const mult   = next <= 3 ? 1 : next <= 6 ? 2 : next <= 9 ? 3 : next <= 12 ? 5 : 8;
   return base * mult;
 }
 
-async function equipPvpItem(id) {
-  try {
-    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id }) });
-    document.getElementById('pvp-item-modal')?.remove();
-    loadProfil();
-  } catch(e) { alert(e.message||'Erreur'); }
-}
-async function unequipPvpItem(id) {
-  try {
-    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id, unequip:true }) });
-    document.getElementById('pvp-item-modal')?.remove();
-    loadProfil();
-  } catch(e) { alert(e.message||'Erreur'); }
-}
-async function forgePvpItem(id) {
-  try {
-    const d = await api('/api/pvp/forge', { method:'POST', body: JSON.stringify({ itemId:id }) });
-    document.getElementById('pvp-item-modal')?.remove();
-    if (d.isMilestone) showAlert(`⭐ Palier atteint ! Nouvelle stat bonus ajoutée !`, 'success');
-    loadProfil();
-  } catch(e) { showAlert(e.message||'Or insuffisant', 'error'); }
-}
-async function openPveChest(rarity) {
-  rarity = rarity || 'common';
-  try {
-    const d = await api('/api/pve/open-chest', { method:'POST', body: JSON.stringify({ rarity }) });
-    showChestRewardPopup(d.item, d.chestRarity);
-    loadProfil();
-    // Rafraîchir l'onglet PVE
-    const fresh = await api('/api/pve/enemies');
-    _pveData = fresh;
-    renderPve(fresh);
-    refreshPveXpBar(fresh);
-  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
-}
-
-function showChestRewardPopup(item, chestRar) {
-  chestRar = chestRar || (item && item.rarity) || 'common';
-  if (!item) return;
-  const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-  const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
-  const col = rarityColor[item.rarity] || '#aaa';
-  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
-  const stats = Object.entries(statLabels)
-    .filter(([s]) => (item[s]||0) > 0)
-    .map(([s,l]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="opacity:.6">${l}</span><span style="color:${col};font-weight:700">+${item[s]}</span></div>`)
-    .join('');
-
-  // Overlay
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s';
-  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-
-  // Particules selon rareté
-  const glowColor = item.rarity === 'legendary' ? 'rgba(255,216,0,.4)' : item.rarity === 'epic' ? 'rgba(192,132,255,.4)' : item.rarity === 'rare' ? 'rgba(77,166,255,.3)' : 'rgba(170,170,170,.2)';
-
-  var CHEST_IMGS_UI = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
-  var chestImgSrc = CHEST_IMGS_UI[chestRar] || CHEST_IMGS_UI.common;
-  overlay.innerHTML = `
-    <div style="
-      background:#0d0e1f;
-      border:2px solid ${col};
-      border-radius:20px;
-      padding:28px 28px;
-      width:min(340px,92vw);
-      text-align:center;
-      position:relative;
-      box-shadow:0 0 60px ${glowColor}, 0 20px 60px rgba(0,0,0,.8);
-      transform:scale(.85);
-      transition:transform .4s cubic-bezier(.175,.885,.32,1.275);
-    " id="chest-popup-box">
-      <div style="font-size:13px;opacity:.5;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">Coffre ouvert !</div>
-      <img src="${chestImgSrc}" style="width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 0 12px ${col});margin-bottom:10px;animation:chestBounce .5s cubic-bezier(.175,.885,.32,1.275) both" onerror="this.style.display='none'">
-      <div style="font-size:13px;font-weight:900;color:${col};margin-bottom:16px;letter-spacing:.05em">${rarityLabel[item.rarity]||item.rarity}</div>
-      <div style="position:relative;display:inline-block;margin-bottom:16px">
-        <div style="position:absolute;inset:-20px;background:radial-gradient(circle,${glowColor} 0%,transparent 70%);border-radius:50%;animation:chestGlow 2s ease-in-out infinite alternate"></div>
-        <img src="${esc(item.image||'')}"
-          style="width:120px;height:120px;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 0 20px ${col});animation:chestBounce .6s cubic-bezier(.175,.885,.32,1.275) .1s both"
-          onerror="this.style.display='none'">
-      </div>
-      <div style="font-size:18px;font-weight:900;color:${col};margin-bottom:4px">${esc(item.name||item.key)}</div>
-      <div style="font-size:11px;opacity:.4;margin-bottom:16px">${item.slot?.toUpperCase()||''}</div>
-      <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:18px;text-align:left">${stats||'<div style="opacity:.4;font-size:12px;text-align:center">Aucune stat</div>'}</div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,${col},${col}88);color:#000;font-weight:900;font-size:14px;cursor:pointer">Super !</button>
-    </div>`;
-
-  document.body.appendChild(overlay);
-  requestAnimationFrame(() => {
-    overlay.style.opacity = '1';
-    const box = document.getElementById('chest-popup-box');
-    if (box) box.style.transform = 'scale(1)';
-  });
-}
-async function spendPvpStat(stat) {
-  try {
-    await api('/api/pvp/spend-stat', { method:'POST', body: JSON.stringify({ stat }) });
-    loadProfil();
-  } catch(e) { showAlert(e.message||'Erreur', 'error'); }
-}
-
-function showTab(name, ev) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('sec-'+name).classList.add('active');
-  if (ev && ev.target) ev.target.classList.add('active');
-  if (name !== 'profil') stopProfilIdle();
-  if (name !== 'matchmaking' && _mmSearching) stopMatchmaking(); // stopper l'animation idle si on quitte le profil
-  if (name==='profil') {
-    loadProfil();
-    // Refresh PVE XP bar if we have data
-    if (_pveData) refreshPveXpBar(_pveData);
-    else api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(()=>{});
+function pvpForgedStats(def, forgeLevel, extraStats) {
+  const mult = 1 + (forgeLevel * 0.08);
+  const result = {};
+  for (const s of PVP_FORGE_BONUS_POOL) {
+    result[s] = Math.round((def[s] || 0) * mult * 10) / 10;
   }
-  if (name==='classement') loadClassement();
-  if (name==='historique') loadHistorique();
-  if (name==='forge') loadForge();
-  if (name==='pve') loadPve();
-  if (name==='matchmaking') { initMatchmakingTab(); loadWeeklyRewards(); loadMmActivity(); }
-  if (name==='defis') loadDefis();
-}
-
-function rankBadgeHtml(rankInfo, pts) {
-  const name = rankInfo?.name || 'Bronze';
-  const col  = RANK_COLORS[name] || '#aaa';
-  const icon = RANK_ICONS[name] ? `<img src="${RANK_ICONS[name]}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px">` : (rankInfo?.icon||'');
-  return `<span class="rank-badge" style="border-color:${col}33;color:${col}">${icon}${esc(name)}<span class="rank-pts">${fmtPts(pts)} pts</span></span>`;
-}
-
-// ── PROFIL ──
-const SKIN_LABELS = {
-  bloody_alchemist: { label:'Bloody Alchemist', icon:'⚗️',  color:'#ff4444' },
-  dark_oracle:      { label:'Dark Oracle',       icon:'🔮',  color:'#9b59b6' },
-  fallen_angels:    { label:'Fallen Angels',     icon:'👼',  color:'#c084ff' },
-  forest_ranger:    { label:'Forest Ranger',     icon:'🏹',  color:'#4caf50' },
-  golem:            { label:'Golem',             icon:'🪨',  color:'#795548' },
-  minotaur:         { label:'Minotaur',          icon:'🐂',  color:'#f57c00' },
-  reaper_man:       { label:'Reaper',            icon:'💀',  color:'#607d8b' },
-  valkyrie:         { label:'Valkyrie',          icon:'⚔️',  color:'#2196f3' },
-};
-
-// Canvas idle animé dans le profil
-let _profilIdleRaf = null;
-let _profilIdleState = null;
-
-function startProfilIdle(skinKey) {
-  stopProfilIdle();
-  const canvas = document.getElementById('profil-char-canvas');
-  if (!canvas) return;
-  const sprites = CLASS_SPRITES[skinKey] || CLASS_SPRITES[DEFAULT_CLASS];
-  const anim    = sprites.idle;
-  if (!anim) return;
-  const img = getImg(anim.file);
-  const FW  = anim.fw || 256;
-  const FH  = 256;
-  canvas.width  = FW;
-  canvas.height = FH;
-  canvas.style.width  = '250px';
-  canvas.style.height = '250px';
-  canvas.style.imageRendering = 'pixelated';
-  _profilIdleState = { frame: 0, tick: 0, fps: anim.fps, frames: anim.frames, fw: FW, fh: FH };
-  let last = performance.now();
-  function loop(ts) {
-    const dt = Math.min(ts - last, 50); last = ts;
-    const st = _profilIdleState;
-    if (!st) return;
-    st.tick += dt;
-    if (st.tick >= 1000 / st.fps) { st.tick = 0; st.frame = (st.frame + 1) % st.frames; }
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (img.complete && img.naturalWidth) {
-      // Upscale pour remplir le canvas du profil
-      const idleDstH = canvas.height;
-      const idleDstW = Math.round(idleDstH * st.fw / st.fh);
-      const idleDx   = Math.floor((canvas.width - idleDstW) / 2);
-      ctx.drawImage(img, st.frame * st.fw, 0, st.fw, st.fh, idleDx, 0, idleDstW, idleDstH);
-    }
-    _profilIdleRaf = requestAnimationFrame(loop);
+  for (const [stat, val] of Object.entries(extraStats || {})) {
+    result[stat] = (result[stat] || 0) + val;
   }
-  _profilIdleRaf = requestAnimationFrame(loop);
+  return result;
 }
 
-function stopProfilIdle() {
-  if (_profilIdleRaf) { cancelAnimationFrame(_profilIdleRaf); _profilIdleRaf = null; }
-  _profilIdleState = null;
+async function getPvpEquipmentBonus(userId) {
+  const { rows } = await pool.query(
+    `SELECT item_key, forge_level, extra_stats FROM pvp_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
+    [userId]
+  );
+  const bonus = { atk:0, def:0, hp:0, speed:0, crit_pct:0, crit_dmg:0, dodge:0, lifesteal:0 };
+  for (const r of rows) {
+    const def = PVP_ITEMS[r.item_key];
+    if (!def) continue;
+    const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+    for (const s of PVP_FORGE_BONUS_POOL) bonus[s] += stats[s] || 0;
+  }
+  return bonus;
 }
 
-async function changeSkin(skin) {
-  try {
-    await api('/api/pvp/skin', { method:'POST', body: JSON.stringify({ skin }) });
-    // Mettre à jour myData
-    if (myData) myData.pvpSkin = skin;
-    // Relancer le canvas idle avec le nouveau skin
-    startProfilIdle(skin);
-    // Mettre à jour le badge
-    const sk = SKIN_LABELS[skin];
-    const badge = document.getElementById('profil-skin-badge');
-    if (badge && sk) {
-      badge.textContent = sk.icon + ' ' + sk.label;
-      badge.style.color = sk.color;
-      badge.style.borderColor = sk.color;
-      badge.style.background  = sk.color + '18';
+function pvpChestLoot(rankName) {
+  const tables = {
+    'Bronze':  [{ rarity:'common', weight:70 }, { rarity:'rare', weight:30 }],
+    'Argent':  [{ rarity:'common', weight:40 }, { rarity:'rare', weight:45 }, { rarity:'epic', weight:15 }],
+    'Or':      [{ rarity:'rare', weight:40 }, { rarity:'epic', weight:50 }, { rarity:'legendary', weight:10 }],
+    'Platine': [{ rarity:'rare', weight:20 }, { rarity:'epic', weight:55 }, { rarity:'legendary', weight:25 }],
+    'Diamant': [{ rarity:'epic', weight:50 }, { rarity:'legendary', weight:50 }],
+    'Maître':  [{ rarity:'epic', weight:30 }, { rarity:'legendary', weight:70 }],
+  };
+  const table = tables[rankName] || tables['Bronze'];
+  let rand  = Math.random() * table.reduce((s, e) => s + e.weight, 0);
+  let rarity = table[0].rarity;
+  for (const e of table) { rand -= e.weight; if (rand <= 0) { rarity = e.rarity; break; } }
+  const itemPool = Object.values(PVP_ITEMS).filter(i => i.rarity === rarity);
+  if (!itemPool.length) return null;
+  return itemPool[Math.floor(Math.random() * itemPool.length)];
+}
+
+function pvpWinRewards(rankName, pvpLevel) {
+  const xpBase   = { Bronze:30, Argent:50, Or:80, Platine:120, Diamant:180, Maître:250 }[rankName] || 30;
+  const goldBase = { Bronze:20, Argent:35, Or:55, Platine:80,  Diamant:120, Maître:180 }[rankName] || 20;
+  const xp   = xpBase   + Math.floor(pvpLevel * 2);
+  const gold = goldBase + Math.floor(pvpLevel * 1.5);
+  return { xp, gold };
+}
+
+// Construire les stats PVP d'un joueur
+async function buildPvpFighter(userId) {
+  const char  = await getOrCreateCharacter(userId);
+  const userQ = await pool.query(
+    `SELECT name, avatar, pvp_rank, pvp_wins, pvp_losses, pvp_xp, pvp_gold, pvp_win_streak, pvp_chests, pve_gold, pve_level, pve_xp, pve_chest_common, pve_chest_rare, pve_chest_epic, pve_chest_legendary, runes FROM users WHERE id=$1`,
+    [userId]
+  );
+  const u = userQ.rows[0];
+
+  const pvpLvl  = Number(char.pvp_level || 1);
+  const statB   = pvpStatBonus(char);
+  const eqB     = await getPvpEquipmentBonus(userId);
+
+  const pvpRankName = getRankInfo(Number(u.pvp_rank)).name;
+  const EQ_CAPS = {
+    'Bronze':  { atk:40,  hp:200,  def:20,  speed:15, crit_pct:10, crit_dmg:30,  dodge:10, lifesteal:5  },
+    'Argent':  { atk:70,  hp:350,  def:35,  speed:25, crit_pct:18, crit_dmg:50,  dodge:15, lifesteal:10 },
+    'Or':      { atk:110, hp:550,  def:55,  speed:35, crit_pct:28, crit_dmg:70,  dodge:20, lifesteal:15 },
+    'Platine': { atk:160, hp:800,  def:80,  speed:50, crit_pct:40, crit_dmg:90,  dodge:28, lifesteal:20 },
+    'Diamant': { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
+    'Maître':  { atk:999, hp:9999, def:999, speed:999,crit_pct:80, crit_dmg:999, dodge:40, lifesteal:999},
+  };
+  const cap    = EQ_CAPS[pvpRankName] || EQ_CAPS['Bronze'];
+  const capEq  = (val, key) => Math.min(val, cap[key]);
+
+  const hp       = Math.round(200 + statB.hp       + capEq(eqB.hp||0,      'hp')      + pvpLvl * 10);
+  const atq      = Math.round(10  + statB.atk      + capEq(eqB.atk||0,     'atk'));
+  const def      = Math.round(       statB.def      + capEq(eqB.def||0,     'def'));
+  const speed    = Math.round(10  + statB.speed     + capEq(eqB.speed||0,   'speed'));
+  const crit     = Math.min(80, Math.round(10 + statB.crit_pct  + capEq(eqB.crit_pct||0,  'crit_pct')));
+  const crit_dmg = Math.round(120 + statB.crit_dmg + capEq(eqB.crit_dmg||0, 'crit_dmg'));
+  const dodge    = Math.min(40, Math.round(10 + statB.dodge + capEq(eqB.dodge||0,     'dodge')));
+  const lifesteal= Math.round(statB.lifesteal + capEq(eqB.lifesteal||0,      'lifesteal'));
+
+  const rankInfo = getRankInfo(Number(u.pvp_rank));
+
+  return {
+    userId,
+    name:        u.name,
+    avatar:      u.avatar || null,
+    rank:        Number(u.pvp_rank),
+    wins:        Number(u.pvp_wins),
+    losses:      Number(u.pvp_losses),
+    pvpGold:     Number(u.pvp_gold   || 0),
+    pvpXp:       Number(u.pvp_xp     || 0),
+    pvpChests:   Number(u.pvp_chests || 0),
+    winStreak:   Number(u.pvp_win_streak || 0),
+    pveGold:     Number(u.pve_gold   || 0),
+    pveChests: {
+      common:    Number(u.pve_chest_common    || 0),
+      rare:      Number(u.pve_chest_rare      || 0),
+      epic:      Number(u.pve_chest_epic      || 0),
+      legendary: Number(u.pve_chest_legendary || 0),
+    },
+    pveLevel:    Number(u.pve_level  || 1),
+    pveXp:       Number(u.pve_xp     || 0),
+    pveXpNeeded: pveXpForLevel(Number(u.pve_level || 1)),
+    runes:       u.runes || {},
+    rankInfo,
+    charClass:   char.char_class,
+    pvpSkin:     char.pvp_skin || 'forest_ranger',
+    pvpLevel:    pvpLvl,
+    pvpPtsAvail: Number(char.pvp_pts_avail || 0),
+    pvpStats: {
+      force:        Number(char.pvp_stat_force        || 5),
+      agilite:      Number(char.pvp_stat_agilite      || 5),
+      intelligence: Number(char.pvp_stat_intelligence || 5),
+      dexterite:    Number(char.pvp_stat_dexterite    || 5),
+    },
+    hp, atq, def, speed, crit, crit_dmg, dodge, lifesteal,
+    level: pvpLvl,
+  };
+}
+
+// Simuler le combat côté serveur
+function simulatePvpBattle(f1, f2) {
+  let hp1 = f1.hp, hp2 = f2.hp;
+  const log = [];
+
+  const [first, second] = f1.speed >= f2.speed ? [f1, f2] : [f2, f1];
+  let hpFirst  = first  === f1 ? hp1 : hp2;
+  let hpSecond = first  === f1 ? hp2 : hp1;
+
+  for (let turn = 1; turn <= 50; turn++) {
+    log.push({ type: 'turn', turn });
+
+    // Attaque du premier
+    const dodge1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 10);
+    if (dodge1) {
+      log.push({ type: 'dodge', attacker: first.name, defender: second.name });
+    } else {
+      const crit1   = Math.random() * 100 < (first.crit || 0);
+      const critMul1 = crit1 ? ((first.crit_dmg || 120) / 100) : 1;
+      const rawDmg1 = Math.round(first.atq * (0.70 + Math.random() * 0.60) * critMul1);
+      const defRed1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
+      const dmg1    = Math.max(1, Math.round(rawDmg1 * (1 - defRed1)));
+      hpSecond = Math.max(0, hpSecond - dmg1);
+      if ((first.lifesteal || 0) > 0) hpFirst = Math.min(first.hp, hpFirst + Math.round(dmg1 * first.lifesteal / 100));
+      log.push({ type: crit1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp, hpLeftAtt: hpFirst, hpMaxAtt: first.hp });
     }
-    // Mettre à jour la grille sélecteur
-    document.querySelectorAll('.skin-card').forEach(el => {
-      el.classList.toggle('active', el.dataset.skin === skin);
+
+    if (hpSecond <= 0) break;
+
+    // Attaque du second
+    const dodge2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 10);
+    if (dodge2) {
+      log.push({ type: 'dodge', attacker: second.name, defender: first.name });
+    } else {
+      const crit2   = Math.random() * 100 < (second.crit || 0);
+      const critMul2 = crit2 ? ((second.crit_dmg || 120) / 100) : 1;
+      const rawDmg2 = Math.round(second.atq * (0.70 + Math.random() * 0.60) * critMul2);
+      const defRed2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
+      const dmg2    = Math.max(1, Math.round(rawDmg2 * (1 - defRed2)));
+      hpFirst = Math.max(0, hpFirst - dmg2);
+      if ((second.lifesteal || 0) > 0) hpSecond = Math.min(second.hp, hpSecond + Math.round(dmg2 * second.lifesteal / 100));
+      log.push({ type: crit2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp, hpLeftAtt: hpSecond, hpMaxAtt: second.hp });
+    }
+
+    if (hpFirst <= 0) break;
+  }
+
+  let winner;
+  if (hpSecond <= 0 && hpFirst > 0) winner = first;
+  else if (hpFirst <= 0 && hpSecond > 0) winner = second;
+  else winner = hpFirst >= hpSecond ? first : second;
+
+  log.push({ type: 'end', winner: winner.name });
+  return { log, winner };
+}
+
+// GET /api/pvp/me — profil PVP du joueur
+app.get("/api/pvp/me", auth, async (req, res) => {
+  try {
+    const fighter = await buildPvpFighter(req.user.id);
+    res.json({ fighter });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/skin — changer le skin du personnage PVP
+const VALID_PVP_SKINS = ['bloody_alchemist','dark_oracle','fallen_angels','forest_ranger','golem','minotaur','reaper_man','valkyrie'];
+app.post("/api/pvp/skin", auth, async (req, res) => {
+  try {
+    const skin = String(req.body?.skin || '').trim();
+    if (!VALID_PVP_SKINS.includes(skin)) return res.status(400).json({ error: 'Skin invalide' });
+    await pool.query(`UPDATE player_character SET pvp_skin=$1 WHERE user_id=$2`, [skin, req.user.id]);
+    res.json({ ok: true, skin });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/leaderboard — top joueurs
+app.get("/api/pvp/leaderboard", auth, async (req, res) => {
+  try {
+    const topQ = await pool.query(`
+      SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses,
+             pc.char_class
+      FROM users u
+      LEFT JOIN player_character pc ON pc.user_id = u.id
+      ORDER BY u.pvp_rank DESC, u.pvp_wins DESC
+      LIMIT 50
+    `);
+    const meQ = await pool.query(`SELECT pvp_rank, pvp_wins, pvp_losses, avatar FROM users WHERE id=$1`, [req.user.id]);
+    const me = meQ.rows[0];
+    res.json({
+      top: topQ.rows.map((u,i) => ({
+        rank: i+1,
+        name: u.name,
+        avatar: u.avatar || null,
+        charClass: u.char_class || null,
+        pts: Number(u.pvp_rank),
+        wins: Number(u.pvp_wins),
+        losses: Number(u.pvp_losses),
+        rankInfo: getRankInfo(Number(u.pvp_rank)),
+      })),
+      me: { pts: Number(me?.pvp_rank||1000), wins: Number(me?.pvp_wins||0), losses: Number(me?.pvp_losses||0), rankInfo: getRankInfo(Number(me?.pvp_rank||1000)), avatar: me?.avatar || null },
     });
-  } catch(e) { console.error('changeSkin error', e); }
-}
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
-function renderSkinSelector(currentSkin) {
-  const skins = Object.entries(SKIN_LABELS);
-  return `
-    <div style="margin-top:14px">
-      <div style="font-size:11px;opacity:.4;text-align:center;margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">Choisir ton personnage</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-        ${skins.map(([key, sk]) => `
-          <div class="skin-card ${key === currentSkin ? 'active' : ''}"
-               data-skin="${key}"
-               onclick="changeSkin('${key}')"
-               style="--sk-color:${sk.color}">
-            <div style="font-size:22px;line-height:1">${sk.icon}</div>
-            <div style="font-size:8px;font-weight:700;margin-top:3px;opacity:.8;text-align:center;line-height:1.2">${sk.label}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>`;
-}
-
-function renderProfilPvp(f) {
-  const skin     = f.pvpSkin || 'forest_ranger';
-  const sk       = SKIN_LABELS[skin] || SKIN_LABELS.forest_ranger;
-  const equipped = _pvpEquipData?.equipped || {}; // items PVP équipés
-  const rankName = f.rankInfo?.name || 'Bronze';
-  const rankCol  = RANK_COLORS[rankName] || '#aaa';
-
-  const photoHtml = f.avatar
-    ? `<img class="photo" src="${esc(f.avatar)}" onerror="this.src=''" alt="">`
-    : `<div class="photo" style="display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--bg3)">🧑</div>`;
-  const frameHtml = RANK_FRAMES[rankName] ? `<img class="frame" src="${RANK_FRAMES[rankName]}" alt="">` : '';
-
-  document.getElementById('profil-content').innerHTML = `
-    <div class="pvp-profil-wrap" style="--pvp-cls-color:${sk.color}">
-      <div class="pvp-col-left">
-        <div class="pvp-user-photo-wrap">${photoHtml}${frameHtml}</div>
-        <div style="text-align:center">
-          <div style="font-size:16px;font-weight:900;margin-bottom:2px">${esc(f.name)}</div>
-          <div style="font-size:11px;opacity:.5;margin-bottom:8px">Niv. ${f.level} · ${f.wins}V ${f.losses}D</div>
-          ${rankBadgeHtml(f.rankInfo, f.rank)}
-        </div>
-        <div class="pvp-stats-mini" style="margin-top:4px">
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ff6464">${f.hp}</div><div class="pvp-stat-mini-lbl">PV</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ffd84d">${f.atq}</div><div class="pvp-stat-mini-lbl">ATQ</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#aaa">${f.def||0}</div><div class="pvp-stat-mini-lbl">DEF</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#4da6ff">${f.speed||0}</div><div class="pvp-stat-mini-lbl">VIT</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#c084ff">${f.crit}%</div><div class="pvp-stat-mini-lbl">Crit</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ffd84d">${f.crit_dmg||150}%</div><div class="pvp-stat-mini-lbl">CritDMG</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#33ff99">${f.dodge}%</div><div class="pvp-stat-mini-lbl">Esquive</div></div>
-          <div class="pvp-stat-mini"><div class="pvp-stat-mini-val" style="color:#ff6464">${f.lifesteal||0}%</div><div class="pvp-stat-mini-lbl">Vol vie</div></div>
-        </div>
-      </div>
-      <div class="pvp-col-center">
-        <div class="pvp-char-img-wrap" style="position:relative">
-          <canvas id="profil-char-canvas"
-            style="image-rendering:pixelated;filter:drop-shadow(0 0 28px ${sk.color});width:250px;height:250px">
-          </canvas>
-        </div>
-        <div id="profil-skin-badge" class="pvp-class-badge"
-             style="color:${sk.color};border-color:${sk.color};background:${sk.color}18">
-          ${sk.icon} ${esc(sk.label)}
-        </div>
-        ${renderSkinSelector(skin)}
-      </div>
-      <div class="pvp-col-right">
-        ${renderPvpSlot('weapon', equipped)}
-        ${renderPvpSlot('head',   equipped)}
-        ${renderPvpSlot('armor',  equipped)}
-        ${renderPvpSlot('boots',  equipped)}
-        ${renderPvpSlot('ring',   equipped)}
-      </div>
-    </div>
-    <div style="margin-top:10px;font-size:11px;opacity:.3;text-align:center">Stats calculées depuis ton personnage, ta classe et ton équipement forgé</div>
-    <div class="pvp-rank-showcase">
-      ${RANK_ICONS[rankName] ? '<img src="' + RANK_ICONS[rankName] + '" class="pvp-rank-showcase-img" alt="' + rankName + '">' : ''}
-      <div class="pvp-rank-showcase-label" style="color:${rankCol}">${rankName}</div>
-      <div class="pvp-rank-showcase-pts">${fmtPts(f.rank)} pts</div>
-    </div>
-    ${buildRankProgressHtml(f.rank)}
-    ${renderPvpProgression(f)}`;
-
-  // Lancer l'animation idle après rendu du DOM
-  requestAnimationFrame(() => {
-    startProfilIdle(skin);
-  });
-}
-const SLOT_DEF = {
-  weapon:{ label:'Arme',   icon:'⚔️' },
-  armor: { label:'Armure', icon:'🛡️' },
-  boots: { label:'Bottes', icon:'👢' },
-  head:  { label:'Casque', icon:'🪖' },
-  ring:  { label:'Anneau', icon:'💍' },
-};
-const EQ_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-let _pvpEquipData = null;
-
-async function loadProfil() {
-  document.getElementById('profil-content').innerHTML = '<div class="loading">Chargement...</div>';
+// POST /api/pvp/accept — accepter et simuler le combat
+app.post("/api/pvp/accept", auth, async (req, res) => {
+  const battleId = Number(req.body?.battleId || 0) | 0;
+  if (!battleId) return res.status(400).json({ error: "Bataille invalide" });
   try {
-    const [dPvp, dInv] = await Promise.all([
-      api('/api/pvp/me'),
-      api('/api/pvp/inventory').catch(() => ({ inventory:[], equipped:{} })),
+    const bQ = await pool.query(`SELECT * FROM pvp_battles WHERE id=$1 AND opponent_id=$2 AND status='pending'`, [battleId, req.user.id]);
+    if (!bQ.rows.length) return res.status(404).json({ error: "Défi introuvable ou déjà traité" });
+    const battle = bQ.rows[0];
+
+    const [f1, f2] = await Promise.all([
+      buildPvpFighter(battle.challenger_id),
+      buildPvpFighter(battle.opponent_id),
     ]);
-    _pvpEquipData = dInv;
-    myData = dPvp.fighter;
-    renderProfilPvp(dPvp.fighter);
-  } catch(e) { document.getElementById('profil-content').innerHTML = '<div class="empty">Erreur chargement profil</div>'; }
-}
 
+    const { log, winner } = simulatePvpBattle(f1, f2);
+    const winnerId = winner.name === f1.name ? f1.userId : f2.userId;
+    const loserId  = winnerId === f1.userId ? f2.userId : f1.userId;
+    const winnerRank = winnerId === f1.userId ? f1.rank : f2.rank;
+    const loserRank  = loserId  === f1.userId ? f1.rank : f2.rank;
+    const rankChange = calcElo(winnerRank, loserRank);
 
+    // Bronze (0-1199) : aucune perte d'ELO en défaite
+    // Argent : perte partielle (rankChange / 2)
+    // Or et + : perte pleine
+    const loserRankInfo = getRankInfo(loserRank);
+    const rankLossMult = loserRankInfo.name === 'Bronze' ? 0
+      : loserRankInfo.name === 'Argent' ? 0.5
+      : loserRankInfo.name === 'Or' ? 0.75
+      : 1.0;
+    const loserLoss = Math.round(rankChange * rankLossMult);
 
-function renderPvpSlot(slot, equipped) {
-  const def  = SLOT_DEF[slot];
-  const item = equipped[slot];
-  const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
-  const statLabels = { atk:'⚔️ ATQ', def:'🛡️ DEF', hp:'❤️ PV', speed:'⚡ VIT', crit_pct:'💥 Crit%', crit_dmg:'🔥 CritDMG%', dodge:'💨 Esquive%', lifesteal:'🩸 Vol vie%' };
-  const statColors = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
-  if (item) {
-    const col   = EQ_RARITY_COLOR[item.rarity] || '#aaa';
-    const fl    = item.forge_level || 0;
-    const flCol = fl>=15?'#ff4488':fl>=12?'#ffd84d':fl>=9?'#c084ff':fl>=6?'#4da6ff':fl>=3?'#fff':null;
-    const stats = Object.entries(statLabels)
-      .filter(([s]) => (item[s]||0) > 0)
-      .map(([s,l]) => `<div class="eq-tooltip-stat"><span>${l}</span><span style="color:${statColors[s]}">+${item[s]}</span></div>`);
-    // Lignes bonus forge
-    Object.entries(item.extra_stats||{}).forEach(([s,v]) => {
-      if (v > 0) stats.push(`<div class="eq-tooltip-stat"><span>${statLabels[s]||s} <span style="color:#ffd84d;font-size:9px">✦</span></span><span style="color:#ffd84d">+${v}</span></div>`);
-    });
-    const forgeBadge = fl>0 ? `<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:900;padding:1px 6px;border-radius:999px;background:#0d0e1c;border:1px solid ${flCol};color:${flCol};z-index:4">+${fl}</div>` : '';
-    return `<div class="eq-slot filled ${item.rarity}" onclick="pvpOpenEquip('${slot}')" style="position:relative">
-      <img class="eq-slot-img" src="${esc(item.image)}" onerror="this.style.display='none'">
-      ${forgeBadge}
-      <span class="eq-slot-unequip" onclick="event.stopPropagation();pvpUnequip(${item.id})">✕</span>
-      <div class="eq-slot-tooltip">
-        <div class="eq-tooltip-name">${esc(item.name||item.item_key)}${fl>0?` <span style="color:${flCol}">+${fl}</span>`:''}</div>
-        <div class="eq-tooltip-rarity" style="color:${col}">${def.icon} ${def.label} · ${rarityNames[item.rarity]||item.rarity}</div>
-        ${stats.length ? stats.join('') : '<div class="eq-tooltip-empty">Aucun bonus</div>'}
-      </div>
-    </div>`;
-  }
-  return `<div class="eq-slot" onclick="pvpOpenEquip('${slot}')">
-    <div class="eq-slot-empty-icon">${def.icon}</div>
-    <div class="eq-slot-label">${def.label}</div>
-    <div class="eq-slot-tooltip"><div class="eq-tooltip-empty">${def.icon} ${def.label} — vide</div><div style="font-size:10px;opacity:.4;margin-top:4px">Clique pour équiper</div></div>
-  </div>`;
-}
-
-async function pvpOpenEquip(slot) {
-  const inv = (_pvpEquipData?.inventory || []).filter(i => i.slot === slot);
-  if (!inv.length) { showAlert(`Aucun équipement "${SLOT_DEF[slot]?.label}" dans l'inventaire.`, 'error'); return; }
-  const equippedIds = new Set(Object.values(_pvpEquipData?.equipped || {}).map(e=>e?.id).filter(Boolean));
-  const html = inv.map(item => {
-    const col = EQ_RARITY_COLOR[item.rarity] || '#aaa';
-    const isEq = equippedIds.has(item.id);
-    return `<div class="pvp-inv-item ${item.rarity} ${isEq?'equipped':''}" onclick="pvpEquip(${item.id},'${slot}')">
-      ${isEq?'<div style="position:absolute;top:3px;right:3px;width:7px;height:7px;background:#33ff99;border-radius:50%"></div>':''}
-      <img class="pvp-inv-img" src="${esc(item.image)}" onerror="this.style.display='none'">
-      <div class="pvp-inv-name" style="color:${col}">${esc(item.name)}</div>
-    </div>`;
-  }).join('');
-  document.getElementById('pvp-inv-overlay').innerHTML = `
-    <div class="pvp-inv-modal-box">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div style="font-size:14px;font-weight:900">${SLOT_DEF[slot].icon} Choisir ${SLOT_DEF[slot].label}</div>
-        <button onclick="pvpCloseInv()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
-      </div>
-      <div class="pvp-inv-grid">${html}</div>
-    </div>`;
-  document.getElementById('pvp-inv-overlay').classList.add('show');
-}
-
-function pvpCloseInv() { document.getElementById('pvp-inv-overlay').classList.remove('show'); }
-
-async function pvpEquip(id, slot) {
-  pvpCloseInv();
-  try {
-    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id }) });
-    _pvpEquipData = await api('/api/pvp/inventory');
-    const fresh = await api('/api/pvp/me');
-    myData = fresh.fighter;
-    renderProfilPvp(fresh.fighter);
-  } catch(e) { showAlert(e.message, 'error'); }
-}
-
-async function pvpUnequip(id) {
-  try {
-    await api('/api/pvp/equip', { method:'POST', body: JSON.stringify({ id, unequip: true }) });
-    _pvpEquipData = await api('/api/pvp/inventory');
-    const fresh = await api('/api/pvp/me');
-    myData = fresh.fighter;
-    renderProfilPvp(fresh.fighter);
-  } catch(e) { showAlert(e.message, 'error'); }
-}
-
-// ── CLASSEMENT avec PODIUM ──
-async function loadClassement() {
-  const el = document.getElementById('lb-content');
-  try {
-    const d = await api('/api/pvp/leaderboard');
-    if (!d.top.length) { el.innerHTML = '<div class="empty">Aucun classement disponible</div>'; return; }
-
-    const top3 = d.top.slice(0, 3);
-    const rest  = d.top.slice(3);
-
-    // Construire le podium (ordre : 2e, 1er, 3e pour l'effet visuel)
-    const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean);
-    const podiumClasses = top3[1] ? ['podium-2','podium-1','podium-3'] : ['podium-1','podium-3'];
-
-    function podiumAvatarHtml(u, cls) {
-      if (!u) return '';
-      const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
-      const rankName = u.rankInfo?.name || 'Bronze';
-      // avatar via background-image — même syntaxe que leaderboard.html
-      const _avPodium = (u.avatar || '').trim() || 'poke.png';
-      const avatarBg = "background-image:url('" + _avPodium.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;font-size:0";
-      const avatarInner = u.avatar ? '' : '🧑';
-      // Icône de rang au-dessus
-      const rankIconTop = RANK_ICONS[rankName]
-        ? `<img class="podium-rank-icon-top" src="${RANK_ICONS[rankName]}" alt="${rankName}" onerror="this.style.display='none'">`
-        : '';
-      // Cadre de rang par dessus l'avatar
-      const rankFrame = RANK_FRAMES[rankName]
-        ? `<img class="podium-rank-frame-img" src="${RANK_FRAMES[rankName]}" alt="" onerror="this.style.display='none'">`
-        : '';
-      // Label de rang sous le nom
-      const rankLabel = `<div class="podium-rank-label" style="color:${col}">
-        ${RANK_ICONS[rankName]?`<img src="${RANK_ICONS[rankName]}" style="width:13px;height:13px;object-fit:contain">`:''}
-        ${esc(rankName)}
-      </div>`;
-      // Numéro de position dans le bloc
-      const posLabel = { 1:'1er', 2:'2e', 3:'3e' }[u.rank] || u.rank;
-
-      return `<div class="podium-col ${cls}">
-        ${rankIconTop}
-        <div class="podium-avatar-wrap">
-          <div class="podium-avatar" style="${avatarBg}">${avatarInner}${rankFrame}</div>
-        </div>
-        <div class="podium-name">${esc(u.name)}</div>
-        <div class="podium-pts" style="color:${col}">${fmtPts(u.pts)} pts</div>
-        ${rankLabel}
-        <div class="podium-block" style="color:${col}">${posLabel}</div>
-      </div>`;
-    }
-
-    let podiumHtml = '<div class="podium-wrap">';
-    podiumOrder.forEach((u, i) => {
-      podiumHtml += podiumAvatarHtml(u, podiumClasses[i]);
-    });
-    podiumHtml += '</div>';
-
-    // Rows pour le reste
-    let rowsHtml = rest.map(u => {
-      const col = RANK_COLORS[u.rankInfo?.name] || '#aaa';
-      const isMe = myData && u.name === myData.name;
-      const rankName = u.rankInfo?.name || 'Bronze';
-      const _avRow = (u.avatar || '').trim() || 'poke.png';
-      const avatarBg = "background-image:url('" + _avRow.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;background-color:transparent;font-size:0";
-      const avatarInner = u.avatar ? '' : '🧑';
-      const rankFrame = RANK_FRAMES[rankName]
-        ? `<img src="${RANK_FRAMES[rankName]}" style="position:absolute;inset:-9px;width:58px;height:58px;object-fit:contain;pointer-events:none;z-index:2" onerror="this.style.display='none'">`
-        : '';
-      return `<div class="lb-row ${isMe?'me':''}">
-        <div class="lb-rank-num">${u.rank}</div>
-        <div style="position:relative;width:40px;height:40px;flex-shrink:0">
-          <div class="lb-avatar" style="${avatarBg};width:40px;height:40px">${avatarInner}</div>
-          ${rankFrame}
-        </div>
-        <div style="flex:1">
-          <div class="lb-name">${esc(u.name)}${isMe?' <span style="font-size:10px;opacity:.5">(toi)</span>':''}</div>
-          <div class="lb-stats">${u.wins}V ${u.losses}D</div>
-        </div>
-        <div>
-          <div class="lb-pts" style="color:${col}">${fmtPts(u.pts)}</div>
-          <div class="lb-rank-badge" style="color:${col};display:flex;align-items:center;gap:3px;justify-content:flex-end">
-            ${RANK_ICONS[rankName] ? `<img src="${RANK_ICONS[rankName]}" style="width:14px;height:14px;object-fit:contain">` : ''}
-            ${esc(rankName)}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Ma position si pas dans les 50
-    if (d.me && (!myData || !d.top.find(u => myData && u.name === myData.name))) {
-      const col = RANK_COLORS[d.me.rankInfo?.name] || '#aaa';
-      const meAvatar = d.me.avatar || myData?.avatar || null;
-      const _avMe = (meAvatar || '').trim() || 'poke.png';
-      const meAvatarBg = "background-image:url('" + _avMe.replace(/'/g, "\\'") + "');background-size:cover;background-position:center;background-color:transparent;font-size:0";
-      const meAvatarInner = meAvatar ? '' : '🧑';
-      rowsHtml += `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        <div class="lb-row me">
-          <div class="lb-rank-num">—</div>
-          <div class="lb-avatar" style="${meAvatarBg}">${meAvatarInner}</div>
-          <div style="flex:1"><div class="lb-name">${esc(myData?.name||'Toi')} <span style="font-size:10px;opacity:.5">(toi)</span></div><div class="lb-stats">${d.me.wins}V ${d.me.losses}D</div></div>
-          <div><div class="lb-pts" style="color:${col}">${fmtPts(d.me.pts)}</div></div>
-        </div>
-      </div>`;
-    }
-
-    el.innerHTML = podiumHtml + (rest.length ? `<div style="margin-top:4px">${rowsHtml}</div>` : rowsHtml);
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
-}
-
-// ── HISTORIQUE ──
-async function loadHistorique() {
-  const el = document.getElementById('hist-content');
-  try {
-    const d = await api('/api/pvp/history');
-    if (!d.history.length) { el.innerHTML = '<div class="empty">Aucun combat pour l\'instant</div>'; return; }
-    el.innerHTML = d.history.map(h => `
-      <div class="hist-row" onclick="loadReplay(${h.battleId})">
-        <div class="hist-result">${h.won?'🏆':'💀'}</div>
-        <div class="hist-info">
-          <div class="hist-vs">vs ${esc(h.opponentName)}</div>
-          <div class="hist-sub">il y a ${timeAgo(h.at)} · Cliquer pour revoir</div>
-        </div>
-        <div class="hist-pts" style="color:${h.won?'#33ff99':'#ff6464'}">${h.won?'+':''}${h.rankChange} pts</div>
-      </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur</div>'; }
-}
-
-async function loadReplay(battleId) {
-  try {
-    const d = await api('/api/pvp/result/'+battleId);
-    const b = d.battle;
-    const f1 = { name: b.challengerName, charClass: b.challengerClass || 'forest_ranger', pvpSkin: b.challengerSkin || b.challengerClass || 'forest_ranger', hp: getMaxHp(b.log, b.challengerName), avatar: b.challengerAvatar||null, rankInfo: b.challengerRankInfo||null };
-    const f2 = { name: b.opponentName,   charClass: b.opponentClass   || 'forest_ranger', pvpSkin: b.opponentSkin   || b.opponentClass   || 'forest_ranger', hp: getMaxHp(b.log, b.opponentName),   avatar: b.opponentAvatar||null,   rankInfo: b.opponentRankInfo||null };
-    openReplay(b.log, f1, f2, b.winnerId, b.rankChange);
-  } catch(e) { showAlert(e.message); }
-}
-
-function guessClassFromLog(log, name) {
-  for (const ev of (log||[])) { if (ev.charClass && ev.name === name) return ev.charClass; }
-  return null;
-}
-function getMaxHp(log, name) {
-  for (const e of log) { if ((e.type==='hit'||e.type==='crit') && e.defender===name) return e.hpMax; }
-  return 300;
-}
-
-// ══════════════════════════════════════════════════
-// REPLAY ANIMÉ
-// ══════════════════════════════════════════════════
-const BATTLEBACKS = [
-  '/battleback/game_background_1.png',
-  '/battleback/game_background_2.png',
-  '/battleback/game_background_3.png',
-  '/battleback/game_background_4.png',
-];
-
-function openReplay(log, f1, f2, winnerId, rankChange) {
-  if (replayBusy) return;
-  replayBusy = true;
-
-  // Choisir un fond d'arene aleatoire
-  const bg = BATTLEBACKS[Math.floor(Math.random() * BATTLEBACKS.length)];
-  const stage = document.getElementById('replay-stage');
-  if (stage) stage.style.backgroundImage = `url('${bg}')`;
-
-  const modal = document.getElementById('replay-modal');
-  document.getElementById('replay-title').textContent = `${f2.isEnemy ? "🐉" : "⚔️"} ${f1.name} vs ${f2.name}`;
-  document.getElementById('replay-log').innerHTML = '';
-  document.getElementById('replay-result').style.display = 'none';
-  resetArenaResultOverlay();
-  modal.classList.add('show');
-
-  setTimeout(() => {
-    // pvpSkin = skin visuel, charClass = classe de stats. On utilise pvpSkin pour les sprites.
-    const skin1 = f1.pvpSkin || f1.charClass || DEFAULT_CLASS;
-    const skin2 = f2.pvpSkin || f2.charClass || DEFAULT_CLASS;
-    initArena(
-      skin1, skin2,
-      f1.hp, f2.hp,
-      f1.name, f2.name,
-      f1.avatar||null, f2.avatar||null,
-      f1.rankInfo, f2.rankInfo,
-      f2.isEnemy||false
+    await pool.query(
+      `UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1 WHERE id=$2`,
+      [rankChange, winnerId]
     );
-    playReplay(log, f1, f2, winnerId, rankChange);
-  }, 350);
-}
+    await pool.query(
+      `UPDATE users SET pvp_rank=GREATEST(0, pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`,
+      [loserLoss, loserId]
+    );
 
-function closeReplay() {
-  document.getElementById('replay-modal').classList.remove('show');
-  stopArena();
-  resetArenaResultOverlay();
-  replayBusy = false;
-}
+    await pool.query(
+      `UPDATE pvp_battles SET status='done', winner_id=$1, log=$2, rank_change=$3, accepted_at=$4 WHERE id=$5`,
+      [winnerId, JSON.stringify(log), rankChange, Date.now(), battleId]
+    );
 
-// ══════════════════════════════════════════════════
-// NARRATION — phrases immersives par situation
-// ══════════════════════════════════════════════════
-const NARRATION = {
-  hit: [
-    (att, def, dmg) => `${att} frappe ${def} pour ${dmg} dégâts !`,
-    (att, def, dmg) => `${att} porte un coup brutal sur ${def} — ${dmg} dégâts !`,
-    (att, def, dmg) => `${def} encaisse ${dmg} dégâts de ${att} !`,
-    (att, def, dmg) => `${att} attaque ! ${dmg} dégâts infligés à ${def}.`,
-    (att, def, dmg) => `Coup solide de ${att} sur ${def} : -${dmg} PV !`,
-  ],
-  crit: [
-    (att, def, dmg) => `⚡ CRITIQUE ! ${att} dévaste ${def} avec ${dmg} dégâts !`,
-    (att, def, dmg) => `💥 ${att} trouve la faille — ${dmg} dégâts CRITIQUES sur ${def} !`,
-    (att, def, dmg) => `🔥 COUP CRITIQUE ! ${dmg} dégâts ! ${def} chancelle !`,
-    (att, def, dmg) => `⚡ ${att} frappe dans le mille ! ${def} subit ${dmg} dégâts critiques !`,
-    (att, def, dmg) => `💥 Attaque dévastatrice de ${att} — CRITIQUE ${dmg} dégâts !`,
-  ],
-  dodge: [
-    (att, def) => `💨 ${def} esquive l'attaque de ${att} !`,
-    (att, def) => `💨 ${att} attaque mais ${def} s'écarte au dernier moment !`,
-    (att, def) => `💨 ${def} disparaît dans l'ombre — esquive parfaite !`,
-    (att, def) => `💨 Réflexes fulgurants ! ${def} évite le coup de ${att} !`,
-    (att, def) => `💨 ${att} rate sa cible — ${def} est trop rapide !`,
-  ],
-  lowHp: [
-    name => `⚠️ ${name} est en danger critique !`,
-    name => `⚠️ ${name} tient à peine debout...`,
-    name => `⚠️ Plus que quelques instants pour ${name} !`,
-  ],
-  turn: [
-    n => `— Round ${n} —`,
-    n => `— Échange ${n} —`,
-    n => `— Tour ${n} —`,
-  ],
-  win: [
-    name => `🏆 ${name} triomphe et s'empare de la victoire !`,
-    name => `🏆 ${name} remporte le combat avec brio !`,
-    name => `🏆 Victoire écrasante de ${name} !`,
-    name => `🏆 ${name} s'impose et domine l'arène !`,
-  ],
-};
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'pvp',$2,$3,$4,0,$5)`,
+      [battle.challenger_id,
+       winnerId === battle.challenger_id ? '🏆 Victoire PVP !' : '💀 Défaite PVP',
+       winnerId === battle.challenger_id ? `Tu as battu ${f2.name} ! +${rankChange} pts` : `${f2.name} t'a battu. -${loserLoss} pts`,
+       JSON.stringify({ battleId }), Date.now()]
+    );
 
-function pickNarr(arr, ...args) {
-  return arr[Math.floor(Math.random() * arr.length)](...args);
-}
-
-// ══════════════════════════════════════════════════
-// EFFETS VISUELS SUPPLÉMENTAIRES
-// ══════════════════════════════════════════════════
-function shakeStage() {
-  const stage = document.getElementById('replay-stage');
-  if (!stage) return;
-  stage.style.transition = 'none';
-  stage.style.transform = 'translateX(-5px)';
-  setTimeout(() => { stage.style.transform = 'translateX(5px)'; }, 60);
-  setTimeout(() => { stage.style.transform = 'translateX(-3px)'; }, 120);
-  setTimeout(() => { stage.style.transform = 'translateX(3px)'; }, 170);
-  setTimeout(() => { stage.style.transform = 'translateX(0)'; stage.style.transition = ''; }, 220);
-}
-
-function shakeStageCrit() {
-  const stage = document.getElementById('replay-stage');
-  if (!stage) return;
-  stage.style.transition = 'none';
-  stage.style.transform = 'translateX(-9px) scale(1.01)';
-  setTimeout(() => { stage.style.transform = 'translateX(9px) scale(1.01)'; }, 60);
-  setTimeout(() => { stage.style.transform = 'translateX(-6px)'; }, 130);
-  setTimeout(() => { stage.style.transform = 'translateX(6px)'; }, 190);
-  setTimeout(() => { stage.style.transform = 'translateX(-3px)'; }, 250);
-  setTimeout(() => { stage.style.transform = 'translateX(0) scale(1)'; stage.style.transition = ''; }, 310);
-}
-
-function slowMotionHit() {
-  // légère pause dramatique avant le coup fatal
-  return wait(320);
-}
-
-function flashScreen(color, opacity) {
-  const stage = document.getElementById('replay-stage');
-  if (!stage) return;
-  const fl = document.createElement('div');
-  fl.style.cssText = `position:absolute;inset:0;background:${color};opacity:${opacity};pointer-events:none;z-index:20;border-radius:inherit;transition:opacity .4s`;
-  stage.appendChild(fl);
-  requestAnimationFrame(() => { fl.style.opacity = '0'; });
-  setTimeout(() => { fl.remove(); }, 450);
-}
-
-function addNarrLine(logEl, text, cls='') {
-  const d = document.createElement('div');
-  d.className = 'log-line ' + cls;
-  d.style.opacity = '0';
-  d.style.transform = 'translateX(-8px)';
-  d.style.transition = 'opacity .25s ease, transform .25s ease';
-  d.textContent = text;
-  logEl.appendChild(d);
-  logEl.scrollTop = logEl.scrollHeight;
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      d.style.opacity = '1';
-      d.style.transform = 'translateX(0)';
+    // PVP = ELO uniquement, pas de XP/or/coffres
+    res.json({
+      ok: true, battleId, winnerId, rankChange, loserLoss, log, fighters: { f1, f2 },
     });
-  });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// ── ROUTES PVP SÉPARÉES ──────────────────────────────────
+
+// GET /api/pvp/inventory — inventaire équipement PVP
+app.get("/api/pvp/inventory", auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, item_key, forge_level, extra_stats, equipped_slot, obtained_at FROM pvp_equipment WHERE user_id=$1 ORDER BY obtained_at DESC`,
+      [req.user.id]
+    );
+    const inventory = rows.map(r => {
+      const def   = PVP_ITEMS[r.item_key] || {};
+      const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+      return { id: r.id, item_key: r.item_key, forge_level: r.forge_level || 0,
+               extra_stats: r.extra_stats || {}, equipped_slot: r.equipped_slot,
+               ...def, ...stats };
+    });
+    const equipped = {};
+    for (const i of inventory) { if (i.equipped_slot) equipped[i.equipped_slot] = i; }
+    res.json({ inventory, equipped });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/equip — équiper/déséquiper un item PVP
+app.post("/api/pvp/equip", auth, async (req, res) => {
+  try {
+    const { id, unequip } = req.body;
+    const itemQ = await pool.query(`SELECT id, item_key, equipped_slot FROM pvp_equipment WHERE id=$1 AND user_id=$2`, [id, req.user.id]);
+    if (!itemQ.rows.length) return res.status(404).json({ error: "Item introuvable" });
+    const item = itemQ.rows[0];
+    if (unequip) {
+      await pool.query(`UPDATE pvp_equipment SET equipped_slot=NULL WHERE id=$1`, [id]);
+      return res.json({ ok: true });
+    }
+    const def  = PVP_ITEMS[item.item_key];
+    if (!def) return res.status(400).json({ error: "Item invalide" });
+    await pool.query(`UPDATE pvp_equipment SET equipped_slot=NULL WHERE user_id=$1 AND equipped_slot=$2`, [req.user.id, def.slot]);
+    await pool.query(`UPDATE pvp_equipment SET equipped_slot=$1 WHERE id=$2`, [def.slot, id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/forge — améliorer un item PVP
+app.post("/api/pvp/forge", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { itemId } = req.body;
+    const itemQ = await client.query(`SELECT id, item_key, forge_level, extra_stats FROM pvp_equipment WHERE id=$1 AND user_id=$2`, [itemId, req.user.id]);
+    if (!itemQ.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: "Item introuvable" }); }
+    const item      = itemQ.rows[0];
+    const def       = PVP_ITEMS[item.item_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Item invalide" }); }
+    const forgeLevel= item.forge_level || 0;
+    if (forgeLevel >= 15) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Niveau max atteint (+15)" }); }
+
+    const cost = pvpForgeCost(def.rarity, forgeLevel);
+    const userQ = await client.query(`SELECT pve_gold FROM users WHERE id=$1`, [req.user.id]);
+    const gold  = Number(userQ.rows[0]?.pve_gold || 0);
+    if (gold < cost) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or PVE insuffisant (${cost} requis, tu en as ${gold})` }); }
+
+    const newLevel   = forgeLevel + 1;
+    let extraStats   = { ...(item.extra_stats || {}) };
+
+    if (PVP_FORGE_MILESTONES.includes(newLevel)) {
+      const statPool = PVP_FORGE_BONUS_POOL.filter(s => (def[s] || 0) > 0 || Object.keys(extraStats).includes(s));
+      const statFallback = PVP_FORGE_BONUS_POOL;
+      const statPoolFinal = statPool.length > 0 ? statPool : statFallback;
+      const chosenStat = statPoolFinal[Math.floor(Math.random() * statPoolFinal.length)];
+      const bonusVal   = pvpForgeBonusValue(chosenStat, def.rarity, newLevel);
+      extraStats[chosenStat] = (extraStats[chosenStat] || 0) + bonusVal;
+    }
+
+    await client.query(`UPDATE users SET pve_gold=pve_gold-$1 WHERE id=$2`, [cost, req.user.id]);
+    await client.query(`UPDATE pvp_equipment SET forge_level=$1, extra_stats=$2 WHERE id=$3`, [newLevel, JSON.stringify(extraStats), itemId]);
+    await client.query('COMMIT');
+
+    const newStats = pvpForgedStats(def, newLevel, extraStats);
+    res.json({ ok: true, newLevel, cost, extraStats, newStats,
+               isMilestone: PVP_FORGE_MILESTONES.includes(newLevel) });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+
+// =========================
+// BRISER & REROLL — RUNES
+// =========================
+
+// Or et runes gagnés en brisant un item
+const SHATTER_REWARDS = {
+  common:    { gold: 10,  runes: { any: 1 } },
+  rare:      { gold: 25,  runes: { any: 2 } },
+  epic:      { gold: 60,  runes: { any: 1, epic: 1 } },
+  legendary: { gold: 150, runes: { epic: 1, legendary: 1 } },
+};
+
+// Coût d'un reroll (or + runes)
+const REROLL_COSTS = {
+  common:    { gold: 20,  runes: { any: 2 } },
+  rare:      { gold: 50,  runes: { any: 3 } },
+  epic:      { gold: 120, runes: { epic: 1 } },
+  legendary: { gold: 300, runes: { legendary: 1 } },
+};
+
+// Plages de valeurs par stat et rareté pour le reroll (min-max)
+const REROLL_RANGES = {
+  common: {
+    hp: [10,40], atk: [2,8], def: [2,8], speed: [1,5],
+    crit_pct: [0.5,2], crit_dmg: [1,4], dodge: [0.5,2], lifesteal: [0.3,1],
+  },
+  rare: {
+    hp: [25,80], atk: [5,18], def: [5,18], speed: [3,10],
+    crit_pct: [1,4], crit_dmg: [2,8], dodge: [1,4], lifesteal: [0.5,2],
+  },
+  epic: {
+    hp: [50,150], atk: [10,35], def: [10,35], speed: [5,18],
+    crit_pct: [2,8], crit_dmg: [5,15], dodge: [2,8], lifesteal: [1,4],
+  },
+  legendary: {
+    hp: [100,300], atk: [20,60], def: [20,60], speed: [10,30],
+    crit_pct: [4,15], crit_dmg: [10,30], dodge: [4,15], lifesteal: [2,8],
+  },
+};
+
+// Note selon percentile dans la plage (F→S)
+function statGrade(val, min, max) {
+  const pct = (val - min) / (max - min);
+  if (pct >= 0.90) return { grade: 'S', color: '#ffd84d', emoji: '⭐' };
+  if (pct >= 0.70) return { grade: 'A', color: '#33ff99', emoji: '✅' };
+  if (pct >= 0.45) return { grade: 'B', color: '#4da6ff', emoji: '🔵' };
+  if (pct >= 0.20) return { grade: 'C', color: '#aaa',    emoji: '⚪' };
+  return { grade: 'F', color: '#ff6464', emoji: '❌' };
 }
 
-async function playReplay(log, f1, f2, winnerId, rankChange) {
-  const logEl = document.getElementById('replay-log');
+// Reroller une stat avec valeur aléatoire dans la plage
+function rollStatValue(stat, rarity) {
+  const ranges = REROLL_RANGES[rarity] || REROLL_RANGES.common;
+  const [min, max] = ranges[stat] || [1, 5];
+  const raw = min + Math.random() * (max - min);
+  const precision = (stat === 'hp' || stat === 'atk' || stat === 'def' || stat === 'speed') ? 0 : 1;
+  const val = Math.round(raw * Math.pow(10, precision)) / Math.pow(10, precision);
+  const g = statGrade(val, min, max);
+  return { val, grade: g.grade, color: g.color, emoji: g.emoji, min, max };
+}
 
-  await wait(300);
-  showVsFlash();
-  await wait(600);
+// POST /api/pvp/forge/shatter — briser un item → or + runes
+app.post('/api/pvp/forge/shatter', auth, async (req, res) => {
+  const itemId = Number(req.body?.itemId || 0) | 0;
+  if (!itemId) return res.status(400).json({ error: 'itemId requis' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const itemQ = await client.query(
+      `SELECT id, item_key, equipped_slot FROM pvp_equipment WHERE id=$1 AND user_id=$2 FOR UPDATE`,
+      [itemId, req.user.id]
+    );
+    if (!itemQ.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Item introuvable' }); }
+    const item = itemQ.rows[0];
+    if (item.equipped_slot) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Déséquipe l'item avant de le briser" }); }
+    const def = PVP_ITEMS[item.item_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Item invalide' }); }
 
-  // Phase 1 : approche dramatique
-  await approachCenter(420);
-  setAnim(1, 'idle'); setAnim(2, 'idle');
-  await wait(500);
+    const rewards = SHATTER_REWARDS[def.rarity] || SHATTER_REWARDS.common;
 
-  // Compter les événements pour détecter le dernier coup
-  const hitEvents = log.filter(e => e.type === 'hit' || e.type === 'crit');
-  const lastHit = hitEvents[hitEvents.length - 1];
+    // Or PVE
+    await client.query(`UPDATE users SET pve_gold = pve_gold + $1 WHERE id=$2`, [rewards.gold, req.user.id]);
 
-  let turnPhraseIdx = 0;
+    // Runes — charger les runes actuelles puis ajouter
+    const runeQ = await client.query(`SELECT runes FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const currentRunes = runeQ.rows[0]?.runes || {};
+    for (const [runeType, qty] of Object.entries(rewards.runes)) {
+      currentRunes[runeType] = (currentRunes[runeType] || 0) + qty;
+    }
+    await client.query(`UPDATE users SET runes=$1 WHERE id=$2`, [JSON.stringify(currentRunes), req.user.id]);
 
-  // Phase 2 : combat
-  for (const ev of log) {
-    if (!arenaState) break;
+    // Supprimer l'item
+    await client.query(`DELETE FROM pvp_equipment WHERE id=$1`, [itemId]);
+    await client.query('COMMIT');
 
-    // ── TOUR ──
-    if (ev.type === 'turn') {
-      if (ev.turn > 1) {
-        await wait(200);
-        const phrase = NARRATION.turn[turnPhraseIdx % NARRATION.turn.length](ev.turn);
-        turnPhraseIdx++;
-        addNarrLine(logEl, phrase, 'turn');
-        await wait(300);
+    res.json({ ok: true, gold: rewards.gold, runes: rewards.runes, totalRunes: currentRunes, itemName: def.name, rarity: def.rarity });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// POST /api/pvp/forge/reroll — reroller une stat bonus d'un item
+app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
+  const itemId   = Number(req.body?.itemId || 0) | 0;
+  const statKey  = String(req.body?.stat || '');
+  const confirm  = req.body?.confirm === true; // faux = preview, vrai = appliquer
+
+  if (!itemId || !statKey) return res.status(400).json({ error: 'itemId et stat requis' });
+  if (!PVP_FORGE_BONUS_POOL.includes(statKey)) return res.status(400).json({ error: 'Stat invalide' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const itemQ = await client.query(
+      `SELECT id, item_key, forge_level, extra_stats FROM pvp_equipment WHERE id=$1 AND user_id=$2 FOR UPDATE`,
+      [itemId, req.user.id]
+    );
+    if (!itemQ.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Item introuvable' }); }
+    const item = itemQ.rows[0];
+    const def = PVP_ITEMS[item.item_key];
+    if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Item invalide' }); }
+
+    const extraStats = item.extra_stats || {};
+    if (!(statKey in extraStats)) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Cette stat n'est pas disponible sur cet item" }); }
+
+    // Vérifier le coût
+    const costs = REROLL_COSTS[def.rarity] || REROLL_COSTS.common;
+    const userQ = await client.query(`SELECT pve_gold, runes FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const u = userQ.rows[0];
+    const gold  = Number(u.pve_gold || 0);
+    const runes = u.runes || {};
+
+    if (gold < costs.gold) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${costs.gold} requis)` }); }
+    for (const [runeType, qty] of Object.entries(costs.runes)) {
+      if ((runes[runeType] || 0) < qty) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: `Runes insuffisantes (${qty} rune ${runeType} requise)` });
       }
-      continue;
     }
 
-    // ── ESQUIVE ──
-    if (ev.type === 'dodge') {
-      const defId = ev.defender === f1.name ? 1 : 2;
-      const attId = ev.defender === f1.name ? 2 : 1;
-      // Petit step en arrière du défenseur
-      if (arenaState) {
-        const f = defId === 1 ? arenaState.f1 : arenaState.f2;
-        const origX = f.x;
-        const dir = defId === 1 ? -18 : 18;
-        f.x += dir;
-        await wait(120);
-        f.x = origX;
-      }
-      addNarrLine(logEl, pickNarr(NARRATION.dodge, ev.attacker, ev.defender), 'dodge');
-      await wait(380);
-      continue;
+    // Générer le jet
+    const roll = rollStatValue(statKey, def.rarity);
+
+    if (!confirm) {
+      // Preview : ne pas appliquer, juste retourner le résultat
+      await client.query('ROLLBACK');
+      return res.json({ ok: true, preview: true, stat: statKey, ...roll, costs, gold, runes });
     }
 
-    // ── COUP NORMAL ou CRITIQUE ──
-    if (ev.type === 'hit' || ev.type === 'crit') {
-      const isF1att  = ev.attacker === f1.name;
-      const attId    = isF1att ? 1 : 2;
-      const defId    = isF1att ? 2 : 1;
-      const attClass = isF1att ? f1Class : f2Class;
-      const isCrit   = ev.type === 'crit';
-      const isFatal  = ev === lastHit; // dernier coup
+    // Appliquer : déduire coût + modifier la stat
+    await client.query(`UPDATE users SET pve_gold = pve_gold - $1 WHERE id=$2`, [costs.gold, req.user.id]);
+    const newRunes = { ...runes };
+    for (const [runeType, qty] of Object.entries(costs.runes)) {
+      newRunes[runeType] = Math.max(0, (newRunes[runeType] || 0) - qty);
+    }
+    await client.query(`UPDATE users SET runes=$1 WHERE id=$2`, [JSON.stringify(newRunes), req.user.id]);
 
-      // Ralenti dramatique sur le coup fatal
-      if (isFatal) {
-        await slowMotionHit();
-      }
+    const newExtra = { ...extraStats, [statKey]: roll.val };
+    await client.query(`UPDATE pvp_equipment SET extra_stats=$1 WHERE id=$2`, [JSON.stringify(newExtra), itemId]);
+    await client.query('COMMIT');
 
-      setAnim(attId, isCrit ? 'attack2' : 'attack1');
-      await wait(isCrit ? 200 : 250);
+    res.json({ ok: true, preview: false, stat: statKey, newVal: roll.val, grade: roll.grade, color: roll.color, emoji: roll.emoji, min: roll.min, max: roll.max, newExtra, costs, newRunes });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
 
-      playSfx(attClass);
-      flashHit(defId);
-      setAnim(defId, 'hurt');  // animation hurt sur le defenseur
-      spawnDmg(defId, ev.dmg, isCrit);
+// GET /api/pvp/forge/runes — voir ses runes
+app.get('/api/pvp/forge/runes', auth, async (req, res) => {
+  try {
+    const q = await pool.query(`SELECT runes, pve_gold FROM users WHERE id=$1`, [req.user.id]);
+    res.json({ runes: q.rows[0]?.runes || {}, gold: Number(q.rows[0]?.pve_gold || 0) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
 
-      // Shake écran
-      if (isCrit) {
-        shakeStageCrit();
-        flashScreen('rgba(255,200,0,0.18)', 0.18);
-      } else if (isFatal) {
-        shakeStageCrit();
-        flashScreen('rgba(255,60,60,0.2)', 0.2);
-      } else {
-        shakeStage();
-      }
+// POST /api/pvp/open-chest — ouvrir un coffre PVP (ancien système)
+app.post("/api/pvp/open-chest", auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const userQ = await client.query(`SELECT pvp_chests, pvp_rank FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const u = userQ.rows[0];
+    if (Number(u.pvp_chests) < 1) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Aucun coffre disponible" }); }
+    const rankInfo = getRankInfo(Number(u.pvp_rank));
+    const item     = pvpChestLoot(rankInfo.name);
+    if (!item) { await client.query('ROLLBACK'); return res.status(500).json({ error: "Loot error" }); }
+    await client.query(`INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`, [req.user.id, item.key, Date.now()]);
+    await client.query(`UPDATE users SET pvp_chests=pvp_chests-1 WHERE id=$1`, [req.user.id]);
+    await client.query('COMMIT');
+    res.json({ ok: true, item });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
 
-      if (isF1att) {
-        updateArenaHp(2, ev.hpLeft, ev.hpMax);
-        if (ev.hpLeftAtt !== undefined) updateArenaHp(1, ev.hpLeftAtt, ev.hpMaxAtt);
-      } else {
-        updateArenaHp(1, ev.hpLeft, ev.hpMax);
-        if (ev.hpLeftAtt !== undefined) updateArenaHp(2, ev.hpLeftAtt, ev.hpMaxAtt);
-      }
+// POST /api/pve/open-chest — ouvrir un coffre PVE par rareté
+app.post("/api/pve/open-chest", auth, async (req, res) => {
+  const chestRarity = String(req.body?.rarity || 'common');
+  const colMap = { common:'pve_chest_common', rare:'pve_chest_rare', epic:'pve_chest_epic', legendary:'pve_chest_legendary' };
+  const col = colMap[chestRarity];
+  if (!col) return res.status(400).json({ error: 'Rareté invalide' });
 
-      // Narration
-      const narr = isCrit
-        ? pickNarr(NARRATION.crit, ev.attacker, ev.defender, ev.dmg)
-        : pickNarr(NARRATION.hit,  ev.attacker, ev.defender, ev.dmg);
-      addNarrLine(logEl, narr, isCrit ? 'crit' : '');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const userQ = await client.query(`SELECT ${col} FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
+    const count = Number(userQ.rows[0]?.[col] || 0);
+    if (count < 1) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Aucun coffre ' + chestRarity + ' disponible' }); }
 
-      // HP critique — avertissement
-      const hpPct = ev.hpLeft / ev.hpMax;
-      if (hpPct > 0 && hpPct <= 0.20) {
-        await wait(120);
-        addNarrLine(logEl, pickNarr(NARRATION.lowHp, ev.defender), 'dodge');
-      }
+    const item = pveChestLoot(chestRarity);
+    if (!item) { await client.query('ROLLBACK'); return res.status(500).json({ error: 'Loot error' }); }
 
-      await wait(isCrit ? 650 : 520);
+    await client.query(`INSERT INTO pvp_equipment(user_id, item_key, obtained_at) VALUES($1,$2,$3)`, [req.user.id, item.key, Date.now()]);
+    await client.query(`UPDATE users SET ${col} = ${col} - 1 WHERE id=$1`, [req.user.id]);
+    await client.query('COMMIT');
+    res.json({ ok: true, item, chestRarity });
+  } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
+  finally { client.release(); }
+});
 
-      if (arenaState && arenaState.f1.anim !== 'dead') setAnim(1, 'idle');
-      if (arenaState && arenaState.f2.anim !== 'dead') setAnim(2, 'idle');
-      await wait(150);
+// POST /api/pvp/spend-stat — dépenser un point de caractéristique PVP
+app.post("/api/pvp/spend-stat", auth, async (req, res) => {
+  try {
+    const stat = req.body?.stat;
+    const validStats = ['force','agilite','intelligence','dexterite'];
+    if (!validStats.includes(stat)) return res.status(400).json({ error: "Stat invalide" });
+    const charQ = await pool.query(`SELECT pvp_pts_avail FROM player_character WHERE user_id=$1`, [req.user.id]);
+    const pts = Number(charQ.rows[0]?.pvp_pts_avail || 0);
+    if (pts < 1) return res.status(400).json({ error: "Aucun point disponible" });
+    await pool.query(
+      `UPDATE player_character SET pvp_pts_avail=pvp_pts_avail-1, pvp_stat_${stat}=pvp_stat_${stat}+1 WHERE user_id=$1`,
+      [req.user.id]
+    );
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/matchmaking/join — rejoindre la file (pas de coût d'énergie)
+app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
+  try {
+    const meQ = await pool.query(`SELECT pvp_rank, mm_games_today, mm_day_key FROM users WHERE id=$1`, [req.user.id]);
+    const me  = meQ.rows[0];
+    // Incrémenter le compteur de games du jour (pour le système de décroissance ELO)
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const mmToday = me.mm_day_key === todayKey ? Number(me.mm_games_today || 0) : 0;
+
+    await pool.query(
+      `INSERT INTO pvp_queue(user_id, pvp_rank, joined_at) VALUES($1,$2,$3)
+       ON CONFLICT(user_id) DO UPDATE SET pvp_rank=$2, joined_at=$3`,
+      [req.user.id, Number(me.pvp_rank), Date.now()]
+    );
+
+    const rank   = Number(me.pvp_rank);
+    const margin = 400;
+    // Paires bannies — ces deux IDs ne se rencontrent jamais
+    const BANNED_PAIRS = [[13, 16]];
+    const isBanned = (a, b) => BANNED_PAIRS.some(p => (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+
+    const opQ = await pool.query(`
+      SELECT q.user_id, u.name, u.avatar, q.pvp_rank
+      FROM pvp_queue q
+      JOIN users u ON u.id = q.user_id
+      WHERE q.user_id != $1
+        AND q.pvp_rank BETWEEN $2 AND $3
+      ORDER BY ABS(q.pvp_rank - $4) ASC, q.joined_at ASC
+      LIMIT 10
+    `, [req.user.id, Math.max(0, rank - margin), rank + margin, rank]);
+
+    const opponent = opQ.rows.find(r => !isBanned(req.user.id, r.user_id));
+    if (!opponent) {
+      return res.json({ status: 'waiting', opponent: null });
+    }
+    await pool.query(`DELETE FROM pvp_queue WHERE user_id = ANY($1)`, [[req.user.id, opponent.user_id]]);
+
+    const battleQ = await pool.query(
+      `INSERT INTO pvp_battles(challenger_id, opponent_id, status, created_at) VALUES($1,$2,'pending',$3) RETURNING id`,
+      [req.user.id, opponent.user_id, Date.now()]
+    );
+    const battleId = battleQ.rows[0].id;
+
+    // Mettre à jour le compteur de games matchmaking du jour
+    const todayKeyUpd = new Date().toISOString().slice(0, 10);
+    await pool.query(`
+      UPDATE users
+      SET mm_games_today = CASE WHEN mm_day_key=$1 THEN mm_games_today+1 ELSE 1 END,
+          mm_day_key = $1,
+          mm_game_buffer = CASE
+            WHEN mm_day_key=$1 AND mm_games_today+1 >= 12 THEN LEAST(mm_game_buffer+3, 9)
+            ELSE mm_game_buffer
+          END
+      WHERE id=$2
+    `, [todayKeyUpd, req.user.id]);
+
+    res.json({
+      status: 'found',
+      opponent: {
+        id:       opponent.user_id,
+        name:     opponent.name,
+        avatar:   opponent.avatar || null,
+        pts:      Number(opponent.pvp_rank),
+        rankInfo: getRankInfo(Number(opponent.pvp_rank)),
+      },
+      battleId,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/matchmaking/leave — quitter la file
+app.post("/api/pvp/matchmaking/leave", auth, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM pvp_queue WHERE user_id=$1`, [req.user.id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/matchmaking/status — vérifier si un match a été trouvé
+app.get("/api/pvp/matchmaking/status", auth, async (req, res) => {
+  try {
+    const qQ = await pool.query(`SELECT 1 FROM pvp_queue WHERE user_id=$1`, [req.user.id]);
+    if (qQ.rows.length) return res.json({ status: 'waiting' });
+
+    const bQ = await pool.query(`
+      SELECT pb.id, pb.challenger_id, pb.opponent_id,
+             u1.name as cname, u1.avatar as cavatar, u1.pvp_rank as crank,
+             u2.name as oname, u2.avatar as oavatar, u2.pvp_rank as orank
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id = pb.challenger_id
+      JOIN users u2 ON u2.id = pb.opponent_id
+      WHERE (pb.challenger_id=$1 OR pb.opponent_id=$1)
+        AND pb.status = 'pending'
+        AND pb.created_at > $2
+      ORDER BY pb.created_at DESC LIMIT 1
+    `, [req.user.id, Date.now() - 30000]);
+
+    if (!bQ.rows.length) return res.json({ status: 'idle' });
+
+    const b = bQ.rows[0];
+    const isChallenger = b.challenger_id === req.user.id;
+    const opponent = isChallenger
+      ? { id: b.opponent_id,   name: b.oname, avatar: b.oavatar, pts: Number(b.orank), rankInfo: getRankInfo(Number(b.orank)) }
+      : { id: b.challenger_id, name: b.cname, avatar: b.cavatar, pts: Number(b.crank), rankInfo: getRankInfo(Number(b.crank)) };
+
+    res.json({ status: 'found', opponent, battleId: b.id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/history — historique des combats
+app.get("/api/pvp/history", auth, async (req, res) => {
+  try {
+    const q = await pool.query(`
+      SELECT pb.id, pb.winner_id, pb.rank_change, pb.accepted_at, pb.log,
+             u1.name as challenger_name, u2.name as opponent_name,
+             pb.challenger_id, pb.opponent_id
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id=pb.challenger_id
+      JOIN users u2 ON u2.id=pb.opponent_id
+      WHERE (pb.challenger_id=$1 OR pb.opponent_id=$1) AND pb.status='done'
+      ORDER BY pb.accepted_at DESC LIMIT 20
+    `, [req.user.id]);
+    res.json({ history: q.rows.map(r => ({
+      battleId: r.id,
+      opponentName: r.challenger_id === req.user.id ? r.opponent_name : r.challenger_name,
+      won: r.winner_id === req.user.id,
+      rankChange: r.winner_id === req.user.id ? +Number(r.rank_change) : -Number(r.rank_change),
+      at: Number(r.accepted_at),
+      log: r.log,
+    })) });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/result/:id — récupérer un combat pour replay
+app.get("/api/pvp/result/:id", auth, async (req, res) => {
+  const battleId = Number(req.params.id) | 0;
+  try {
+    const q = await pool.query(`
+      SELECT pb.*, u1.name as cname, u1.avatar as cavatar, u2.name as oname, u2.avatar as oavatar FROM pvp_battles pb
+      JOIN users u1 ON u1.id=pb.challenger_id JOIN users u2 ON u2.id=pb.opponent_id
+      WHERE pb.id=$1 AND (pb.challenger_id=$2 OR pb.opponent_id=$2)
+    `, [battleId, req.user.id]);
+    if (!q.rows.length) return res.status(404).json({ error: "Combat introuvable" });
+    const r = q.rows[0];
+    const [c1char, c2char] = await Promise.all([
+      pool.query('SELECT char_class, pvp_skin FROM player_character WHERE user_id=$1 LIMIT 1', [r.challenger_id]),
+      pool.query('SELECT char_class, pvp_skin FROM player_character WHERE user_id=$1 LIMIT 1', [r.opponent_id]),
+    ]);
+    res.json({ battle: {
+      id: r.id,
+      challengerName:     r.cname,
+      opponentName:       r.oname,
+      challengerClass:    c1char.rows[0]?.char_class || null,
+      opponentClass:      c2char.rows[0]?.char_class || null,
+      challengerSkin:     c1char.rows[0]?.pvp_skin || c1char.rows[0]?.char_class || 'forest_ranger',
+      opponentSkin:       c2char.rows[0]?.pvp_skin || c2char.rows[0]?.char_class || 'forest_ranger',
+      challengerAvatar:   r.cavatar || null,
+      opponentAvatar:     r.oavatar || null,
+      challengerRankInfo: getRankInfo(Number(r.challenger_rank_before||1000)),
+      opponentRankInfo:   getRankInfo(Number(r.opponent_rank_before||1000)),
+      winnerId:   r.winner_id,
+      rankChange: r.rank_change,
+      log:        r.log,
+      at:         r.accepted_at,
+    }});
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/pvp/battle-result/:id — poll pour voir si un combat est terminé
+app.get("/api/pvp/battle-result/:id", auth, async (req, res) => {
+  const battleId = Number(req.params.id) | 0;
+  try {
+    const q = await pool.query(`
+      SELECT pb.status, pb.winner_id, pb.rank_change, pb.log,
+             pb.challenger_id, pb.opponent_id,
+             u1.name as cname, u1.avatar as cavatar, u1.pvp_rank as crank,
+             u2.name as oname, u2.avatar as oavatar, u2.pvp_rank as orank,
+             pc1.pvp_skin as cskin, pc2.pvp_skin as oskin,
+             pc1.char_class as cclass, pc2.char_class as oclass
+      FROM pvp_battles pb
+      JOIN users u1 ON u1.id = pb.challenger_id
+      JOIN users u2 ON u2.id = pb.opponent_id
+      LEFT JOIN player_character pc1 ON pc1.user_id = pb.challenger_id
+      LEFT JOIN player_character pc2 ON pc2.user_id = pb.opponent_id
+      WHERE pb.id = $1
+        AND (pb.challenger_id = $2 OR pb.opponent_id = $2)
+    `, [battleId, req.user.id]);
+
+    if (!q.rows.length) return res.status(404).json({ error: 'Combat introuvable' });
+    const b = q.rows[0];
+
+    if (b.status !== 'done') return res.json({ done: false });
+
+    const f1 = {
+      name:      b.cname,
+      avatar:    b.cavatar || null,
+      charClass: b.cclass  || null,
+      pvpSkin:   b.cskin   || 'forest_ranger',
+      rankInfo:  getRankInfo(Number(b.crank)),
+      hp: 100,
+    };
+    const f2 = {
+      name:      b.oname,
+      avatar:    b.oavatar || null,
+      charClass: b.oclass  || null,
+      pvpSkin:   b.oskin   || 'forest_ranger',
+      rankInfo:  getRankInfo(Number(b.orank)),
+      hp: 100,
+    };
+
+    const isWinner    = b.winner_id === req.user.id;
+    const rankChange  = Number(b.rank_change || 0);
+
+    res.json({
+      done:       true,
+      winnerId:   b.winner_id,
+      rankChange: isWinner ? rankChange : -rankChange,
+      log:        b.log,
+      fighters:   { f1, f2 },
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+
+
+// =========================
+// SYSTÈME PVE
+// =========================
+
+// Tables PVE créées dans initDb (voir ci-dessus)
+// 7 ennemis × 3 difficultés, 9 combats/jour, coffre toutes les 3 victoires contre un même ennemi
+
+const PVE_ENEMIES = {
+  goblin: {
+    key: 'goblin', name: 'Gobelin',
+    sprite: '/ennemie spritesheet/goblin',
+    difficulties: {
+      easy:   { hp: 120, atq: 8,  def: 2,  speed: 12, crit: 5,  crit_dmg: 110, dodge: 5  },
+      medium: { hp: 200, atq: 14, def: 5,  speed: 14, crit: 8,  crit_dmg: 115, dodge: 8  },
+      hard:   { hp: 320, atq: 22, def: 10, speed: 16, crit: 12, crit_dmg: 120, dodge: 12 },
+    },
+    xp:   { easy: 40,  medium: 80,  hard: 150 },
+    gold: { easy: 25,  medium: 50,  hard: 90  },
+  },
+  skeleton_warrior: {
+    key: 'skeleton_warrior', name: 'Squelette Guerrier',
+    sprite: '/ennemie spritesheet/skeleton_warrior',
+    difficulties: {
+      easy:   { hp: 160, atq: 12, def: 3,  speed: 10, crit: 8,  crit_dmg: 120, dodge: 8  },
+      medium: { hp: 260, atq: 20, def: 8,  speed: 13, crit: 12, crit_dmg: 130, dodge: 12 },
+      hard:   { hp: 400, atq: 30, def: 14, speed: 16, crit: 18, crit_dmg: 140, dodge: 18 },
+    },
+    xp:   { easy: 70,  medium: 140, hard: 260 },
+    gold: { easy: 40,  medium: 80,  hard: 150 },
+  },
+  orc: {
+    key: 'orc', name: 'Orc',
+    sprite: '/ennemie spritesheet/orc',
+    difficulties: {
+      easy:   { hp: 200, atq: 14, def: 5,  speed: 8,  crit: 5,  crit_dmg: 110, dodge: 3  },
+      medium: { hp: 320, atq: 22, def: 10, speed: 10, crit: 8,  crit_dmg: 115, dodge: 5  },
+      hard:   { hp: 480, atq: 34, def: 18, speed: 12, crit: 12, crit_dmg: 120, dodge: 8  },
+    },
+    xp:   { easy: 60,  medium: 120, hard: 220 },
+    gold: { easy: 35,  medium: 70,  hard: 130 },
+  },
+  zombie_villager: {
+    key: 'zombie_villager', name: 'Zombie Villageois',
+    sprite: '/ennemie spritesheet/zombie_villager',
+    difficulties: {
+      easy:   { hp: 250, atq: 16, def: 6,  speed: 5,  crit: 3,  crit_dmg: 108, dodge: 3  },
+      medium: { hp: 400, atq: 25, def: 12, speed: 7,  crit: 5,  crit_dmg: 112, dodge: 5  },
+      hard:   { hp: 600, atq: 38, def: 20, speed: 9,  crit: 8,  crit_dmg: 118, dodge: 8  },
+    },
+    xp:   { easy: 80,  medium: 160, hard: 290 },
+    gold: { easy: 50,  medium: 100, hard: 180 },
+  },
+  ogre: {
+    key: 'ogre', name: 'Ogre',
+    sprite: '/ennemie spritesheet/ogre',
+    difficulties: {
+      easy:   { hp: 350, atq: 18, def: 10, speed: 6,  crit: 4,  crit_dmg: 110, dodge: 2  },
+      medium: { hp: 550, atq: 28, def: 18, speed: 8,  crit: 6,  crit_dmg: 115, dodge: 4  },
+      hard:   { hp: 800, atq: 42, def: 28, speed: 10, crit: 10, crit_dmg: 120, dodge: 6  },
+    },
+    xp:   { easy: 90,  medium: 180, hard: 320 },
+    gold: { easy: 55,  medium: 110, hard: 200 },
+  },
+  golem: {
+    key: 'golem', name: 'Golem de Pierre',
+    sprite: '/ennemie spritesheet/golem',
+    difficulties: {
+      easy:   { hp: 500, atq: 22, def: 18, speed: 4,  crit: 3,  crit_dmg: 110, dodge: 1  },
+      medium: { hp: 780, atq: 34, def: 28, speed: 6,  crit: 5,  crit_dmg: 115, dodge: 3  },
+      hard:   { hp: 1100,atq: 50, def: 42, speed: 8,  crit: 8,  crit_dmg: 120, dodge: 5  },
+    },
+    xp:   { easy: 120, medium: 240, hard: 420 },
+    gold: { easy: 70,  medium: 140, hard: 260 },
+  },
+  necromancer_of_the_shadow: {
+    key: 'necromancer_of_the_shadow', name: 'Nécromancien des Ombres',
+    sprite: '/ennemie spritesheet/necromancer_of_the_shadow',
+    difficulties: {
+      easy:   { hp: 650,  atq: 35, def: 12, speed: 16, crit: 18, crit_dmg: 138, dodge: 18 },
+      medium: { hp: 1000, atq: 52, def: 18, speed: 20, crit: 26, crit_dmg: 150, dodge: 26 },
+      hard:   { hp: 1500, atq: 75, def: 28, speed: 24, crit: 35, crit_dmg: 165, dodge: 35 },
+    },
+    xp:   { easy: 180, medium: 360, hard: 650 },
+    gold: { easy: 110, medium: 220, hard: 400 },
+  },
+};
+
+
+const PVE_MAX_LEVEL = 50;
+
+// XP nécessaire pour passer du niveau N au N+1 (courbe progressive)
+function pveXpForLevel(lvl) {
+  lvl = Math.max(1, Math.min(lvl, PVE_MAX_LEVEL));
+  return Math.floor(200 * Math.pow(lvl, 1.5));
+}
+
+// Donne de l'XP PVE et monte de niveau si besoin
+async function addPveXp(userId, xpGain, client) {
+  const q = await client.query(`SELECT pve_level, pve_xp FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+  let lvl = Number(q.rows[0]?.pve_level || 1);
+  let xp  = Number(q.rows[0]?.pve_xp    || 0) + xpGain;
+  let levelsGained = 0;
+
+  while (lvl < PVE_MAX_LEVEL && xp >= pveXpForLevel(lvl)) {
+    xp -= pveXpForLevel(lvl);
+    lvl++;
+    levelsGained++;
+  }
+  if (lvl >= PVE_MAX_LEVEL) xp = 0;
+
+  await client.query(`UPDATE users SET pve_level=$1, pve_xp=$2 WHERE id=$3`, [lvl, xp, userId]);
+
+  // Chaque niveau PVE donne 1 point de stat PVP
+  if (levelsGained > 0) {
+    await client.query(
+      `UPDATE player_character SET pvp_pts_avail = pvp_pts_avail + $1 WHERE user_id = $2`,
+      [levelsGained, userId]
+    );
+  }
+  return { newLevel: lvl, newXp: xp, levelsGained };
+}
+
+// Détermine le type de coffre PVE selon les HP de l'ennemi
+function pveChestTypeForEnemy(enemyKey, difficulty) {
+  const enemyDef = PVE_ENEMIES[enemyKey];
+  if (!enemyDef) return 'common';
+  const hp = enemyDef.difficulties[difficulty]?.hp || 0;
+  if (hp >= 1450) return 'legendary';
+  if (hp >= 779)  return 'epic';
+  if (hp >= 401)  return 'rare';
+  return 'common';
+}
+
+// Loot d'un coffre PVE selon sa rareté
+function pveChestLoot(chestRarity) {
+  // commun  → item commun (80%) ou rare (20%)
+  // rare    → item rare (65%) ou épique (35%)
+  // épique  → item épique (60%) ou légendaire (40%)
+  // légendaire → item légendaire (100%)
+  const pools = {
+    common:    [{ rarity:'common', w:80 }, { rarity:'rare',      w:20 }],
+    rare:      [{ rarity:'rare',   w:65 }, { rarity:'epic',      w:35 }],
+    epic:      [{ rarity:'epic',   w:60 }, { rarity:'legendary', w:40 }],
+    legendary: [{ rarity:'legendary', w:100 }],
+  };
+  const pool = pools[chestRarity] || pools.common;
+  const total = pool.reduce((s, e) => s + e.w, 0);
+  let rand = Math.random() * total;
+  let chosen = pool[0].rarity;
+  for (const e of pool) { rand -= e.w; if (rand <= 0) { chosen = e.rarity; break; } }
+
+  const items = Object.values(PVP_ITEMS).filter(i => i.rarity === chosen);
+  if (!items.length) return null;
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+const PVE_CHEST_IMG = {
+  common:    'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png',
+  rare:      'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png',
+  epic:      'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png',
+  legendary: 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png',
+};
+
+const PVE_DAILY_MAX = 9;
+
+function simulatePveBattle(fighter, enemy) {
+  let hpF = fighter.hp;
+  let hpE = enemy.hp;
+  const log = [];
+
+  // Qui frappe en premier (vitesse)
+  const [first, second, hpFirst0, hpSecond0] = fighter.speed >= enemy.speed
+    ? [fighter, enemy, hpF, hpE]
+    : [enemy, fighter, hpE, hpF];
+
+  let hpFirst  = hpFirst0;
+  let hpSecond = hpSecond0;
+  const firstIsPlayer = first === fighter;
+
+  for (let turn = 1; turn <= 60; turn++) {
+    log.push({ type: 'turn', turn });
+
+    // Attaque du premier
+    const d1 = Math.random() * 100 < Math.min(50, (second.dodge || 0) + 10);
+    if (d1) {
+      log.push({ type: 'dodge', attacker: first.name, defender: second.name });
+    } else {
+      const c1 = Math.random() * 100 < (first.crit || 0);
+      const cm1 = c1 ? ((first.crit_dmg || 120) / 100) : 1;
+      const raw1 = Math.round(first.atq * (0.80 + Math.random() * 0.40) * cm1);
+      const red1 = Math.min(0.75, (second.def || 0) / ((second.def || 0) + 80));
+      const dmg1 = Math.max(1, Math.round(raw1 * (1 - red1)));
+      hpSecond = Math.max(0, hpSecond - dmg1);
+      if ((first.lifesteal || 0) > 0) hpFirst = Math.min(first.hp, hpFirst + Math.round(dmg1 * first.lifesteal / 100));
+      log.push({ type: c1 ? 'crit' : 'hit', attacker: first.name, defender: second.name, dmg: dmg1, hpLeft: hpSecond, hpMax: second.hp, hpLeftAtt: hpFirst, hpMaxAtt: first.hp });
+    }
+    if (hpSecond <= 0) break;
+
+    // Attaque du second
+    const d2 = Math.random() * 100 < Math.min(50, (first.dodge || 0) + 10);
+    if (d2) {
+      log.push({ type: 'dodge', attacker: second.name, defender: first.name });
+    } else {
+      const c2 = Math.random() * 100 < (second.crit || 0);
+      const cm2 = c2 ? ((second.crit_dmg || 120) / 100) : 1;
+      const raw2 = Math.round(second.atq * (0.80 + Math.random() * 0.40) * cm2);
+      const red2 = Math.min(0.75, (first.def || 0) / ((first.def || 0) + 80));
+      const dmg2 = Math.max(1, Math.round(raw2 * (1 - red2)));
+      hpFirst = Math.max(0, hpFirst - dmg2);
+      if ((second.lifesteal || 0) > 0) hpSecond = Math.min(second.hp, hpSecond + Math.round(dmg2 * second.lifesteal / 100));
+      log.push({ type: c2 ? 'crit' : 'hit', attacker: second.name, defender: first.name, dmg: dmg2, hpLeft: hpFirst, hpMax: first.hp, hpLeftAtt: hpSecond, hpMaxAtt: second.hp });
+    }
+    if (hpFirst <= 0) break;
+  }
+
+  const playerHp = firstIsPlayer ? hpFirst : hpSecond;
+  const enemyHp  = firstIsPlayer ? hpSecond : hpFirst;
+  const playerWon = playerHp > enemyHp || (enemyHp <= 0 && playerHp > 0) || (playerHp > 0 && enemyHp <= 0);
+  log.push({ type: 'end', winner: playerHp > 0 && (enemyHp <= 0 || playerHp >= enemyHp) ? fighter.name : enemy.name });
+  return { log, playerWon: playerHp > 0 && (enemyHp <= 0 || playerHp >= enemyHp) };
+}
+
+// GET /api/pve/enemies — liste des ennemis + progression du joueur
+app.get('/api/pve/enemies', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Combats restants aujourd'hui
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dayQ = await pool.query(
+      `SELECT pve_fights_today, pve_day_key FROM users WHERE id=$1`, [userId]
+    );
+    const u = dayQ.rows[0] || {};
+    const fightsToday = u.pve_day_key === todayKey ? Number(u.pve_fights_today || 0) : 0;
+    const fightsLeft  = Math.max(0, PVE_DAILY_MAX - fightsToday);
+
+    // Victoires par ennemi+difficulté
+    const winsQ = await pool.query(
+      `SELECT enemy_key, difficulty, wins FROM pve_progress WHERE user_id=$1`, [userId]
+    );
+    const wins = {};
+    for (const r of winsQ.rows) {
+      wins[r.enemy_key + '_' + r.difficulty] = Number(r.wins);
     }
 
-    // ── FIN ──
-    if (ev.type === 'end') {
-      const isMyWin = myData && (
-        (ev.winner === f1.name && f1.name === myData.name) ||
-        (ev.winner === f2.name && f2.name === myData.name)
+    const enemies = Object.values(PVE_ENEMIES).map(e => ({
+      key: e.key,
+      name: e.name,
+      sprite: e.sprite,
+      difficulties: ['easy', 'medium', 'hard'].map(d => ({
+        id: d,
+        label: d === 'easy' ? 'Facile' : d === 'medium' ? 'Moyen' : 'Difficile',
+        hp: e.difficulties[d].hp,
+        wins: wins[e.key + '_' + d] || 0,
+        xp: e.xp[d],
+        gold: e.gold[d],
+        // Coffre toutes les 3 victoires
+        chestEvery: 3,
+        nextChestIn: 3 - ((wins[e.key + '_' + d] || 0) % 3),
+      })),
+    }));
+
+    // Récupérer le niveau PVE du joueur
+    const pveLvlQ = await pool.query(`SELECT pve_level, pve_xp, pve_chest_common, pve_chest_rare, pve_chest_epic, pve_chest_legendary FROM users WHERE id=$1`, [userId]);
+    const pveUser = pveLvlQ.rows[0] || {};
+    const pveLevel = Number(pveUser.pve_level || 1);
+    const pveXp    = Number(pveUser.pve_xp    || 0);
+    const pveXpNeeded = pveXpForLevel(pveLevel);
+    const pveChests = {
+      common:    Number(pveUser.pve_chest_common    || 0),
+      rare:      Number(pveUser.pve_chest_rare      || 0),
+      epic:      Number(pveUser.pve_chest_epic      || 0),
+      legendary: Number(pveUser.pve_chest_legendary || 0),
+    };
+    const pveTotalChests = pveChests.common + pveChests.rare + pveChests.epic + pveChests.legendary;
+    res.json({ enemies, fightsLeft, fightsToday, maxDaily: PVE_DAILY_MAX, pveLevel, pveXp, pveXpNeeded, pveChests, pveTotalChests });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pve/fight — lancer un combat PVE
+app.post('/api/pve/fight', auth, async (req, res) => {
+  const userId     = req.user.id;
+  const enemyKey   = String(req.body?.enemy || '');
+  const difficulty = String(req.body?.difficulty || 'easy');
+
+  const enemyDef = PVE_ENEMIES[enemyKey];
+  if (!enemyDef) return res.status(400).json({ error: 'Ennemi invalide' });
+  if (!['easy', 'medium', 'hard'].includes(difficulty)) return res.status(400).json({ error: 'Difficulté invalide' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Vérifier limite journalière
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const dayQ = await client.query(`SELECT pve_fights_today, pve_day_key FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+    const u = dayQ.rows[0] || {};
+    const fightsToday = u.pve_day_key === todayKey ? Number(u.pve_fights_today || 0) : 0;
+    if (fightsToday >= PVE_DAILY_MAX) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Limite journalière atteinte (${PVE_DAILY_MAX} combats/jour)` });
+    }
+
+    // Construire le fighter joueur
+    const fighter = await buildPvpFighter(userId);
+    // Construire l'ennemi
+    const eStats = enemyDef.difficulties[difficulty];
+    const enemy = {
+      name: enemyDef.name,
+      hp: eStats.hp,
+      atq: eStats.atq,
+      def: eStats.def,
+      speed: eStats.speed,
+      crit: eStats.crit,
+      crit_dmg: eStats.crit_dmg,
+      dodge: eStats.dodge,
+      lifesteal: 0,
+    };
+
+    // Simuler
+    const { log, playerWon } = simulatePveBattle(fighter, enemy);
+
+    // Mettre à jour les combats du jour
+    const newFightsToday = fightsToday + 1;
+    await client.query(
+      `UPDATE users SET pve_fights_today=$1, pve_day_key=$2 WHERE id=$3`,
+      [newFightsToday, todayKey, userId]
+    );
+
+    let xpGained = 0, goldGained = 0, chestEarned = false, winsAfter = 0;
+    let pveProgress = { newLevel: 1, newXp: 0, levelsGained: 0 };
+
+    if (playerWon) {
+      xpGained   = enemyDef.xp[difficulty];
+      goldGained = enemyDef.gold[difficulty];
+
+      // XP PVE (système propre, niveau 1-50)
+      pveProgress = await addPveXp(userId, xpGained, client);
+      // Or PVE (monnaie séparée, utilisable pour la Forge)
+      await client.query(`UPDATE users SET pve_gold=pve_gold+$1 WHERE id=$2`, [goldGained, userId]);
+
+      // Progression PVE
+      const progQ = await client.query(
+        `SELECT wins FROM pve_progress WHERE user_id=$1 AND enemy_key=$2 AND difficulty=$3`,
+        [userId, enemyKey, difficulty]
       );
-      const loserId = ev.winner === f1.name ? 2 : 1;
+      const prevWins = Number(progQ.rows[0]?.wins || 0);
+      winsAfter = prevWins + 1;
+      await client.query(
+        `INSERT INTO pve_progress(user_id, enemy_key, difficulty, wins, last_fought_at)
+         VALUES($1,$2,$3,$4,$5)
+         ON CONFLICT(user_id, enemy_key, difficulty) DO UPDATE SET wins=pve_progress.wins+1, last_fought_at=$5`,
+        [userId, enemyKey, difficulty, winsAfter, Date.now()]
+      );
 
-      await wait(400);
-      setAnim(loserId, 'dead');
-      await wait(1000);
-
-      addNarrLine(logEl, pickNarr(NARRATION.win, ev.winner), isMyWin ? 'win' : 'lose');
-      await wait(500);
-
-      showArenaResult(isMyWin, ev.winner, rankChange);
-    }
-  }
-  replayBusy = false;
-}
-
-
-// ══ FORGE PVP (style clan, sans matériaux) ══════════════
-const FORGE_IMG_PVP   = 'https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/enclume.png';
-const FORGE_SFX_PVP   = new Audio('https://raw.githubusercontent.com/skunfy/pok-gacha/main/forge/anvil.wav');
-FORGE_SFX_PVP.preload = 'auto';
-const PVP_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-const PVP_STAT_LABELS  = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
-const PVP_STAT_COLORS  = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
-
-let _pvpForgeInv     = null;
-let _pvpForgeSelItem = null;
-let _pvpForgeGold    = 0;
-
-function pvpForgeLevelClass(lvl) {
-  if (lvl>=15) return 'forge-lv15'; if (lvl>=12) return 'forge-lv12';
-  if (lvl>=9)  return 'forge-lv9';  if (lvl>=6)  return 'forge-lv6';
-  if (lvl>=3)  return 'forge-lv3';  return '';
-}
-function pvpForgeLevelColor(lvl) {
-  if (lvl>=15) return '#ff4488'; if (lvl>=12) return '#ffd84d';
-  if (lvl>=9)  return '#c084ff'; if (lvl>=6)  return '#4da6ff';
-  if (lvl>=3)  return '#fff';    return 'rgba(255,255,255,.3)';
-}
-
-async function loadForge() {
-  const el = document.getElementById('forge-content');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Chargement de la forge...</div>';
-  try {
-    const [inv, me] = await Promise.all([ api('/api/pvp/inventory'), api('/api/pvp/me') ]);
-    _pvpForgeInv  = inv; _pvpInventory = inv;
-    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
-    _pvpForgeRunes = me.fighter?.runes || {};
-    _rerollSelItem = null; _rerollSelStat = null;
-    renderPvpForge();
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement forge</div>'; }
-}
-
-function renderPvpForge() {
-  const el = document.getElementById('forge-content');
-  if (!el || !_pvpForgeInv) return;
-  const inventory = _pvpForgeInv.inventory || [];
-  const gold = _pvpForgeGold;
-  const item = _pvpForgeSelItem ? inventory.find(i => i.id === _pvpForgeSelItem) : null;
-  const fl   = item ? (item.forge_level || 0) : 0;
-  const cost = item && fl < 15 ? pvpForgeCostClient(item.rarity, fl) : null;
-  const canForge = !!(item && cost !== null && gold >= cost);
-  const isMax = fl >= 15;
-
-  // ── COL GAUCHE ──
-  let itemSlotHtml = '';
-  if (item) {
-    const col = pvpForgeLevelColor(fl);
-    const rarCol = PVP_RARITY_COLOR[item.rarity] || '#aaa';
-    const nextMul = 1 + (fl+1)*0.08;
-    const statsLines = Object.entries(PVP_STAT_LABELS)
-      .filter(([k]) => (item[k]||0) > 0)
-      .map(([k,lbl]) => {
-        const cur  = item[k]||0;
-        const next = fl<15 ? Math.round(cur*nextMul*10)/10 : null;
-        return '<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px">'
-          + '<span style="opacity:.6;color:'+PVP_STAT_COLORS[k]+'">'+cur+' '+lbl+'</span>'
-          + (next&&fl<15 ? '<span style="color:#33ff99">→ '+next+'</span>' : '')+'</div>';
-      }).join('');
-    const extraLines = Object.entries(item.extra_stats||{}).filter(([,v])=>v>0)
-      .map(([k,v])=>'<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px">'
-        +'<span style="color:#ffd84d">✦ '+(PVP_STAT_LABELS[k]||k)+'</span>'
-        +'<span style="color:#ffd84d">+'+v+'</span></div>').join('');
-    const nextMs = [3,6,9,12,15].find(m=>m>fl);
-    const msHint = nextMs&&!isMax ? '<div style="font-size:9px;color:#7f5cff;margin-top:6px;text-align:center">⭐ Nouvelle stat au +'+nextMs+'</div>' : '';
-
-    itemSlotHtml = '<div class="forge-item-slot filled '+(item.rarity||'')+' '+pvpForgeLevelClass(fl)+'" onclick="pvpOpenForgePicker()">'
-      + '<img src="'+esc(item.image||'')+'" onerror="this.style.display=\'none\'">'
-      + '<div class="forge-item-level" style="color:'+col+';border-color:'+col+'40">'+(fl>0?'+'+fl:'✓')+'</div></div>'
-      + '<div style="text-align:center;max-width:110px"><div style="font-size:11px;font-weight:900;color:'+rarCol+'">'+esc(item.name||item.item_key||'')+'</div>'
-      + '<div style="font-size:10px;opacity:.45;margin-top:2px">'+(isMax?'✨ MAX':'+'+fl+' → +'+(fl+1))+'</div></div>'
-      + '<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px;width:100%;font-size:10px">'+statsLines
-      + (extraLines?'<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,.06);padding-top:4px">'+extraLines+'</div>':'')+'</div>'+msHint;
-  } else {
-    itemSlotHtml = '<div class="forge-item-slot" onclick="pvpOpenForgePicker()">'
-      + '<div style="font-size:28px;opacity:.25">⚔️</div>'
-      + '<div style="font-size:9px;opacity:.4;margin-top:4px">Choisir</div></div>'
-      + '<div style="font-size:12px;opacity:.4;text-align:center">Sélectionne un équipement</div>';
-  }
-
-  // ── COL CENTRE ──
-  let centerHtml = '<img class="forge-anvil" src="'+FORGE_IMG_PVP+'" alt="Forge" onerror="this.remove()">';
-  centerHtml += '<div style="font-size:14px;font-weight:900;color:#33ff99;text-align:center">🐉 '+gold.toLocaleString()+' Or PVE</div>';
-  if (cost!==null&&item&&!isMax) {
-    centerHtml += '<div class="forge-cost" style="color:'+(gold>=cost?'#33ff99':'#ff4444')+'">💰 '+cost+' Or PVE</div>';
-  } else if (isMax) {
-    centerHtml += '<div style="font-size:13px;font-weight:900;color:#ffd84d;text-align:center">✨ Niveau MAX</div>';
-  } else if (!item) {
-    centerHtml += '<div style="font-size:12px;opacity:.35;text-align:center">Sélectionne<br>un item</div>';
-  }
-  const btnLabel = !item?'Choisir un item':isMax?'✨ MAX':canForge?'⚒️ Forger +'+(fl+1):'Or insuffisant';
-  centerHtml += '<button class="forge-btn" id="pvp-forge-btn" onclick="doPvpForge()" '+(!canForge||isMax?'disabled':'')+'>'+btnLabel+'</button>';
-
-  // ── INVENTAIRE ──
-  let invHtml = !inventory.length
-    ? '<div style="opacity:.35;font-size:13px;text-align:center;padding:16px">Aucun item — gagne des coffres en PVE !</div>'
-    : inventory.map(i => {
-        const sel=i.id===_pvpForgeSelItem?'selected':'';
-        const col=PVP_RARITY_COLOR[i.rarity]||'#aaa';
-        return '<div class="forge-inv-item '+(i.rarity||'')+' '+pvpForgeLevelClass(i.forge_level)+' '+sel+'" onclick="selectPvpForgeItem('+i.id+')">'
-          +'<img class="forge-inv-img" src="'+esc(i.image||'')+'" onerror="this.style.display=\'none\'">'
-          +'<div class="forge-inv-name" style="color:'+col+'">'+esc(i.name||i.item_key||'')+'</div>'
-          +'<div class="forge-inv-lvl" style="color:'+pvpForgeLevelColor(i.forge_level)+'">'+(i.forge_level>0?'+'+i.forge_level:'')+(i.equipped_slot?' 📌':'')+'</div></div>';
-      }).join('');
-
-  el.innerHTML = '<div class="forge-wrap">'
-    // ── Onglets ──
-    + '<div class="forge-tabs">'
-    +   '<button class="forge-tab active" onclick="switchForgeTab('upgrade',this)">⚒️ Améliorer</button>'
-    +   '<button class="forge-tab" onclick="switchForgeTab('shatter',this)">💥 Briser</button>'
-    +   '<button class="forge-tab" onclick="switchForgeTab('reroll',this)">🎲 Runes</button>'
-    + '</div>'
-    // ── Onglet Améliorer ──
-    + '<div id="forge-tab-upgrade" class="forge-tab-section active">'
-    +   '<div class="card" style="margin-bottom:12px"><div class="card-title" style="margin-bottom:16px">⚒️ Forge — coût en Or PVE</div>'
-    +     '<div class="forge-main"><div class="forge-col-left"><div style="font-size:11px;font-weight:900;opacity:.45;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">Équipement</div>'
-    +     itemSlotHtml+'</div><div class="forge-col-center">'+centerHtml+'</div></div>'
-    +     '<div id="pvpForgeAlert" style="margin-top:10px"></div></div>'
-    +   '<div class="card"><div class="card-title">🎒 Inventaire</div>'
-    +     '<div class="forge-inv-grid">'+invHtml+'</div></div>'
-    + '</div>'
-    // ── Onglet Briser ──
-    + '<div id="forge-tab-shatter" class="forge-tab-section">'
-    +   renderShatterTab(inventory, _pvpForgeGold)
-    + '</div>'
-    // ── Onglet Runes ──
-    + '<div id="forge-tab-reroll" class="forge-tab-section">'
-    +   renderRerollTab(inventory, _pvpForgeInv?.runes || {}, _pvpForgeGold)
-    + '</div>'
-    + '</div>';
-}
-
-function selectPvpForgeItem(id) { _pvpForgeSelItem=(_pvpForgeSelItem===id)?null:id; renderPvpForge(); }
-function pvpOpenForgePicker() { document.querySelector('#forge-content .forge-inv-grid')?.scrollIntoView({behavior:'smooth',block:'start'}); }
-
-function pvpForgeSuccessAnim() {
-  const slot=document.querySelector('#forge-content .forge-item-slot.filled'); if(!slot) return;
-  slot.style.transition='transform .15s';
-  [1.25,0.9,1.15,0.95,1.0].forEach((s,i)=>setTimeout(()=>{slot.style.transform='scale('+s+')';},i*80));
-  setTimeout(()=>{slot.style.transform='';slot.style.transition='';},500);
-  const rect=slot.getBoundingClientRect();
-  for(let i=0;i<12;i++){const p=document.createElement('div');const a=(i/12)*Math.PI*2,d=40+Math.random()*30;
-    p.style.cssText='position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;z-index:99999;left:'+(rect.left+rect.width/2)+'px;top:'+(rect.top+rect.height/2)+'px;background:'+['#ffd84d','#ff8800','#fff','#c084ff'][i%4]+';transition:all .6s ease-out;opacity:1;';
-    document.body.appendChild(p);setTimeout(()=>{p.style.transform='translate('+(Math.cos(a)*d)+'px,'+(Math.sin(a)*d)+'px) scale(0)';p.style.opacity='0';},20);setTimeout(()=>p.remove(),700);}
-}
-function pvpForgeFailAnim() {
-  const slot=document.querySelector('#forge-content .forge-item-slot.filled'); if(!slot) return;
-  slot.style.transition='transform .08s';
-  [-10,10,-8,8,-5,5,0].forEach((x,i)=>setTimeout(()=>{slot.style.transform='translateX('+x+'px)';},i*80));
-  setTimeout(()=>{slot.style.transform='';slot.style.transition='';},650);
-  const f=document.createElement('div');f.style.cssText='position:fixed;inset:0;background:rgba(255,50,50,.15);pointer-events:none;z-index:99998;transition:opacity .4s';
-  document.body.appendChild(f);setTimeout(()=>{f.style.opacity='0';},50);setTimeout(()=>f.remove(),500);
-}
-
-async function doPvpForge() {
-  if (!_pvpForgeSelItem) return;
-  const alertEl=document.getElementById('pvpForgeAlert');
-  const btn=document.getElementById('pvp-forge-btn');
-  if (btn) btn.disabled=true;
-  try {
-    FORGE_SFX_PVP.currentTime=0; FORGE_SFX_PVP.play().catch(()=>{});
-    const anvil=document.querySelector('#forge-content .forge-anvil');
-    if (anvil){anvil.style.transform='scale(1.1) rotate(-5deg)';setTimeout(()=>{anvil.style.transform='';},300);}
-    const d=await api('/api/pvp/forge',{method:'POST',body:JSON.stringify({itemId:_pvpForgeSelItem})});
-    const [inv,me]=await Promise.all([api('/api/pvp/inventory'),api('/api/pvp/me')]);
-    _pvpForgeInv=inv; _pvpInventory=inv; _pvpForgeGold=Number(me.fighter?.pveGold||0);
-    pvpForgeSuccessAnim();
-    const msg=d.isMilestone?'⭐ Palier +'+d.newLevel+' ! Nouvelle stat ajoutée !':'✅ Succès ! Équipement amélioré à +'+d.newLevel+' !';
-    if (alertEl) alertEl.innerHTML='<div class="alert alert-success">'+msg+'</div>';
-    setTimeout(()=>{if(alertEl)alertEl.innerHTML='';},4000);
-    renderPvpForge();
-  } catch(e) {
-    pvpForgeFailAnim();
-    if (alertEl) alertEl.innerHTML='<div class="alert alert-error">'+esc(e.message||'Or insuffisant')+'</div>';
-    if (btn) btn.disabled=false;
-    renderPvpForge();
-  }
-}
-
-
-// ══ FORGE TABS ══
-var _forgeActiveTab = 'upgrade';
-var _pvpForgeRunes = {};
-
-function switchForgeTab(tab, btn) {
-  _forgeActiveTab = tab;
-  document.querySelectorAll('.forge-tab').forEach(function(b) { b.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  document.querySelectorAll('.forge-tab-section').forEach(function(s) { s.classList.remove('active'); });
-  var sec = document.getElementById('forge-tab-' + tab);
-  if (sec) sec.classList.add('active');
-}
-
-// ══ BRISER ══
-const SHATTER_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-const SHATTER_GOLD = { common:10, rare:25, epic:60, legendary:150 };
-const SHATTER_RUNES_TEXT = {
-  common:    '🪨 1 Rune',
-  rare:      '🪨 2 Runes',
-  epic:      '🪨 1 Rune · 💎 1 Rune Épique',
-  legendary: '💎 1 Rune Épique · ⭐ 1 Rune Légendaire',
-};
-
-function renderShatterTab(inventory, gold) {
-  var items = inventory.filter(function(i) { return !i.equipped_slot; });
-  if (!items.length) {
-    return '<div class="card"><div class="empty" style="padding:24px">Aucun item non équipé à briser.<br>Déséquipe un item d'abord.</div></div>';
-  }
-
-  var rows = items.map(function(i) {
-    var col = SHATTER_RARITY_COLOR[i.rarity] || '#aaa';
-    var goldGain = SHATTER_GOLD[i.rarity] || 10;
-    var runesText = SHATTER_RUNES_TEXT[i.rarity] || '🪨 1 Rune';
-    var fl = i.forge_level || 0;
-    return '<div class="shatter-item">'
-      + '<img class="shatter-item-img" src="' + esc(i.image||'') + '" onerror="this.style.opacity='.2'">'
-      + '<div class="shatter-info">'
-        + '<div class="shatter-name">' + esc(i.name||i.item_key||'') + (fl>0?' <span style="color:#ffd84d;font-size:10px">+'+fl+'</span>':'') + '</div>'
-        + '<div class="shatter-rarity" style="color:' + col + '">' + (i.rarity||'').charAt(0).toUpperCase()+(i.rarity||'').slice(1) + '</div>'
-        + '<div class="shatter-reward">💰 +' + goldGain + ' Or PVE · ' + runesText + '</div>'
-      + '</div>'
-      + '<button class="shatter-btn" onclick="doShatter(' + i.id + ','' + esc(i.name||i.item_key) + '')" title="Briser">💥 Briser</button>'
-    + '</div>';
-  }).join('');
-
-  return '<div class="card">'
-    + '<div class="card-title" style="margin-bottom:4px">💥 Briser un item</div>'
-    + '<div style="font-size:11px;opacity:.45;margin-bottom:14px">Brise un item pour récupérer de l'Or PVE et des Runes de modification. Action irréversible.</div>'
-    + rows
-    + '</div>';
-}
-
-async function doShatter(itemId, itemName) {
-  if (!confirm('Briser ' + itemName + ' ? Cette action est irréversible !')) return;
-  try {
-    const d = await api('/api/pvp/forge/shatter', { method:'POST', body: JSON.stringify({ itemId }) });
-    showAlert('💥 ' + d.itemName + ' brisé ! +' + d.gold + ' Or PVE · ' + Object.entries(d.runes).map(function(e){ return e[1]+'x Rune '+e[0]; }).join(' · '), 'success');
-    // Refresh
-    const [inv, me] = await Promise.all([api('/api/pvp/inventory'), api('/api/pvp/me')]);
-    _pvpForgeInv  = inv;
-    _pvpInventory = inv;
-    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
-    _pvpForgeRunes = me.fighter?.runes || {};
-    renderPvpForge();
-    // Rester sur l'onglet briser
-    setTimeout(function() { switchForgeTab('shatter', document.querySelector('.forge-tab:nth-child(2)')); }, 50);
-  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
-}
-
-// ══ REROLL ══
-const REROLL_COSTS_CLIENT = {
-  common:    { gold:20,  runeType:'any',       runeQty:2 },
-  rare:      { gold:50,  runeType:'any',       runeQty:3 },
-  epic:      { gold:120, runeType:'epic',      runeQty:1 },
-  legendary: { gold:300, runeType:'legendary', runeQty:1 },
-};
-const RUNE_LABELS = { any:'Rune (toutes)', epic:'Rune Épique', legendary:'Rune Légendaire' };
-const RUNE_COLORS = { any:'#aaa', epic:'#c084ff', legendary:'#ffd84d' };
-
-var _rerollSelItem = null;
-var _rerollSelStat = null;
-
-function renderRerollTab(inventory, runes, gold) {
-  _pvpForgeRunes = runes;
-
-  // Affichage des runes disponibles
-  var runeHtml = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'
-    + Object.entries(RUNE_LABELS).map(function(e) {
-        var type = e[0], label = e[1];
-        var qty = runes[type] || 0;
-        return '<span class="rune-badge ' + type + '">' + (type==='any'?'🪨':type==='epic'?'💎':'⭐') + ' ' + qty + ' ' + label + '</span>';
-      }).join('')
-    + '</div>';
-
-  // Items avec des extra_stats (bonus de palier)
-  var rerollItems = inventory.filter(function(i) {
-    return i.extra_stats && Object.keys(i.extra_stats).length > 0;
-  });
-
-  var itemPickHtml = '';
-  if (!rerollItems.length) {
-    itemPickHtml = '<div class="empty" style="padding:16px">Aucun item avec des stats de palier (+3/+6…).<br>Monte un item au moins au +3 pour débloquer les Runes.</div>';
-  } else {
-    itemPickHtml = '<div style="font-size:11px;font-weight:900;opacity:.45;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Choisir un item</div>'
-      + rerollItems.map(function(i) {
-          var col = SHATTER_RARITY_COLOR[i.rarity] || '#aaa';
-          var sel = _rerollSelItem === i.id;
-          var fl  = i.forge_level || 0;
-          return '<div class="shatter-item" style="cursor:pointer;border-color:' + (sel?'#7f5cff':'') + ';background:' + (sel?'rgba(127,92,255,.08)':'') + '" onclick="selectRerollItem(' + i.id + ')">'
-            + '<img class="shatter-item-img" src="' + esc(i.image||'') + '" onerror="this.style.opacity='.2'">'
-            + '<div class="shatter-info">'
-              + '<div class="shatter-name">' + esc(i.name||i.item_key||'') + ' <span style="color:#ffd84d;font-size:10px">+' + fl + '</span></div>'
-              + '<div class="shatter-rarity" style="color:' + col + '">' + Object.keys(i.extra_stats||{}).length + ' stat(s) bonus</div>'
-            + '</div>'
-            + (sel ? '<span style="color:#7f5cff;font-size:14px">✓</span>' : '')
-          + '</div>';
-        }).join('');
-  }
-
-  // Panneau de reroll si item sélectionné
-  var rerollPanelHtml = '';
-  if (_rerollSelItem) {
-    var selItem = inventory.find(function(i) { return i.id === _rerollSelItem; });
-    if (selItem && selItem.extra_stats) {
-      var costs = REROLL_COSTS_CLIENT[selItem.rarity] || REROLL_COSTS_CLIENT.common;
-      var canAffordGold = gold >= costs.gold;
-      var canAffordRune = (runes[costs.runeType] || 0) >= costs.runeQty;
-      var canReroll = canAffordGold && canAffordRune;
-
-      var statRows = Object.entries(selItem.extra_stats).filter(function(e) { return e[1] > 0; }).map(function(e) {
-        var k = e[0], v = e[1];
-        var label = PVP_STAT_LABELS[k] || k;
-        var color = PVP_STAT_COLORS[k] || '#aaa';
-        var sel = _rerollSelStat === k;
-        return '<div class="reroll-stat-row' + (sel?' selected':'') + '" onclick="selectRerollStat('' + k + '')">'
-          + '<div style="font-size:16px">' + (PVP_STAT_COLORS[k]?'':'🔢') + '</div>'
-          + '<div class="reroll-stat-label" style="color:' + color + '">' + label + '</div>'
-          + '<div class="reroll-stat-val" style="color:' + color + '">+' + v + '</div>'
-          + (sel ? '<div style="font-size:12px;color:#7f5cff">← Sélectionnée</div>' : '')
-        + '</div>';
-      }).join('');
-
-      rerollPanelHtml = '<div class="card" style="margin-top:12px">'
-        + '<div class="card-title" style="margin-bottom:8px">🎲 Choisir la stat à reroller</div>'
-        + '<div style="font-size:11px;opacity:.4;margin-bottom:10px">Clique sur une stat bonus pour la reroller. La valeur sera aléatoire dans une plage définie par la rareté.</div>'
-        + statRows
-        + '<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.03);border-radius:10px;font-size:11px">'
-          + '<div style="font-weight:700;margin-bottom:6px">Coût du reroll</div>'
-          + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
-            + '<span style="color:' + (canAffordGold?'#33ff99':'#ff4444') + '">💰 ' + costs.gold + ' Or PVE</span>'
-            + '<span style="color:' + (canAffordRune?RUNE_COLORS[costs.runeType]||'#aaa':'#ff4444') + '">' + costs.runeQty + 'x ' + (RUNE_LABELS[costs.runeType]||costs.runeType) + '</span>'
-          + '</div>'
-        + '</div>'
-        + '<div style="display:flex;gap:8px;margin-top:10px">'
-          + '<button onclick="doRerollPreview()" ' + (!_rerollSelStat||!canReroll?'disabled':'') + ' style="flex:1;padding:10px;border:none;border-radius:10px;background:rgba(127,92,255,.2);border:1px solid rgba(127,92,255,.4);color:#c084ff;font-weight:700;cursor:pointer;font-size:13px">🎲 Prévisualiser</button>'
-          + '<button onclick="doRerollApply()" ' + (!_rerollSelStat||!canReroll?'disabled':'') + ' style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:13px">✅ Appliquer</button>'
-        + '</div>'
-      + '</div>';
-    }
-  }
-
-  return '<div class="card">'
-    + '<div class="card-title" style="margin-bottom:4px">🎲 Runes de Modification</div>'
-    + '<div style="font-size:11px;opacity:.45;margin-bottom:12px">Utilise des Runes pour reroller la valeur d'une stat bonus (paliers +3/+6…). La note (F→S) indique la qualité du jet.</div>'
-    + runeHtml
-    + itemPickHtml
-    + rerollPanelHtml
-    + '</div>';
-}
-
-function selectRerollItem(id) {
-  _rerollSelItem = (_rerollSelItem === id) ? null : id;
-  _rerollSelStat = null;
-  renderPvpForge();
-  setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
-}
-function selectRerollStat(stat) {
-  _rerollSelStat = (_rerollSelStat === stat) ? null : stat;
-  renderPvpForge();
-  setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
-}
-
-var _lastRerollResult = null;
-
-async function doRerollPreview() {
-  if (!_rerollSelItem || !_rerollSelStat) return;
-  try {
-    const d = await api('/api/pvp/forge/reroll', { method:'POST', body: JSON.stringify({ itemId: _rerollSelItem, stat: _rerollSelStat, confirm: false }) });
-    _lastRerollResult = d;
-    showRerollResultPopup(d, false);
-  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
-}
-
-async function doRerollApply() {
-  if (!_rerollSelItem || !_rerollSelStat) return;
-  try {
-    const d = await api('/api/pvp/forge/reroll', { method:'POST', body: JSON.stringify({ itemId: _rerollSelItem, stat: _rerollSelStat, confirm: true }) });
-    showRerollResultPopup(d, true);
-    // Refresh inventaire
-    const [inv, me] = await Promise.all([api('/api/pvp/inventory'), api('/api/pvp/me')]);
-    _pvpForgeInv  = inv; _pvpInventory = inv;
-    _pvpForgeGold = Number(me.fighter?.pveGold || 0);
-    _pvpForgeRunes = me.fighter?.runes || {};
-    _rerollSelStat = null;
-    renderPvpForge();
-    setTimeout(function() { switchForgeTab('reroll', document.querySelector('.forge-tab:nth-child(3)')); }, 50);
-  } catch(e) { showAlert(e.message || 'Erreur', 'error'); }
-}
-
-function showRerollResultPopup(d, applied) {
-  var gradeEmojis = { S:'⭐', A:'✅', B:'🔵', C:'⚪', F:'❌' };
-  var gradeMsg    = { S:'Excellent !', A:'Très bien !', B:'Correct', C:'Passable', F:'Mauvais jet...' };
-  var statLabel   = PVP_STAT_LABELS[d.stat] || d.stat;
-  var statColor   = PVP_STAT_COLORS[d.stat] || '#aaa';
-  var pct         = Math.round((d.val - d.min) / (d.max - d.min) * 100);
-  // Barre de qualité
-  var barColor    = d.color || '#aaa';
-  var grades      = ['F','C','B','A','S'];
-  var thresholds  = [0, 20, 45, 70, 90];
-  var pipHtml = grades.map(function(g, i) {
-    var filled = pct >= thresholds[i];
-    var c = filled ? barColor : 'rgba(255,255,255,.1)';
-    return '<div style="flex:1;height:6px;border-radius:3px;background:' + c + ';transition:background .3s ' + (i*0.08) + 's"></div>';
-  }).join('');
-
-  var overlay = document.createElement('div');
-  overlay.className = 'reroll-result-popup';
-  overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
-  overlay.innerHTML = '<div class="reroll-result-box" style="border:2px solid ' + (d.color||'#aaa') + ';box-shadow:0 0 40px ' + (d.color||'#aaa') + '44">'
-    + '<div style="font-size:12px;opacity:.5;margin-bottom:8px;letter-spacing:.1em;text-transform:uppercase">' + (applied?'Résultat':'Prévisualisation') + '</div>'
-    + '<div style="font-size:12px;font-weight:700;color:' + statColor + ';margin-bottom:16px">' + statLabel + '</div>'
-    + '<div class="reroll-grade-big" style="color:' + (d.color||'#aaa') + '">' + (d.emoji||'') + ' ' + (d.grade||'?') + '</div>'
-    + '<div style="font-size:11px;opacity:.6;margin:8px 0 4px">' + (gradeMsg[d.grade]||'') + '</div>'
-    + '<div style="font-size:32px;font-weight:900;color:' + statColor + ';margin-bottom:8px">+' + d.val + '</div>'
-    + '<div style="font-size:10px;opacity:.4;margin-bottom:12px">Plage : ' + d.min + ' → ' + d.max + ' · Ton jet : ' + pct + '%</div>'
-    + '<div style="display:flex;gap:4px;margin-bottom:18px">' + pipHtml + '</div>'
-    + (applied
-      ? '<div style="font-size:11px;color:#33ff99;margin-bottom:14px">✅ Stat appliquée avec succès !</div>'
-      : '<div style="display:flex;gap:8px;margin-bottom:14px">'
-          + '<button onclick="this.closest('.reroll-result-popup').remove();doRerollApply()" style="flex:1;padding:9px;border:none;border-radius:10px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;cursor:pointer;font-size:12px">✅ Appliquer</button>'
-          + '<button onclick="this.closest('.reroll-result-popup').remove();doRerollPreview()" style="flex:1;padding:9px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font-weight:700;cursor:pointer;font-size:12px">🎲 Reroll</button>'
-        + '</div>'
-    )
-    + '<button onclick="this.closest('.reroll-result-popup').remove()" style="width:100%;padding:9px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);cursor:pointer;font-size:12px">Fermer</button>'
-  + '</div>';
-
-  document.body.appendChild(overlay);
-}
-
-// ══ MATCHMAKING ══════════════════════════════════════════
-// Système de file d'attente : join → polling status → found/waiting
-let _mmPollInterval = null;
-let _mmSearching    = false;
-
-function initMatchmakingTab() {
-  stopMatchmaking();
-}
-
-async function startMatchmaking() {
-  if (_mmSearching) return;
-  _mmSearching = true;
-  document.getElementById('mm-btn').style.display     = 'none';
-  document.getElementById('mm-spinner').style.display = 'block';
-  document.getElementById('mm-found').style.display   = 'none';
-  document.getElementById('mm-status').textContent    = "Recherche d'un adversaire...";
-  document.getElementById('mm-timer').textContent     = 'En attente...';
-
-  try {
-    // Rejoindre la file ET chercher immédiatement
-    const d = await api('/api/pvp/matchmaking/join', { method: 'POST', body: '{}' });
-    if (d.status === 'found') {
-      _mmSearching = false;
-      showMmFound(d.opponent, d.battleId);
-      return;
-    }
-  } catch(e) {
-    showAlert(e.message || 'Erreur matchmaking', 'error');
-    stopMatchmaking();
-    return;
-  }
-
-  // Personne trouvé immédiatement → polling toutes les 2s
-  let elapsed = 0;
-  _mmPollInterval = setInterval(async () => {
-    elapsed += 2;
-    const t = document.getElementById('mm-timer');
-    if (t) t.textContent = `En file depuis ${elapsed}s...`;
-
-    try {
-      const d = await api('/api/pvp/matchmaking/status');
-
-      if (d.status === 'found') {
-        stopMatchmaking(false); // ne pas quitter la file (déjà retiré côté serveur)
-        showMmFound(d.opponent, d.battleId);
-      } else if (d.status === 'idle') {
-        // Plus dans la file sans match = timeout ou problème
-        stopMatchmaking(false);
+      // Coffre toutes les 3 victoires → ajouter 1 coffre PVE du bon type
+      if (winsAfter % 3 === 0) {
+        chestEarned = true;
+        const chestType = pveChestTypeForEnemy(enemyKey, difficulty);
+        const colMap = { common:'pve_chest_common', rare:'pve_chest_rare', epic:'pve_chest_epic', legendary:'pve_chest_legendary' };
+        const col = colMap[chestType] || 'pve_chest_common';
+        await client.query(`UPDATE users SET ${col} = ${col} + 1 WHERE id=$1`, [userId]);
+        chestEarned = chestType; // retourner le type
       }
-      // 'waiting' → continuer à attendre
-    } catch(e) { /* continuer */ }
-  }, 2000);
-}
-
-async function stopMatchmaking(leaveQueue = true) {
-  _mmSearching = false;
-  if (_mmPollInterval) { clearInterval(_mmPollInterval); _mmPollInterval = null; }
-  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
-
-  if (leaveQueue) {
-    try { await api('/api/pvp/matchmaking/leave', { method: 'POST', body: '{}' }); } catch(e) {}
-  }
-
-  const btn     = document.getElementById('mm-btn');
-  const spinner = document.getElementById('mm-spinner');
-  const status  = document.getElementById('mm-status');
-  const found   = document.getElementById('mm-found');
-  if (btn)     btn.style.display     = 'block';
-  if (spinner) spinner.style.display = 'none';
-  if (status)  status.textContent    = 'Trouve un adversaire automatiquement';
-  if (found)   found.style.display   = 'none';
-}
-
-let _mmBattlePollInterval = null;
-
-function showMmFound(opponent, battleId) {
-  const rankCol  = RANK_COLORS[opponent.rankInfo?.name] || '#aaa';
-  const rankIcon = RANK_ICONS[opponent.rankInfo?.name]
-    ? '<img src="' + RANK_ICONS[opponent.rankInfo.name] + '" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:4px">'
-    : '';
-  const avBg = opponent.avatar
-    ? 'background-image:url(' + JSON.stringify(opponent.avatar) + ');background-size:cover;background-position:center'
-    : '';
-
-  document.getElementById('mm-btn').style.display     = 'none';
-  document.getElementById('mm-spinner').style.display = 'none';
-  document.getElementById('mm-status').textContent    = '⚡ Adversaire trouvé !';
-
-  const found = document.getElementById('mm-found');
-  found.style.display = 'block';
-  found.innerHTML = `
-    <div style="background:rgba(127,92,255,.1);border:1px solid rgba(127,92,255,.3);border-radius:16px;padding:20px;text-align:center;animation:mmPulse 1.5s ease-in-out infinite">
-      <div style="width:72px;height:72px;border-radius:50%;border:3px solid ${rankCol};background:var(--bg3);margin:0 auto 10px;${avBg}"></div>
-      <div style="font-size:17px;font-weight:900;margin-bottom:4px">${esc(opponent.name)}</div>
-      <div style="font-size:12px;color:${rankCol};margin-bottom:16px">${rankIcon}${esc(opponent.rankInfo?.name || '')} · ${fmtPts(opponent.pts)} pts</div>
-      <div style="display:flex;gap:10px;justify-content:center">
-        <button onclick="mmAccept(${battleId})" style="padding:12px 24px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D9E75,#33ff99);color:#000;font-weight:900;font-size:14px;cursor:pointer">⚔️ Accepter</button>
-        <button onclick="mmDecline(${battleId})" style="padding:12px 24px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Refuser</button>
-      </div>
-      <div style="margin-top:10px;font-size:11px;opacity:.4">En attente que l'adversaire accepte...</div>
-    </div>`;
-
-  // Poll toutes les 2s pour voir si l'adversaire a accepté → replay auto
-  _mmBattlePollInterval = setInterval(async () => {
-    try {
-      const d = await api('/api/pvp/battle-result/' + battleId);
-      if (d.done) {
-        clearInterval(_mmBattlePollInterval);
-        _mmBattlePollInterval = null;
-        document.getElementById('mm-found').style.display = 'none';
-        stopMatchmaking(false);
-        openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
-        await loadEnergy();
-        loadProfil();
-        loadMmActivity();
-      }
-    } catch(e) {}
-  }, 2000);
-}
-
-async function mmAccept(battleId) {
-  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
-  try {
-    document.getElementById('mm-found').innerHTML = '<div style="opacity:.5;font-size:13px;text-align:center;padding:10px">⚔️ Combat en cours...</div>';
-    const d = await api('/api/pvp/accept', { method: 'POST', body: JSON.stringify({ battleId }) });
-    await loadEnergy();
-    document.getElementById('mm-found').style.display = 'none';
-    stopMatchmaking(false);
-    openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
-    // PVP rewards removed — ELO only
-    loadProfil();
-    loadMmActivity(); // Maj rang + compteur games
-  } catch(e) {
-    showAlert(e.message || 'Erreur', 'error');
-    stopMatchmaking(false);
-  }
-}
-
-async function mmDecline(battleId) {
-  if (_mmBattlePollInterval) { clearInterval(_mmBattlePollInterval); _mmBattlePollInterval = null; }
-  try { await api('/api/pvp/decline', { method: 'POST', body: JSON.stringify({ battleId }) }); } catch(e) {}
-  stopMatchmaking(false);
-}
-function showPvpRewards(r) {
-  // PVP ne donne plus XP/or/coffres — juste l'ELO
-}
-
-
-
-// OVERLAY RESULTAT ARENE
-function showArenaResult(isWin, winnerName, rankChange) {
-  var overlay = document.getElementById('arena-result-overlay');
-  var bg      = document.getElementById('arena-result-bg');
-  var word    = document.getElementById('arena-result-word');
-  var label   = document.getElementById('arena-result-label');
-  var pts     = document.getElementById('arena-result-pts');
-  if (!overlay) return;
-
-  var text  = isWin ? 'VICTORY' : 'DEFEAT';
-  var color = isWin ? '#33ff99' : '#ff4444';
-  var glow  = isWin ? 'rgba(51,255,153,.9)' : 'rgba(255,68,68,.9)';
-  var bgGrad = isWin
-    ? 'radial-gradient(ellipse at center, rgba(20,160,100,.55) 0%, rgba(0,0,0,.78) 100%)'
-    : 'radial-gradient(ellipse at center, rgba(180,20,20,.55) 0%, rgba(0,0,0,.78) 100%)';
-
-  // Reset
-  [overlay, bg, label, pts].forEach(function(el){ el.style.transition='none'; });
-  overlay.style.opacity = '0';
-  bg.style.opacity = '0';
-  bg.style.background = bgGrad;
-  label.style.opacity = '0';
-  pts.style.opacity = '0';
-
-  // Construire les lettres
-  word.innerHTML = '';
-  text.split('').forEach(function(ch, i) {
-    var span = document.createElement('span');
-    span.textContent = ch;
-    span.style.cssText = [
-      'display:inline-block',
-      'font-size:clamp(52px,8vw,88px)',
-      'font-weight:900',
-      'font-family:Impact,Arial Black,sans-serif',
-      'letter-spacing:.05em',
-      'color:' + color,
-      'text-shadow:0 0 30px ' + glow + ',0 4px 0 rgba(0,0,0,.8)',
-      'opacity:0',
-      'position:relative',
-      'z-index:2',
-      '-webkit-text-stroke:2px rgba(0,0,0,.5)',
-    ].join(';');
-    word.appendChild(span);
-    setTimeout(function() {
-      span.style.animation = 'vLetterDrop .5s cubic-bezier(.175,.885,.32,1.275) forwards, vGlow 2s ease-in-out ' + (.5 + i*.04) + 's infinite';
-      span.style.opacity = '1';
-    }, i * 55);
-  });
-
-  // Sous-titre
-  label.style.color = color;
-  label.style.opacity = '0';
-  label.textContent = isWin ? '— Victoire —' : '— Défaite —';
-
-  // Points
-  pts.style.color = isWin ? '#33ff99' : 'rgba(255,140,140,.9)';
-  pts.textContent = rankChange
-    ? (isWin ? '+' : '−') + Math.abs(rankChange) + ' pts de rang'
-    : '';
-
-  void overlay.offsetWidth;
-  overlay.style.transition = 'opacity .3s ease';
-  bg.style.transition = 'opacity .4s ease';
-  overlay.style.opacity = '1';
-  bg.style.opacity = '1';
-
-  // Apparition décalée du label et pts
-  var delay = text.length * 55 + 300;
-  setTimeout(function() {
-    label.style.transition = 'opacity .5s ease';
-    label.style.opacity = '1';
-    // Effet shake sur défaite
-    if (!isWin) { word.style.animation = 'vShake .4s ease'; }
-  }, delay);
-  setTimeout(function() {
-    pts.style.transition = 'opacity .5s ease';
-    pts.style.opacity = '1';
-  }, delay + 200);
-
-  if (isWin) spawnConfetti();
-}
-
-function resetArenaResultOverlay() {
-  var overlay = document.getElementById('arena-result-overlay');
-  if (!overlay) return;
-  overlay.style.transition    = 'none';
-  overlay.style.opacity       = '0';
-  overlay.style.pointerEvents = 'none';
-  var word  = document.getElementById('arena-result-word');
-  var label = document.getElementById('arena-result-label');
-  var pts   = document.getElementById('arena-result-pts');
-  var bg    = document.getElementById('arena-result-bg');
-  if (bg)    { bg.style.transition = 'none'; bg.style.opacity = '0'; }
-  if (word)  { word.innerHTML = ''; word.style.animation = ''; }
-  if (label) { label.style.transition = 'none'; label.style.opacity = '0'; }
-  if (pts)   { pts.style.transition = 'none'; pts.style.opacity = '0'; }
-}
-
-function spawnConfetti() {
-  var stage = document.getElementById('replay-stage');
-  if (!stage) return;
-  var colors = ['#ffd700','#33ff99','#7f5cff','#f053c5','#4da6ff','#ff6b6b','#ffffff'];
-  for (var i = 0; i < 45; i++) {
-    (function() {
-      var p    = document.createElement('div');
-      var size = 5 + Math.random() * 8;
-      var x    = 5 + Math.random() * 90;
-      var del  = Math.random() * 700;
-      var dur  = 800 + Math.random() * 800;
-      var col  = colors[Math.floor(Math.random() * colors.length)];
-      var rot  = Math.random() * 360;
-      p.style.cssText = 'position:absolute;top:-12px;left:'+x+'%;width:'+size+'px;height:'+(size*.42)+'px;background:'+col+';border-radius:2px;opacity:0;z-index:61;pointer-events:none;transform:rotate('+rot+'deg);animation:confettiFall '+dur+'ms ease-in '+del+'ms forwards';
-      stage.appendChild(p);
-      setTimeout(function(){ p.remove(); }, del + dur + 120);
-    })();
-  }
-}
-
-
-// ══════════════════════════════════════════════════
-// PVE
-// ══════════════════════════════════════════════════
-const PVE_DIFF_COLORS = { easy:'#33ff99', medium:'#ffd84d', hard:'#ff6464' };
-const PVE_DIFF_LABELS = { easy:'Facile', medium:'Moyen', hard:'Difficile' };
-const PVE_ENEMY_ICONS = {
-  goblin:'👺', orc:'👹', skeleton_warrior:'💀', ogre:'🗿',
-  zombie_villager:'🧟', golem:'🪨', necromancer_of_the_shadow:'🧙'
-};
-
-let _pveData = null;
-
-function refreshPveXpBar(d) {
-  if (!d) return;
-  const lvl     = d.pveLevel || 1;
-  const xp      = d.pveXp || 0;
-  const needed  = d.pveXpNeeded || 1;
-  const pct     = lvl >= 50 ? 100 : Math.min(100, Math.round(xp / needed * 100));
-  const lvlTxt  = lvl >= 50 ? 'MAX (50)' : String(lvl);
-  const xpTxt   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
-
-  // Barre dans le profil
-  const lvlEl  = document.getElementById('pve-lvl-badge');
-  const xpEl   = document.getElementById('pve-xp-txt');
-  const fillEl = document.getElementById('pve-xp-fill');
-  if (lvlEl) lvlEl.textContent = lvlTxt;
-  if (xpEl)  xpEl.textContent  = xpTxt;
-  if (fillEl) fillEl.style.width = pct + '%';
-
-  // Barre dans l'onglet PVE
-  const tabLvl  = document.getElementById('pve-tab-lvl');
-  const tabXp   = document.getElementById('pve-tab-xp');
-  const tabFill = document.getElementById('pve-tab-xp-fill');
-  if (tabLvl) tabLvl.textContent = lvlTxt;
-  if (tabXp)  tabXp.textContent  = xpTxt;
-  if (tabFill) tabFill.style.width = pct + '%';
-}
-
-async function loadPve() {
-  const el = document.getElementById('pve-content');
-  el.innerHTML = '<div class="loading">Chargement...</div>';
-  try {
-    const d = await api('/api/pve/enemies');
-    _pveData = d;
-    renderPve(d);
-    refreshPveXpBar(d);  // Met à jour la barre XP PVE dans le profil aussi
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement PVE</div>'; }
-}
-
-function renderPve(d) {
-  const el = document.getElementById('pve-content');
-  const flEl = document.getElementById('pve-fights-left');
-  if (flEl) {
-    const col = d.fightsLeft <= 0 ? '#ff4444' : d.fightsLeft <= 3 ? '#ffd84d' : '#33ff99';
-    flEl.innerHTML = `<span style="color:${col}">⚡ ${d.fightsLeft}/${d.maxDaily} combats restants</span>`;
-  }
-
-  // Barre XP PVE dans l'onglet PVE
-  const tabLvl  = document.getElementById('pve-tab-lvl');
-  const tabXp   = document.getElementById('pve-tab-xp');
-  const tabFill = document.getElementById('pve-tab-xp-fill');
-  if (tabLvl && d.pveLevel !== undefined) {
-    const lvl    = d.pveLevel || 1;
-    const xp     = d.pveXp || 0;
-    const needed = d.pveXpNeeded || 1;
-    const pct    = lvl >= 50 ? 100 : Math.min(100, Math.round(xp / needed * 100));
-    tabLvl.textContent  = lvl >= 50 ? 'MAX' : lvl;
-    if (tabXp)   tabXp.textContent   = lvl >= 50 ? 'Niveau maximum !' : `${xp} / ${needed} XP`;
-    if (tabFill) tabFill.style.width = pct + '%';
-  }
-
-  // Coffres disponibles dans l'onglet PVE
-  const chestWrap = document.getElementById('pve-chest-btn-wrap');
-  if (chestWrap) {
-    const pc = d.pveChests || {};
-    const total = (pc.common||0)+(pc.rare||0)+(pc.epic||0)+(pc.legendary||0);
-    if (total > 0) {
-      const CIMGS = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
-      const CCOLS = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-      let btns = '';
-      ['common','rare','epic','legendary'].forEach(function(t) {
-        if ((pc[t]||0) <= 0) return;
-        btns += '<div onclick="openPveChest(\'' + t + '\')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative">'
-          + '<img src="' + CIMGS[t] + '" style="width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 0 5px ' + CCOLS[t] + ')" onerror="this.remove()">'
-          + '<div style="position:absolute;top:-5px;right:-5px;background:' + CCOLS[t] + ';color:#000;border-radius:999px;font-size:9px;font-weight:900;width:16px;height:16px;display:flex;align-items:center;justify-content:center">' + pc[t] + '</div>'
-          + '</div>';
-      });
-      chestWrap.innerHTML = '<div style="display:flex;gap:6px;align-items:center">' + btns + '</div>';
-    } else {
-      chestWrap.innerHTML = '<div style="font-size:11px;opacity:.35;white-space:nowrap">Aucun coffre</div>';
-    }
-  }
-
-  el.innerHTML = d.enemies.map(e => {
-    const icon = PVE_ENEMY_ICONS[e.key] || '👾';
-    const diffHtml = e.difficulties.map(diff => {
-      const col = PVE_DIFF_COLORS[diff.id] || '#aaa';
-      // Type de coffre selon HP
-      const chestType = diff.hp >= 1450 ? 'legendary' : diff.hp >= 779 ? 'epic' : diff.hp >= 401 ? 'rare' : 'common';
-      const chestCols = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-      const chestImgs = { common:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrecommun.png', rare:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrerare.png', epic:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffreepic.png', legendary:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/asset/coffrelegendaire.png' };
-      const chestLabel = diff.wins > 0
-        ? (diff.nextChestIn === 3
-            ? `Coffre dans 3 victoires`
-            : `+${diff.nextChestIn} victoire${diff.nextChestIn > 1 ? 's' : ''} pour coffre`)
-        : `Coffre à la 3e victoire`;
-      return `<div class="pve-diff-btn ${diff.id}" onclick="doPveFight('${e.key}','${diff.id}')" ${d.fightsLeft <= 0 ? 'disabled' : ''}>
-        <div class="pve-diff-label">${PVE_DIFF_LABELS[diff.id]}</div>
-        <div class="pve-diff-hp" style="color:${col}">❤️ ${diff.hp} PV</div>
-        <div class="pve-diff-rewards">+${diff.xp} XP · +${diff.gold} or</div>
-        <div class="pve-diff-wins">${diff.wins} victoire${diff.wins !== 1 ? 's' : ''}</div>
-        <div class="pve-diff-chest" style="display:flex;align-items:center;justify-content:center;gap:5px;color:${chestCols[chestType]}">
-          <img src="${chestImgs[chestType]}" style="width:18px;height:18px;object-fit:contain" onerror="this.style.display='none'">
-          <span style="font-size:10px">${chestLabel}</span>
-        </div>
-      </div>`;
-    }).join('');
-
-    return `<div class="pve-enemy-card">
-      <div class="pve-enemy-header">
-        <div class="pve-enemy-icon">${icon}</div>
-        <div>
-          <div class="pve-enemy-name">${esc(e.name)}</div>
-          <div style="font-size:11px;opacity:.45;margin-top:2px">3 niveaux de difficulté</div>
-        </div>
-      </div>
-      <div class="pve-diff-grid">${diffHtml}</div>
-    </div>`;
-  }).join('');
-}
-
-async function doPveFight(enemyKey, difficulty) {
-  if (!_pveData || _pveData.fightsLeft <= 0) {
-    showAlert('Plus de combats disponibles!', 'error'); return;
-  }
-  // Disable all buttons during fight
-  document.querySelectorAll('.pve-diff-btn').forEach(b => b.disabled = true);
-  try {
-    const d = await api('/api/pve/fight', { method: 'POST', body: JSON.stringify({ enemy: enemyKey, difficulty }) });
-    _pveData.fightsLeft = d.fightsLeft;
-
-    // Build fake fighter objects for replay
-    const me = myData || { name: 'Toi', pvpSkin: 'forest_ranger', charClass: null, hp: 300 };
-    const f1 = { name: me.name, pvpSkin: me.pvpSkin || 'forest_ranger', charClass: me.charClass || null, hp: me.hp || 300, rankInfo: me.rankInfo || null, avatar: me.avatar || null };
-    const f2 = { name: d.enemy.name, pvpSkin: d.enemy.key, charClass: d.enemy.key, hp: d.enemy.hp, rankInfo: null, avatar: null, isEnemy: true };
-
-    // Show rewards
-    if (d.rewards) {
-      const parts = [];
-      if (d.rewards.xp)         parts.push(`+${d.rewards.xp} XP PVE`);
-      if (d.rewards.gold)       parts.push(`+${d.rewards.gold} or`);
-      if (d.rewards.chestEarned) {
-        const chestT = typeof d.rewards.chestEarned === 'string' ? d.rewards.chestEarned : 'common';
-        const chestN = {common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire'}[chestT] || chestT;
-        parts.push('🎁 Coffre ' + chestN + ' obtenu !');
-      }
-      if (d.rewards.pveLevelUp) parts.push(`⬆️ Niv. PVE ${d.rewards.pveLevel} !`);
-      if (parts.length) showAlert(parts.join(' · '), 'success');
-    } else {
-      showAlert('💀 Défaite... Réessaie !', 'error');
     }
 
-    // Replay the fight
-    openReplay(d.log, f1, f2, d.playerWon ? null : null, 0);
+    await client.query('COMMIT');
 
-    // Refresh PVE list
-    const fresh = await api('/api/pve/enemies');
-    _pveData = fresh;
-    renderPve(fresh);
-    refreshPveXpBar(fresh);
-    // Also refresh profil XP/gold
-    loadProfil();
+    res.json({
+      ok: true,
+      playerWon,
+      log,
+      fightsLeft: Math.max(0, PVE_DAILY_MAX - newFightsToday),
+      rewards: playerWon ? {
+        xp: xpGained,
+        gold: goldGained,
+        chestEarned: chestEarned !== false ? chestEarned : false,
+        chestType: chestEarned !== false ? chestEarned : null,
+        winsAgainstEnemy: winsAfter,
+        nextChestIn: 3 - (winsAfter % 3),
+        pveLevel: pveProgress.newLevel,
+        pveLevelUp: pveProgress.levelsGained > 0,
+        pveXp: pveProgress.newXp,
+        pveXpForNext: pveXpForLevel(pveProgress.newLevel),
+      } : null,
+      fighter: { name: fighter.name, hp: fighter.hp, pvpSkin: fighter.pvpSkin, charClass: fighter.charClass },
+      enemy:   { name: enemy.name, hp: enemy.hp, key: enemyKey, difficulty },
+    });
   } catch(e) {
-    showAlert(e.message || 'Erreur PVE', 'error');
-    document.querySelectorAll('.pve-diff-btn').forEach(b => b.disabled = (_pveData?.fightsLeft <= 0));
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+
+
+// =========================
+// DÉFIS (mode fantôme)
+// =========================
+const DEFI_DAILY_MAX   = 10;
+const DEFI_ENERGY_COST = 10;
+const DEFI_ENERGY_REGEN_MS = 3 * 60 * 60 * 1000; // +10 toutes les 3h
+const DEFI_ELO_MULT    = 0.5; // moitié ELO normal
+const DEFI_BANNED_PAIRS = [[13, 16]];
+const defiIsBanned = (a, b) => DEFI_BANNED_PAIRS.some(p => (p[0]===a&&p[1]===b)||(p[0]===b&&p[1]===a));
+
+async function getDefiEnergy(userId) {
+  const r = await pool.query(`SELECT pvp_energy, pvp_energy_last_refill FROM users WHERE id=$1`, [userId]);
+  let energy     = Number(r.rows[0]?.pvp_energy ?? 100);
+  let lastRefill = Number(r.rows[0]?.pvp_energy_last_refill ?? Date.now());
+  // Regen 3h pour défis (on utilise la même colonne d'énergie)
+  const tranches = Math.floor((Date.now() - lastRefill) / DEFI_ENERGY_REGEN_MS);
+  if (tranches > 0) {
+    energy = Math.min(100, energy + tranches * DEFI_ENERGY_COST);
+    lastRefill += tranches * DEFI_ENERGY_REGEN_MS;
+    await pool.query(`UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2 WHERE id=$3`, [energy, lastRefill, userId]);
+  }
+  return { energy, lastRefill };
+}
+
+// GET /api/pvp/defi/players
+app.get('/api/pvp/defi/players', auth, async (req, res) => {
+  try {
+    const userId   = req.user.id;
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    const [doneQ, dayQ, playersQ] = await Promise.all([
+      pool.query(`SELECT opponent_id FROM pvp_defi_log WHERE challenger_id=$1 AND day_key=$2`, [userId, todayKey]),
+      pool.query(`SELECT defi_today, defi_day_key FROM users WHERE id=$1`, [userId]),
+      pool.query(`
+        SELECT u.id, u.name, u.avatar, u.pvp_rank, u.pvp_wins, u.pvp_losses,
+               pc.char_class, pc.pvp_skin
+        FROM users u
+        LEFT JOIN player_character pc ON pc.user_id = u.id
+        WHERE u.id != $1
+        ORDER BY u.pvp_rank DESC
+        LIMIT 100
+      `, [userId]),
+    ]);
+
+    const doneIds   = new Set(doneQ.rows.map(r => r.opponent_id));
+    const u         = dayQ.rows[0] || {};
+    const defiToday = u.defi_day_key === todayKey ? Number(u.defi_today || 0) : 0;
+    const { energy, lastRefill } = await getDefiEnergy(userId);
+
+    // Calcul du prochain regen énergie
+    const elapsed = Date.now() - lastRefill;
+    const nextRegenMs = DEFI_ENERGY_REGEN_MS - (elapsed % DEFI_ENERGY_REGEN_MS);
+
+    const players = playersQ.rows
+      .filter(p => !defiIsBanned(userId, p.id))
+      .map(p => ({
+        id:          p.id,
+        name:        p.name,
+        avatar:      p.avatar || null,
+        pvpRank:     Number(p.pvp_rank || 1000),
+        wins:        Number(p.pvp_wins || 0),
+        losses:      Number(p.pvp_losses || 0),
+        charClass:   p.char_class || null,
+        pvpSkin:     p.pvp_skin || 'forest_ranger',
+        rankInfo:    getRankInfo(Number(p.pvp_rank || 1000)),
+        alreadyDone: doneIds.has(p.id),
+      }));
+
+    res.json({
+      players,
+      defiLeft: Math.max(0, DEFI_DAILY_MAX - defiToday),
+      defiToday,
+      maxDaily: DEFI_DAILY_MAX,
+      energy,
+      nextRegenMs,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/pvp/defi/fight
+app.post('/api/pvp/defi/fight', auth, async (req, res) => {
+  const opponentId = Number(req.body?.opponentId || 0) | 0;
+  if (!opponentId) return res.status(400).json({ error: 'opponentId requis' });
+  const userId = req.user.id;
+
+  if (defiIsBanned(userId, opponentId)) return res.status(403).json({ error: 'Défi non autorisé' });
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    // Vérifier limite journalière + énergie
+    const dayQ = await client.query(`SELECT defi_today, defi_day_key FROM users WHERE id=$1 FOR UPDATE`, [userId]);
+    const u = dayQ.rows[0];
+    const defiToday = u.defi_day_key === todayKey ? Number(u.defi_today || 0) : 0;
+    if (defiToday >= DEFI_DAILY_MAX) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Limite atteinte (${DEFI_DAILY_MAX} défis/jour)` });
+    }
+
+    // Énergie (regen 3h)
+    const { energy, lastRefill } = await getDefiEnergy(userId);
+    if (energy < DEFI_ENERGY_COST) {
+      await client.query('ROLLBACK');
+      const min = Math.ceil((DEFI_ENERGY_REGEN_MS - ((Date.now() - lastRefill) % DEFI_ENERGY_REGEN_MS)) / 60000);
+      return res.status(400).json({ error: `Énergie insuffisante — rechargement dans ${min} min` });
+    }
+
+    // Déjà défié aujourd'hui ?
+    const doneQ = await client.query(
+      `SELECT 1 FROM pvp_defi_log WHERE challenger_id=$1 AND opponent_id=$2 AND day_key=$3`,
+      [userId, opponentId, todayKey]
+    );
+    if (doneQ.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: "Tu as déjà défié ce joueur aujourd'hui" });
+    }
+
+    // Simuler le combat
+    const [challenger, opponent] = await Promise.all([buildPvpFighter(userId), buildPvpFighter(opponentId)]);
+    const { log: defiLog, winner } = simulatePvpBattle(challenger, opponent);
+    const winnerId = winner.name === challenger.name ? userId : opponentId;
+    const loserId  = winnerId === userId ? opponentId : userId;
+
+    // ELO réduit
+    const winnerRank = winnerId === userId ? challenger.rank : opponent.rank;
+    const loserRank  = loserId  === userId ? challenger.rank : opponent.rank;
+    const rankChange = Math.max(1, Math.round(calcElo(winnerRank, loserRank) * DEFI_ELO_MULT));
+    const loserRankInfo = getRankInfo(loserRank);
+    const lossMult = loserRankInfo.name === 'Bronze' ? 0 : loserRankInfo.name === 'Argent' ? 0.5 : loserRankInfo.name === 'Or' ? 0.75 : 1;
+    const loserLoss = Math.round(rankChange * lossMult);
+
+    // Commit
+    const DEFI_GOLD_WIN = 25;
+    const newEnergy    = energy - DEFI_ENERGY_COST;
+    const newDefiToday = defiToday + 1;
+    await client.query(
+      `UPDATE users SET pvp_energy=$1, pvp_energy_last_refill=$2, defi_today=$3, defi_day_key=$4 WHERE id=$5`,
+      [newEnergy, lastRefill, newDefiToday, todayKey, userId]
+    );
+    await client.query(`UPDATE users SET pvp_rank=pvp_rank+$1, pvp_wins=pvp_wins+1, pve_gold=pve_gold+$2 WHERE id=$3`, [rankChange, DEFI_GOLD_WIN, winnerId]);
+    await client.query(`UPDATE users SET pvp_rank=GREATEST(0,pvp_rank-$1), pvp_losses=pvp_losses+1 WHERE id=$2`, [loserLoss, loserId]);
+    await client.query(
+      `INSERT INTO pvp_defi_log(challenger_id,opponent_id,winner_id,rank_change,day_key,fought_at) VALUES($1,$2,$3,$4,$5,$6)`,
+      [userId, opponentId, winnerId, rankChange, todayKey, Date.now()]
+    );
+    // Notif à l'adversaire
+    await pool.query(
+      `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'defi',$2,$3,$4,0,$5)`,
+      [opponentId,
+       winnerId === opponentId ? '⚔️ Défi reçu — Victoire !' : '⚔️ Défi reçu — Défaite',
+       winnerId === opponentId ? `${challenger.name} t'a défié... et a perdu ! +${rankChange} pts` : `${challenger.name} t'a défié et a gagné. -${loserLoss} pts`,
+       JSON.stringify({ challengerName: challenger.name }), Date.now()]
+    );
+    await client.query('COMMIT');
+
+    // Préparer les fighters pour le replay côté client
+    const f1 = {
+      name: challenger.name, avatar: challenger.avatar||null,
+      pvpSkin: challenger.pvpSkin||'forest_ranger', charClass: challenger.charClass||null,
+      hp: challenger.hp, rankInfo: challenger.rankInfo,
+    };
+    const f2 = {
+      name: opponent.name, avatar: opponent.avatar||null,
+      pvpSkin: opponent.pvpSkin||'forest_ranger', charClass: opponent.charClass||null,
+      hp: opponent.hp, rankInfo: opponent.rankInfo,
+    };
+
+    res.json({
+      ok: true,
+      playerWon:  winnerId === userId,
+      winnerId,
+      rankChange,
+      loserLoss,
+      goldWon:    winnerId === userId ? DEFI_GOLD_WIN : 0,
+      defiLeft:   Math.max(0, DEFI_DAILY_MAX - newDefiToday),
+      energy:     newEnergy,
+      log:        defiLog,
+      fighters:   { f1, f2 },
+    });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+
+// =========================
+// DÉCROISSANCE ELO (Diamant+)
+// =========================
+// Règles :
+//  • À partir de Diamant (1800+), obligation de jouer 4 matchmaking/jour
+//  • Si <4 games joués : -50 ELO ce jour-là
+//  • Si ≥12 games joués en un jour : +3 jours de buffer (max 9 jours)
+//  • Chaque jour le buffer est consommé avant d'appliquer la pénalité
+
+const ELO_DECAY_THRESHOLD_RANK = 'Diamant'; // à partir de ce rang
+const ELO_DECAY_MIN_GAMES      = 4;         // games obligatoires/jour
+const ELO_DECAY_AMOUNT         = 50;        // pénalité ELO par jour inactif
+const ELO_BUFFER_MAX           = 9;         // max 9 jours de buffer
+
+async function applyDailyEloDecay() {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    console.log('⏰ Décroissance ELO quotidienne...');
+
+    // Joueurs Diamant+ qui n'ont pas joué suffisamment hier
+    const users = await pool.query(`
+      SELECT id, pvp_rank, mm_games_today, mm_day_key, mm_game_buffer, elo_decay_last
+      FROM users
+      WHERE pvp_rank >= 1800
+    `);
+
+    let decayed = 0;
+    for (const u of users.rows) {
+      // Déjà traité aujourd'hui ?
+      if (u.elo_decay_last === todayKey) continue;
+
+      const gamesYesterday = u.mm_day_key !== todayKey ? Number(u.mm_games_today || 0) : 0;
+      // Si mm_day_key = aujourd'hui → les games d'hier = 0 (pas de données hier)
+      // Si mm_day_key = hier → les games d'hier sont mm_games_today
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayKey = yesterday.toISOString().slice(0, 10);
+      const gamesHier = u.mm_day_key === yesterdayKey ? Number(u.mm_games_today || 0) : 0;
+
+      if (gamesHier >= ELO_DECAY_MIN_GAMES) {
+        // Assez de games hier — pas de pénalité, mettre à jour elo_decay_last
+        await pool.query(`UPDATE users SET elo_decay_last=$1 WHERE id=$2`, [todayKey, u.id]);
+        continue;
+      }
+
+      // Pas assez de games — consommer le buffer ou appliquer la pénalité
+      let buffer = Number(u.mm_game_buffer || 0);
+      if (buffer > 0) {
+        buffer--;
+        await pool.query(
+          `UPDATE users SET mm_game_buffer=$1, elo_decay_last=$2 WHERE id=$3`,
+          [buffer, todayKey, u.id]
+        );
+        console.log(`  → ${u.id}: buffer utilisé (reste ${buffer} jours)`);
+      } else {
+        const newRank = Math.max(getRankInfo('Diamant').min, Number(u.pvp_rank) - ELO_DECAY_AMOUNT);
+        await pool.query(
+          `UPDATE users SET pvp_rank=$1, elo_decay_last=$2 WHERE id=$3`,
+          [newRank, todayKey, u.id]
+        );
+        // Notification
+        await pool.query(
+          `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'elo_decay',$2,$3,$4,0,$5)`,
+          [u.id,
+           '📉 Décroissance ELO',
+           "Tu n'as pas joué suffisamment hier (4 games requis). -" + ELO_DECAY_AMOUNT + " ELO",
+           JSON.stringify({ gamesPlayed: gamesHier, required: ELO_DECAY_MIN_GAMES }),
+           Date.now()]
+        );
+        decayed++;
+      }
+    }
+    console.log('✅ Décroissance ELO appliquée à ' + decayed + ' joueurs');
+  } catch(e) {
+    console.error('❌ Erreur décroissance ELO:', e);
   }
 }
 
+// GET /api/pvp/activity — infos activité matchmaking du joueur
+app.get('/api/pvp/activity', auth, async (req, res) => {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const q = await pool.query(
+      `SELECT pvp_rank, mm_games_today, mm_day_key, mm_game_buffer FROM users WHERE id=$1`,
+      [req.user.id]
+    );
+    const u = q.rows[0];
+    const rankInfo  = getRankInfo(Number(u.pvp_rank || 1000));
+    const isDiamond = Number(u.pvp_rank || 0) >= 1800;
+    const mmToday   = u.mm_day_key === todayKey ? Number(u.mm_games_today || 0) : 0;
+    const buffer    = Number(u.mm_game_buffer || 0);
 
-// ══════════════════════════════════════════════════
+    res.json({
+      pvpRank:    Number(u.pvp_rank || 1000),
+      rankInfo,
+      isDiamond,
+      mmToday,
+      mmRequired: isDiamond ? ELO_DECAY_MIN_GAMES : 0,
+      mmBuffer:   buffer,
+      mmBufferMax: ELO_BUFFER_MAX,
+      // Avancement vers le buffer (+3 jours si 12 games/jour)
+      mmToBuffer: Math.max(0, 12 - mmToday),
+      decayAmount: ELO_DECAY_AMOUNT,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// =========================
 // RÉCOMPENSES HEBDOMADAIRES ELO
-// ══════════════════════════════════════════════════
-const WEEKLY_ELO_TABLE = [
-  { rank:'Bronze',  min:0,    dollax:500   },
-  { rank:'Argent',  min:1200, dollax:1500  },
-  { rank:'Or',      min:1400, dollax:3000  },
-  { rank:'Platine', min:1600, dollax:6000  },
-  { rank:'Diamant', min:1800, dollax:12000 },
-  { rank:'Maître',  min:2000, dollax:25000 },
+// =========================
+
+const WEEKLY_ELO_REWARDS = [
+  { rank: 'Bronze',   min: 0,    dollax: 500  },
+  { rank: 'Argent',   min: 1200, dollax: 1500 },
+  { rank: 'Or',       min: 1400, dollax: 3000 },
+  { rank: 'Platine',  min: 1600, dollax: 6000 },
+  { rank: 'Diamant',  min: 1800, dollax: 12000 },
+  { rank: 'Maître',   min: 2000, dollax: 25000 },
 ];
 
-async function loadWeeklyRewards() {
-  const el = document.getElementById('weekly-reward-preview');
-  if (!el) return;
+async function distributeWeeklyEloRewards() {
   try {
-    const d = await api('/api/pvp/weekly-rewards');
-    const r = d.currentReward;
-    const rows = WEEKLY_ELO_TABLE.map(t => {
-      const isCurrent = t.rank === r.rank;
-      return `<span style="padding:2px 7px;border-radius:6px;font-size:10px;font-weight:700;${isCurrent?'background:rgba(255,216,77,.2);color:#ffd84d;':'opacity:.4;'}">
-        ${t.rank}: +${t.dollax.toLocaleString()}
-      </span>`;
-    }).join('');
-    el.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end">${rows}</div>
-      <div style="font-size:10px;opacity:.5;text-align:right;margin-top:4px">Ton rang actuel : <b style="color:#ffd84d">${r.rank}</b> → +${r.dollax.toLocaleString()} dollax lundi</div>`;
-  } catch(e) { if (el) el.innerHTML = ''; }
-}
+    console.log('💰 Distribution des récompenses hebdomadaires ELO...');
+    const users = await pool.query(`SELECT id, pvp_rank, name FROM users WHERE pvp_wins > 0 OR pvp_losses > 0`);
+    let distributed = 0;
 
+    for (const u of users.rows) {
+      const rank = Number(u.pvp_rank || 0);
+      // Trouver la tranche ELO (la plus haute applicable)
+      const reward = [...WEEKLY_ELO_REWARDS].reverse().find(r => rank >= r.min);
+      if (!reward) continue;
 
-// ══════════════════════════════════════════════════
-// DÉFIS — mode fantôme
-// ══════════════════════════════════════════════════
-let _defiData = null;
-let _defiSearchTerm = '';
-
-async function loadDefis() {
-  const el = document.getElementById('defi-content');
-  el.innerHTML = '<div class="loading">Chargement...</div>';
-  try {
-    const d = await api('/api/pvp/defi/players');
-    _defiData = d;
-    renderDefis(d);
-  } catch(e) { el.innerHTML = '<div class="empty">Erreur chargement</div>'; }
-}
-
-function renderDefis(d) {
-  // Badges
-  const leftEl   = document.getElementById('defi-left-badge');
-  const energyEl = document.getElementById('defi-energy-badge');
-  if (leftEl) {
-    const col = d.defiLeft <= 0 ? '#ff4444' : d.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
-    leftEl.innerHTML = '<span style="color:' + col + '">⚔️ ' + d.defiLeft + '/' + d.maxDaily + ' défis restants</span>';
-  }
-  if (energyEl) {
-    const col = d.energy <= 0 ? '#ff4444' : d.energy < 30 ? '#ffd84d' : '#aaa';
-    const min = d.nextRegenMs ? Math.ceil(d.nextRegenMs / 60000) : '?';
-    energyEl.innerHTML = '<span style="color:' + col + '">⚡ ' + d.energy + '/100 énergie</span>'
-      + (d.energy < 100 ? ' · <span style="opacity:.5">+10 dans ' + min + ' min</span>' : '');
-  }
-
-  const el = document.getElementById('defi-content');
-
-  // Barre de recherche
-  let searchHtml = '<div style="margin-bottom:12px;display:flex;gap:8px">'
-    + '<input id="defi-search" type="text" placeholder="🔍 Rechercher un joueur..." '
-    + 'style="flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px" '
-    + 'oninput="filterDefis(this.value)">'
-    + '</div>';
-
-  // Banner résultat (réutilisé)
-  let bannerHtml = '<div id="defi-result" class="defi-result-banner"></div>';
-
-  // Trier : non faits en premier, puis par rang
-  const sorted = [...d.players].sort(function(a, b) {
-    if (a.alreadyDone !== b.alreadyDone) return a.alreadyDone ? 1 : -1;
-    return b.pvpRank - a.pvpRank;
-  });
-
-  const rowsHtml = sorted.map(function(p) {
-    const col     = RANK_COLORS[p.rankInfo?.name] || '#aaa';
-    const rankName = p.rankInfo?.name || 'Bronze';
-    const avBg    = p.avatar ? "background-image:url('" + p.avatar.replace(/'/g,"\'") + "');background-size:cover;font-size:0" : '';
-    const avTxt   = p.avatar ? '' : '🧑';
-    const done    = p.alreadyDone;
-    const noEnergy = d.energy < 10;
-    const disabled = done || d.defiLeft <= 0 || noEnergy;
-    const btnLabel = done ? '✓ Défié' : '⚔️ Défier';
-    const rankIcon = RANK_ICONS[rankName] ? '<img src="' + RANK_ICONS[rankName] + '" style="width:12px;height:12px;object-fit:contain;vertical-align:middle;margin-right:3px">' : '';
-    return '<div class="defi-player-row' + (done?' done':'') + '" data-name="' + esc(p.name).toLowerCase() + '">'
-      + '<div class="defi-avatar" style="' + avBg + '">' + avTxt + '</div>'
-      + '<div class="defi-info">'
-        + '<div class="defi-name">' + esc(p.name) + '</div>'
-        + '<div class="defi-rank" style="color:' + col + '">' + rankIcon + rankName + ' · ' + fmtPts(p.pvpRank) + ' pts · ' + p.wins + 'V ' + p.losses + 'D</div>'
-      + '</div>'
-      + '<button class="defi-btn" ' + (disabled?'disabled':'') + ' onclick="launchDefi(' + p.id + ',this)">' + btnLabel + '</button>'
-      + '</div>';
-  }).join('');
-
-  el.innerHTML = searchHtml + bannerHtml + '<div id="defi-rows">' + rowsHtml + '</div>';
-}
-
-function filterDefis(term) {
-  _defiSearchTerm = term.toLowerCase();
-  document.querySelectorAll('#defi-rows .defi-player-row').forEach(function(row) {
-    const name = row.getAttribute('data-name') || '';
-    row.style.display = name.includes(_defiSearchTerm) ? '' : 'none';
-  });
-}
-
-async function launchDefi(opponentId, btn) {
-  if (btn) { btn.disabled = true; btn.textContent = '⏳...'; }
-  try {
-    const d = await api('/api/pvp/defi/fight', { method: 'POST', body: JSON.stringify({ opponentId }) });
-
-    // Marquer le bouton comme fait immédiatement
-    if (btn) { btn.textContent = '✓ Défié'; btn.disabled = true; }
-
-    // Ouvrir le replay animé
-    if (d.log && d.fighters) {
-      const f1 = d.fighters.f1;
-      const f2 = d.fighters.f2;
-      // Pts de rang affiché dans le replay
-      const displayRankChange = d.playerWon ? d.rankChange : -d.loserLoss;
-      openReplay(d.log, f1, f2, d.winnerId, displayRankChange);
+      await pool.query(`UPDATE users SET money = money + $1 WHERE id = $2`, [reward.dollax, u.id]);
+      await pool.query(
+        `INSERT INTO notifications(user_id, type, title, body, meta, is_read, createdAt)
+         VALUES($1,'weekly_reward','🏆 Récompense hebdomadaire !',$2,$3,0,$4)`,
+        [u.id,
+         `Rang ${reward.rank} — +${reward.dollax.toLocaleString()} dollax pour cette semaine !`,
+         JSON.stringify({ rank: reward.rank, dollax: reward.dollax, pvp_rank: rank }),
+         Date.now()]
+      );
+      distributed++;
     }
-
-    // Toast récompenses
-    var parts = [];
-    if (d.playerWon) {
-      parts.push('+' + d.rankChange + ' pts de rang');
-      if (d.goldWon) parts.push('+' + d.goldWon + ' Or PVE');
-    } else {
-      if (d.loserLoss) parts.push('-' + d.loserLoss + ' pts de rang');
-    }
-    if (parts.length) showAlert((d.playerWon ? '🏆 Victoire ! ' : '💀 Défaite. ') + parts.join(' · '), d.playerWon ? 'success' : 'error');
-
-    // Rafraîchir les badges énergie/défis sans recharger toute la liste
-    const fresh = await api('/api/pvp/defi/players');
-    _defiData = fresh;
-    var leftEl   = document.getElementById('defi-left-badge');
-    var energyEl = document.getElementById('defi-energy-badge');
-    if (leftEl) {
-      var col = fresh.defiLeft <= 0 ? '#ff4444' : fresh.defiLeft <= 3 ? '#ffd84d' : '#33ff99';
-      leftEl.innerHTML = '<span style="color:' + col + '">⚔️ ' + fresh.defiLeft + '/' + fresh.maxDaily + ' défis restants</span>';
-    }
-    if (energyEl) {
-      var ecol = fresh.energy <= 0 ? '#ff4444' : fresh.energy < 30 ? '#ffd84d' : '#aaa';
-      var min  = fresh.nextRegenMs ? Math.ceil(fresh.nextRegenMs / 60000) : '?';
-      energyEl.innerHTML = '<span style="color:' + ecol + '">⚡ ' + fresh.energy + '/100 énergie</span>'
-        + (fresh.energy < 100 ? ' · +10 dans ' + min + ' min' : '');
-    }
-    // Rafraîchir profil (rang + or PVE mis à jour)
-    loadProfil();
+    console.log(`✅ Récompenses distribuées à ${distributed} joueurs`);
   } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '⚔️ Défier'; }
-    showAlert(e.message || 'Erreur', 'error');
+    console.error('❌ Erreur récompenses hebdomadaires:', e);
   }
 }
 
-
-// ══════════════════════════════════════════════════
-// ACTIVITÉ MATCHMAKING + DÉCROISSANCE ELO
-// ══════════════════════════════════════════════════
-async function loadMmActivity() {
+// GET /api/pvp/weekly-rewards — voir les récompenses disponibles
+app.get('/api/pvp/weekly-rewards', auth, async (req, res) => {
   try {
-    const d = await api('/api/pvp/activity');
-    renderMmActivity(d);
-  } catch(e) { /* silencieux */ }
+    const userQ = await pool.query(`SELECT pvp_rank FROM users WHERE id=$1`, [req.user.id]);
+    const rank = Number(userQ.rows[0]?.pvp_rank || 0);
+    const currentReward = [...WEEKLY_ELO_REWARDS].reverse().find(r => rank >= r.min);
+    res.json({
+      rewards: WEEKLY_ELO_REWARDS,
+      currentRank: rank,
+      currentReward: currentReward || WEEKLY_ELO_REWARDS[0],
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/admin/weekly-rewards — déclencher manuellement (admin uniquement)
+app.post('/api/admin/weekly-rewards', auth, async (req, res) => {
+  // Simple protection par token admin
+  const adminToken = req.headers['x-admin-token'] || req.body?.adminToken;
+  if (adminToken !== process.env.ADMIN_TOKEN && adminToken !== 'gachax-admin-2024') {
+    return res.status(403).json({ error: 'Accès refusé' });
+  }
+  await distributeWeeklyEloRewards();
+  res.json({ ok: true });
+});
+
+// Cron hebdomadaire : chaque lundi à 00h00
+function scheduleDailyEloDecay() {
+  function msUntilMidnight() {
+    const now = new Date();
+    const midnight = new Date(now); midnight.setHours(24, 0, 1, 0);
+    return midnight - now;
+  }
+  const ms = msUntilMidnight();
+  console.log('⏰ Décroissance ELO dans ' + Math.round(ms/3600000) + 'h');
+  setTimeout(() => {
+    applyDailyEloDecay();
+    setInterval(applyDailyEloDecay, 24 * 60 * 60 * 1000);
+  }, ms);
 }
 
-function renderMmActivity(d) {
-  // Logo rang
-  const iconEl = document.getElementById('mm-rank-icon');
-  const nameEl = document.getElementById('mm-rank-name');
-  const ptsEl  = document.getElementById('mm-rank-pts');
-  const ri = d.rankInfo || {};
-  if (iconEl && RANK_ICONS[ri.name]) iconEl.src = RANK_ICONS[ri.name];
-  if (nameEl) { nameEl.textContent = ri.name || '—'; nameEl.style.color = RANK_COLORS[ri.name] || '#fff'; }
-  if (ptsEl)  ptsEl.textContent = fmtPts(d.pvpRank) + ' pts';
-
-  // Bloc activité
-  const block = document.getElementById('mm-activity-block');
-  if (!block) return;
-
-  if (!d.isDiamond) {
-    // Rang < Diamant : pas de contrainte
-    block.innerHTML =
-      '<div style="font-size:13px;font-weight:700;margin-bottom:6px">⚔️ Matchmaking illimité</div>'
-      + '<div style="font-size:11px;opacity:.5;line-height:1.6">'
-      + 'Joue autant que tu veux — aucune pénalité.<br>'
-      + 'La décroissance ELO est active à partir du rang <span style="color:#c084ff;font-weight:700">Diamant</span>.'
-      + '</div>';
-    return;
+function scheduleWeeklyRewards() {
+  function msUntilNextMonday() {
+    const now = new Date();
+    const day = now.getDay(); // 0=dim, 1=lun
+    const daysUntilMonday = (8 - day) % 7 || 7;
+    const nextMonday = new Date(now);
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
+    nextMonday.setHours(0, 0, 0, 0);
+    return nextMonday - now;
   }
 
-  // Rang Diamant+ : afficher le système de stock
-  var gamesLeft = Math.max(0, d.mmRequired - d.mmToday);
-  var pct = Math.min(100, Math.round(d.mmToday / d.mmRequired * 100));
-  var barColor = d.mmToday >= d.mmRequired ? '#33ff99' : d.mmToday >= 2 ? '#ffd84d' : '#ff6464';
-  var statusTxt = d.mmToday >= d.mmRequired
-    ? '✅ Objectif atteint !'
-    : gamesLeft + ' game' + (gamesLeft > 1 ? 's' : '') + ' restante' + (gamesLeft > 1 ? 's' : '') + ' pour éviter la pénalité';
-
-  // Buffer (stock de jours)
-  var bufferHtml = '';
-  if (d.mmBuffer > 0) {
-    bufferHtml = '<div style="margin-top:8px;padding:7px 10px;background:rgba(51,255,153,.08);border:1px solid rgba(51,255,153,.2);border-radius:8px;font-size:11px">'
-      + '🛡️ <span style="color:#33ff99;font-weight:700">' + d.mmBuffer + ' jour' + (d.mmBuffer > 1 ? 's' : '') + ' de protection</span>'
-      + ' — tu peux te reposer sans perdre d\'ELO'
-      + '</div>';
-  }
-
-  // Progression vers le prochain buffer (+3 jours si 12 games)
-  var toBufferHtml = '';
-  if (d.mmToday < 12) {
-    toBufferHtml = '<div style="font-size:10px;opacity:.45;margin-top:5px">'
-      + 'Joue ' + d.mmToBuffer + ' game' + (d.mmToBuffer > 1 ? 's' : '') + ' de plus aujourd\'hui pour gagner <b>+3 jours de protection</b>'
-      + '</div>';
-  } else {
-    toBufferHtml = '<div style="font-size:10px;color:#33ff99;margin-top:5px">⭐ 12 games atteints ! +3 jours de protection gagnés</div>';
-  }
-
-  block.innerHTML =
-    '<div style="font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Activité quotidienne</div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">'
-      + '<span style="color:' + barColor + '">' + statusTxt + '</span>'
-      + '<span style="opacity:.5">' + d.mmToday + ' / ' + d.mmRequired + ' games</span>'
-    + '</div>'
-    + '<div style="height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-bottom:4px">'
-      + '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px;transition:width .4s ease"></div>'
-    + '</div>'
-    + '<div style="font-size:10px;opacity:.4;margin-bottom:8px">−' + d.decayAmount + ' ELO si objectif non atteint (sauf protection active)</div>'
-    + bufferHtml
-    + toBufferHtml;
+  const ms = msUntilNextMonday();
+  console.log(`⏰ Prochaines récompenses ELO dans ${Math.round(ms/3600000)}h`);
+  setTimeout(() => {
+    distributeWeeklyEloRewards();
+    setInterval(distributeWeeklyEloRewards, 7 * 24 * 60 * 60 * 1000);
+  }, ms);
 }
 
-// ── INIT ──
-window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
-loadProfil();
-loadEnergy();
-loadMmActivity();
-// Charger le niveau PVE dès le départ
-api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(() => {});
-// Charger les récompenses hebdomadaires
-loadWeeklyRewards();
-</script>
-
-<!-- ══ RADIO ══ -->
-<div id="radio-widget">
-  <div id="radio-panel" class="hidden">
-    <div class="radio-track" id="radio-track-name">♪ Sélectionne une piste...</div>
-    <div class="radio-bars" id="radio-bars">
-      <div class="radio-bar" style="height:8px"></div>
-      <div class="radio-bar"></div>
-      <div class="radio-bar"></div>
-      <div class="radio-bar"></div>
-      <div class="radio-bar" style="height:8px"></div>
-    </div>
-    <div class="radio-controls">
-      <button class="radio-ctrl" onclick="radioPrev()" title="Précédent">⏮</button>
-      <button class="radio-ctrl" id="radio-play-btn" onclick="radioToggle()" title="Play/Pause">▶</button>
-      <button class="radio-ctrl" onclick="radioNext()" title="Suivant">⏭</button>
-      <button class="radio-ctrl" id="radio-mute-btn" onclick="radioMute()" title="Mute">🔊</button>
-      <input type="range" class="radio-vol" id="radio-vol" min="0" max="1" step="0.05" value="0.6" oninput="radioSetVol(this.value)" title="Volume">
-    </div>
-  </div>
-  <button id="radio-btn" onclick="radioTogglePanel()" title="Radio">
-    <img src="https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/radio.png" style="width:64px;height:64px;object-fit:contain" onerror="this.outerHTML='📻'">
-  </button>
-</div>
-
-<script>
-// ══ RADIO ══
-var RADIO_TRACKS = [
-  { name:'Tenebrus',         src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/Tenebrus.mp3' },
-  { name:'Battle',           src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/battle.mp3' },
-  { name:'Boys And Girls',   src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/boys and girls.mp3' },
-  { name:'Castle',           src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/castle.mp3' },
-  { name:'Demon',            src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/demon.mp3' },
-  { name:'Honk Honk',        src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/honk honk.mp3' },
-  { name:'Need You',         src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/need you.mp3' },
-  { name:'Pop',              src:'https://raw.githubusercontent.com/skunfy/pok-gacha/main/music/pop.mp3' },
-];
-
-var _radioAudio   = new Audio();
-var _radioIdx     = 0;
-var _radioPlaying = false;
-var _radioPanelOpen = false;
-var _radioMuted   = false;
-
-_radioAudio.volume = 0.6;
-_radioAudio.addEventListener('ended', function() { radioNext(); });
-
-function radioTogglePanel() {
-  _radioPanelOpen = !_radioPanelOpen;
-  var panel = document.getElementById('radio-panel');
-  var btn   = document.getElementById('radio-btn');
-  if (_radioPanelOpen) {
-    panel.classList.remove('hidden');
-    btn.classList.add('on');
-    // Auto-play à l'ouverture si rien ne joue
-    if (!_radioPlaying) radioPlay();
-  } else {
-    panel.classList.add('hidden');
-    btn.classList.remove('on');
-  }
-}
-
-function radioPlay() {
-  var track = RADIO_TRACKS[_radioIdx];
-  if (_radioAudio.src !== track.src) {
-    _radioAudio.src = track.src;
-    _radioAudio.load();
-  }
-  _radioAudio.play().catch(function(){});
-  _radioPlaying = true;
-  document.getElementById('radio-play-btn').textContent = '⏸';
-  document.getElementById('radio-track-name').textContent = '♪ ' + track.name;
-  document.getElementById('radio-bars').classList.remove('paused');
-  document.getElementById('radio-btn').classList.add('on');
-}
-
-function radioPause() {
-  _radioAudio.pause();
-  _radioPlaying = false;
-  document.getElementById('radio-play-btn').textContent = '▶';
-  document.getElementById('radio-bars').classList.add('paused');
-}
-
-function radioToggle() {
-  if (_radioPlaying) radioPause(); else radioPlay();
-}
-
-function radioNext() {
-  _radioIdx = (_radioIdx + 1) % RADIO_TRACKS.length;
-  _radioAudio.src = RADIO_TRACKS[_radioIdx].src;
-  _radioAudio.load();
-  if (_radioPlaying) radioPlay(); else {
-    document.getElementById('radio-track-name').textContent = '♪ ' + RADIO_TRACKS[_radioIdx].name;
-  }
-}
-
-function radioPrev() {
-  _radioIdx = (_radioIdx - 1 + RADIO_TRACKS.length) % RADIO_TRACKS.length;
-  _radioAudio.src = RADIO_TRACKS[_radioIdx].src;
-  _radioAudio.load();
-  if (_radioPlaying) radioPlay(); else {
-    document.getElementById('radio-track-name').textContent = '♪ ' + RADIO_TRACKS[_radioIdx].name;
-  }
-}
-
-function radioMute() {
-  _radioMuted = !_radioMuted;
-  _radioAudio.muted = _radioMuted;
-  document.getElementById('radio-mute-btn').textContent = _radioMuted ? '🔇' : '🔊';
-  document.getElementById('radio-mute-btn').classList.toggle('active', _radioMuted);
-}
-
-function radioSetVol(v) {
-  _radioAudio.volume = parseFloat(v);
-  if (_radioMuted && parseFloat(v) > 0) {
-    _radioMuted = false;
-    _radioAudio.muted = false;
-    document.getElementById('radio-mute-btn').textContent = '🔊';
-    document.getElementById('radio-mute-btn').classList.remove('active');
-  }
-}
-</script>
-
-</body>
-</html>
+// =========================
+// START
+// =========================
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`✅ Server listening on port ${PORT}`);
+      console.log(`✅ Render PORT env is ${process.env.PORT || "(not set locally)"}`);
+      scheduleWeeklyRewards(); // Démarrer le cron de récompenses ELO
+      scheduleDailyEloDecay(); // Cron quotidien décroissance ELO Diamant+
+    });
+  })
+  .catch((e) => {
+    console.error("❌ DB init error:", e);
+    process.exit(1);
+  });
