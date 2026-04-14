@@ -6545,7 +6545,17 @@ async function getPvpEquipmentBonus(userId) {
   for (const r of rows) {
     const def = PVP_ITEMS[r.item_key];
     if (!def) continue;
-    const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+    // Normaliser extra_stats vers ancien format plat {stat: val} pour pvpForgedStats
+    const rawExtra = r.extra_stats || {};
+    const flatExtra = {};
+    Object.entries(rawExtra).forEach(([k, v]) => {
+      if (k.startsWith('slot_') && v && v.stat) {
+        flatExtra[v.stat] = (flatExtra[v.stat] || 0) + v.val;
+      } else if (!k.startsWith('slot_') && typeof v === 'number') {
+        flatExtra[k] = (flatExtra[k] || 0) + v;
+      }
+    });
+    const stats = pvpForgedStats(def, r.forge_level || 0, flatExtra);
     for (const s of PVP_FORGE_BONUS_POOL) bonus[s] += stats[s] || 0;
   }
   return bonus;
@@ -6834,7 +6844,14 @@ app.get("/api/pvp/inventory", auth, async (req, res) => {
     );
     const inventory = rows.map(r => {
       const def   = PVP_ITEMS[r.item_key] || {};
-      const stats = pvpForgedStats(def, r.forge_level || 0, r.extra_stats || {});
+      // Normaliser extra_stats (nouveau format slot_N ou ancien format plat)
+      const rawExtraInv = r.extra_stats || {};
+      const flatExtraInv = {};
+      Object.entries(rawExtraInv).forEach(([k,v]) => {
+        if (k.startsWith('slot_') && v && v.stat) flatExtraInv[v.stat] = (flatExtraInv[v.stat]||0)+v.val;
+        else if (!k.startsWith('slot_') && typeof v==='number') flatExtraInv[k]=(flatExtraInv[k]||0)+v;
+      });
+      const stats = pvpForgedStats(def, r.forge_level || 0, flatExtraInv);
       return { id: r.id, item_key: r.item_key, forge_level: r.forge_level || 0,
                extra_stats: r.extra_stats || {}, equipped_slot: r.equipped_slot,
                ...def, ...stats };
@@ -6913,18 +6930,18 @@ app.post("/api/pvp/forge", auth, async (req, res) => {
 
 // Or et runes gagnés en brisant un item
 const SHATTER_REWARDS = {
-  common:    { gold: 10,  runes: { any: 1 } },
-  rare:      { gold: 25,  runes: { any: 2 } },
-  epic:      { gold: 60,  runes: { any: 1, epic: 1 } },
-  legendary: { gold: 150, runes: { epic: 1, legendary: 1 } },
+  common:    { gold: 10,  runes: 1 },
+  rare:      { gold: 25,  runes: 2 },
+  epic:      { gold: 60,  runes: 4 },
+  legendary: { gold: 150, runes: 8 },
 };
 
 // Coût d'un reroll (or + runes)
 const REROLL_COSTS = {
-  common:    { gold: 20,  runes: { any: 2 } },
-  rare:      { gold: 50,  runes: { any: 3 } },
-  epic:      { gold: 120, runes: { epic: 1 } },
-  legendary: { gold: 300, runes: { legendary: 1 } },
+  common:    { gold: 20,  runes: 2 },
+  rare:      { gold: 50,  runes: 3 },
+  epic:      { gold: 120, runes: 5 },
+  legendary: { gold: 300, runes: 10 },
 };
 
 // Plages de valeurs par stat et rareté pour le reroll (min-max)
@@ -6991,25 +7008,19 @@ app.post('/api/pvp/forge/shatter', auth, async (req, res) => {
 
     const rewards = SHATTER_REWARDS[def.rarity] || SHATTER_REWARDS.common;
 
-    // Or PVE + Runes — tout en une seule requête atomique JSONB
-    // Pour chaque type de rune, on incrémente la valeur dans le JSONB via opérateurs natifs PostgreSQL
-    let runesUpdate = `runes`;
-    const runeEntries = Object.entries(rewards.runes);
-    for (const [runeType, qty] of runeEntries) {
-      // jsonb_set(runes, '{type}', (COALESCE((runes->>'type')::int, 0) + qty)::text::jsonb)
-      runesUpdate = `jsonb_set(${runesUpdate}, '{${runeType}}', to_jsonb(COALESCE((${runesUpdate}->>'${runeType}')::int, 0) + ${qty}))`;
-    }
+    // Or PVE + Runes (1 seul type) atomiquement
     const updateQ = await client.query(
-      `UPDATE users SET pve_gold = pve_gold + $1, runes = ${runesUpdate} WHERE id=$2 RETURNING runes`,
-      [rewards.gold, req.user.id]
+      `UPDATE users SET pve_gold = pve_gold + $1,
+        runes = jsonb_set(COALESCE(runes,'{}'), '{rune}', to_jsonb(COALESCE((runes->>'rune')::int, 0) + $2))
+       WHERE id=$3 RETURNING runes, pve_gold`,
+      [rewards.gold, rewards.runes, req.user.id]
     );
-    const totalRunes = updateQ.rows[0]?.runes || {};
+    const totalRunes = Number(updateQ.rows[0]?.runes?.rune || 0);
 
-    // Supprimer l'item
     await client.query(`DELETE FROM pvp_equipment WHERE id=$1`, [itemId]);
     await client.query('COMMIT');
 
-    res.json({ ok: true, gold: rewards.gold, runes: rewards.runes, totalRunes, itemName: def.name, rarity: def.rarity });
+    res.json({ ok: true, gold: rewards.gold, runesGained: rewards.runes, totalRunes, itemName: def.name, rarity: def.rarity });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
 });
@@ -7047,37 +7058,53 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
       return res.status(400).json({ error: `Cet item n'est pas encore au +${milestone}` });
     }
 
-    // Les extra_stats actuelles comme tableau [statKey, val] dans l'ordre des milestones
+    // Lire les slots depuis le nouveau format {slot_3:{stat,val}, slot_6:{stat,val}...}
+    // Compatibilité descendante : si extra_stats est ancien format {hp:60, def:16}
+    // on migre vers le nouveau format à la volée
+    let normalizedExtra = { ...extraStats };
+    const isOldFormat = Object.keys(extraStats).some(k => !k.startsWith('slot_'));
+    if (isOldFormat && Object.keys(extraStats).length > 0) {
+      // Migration : associer chaque entrée ancienne au milestone correspondant
+      const oldEntries = Object.entries(extraStats);
+      normalizedExtra = {};
+      PVP_FORGE_MILESTONES.filter(m => m <= item.forge_level).forEach((m, i) => {
+        if (oldEntries[i]) {
+          normalizedExtra['slot_' + m] = { stat: oldEntries[i][0], val: oldEntries[i][1] };
+        }
+      });
+      // Sauvegarder la migration en DB
+      await client.query(`UPDATE pvp_equipment SET extra_stats=$1 WHERE id=$2`, [JSON.stringify(normalizedExtra), itemId]);
+    }
+
     const slots = PVP_FORGE_MILESTONES
       .filter(m => m <= item.forge_level)
       .map((m, i) => {
-        const entry = Object.entries(extraStats)[i] || [null, 0];
-        return { milestone: m, statKey: entry[0], val: entry[1] };
+        const slotData = normalizedExtra['slot_' + m] || {};
+        return { milestone: m, statKey: slotData.stat || null, val: slotData.val ?? null };
       });
+    // Remplacer extraStats par la version normalisée
+    const extraStats_ = normalizedExtra;
 
-    if (!slots[slotIndex] || !slots[slotIndex].statKey) {
+    if (!slots[slotIndex]) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Ce slot est vide' });
+      return res.status(400).json({ error: 'Slot invalide' });
     }
 
     // Vérifier le coût
     const costs = REROLL_COSTS[def.rarity] || REROLL_COSTS.common;
     const userQ = await client.query(`SELECT pve_gold, runes FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
     const u = userQ.rows[0];
-    const gold  = Number(u.pve_gold || 0);
-    const runes = u.runes || {};
+    const gold      = Number(u.pve_gold || 0);
+    const runeCount = Number(u.runes?.rune || 0);
 
     if (gold < costs.gold) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${costs.gold} requis, tu en as ${gold})` }); }
-    for (const [runeType, qty] of Object.entries(costs.runes)) {
-      if ((runes[runeType] || 0) < qty) {
-        await client.query('ROLLBACK');
-        return res.status(400).json({ error: `Runes insuffisantes — ${qty} Rune ${runeType} requise` });
-      }
-    }
+    if (runeCount < costs.runes) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Runes insuffisantes (${costs.runes} requises, tu en as ${runeCount})` }); }
 
     // ── Générer le jet : NOUVELLE STAT aléatoire + NOUVELLE VALEUR ──
-    // Interdire de retomber sur la même stat (pour garantir un vrai reroll)
-    const oldStatKey = slots[slotIndex].statKey;
+    const slotKey    = 'slot_' + milestone;
+    const currentSlot = extraStats_[slotKey] || {};
+    const oldStatKey = currentSlot.stat || null;
+    // Interdire de retomber sur la même stat
     const statPool   = PVP_FORGE_BONUS_POOL.filter(s => s !== oldStatKey);
     const newStatKey = statPool[Math.floor(Math.random() * statPool.length)];
     const roll       = rollStatValue(newStatKey, def.rarity);
@@ -7086,43 +7113,34 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
       await client.query('ROLLBACK');
       return res.json({
         ok: true, preview: true,
-        oldStat: oldStatKey, oldVal: slots[slotIndex].val,
+        oldStat: oldStatKey, oldVal: currentSlot.val ?? null,
         stat: newStatKey, val: roll.val, ...roll,
-        milestone, slotIndex, costs, gold, runes,
+        milestone, slotIndex, costs, gold, runeCount,
       });
     }
 
-    // ── Appliquer : remplacer l'ancien slot par le nouveau ──
-    // Reconstruire extra_stats dans le bon ordre (slot par slot)
-    const newExtra = {};
-    slots.forEach(function(slot, i) {
-      if (i === slotIndex) {
-        newExtra[newStatKey] = roll.val;
-      } else {
-        newExtra[slot.statKey] = slot.val;
-      }
-    });
+    // ── Appliquer : écrire le slot par sa clé milestone ──
+    const newExtra = { ...extraStats_ };
+    newExtra[slotKey] = { stat: newStatKey, val: roll.val };
 
     // Déduire or + runes atomiquement
-    let runesDeduct = `runes`;
-    for (const [runeType, qty] of Object.entries(costs.runes)) {
-      runesDeduct = `jsonb_set(${runesDeduct}, '{${runeType}}', to_jsonb(GREATEST(0, COALESCE((${runesDeduct}->>'${runeType}')::int, 0) - ${qty})))`;
-    }
     const deductQ = await client.query(
-      `UPDATE users SET pve_gold = pve_gold - $1, runes = ${runesDeduct} WHERE id=$2 RETURNING runes`,
-      [costs.gold, req.user.id]
+      `UPDATE users SET pve_gold = pve_gold - $1,
+        runes = jsonb_set(COALESCE(runes,'{}'), '{rune}', to_jsonb(GREATEST(0, COALESCE((runes->>'rune')::int,0) - $2)))
+       WHERE id=$3 RETURNING runes`,
+      [costs.gold, costs.runes, req.user.id]
     );
-    const newRunes = deductQ.rows[0]?.runes || {};
+    const newRuneCount = Number(deductQ.rows[0]?.runes?.rune || 0);
 
     await client.query(`UPDATE pvp_equipment SET extra_stats=$1 WHERE id=$2`, [JSON.stringify(newExtra), itemId]);
     await client.query('COMMIT');
 
     res.json({
       ok: true, preview: false,
-      oldStat: oldStatKey, oldVal: slots[slotIndex].val,
+      oldStat: oldStatKey, oldVal: currentSlot.val ?? null,
       stat: newStatKey, newVal: roll.val,
       grade: roll.grade, color: roll.color, emoji: roll.emoji, min: roll.min, max: roll.max,
-      milestone, slotIndex, newExtra, newRunes,
+      milestone, slotIndex, newExtra, newRuneCount,
     });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
