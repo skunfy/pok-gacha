@@ -969,6 +969,11 @@ async function initDb() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_rare      INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_epic      INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pve_chest_legendary INTEGER NOT NULL DEFAULT 0`);
+  // Matchmaking activity tracking + décroissance ELO Diamant+
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_games_today  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_day_key      TEXT    NOT NULL DEFAULT ''`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS mm_game_buffer  INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS elo_decay_last  TEXT    NOT NULL DEFAULT ''`);
   // Défis (mode fantôme)
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_today   INTEGER NOT NULL DEFAULT 0`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS defi_day_key TEXT    NOT NULL DEFAULT ''`);
@@ -6940,12 +6945,14 @@ app.post("/api/pvp/spend-stat", auth, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/pvp/matchmaking/join — rejoindre la file
+// POST /api/pvp/matchmaking/join — rejoindre la file (pas de coût d'énergie)
 app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
   try {
-    const meQ = await pool.query(`SELECT pvp_rank, pvp_energy FROM users WHERE id=$1`, [req.user.id]);
+    const meQ = await pool.query(`SELECT pvp_rank, mm_games_today, mm_day_key FROM users WHERE id=$1`, [req.user.id]);
     const me  = meQ.rows[0];
-    if (Number(me.pvp_energy) < 1) return res.status(400).json({ error: "Énergie insuffisante" });
+    // Incrémenter le compteur de games du jour (pour le système de décroissance ELO)
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const mmToday = me.mm_day_key === todayKey ? Number(me.mm_games_today || 0) : 0;
 
     await pool.query(
       `INSERT INTO pvp_queue(user_id, pvp_rank, joined_at) VALUES($1,$2,$3)
@@ -6980,6 +6987,19 @@ app.post("/api/pvp/matchmaking/join", auth, async (req, res) => {
       [req.user.id, opponent.user_id, Date.now()]
     );
     const battleId = battleQ.rows[0].id;
+
+    // Mettre à jour le compteur de games matchmaking du jour
+    const todayKeyUpd = new Date().toISOString().slice(0, 10);
+    await pool.query(`
+      UPDATE users
+      SET mm_games_today = CASE WHEN mm_day_key=$1 THEN mm_games_today+1 ELSE 1 END,
+          mm_day_key = $1,
+          mm_game_buffer = CASE
+            WHEN mm_day_key=$1 AND mm_games_today+1 >= 12 THEN LEAST(mm_game_buffer+3, 9)
+            ELSE mm_game_buffer
+          END
+      WHERE id=$2
+    `, [todayKeyUpd, req.user.id]);
 
     res.json({
       status: 'found',
@@ -7733,6 +7753,113 @@ app.post('/api/pvp/defi/fight', auth, async (req, res) => {
   } finally { client.release(); }
 });
 
+
+// =========================
+// DÉCROISSANCE ELO (Diamant+)
+// =========================
+// Règles :
+//  • À partir de Diamant (1800+), obligation de jouer 4 matchmaking/jour
+//  • Si <4 games joués : -50 ELO ce jour-là
+//  • Si ≥12 games joués en un jour : +3 jours de buffer (max 9 jours)
+//  • Chaque jour le buffer est consommé avant d'appliquer la pénalité
+
+const ELO_DECAY_THRESHOLD_RANK = 'Diamant'; // à partir de ce rang
+const ELO_DECAY_MIN_GAMES      = 4;         // games obligatoires/jour
+const ELO_DECAY_AMOUNT         = 50;        // pénalité ELO par jour inactif
+const ELO_BUFFER_MAX           = 9;         // max 9 jours de buffer
+
+async function applyDailyEloDecay() {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    console.log('⏰ Décroissance ELO quotidienne...');
+
+    // Joueurs Diamant+ qui n'ont pas joué suffisamment hier
+    const users = await pool.query(`
+      SELECT id, pvp_rank, mm_games_today, mm_day_key, mm_game_buffer, elo_decay_last
+      FROM users
+      WHERE pvp_rank >= 1800
+    `);
+
+    let decayed = 0;
+    for (const u of users.rows) {
+      // Déjà traité aujourd'hui ?
+      if (u.elo_decay_last === todayKey) continue;
+
+      const gamesYesterday = u.mm_day_key !== todayKey ? Number(u.mm_games_today || 0) : 0;
+      // Si mm_day_key = aujourd'hui → les games d'hier = 0 (pas de données hier)
+      // Si mm_day_key = hier → les games d'hier sont mm_games_today
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayKey = yesterday.toISOString().slice(0, 10);
+      const gamesHier = u.mm_day_key === yesterdayKey ? Number(u.mm_games_today || 0) : 0;
+
+      if (gamesHier >= ELO_DECAY_MIN_GAMES) {
+        // Assez de games hier — pas de pénalité, mettre à jour elo_decay_last
+        await pool.query(`UPDATE users SET elo_decay_last=$1 WHERE id=$2`, [todayKey, u.id]);
+        continue;
+      }
+
+      // Pas assez de games — consommer le buffer ou appliquer la pénalité
+      let buffer = Number(u.mm_game_buffer || 0);
+      if (buffer > 0) {
+        buffer--;
+        await pool.query(
+          `UPDATE users SET mm_game_buffer=$1, elo_decay_last=$2 WHERE id=$3`,
+          [buffer, todayKey, u.id]
+        );
+        console.log(`  → ${u.id}: buffer utilisé (reste ${buffer} jours)`);
+      } else {
+        const newRank = Math.max(getRankInfo('Diamant').min, Number(u.pvp_rank) - ELO_DECAY_AMOUNT);
+        await pool.query(
+          `UPDATE users SET pvp_rank=$1, elo_decay_last=$2 WHERE id=$3`,
+          [newRank, todayKey, u.id]
+        );
+        // Notification
+        await pool.query(
+          `INSERT INTO notifications(user_id,type,title,body,meta,is_read,createdAt) VALUES($1,'elo_decay',$2,$3,$4,0,$5)`,
+          [u.id,
+           '📉 Décroissance ELO',
+           "Tu n'as pas joué suffisamment hier (4 games requis). -" + ELO_DECAY_AMOUNT + " ELO",
+           JSON.stringify({ gamesPlayed: gamesHier, required: ELO_DECAY_MIN_GAMES }),
+           Date.now()]
+        );
+        decayed++;
+      }
+    }
+    console.log('✅ Décroissance ELO appliquée à ' + decayed + ' joueurs');
+  } catch(e) {
+    console.error('❌ Erreur décroissance ELO:', e);
+  }
+}
+
+// GET /api/pvp/activity — infos activité matchmaking du joueur
+app.get('/api/pvp/activity', auth, async (req, res) => {
+  try {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const q = await pool.query(
+      `SELECT pvp_rank, mm_games_today, mm_day_key, mm_game_buffer FROM users WHERE id=$1`,
+      [req.user.id]
+    );
+    const u = q.rows[0];
+    const rankInfo  = getRankInfo(Number(u.pvp_rank || 1000));
+    const isDiamond = Number(u.pvp_rank || 0) >= 1800;
+    const mmToday   = u.mm_day_key === todayKey ? Number(u.mm_games_today || 0) : 0;
+    const buffer    = Number(u.mm_game_buffer || 0);
+
+    res.json({
+      pvpRank:    Number(u.pvp_rank || 1000),
+      rankInfo,
+      isDiamond,
+      mmToday,
+      mmRequired: isDiamond ? ELO_DECAY_MIN_GAMES : 0,
+      mmBuffer:   buffer,
+      mmBufferMax: ELO_BUFFER_MAX,
+      // Avancement vers le buffer (+3 jours si 12 games/jour)
+      mmToBuffer: Math.max(0, 12 - mmToday),
+      decayAmount: ELO_DECAY_AMOUNT,
+    });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // =========================
 // RÉCOMPENSES HEBDOMADAIRES ELO
 // =========================
@@ -7801,6 +7928,20 @@ app.post('/api/admin/weekly-rewards', auth, async (req, res) => {
 });
 
 // Cron hebdomadaire : chaque lundi à 00h00
+function scheduleDailyEloDecay() {
+  function msUntilMidnight() {
+    const now = new Date();
+    const midnight = new Date(now); midnight.setHours(24, 0, 1, 0);
+    return midnight - now;
+  }
+  const ms = msUntilMidnight();
+  console.log('⏰ Décroissance ELO dans ' + Math.round(ms/3600000) + 'h');
+  setTimeout(() => {
+    applyDailyEloDecay();
+    setInterval(applyDailyEloDecay, 24 * 60 * 60 * 1000);
+  }, ms);
+}
+
 function scheduleWeeklyRewards() {
   function msUntilNextMonday() {
     const now = new Date();
@@ -7829,6 +7970,7 @@ initDb()
       console.log(`✅ Server listening on port ${PORT}`);
       console.log(`✅ Render PORT env is ${process.env.PORT || "(not set locally)"}`);
       scheduleWeeklyRewards(); // Démarrer le cron de récompenses ELO
+      scheduleDailyEloDecay(); // Cron quotidien décroissance ELO Diamant+
     });
   })
   .catch((e) => {

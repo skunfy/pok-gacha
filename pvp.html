@@ -426,19 +426,34 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
   </div>
 
   <div id="sec-matchmaking" class="section">
-    <div class="card">
-      <div class="card-title">⚡ Matchmaking</div>
-      <!-- Récompenses hebdomadaires ELO -->
-      <div id="weekly-rewards-bar" style="margin-bottom:14px;background:rgba(255,216,77,.05);border:1px solid rgba(255,216,77,.15);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-size:11px;font-weight:900;color:#ffd84d;margin-bottom:2px">🏆 Récompenses hebdomadaires</div>
-          <div style="font-size:10px;opacity:.5">Chaque lundi — dollax selon ton rang ELO</div>
+
+    <!-- Rang actuel + activité -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <!-- Logo rang -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0" id="mm-rank-display">
+          <img id="mm-rank-icon" src="" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(255,255,255,.2))" onerror="this.remove()">
+          <div id="mm-rank-name" style="font-size:14px;font-weight:900;letter-spacing:.06em"></div>
+          <div id="mm-rank-pts" style="font-size:12px;opacity:.5"></div>
         </div>
-        <div id="weekly-reward-preview" style="font-size:12px;font-weight:700;color:#ffd84d"></div>
+        <!-- Activité + décroissance ELO -->
+        <div style="flex:1;min-width:180px" id="mm-activity-block"></div>
       </div>
+    </div>
+
+    <!-- Récompenses hebdomadaires ELO -->
+    <div id="weekly-rewards-bar" style="margin-bottom:12px;background:rgba(255,216,77,.05);border:1px solid rgba(255,216,77,.15);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:11px;font-weight:900;color:#ffd84d;margin-bottom:2px">🏆 Récompenses hebdomadaires</div>
+        <div style="font-size:10px;opacity:.5">Chaque lundi — dollax selon ton rang ELO</div>
+      </div>
+      <div id="weekly-reward-preview" style="font-size:12px;font-weight:700;color:#ffd84d"></div>
+    </div>
+
+    <div class="card">
       <div id="mm-content">
-        <div style="text-align:center;padding:30px">
-          <div id="mm-status" style="font-size:15px;margin-bottom:16px;opacity:.7">Trouve un adversaire automatiquement</div>
+        <div style="text-align:center;padding:24px">
+          <div id="mm-status" style="font-size:15px;margin-bottom:16px;opacity:.7">Matchmaking illimité — aucune énergie requise</div>
           <button id="mm-btn" onclick="startMatchmaking()" style="padding:14px 32px;border:none;border-radius:14px;background:linear-gradient(135deg,#7f5cff,#f053c5);color:#fff;font-weight:900;font-size:15px;cursor:pointer;transition:.2s">⚡ Lancer le matchmaking</button>
           <div id="mm-spinner" style="display:none;margin-top:20px">
             <div style="font-size:32px;animation:mmSpin 1s linear infinite">⚙️</div>
@@ -1535,7 +1550,7 @@ function showTab(name, ev) {
   if (name==='historique') loadHistorique();
   if (name==='forge') loadForge();
   if (name==='pve') loadPve();
-  if (name==='matchmaking') { initMatchmakingTab(); loadWeeklyRewards(); }
+  if (name==='matchmaking') { initMatchmakingTab(); loadWeeklyRewards(); loadMmActivity(); }
   if (name==='defis') loadDefis();
 }
 
@@ -2429,7 +2444,6 @@ function initMatchmakingTab() {
 async function startMatchmaking() {
   if (_mmSearching) return;
   _mmSearching = true;
-
   document.getElementById('mm-btn').style.display     = 'none';
   document.getElementById('mm-spinner').style.display = 'block';
   document.getElementById('mm-found').style.display   = 'none';
@@ -2532,6 +2546,7 @@ function showMmFound(opponent, battleId) {
         openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
         await loadEnergy();
         loadProfil();
+        loadMmActivity();
       }
     } catch(e) {}
   }, 2000);
@@ -2548,6 +2563,7 @@ async function mmAccept(battleId) {
     openReplay(d.log, d.fighters.f1, d.fighters.f2, d.winnerId, d.rankChange);
     // PVP rewards removed — ELO only
     loadProfil();
+    loadMmActivity(); // Maj rang + compteur games
   } catch(e) {
     showAlert(e.message || 'Erreur', 'error');
     stopMatchmaking(false);
@@ -3023,10 +3039,88 @@ async function launchDefi(opponentId, btn) {
   }
 }
 
+
+// ══════════════════════════════════════════════════
+// ACTIVITÉ MATCHMAKING + DÉCROISSANCE ELO
+// ══════════════════════════════════════════════════
+async function loadMmActivity() {
+  try {
+    const d = await api('/api/pvp/activity');
+    renderMmActivity(d);
+  } catch(e) { /* silencieux */ }
+}
+
+function renderMmActivity(d) {
+  // Logo rang
+  const iconEl = document.getElementById('mm-rank-icon');
+  const nameEl = document.getElementById('mm-rank-name');
+  const ptsEl  = document.getElementById('mm-rank-pts');
+  const ri = d.rankInfo || {};
+  if (iconEl && RANK_ICONS[ri.name]) iconEl.src = RANK_ICONS[ri.name];
+  if (nameEl) { nameEl.textContent = ri.name || '—'; nameEl.style.color = RANK_COLORS[ri.name] || '#fff'; }
+  if (ptsEl)  ptsEl.textContent = fmtPts(d.pvpRank) + ' pts';
+
+  // Bloc activité
+  const block = document.getElementById('mm-activity-block');
+  if (!block) return;
+
+  if (!d.isDiamond) {
+    // Rang < Diamant : pas de contrainte
+    block.innerHTML =
+      '<div style="font-size:13px;font-weight:700;margin-bottom:6px">⚔️ Matchmaking illimité</div>'
+      + '<div style="font-size:11px;opacity:.5;line-height:1.6">'
+      + 'Joue autant que tu veux — aucune pénalité.<br>'
+      + 'La décroissance ELO estactive à partir du rang <span style="color:#c084ff;font-weight:700">Diamant</span>.'
+      + '</div>';
+    return;
+  }
+
+  // Rang Diamant+ : afficher le système de stock
+  var gamesLeft = Math.max(0, d.mmRequired - d.mmToday);
+  var pct = Math.min(100, Math.round(d.mmToday / d.mmRequired * 100));
+  var barColor = d.mmToday >= d.mmRequired ? '#33ff99' : d.mmToday >= 2 ? '#ffd84d' : '#ff6464';
+  var statusTxt = d.mmToday >= d.mmRequired
+    ? '✅ Objectif atteint !'
+    : gamesLeft + ' game' + (gamesLeft > 1 ? 's' : '') + ' restante' + (gamesLeft > 1 ? 's' : '') + ' pour éviter la pénalité';
+
+  // Buffer (stock de jours)
+  var bufferHtml = '';
+  if (d.mmBuffer > 0) {
+    bufferHtml = '<div style="margin-top:8px;padding:7px 10px;background:rgba(51,255,153,.08);border:1px solid rgba(51,255,153,.2);border-radius:8px;font-size:11px">'
+      + '🛡️ <span style="color:#33ff99;font-weight:700">' + d.mmBuffer + ' jour' + (d.mmBuffer > 1 ? 's' : '') + ' de protection</span>'
+      + ' — tu peux te reposer sans perdre d\'ELO'
+      + '</div>';
+  }
+
+  // Progression vers le prochain buffer (+3 jours si 12 games)
+  var toBufferHtml = '';
+  if (d.mmToday < 12) {
+    toBufferHtml = '<div style="font-size:10px;opacity:.45;margin-top:5px">'
+      + 'Joue ' + d.mmToBuffer + ' game' + (d.mmToBuffer > 1 ? 's' : '') + ' de plus aujourd\'hui pour gagner <b>+3 jours de protection</b>'
+      + '</div>';
+  } else {
+    toBufferHtml = '<div style="font-size:10px;color:#33ff99;margin-top:5px">⭐ 12 games atteints ! +3 jours de protection gagnés</div>';
+  }
+
+  block.innerHTML =
+    '<div style="font-size:11px;font-weight:900;opacity:.5;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Activité quotidienne</div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">'
+      + '<span style="color:' + barColor + '">' + statusTxt + '</span>'
+      + '<span style="opacity:.5">' + d.mmToday + ' / ' + d.mmRequired + ' games</span>'
+    + '</div>'
+    + '<div style="height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-bottom:4px">'
+      + '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:999px;transition:width .4s ease"></div>'
+    + '</div>'
+    + '<div style="font-size:10px;opacity:.4;margin-bottom:8px">−' + d.decayAmount + ' ELO si objectif non atteint (sauf protection active)</div>'
+    + bufferHtml
+    + toBufferHtml;
+}
+
 // ── INIT ──
 window.addEventListener('beforeunload', () => { if (_mmSearching) navigator.sendBeacon('/api/pvp/matchmaking/leave'); });
 loadProfil();
 loadEnergy();
+loadMmActivity();
 // Charger le niveau PVE dès le départ
 api('/api/pve/enemies').then(d => { _pveData = d; refreshPveXpBar(d); }).catch(() => {});
 // Charger les récompenses hebdomadaires
