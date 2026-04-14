@@ -7014,14 +7014,15 @@ app.post('/api/pvp/forge/shatter', auth, async (req, res) => {
   finally { client.release(); }
 });
 
-// POST /api/pvp/forge/reroll — reroller une stat bonus d'un item
+// POST /api/pvp/forge/reroll — reroller un SLOT de stat bonus (stat + valeur changent)
+// slotIndex = index du palier (0=+3, 1=+6, 2=+9, 3=+12, 4=+15)
+// La nouvelle stat est choisie ALÉATOIREMENT parmi toutes les stats possibles
 app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
-  const itemId   = Number(req.body?.itemId || 0) | 0;
-  const statKey  = String(req.body?.stat || '');
-  const confirm  = req.body?.confirm === true; // faux = preview, vrai = appliquer
+  const itemId    = Number(req.body?.itemId || 0) | 0;
+  const slotIndex = Number(req.body?.slotIndex ?? -1);  // 0-4
+  const confirm   = req.body?.confirm === true;
 
-  if (!itemId || !statKey) return res.status(400).json({ error: 'itemId et stat requis' });
-  if (!PVP_FORGE_BONUS_POOL.includes(statKey)) return res.status(400).json({ error: 'Stat invalide' });
+  if (!itemId || slotIndex < 0 || slotIndex > 4) return res.status(400).json({ error: 'itemId et slotIndex (0-4) requis' });
 
   const client = await pool.connect();
   try {
@@ -7033,11 +7034,31 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
     );
     if (!itemQ.rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'Item introuvable' }); }
     const item = itemQ.rows[0];
-    const def = PVP_ITEMS[item.item_key];
+    const def  = PVP_ITEMS[item.item_key];
     if (!def) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Item invalide' }); }
 
+    // Reconstruire les slots : chaque milestone a exactement 1 slot
+    // extra_stats est un objet {statKey: value} — on le convertit en tableau ordonné de slots
     const extraStats = item.extra_stats || {};
-    if (!(statKey in extraStats)) { await client.query('ROLLBACK'); return res.status(400).json({ error: "Cette stat n'est pas disponible sur cet item" }); }
+    const milestone  = PVP_FORGE_MILESTONES[slotIndex]; // ex: slotIndex=0 → milestone=3
+    if (!milestone) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'Slot invalide' }); }
+    if (item.forge_level < milestone) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: `Cet item n'est pas encore au +${milestone}` });
+    }
+
+    // Les extra_stats actuelles comme tableau [statKey, val] dans l'ordre des milestones
+    const slots = PVP_FORGE_MILESTONES
+      .filter(m => m <= item.forge_level)
+      .map((m, i) => {
+        const entry = Object.entries(extraStats)[i] || [null, 0];
+        return { milestone: m, statKey: entry[0], val: entry[1] };
+      });
+
+    if (!slots[slotIndex] || !slots[slotIndex].statKey) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Ce slot est vide' });
+    }
 
     // Vérifier le coût
     const costs = REROLL_COSTS[def.rarity] || REROLL_COSTS.common;
@@ -7046,24 +7067,42 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
     const gold  = Number(u.pve_gold || 0);
     const runes = u.runes || {};
 
-    if (gold < costs.gold) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${costs.gold} requis)` }); }
+    if (gold < costs.gold) { await client.query('ROLLBACK'); return res.status(400).json({ error: `Or insuffisant (${costs.gold} requis, tu en as ${gold})` }); }
     for (const [runeType, qty] of Object.entries(costs.runes)) {
       if ((runes[runeType] || 0) < qty) {
         await client.query('ROLLBACK');
-        return res.status(400).json({ error: `Runes insuffisantes (${qty} rune ${runeType} requise)` });
+        return res.status(400).json({ error: `Runes insuffisantes — ${qty} Rune ${runeType} requise` });
       }
     }
 
-    // Générer le jet
-    const roll = rollStatValue(statKey, def.rarity);
+    // ── Générer le jet : NOUVELLE STAT aléatoire + NOUVELLE VALEUR ──
+    // Interdire de retomber sur la même stat (pour garantir un vrai reroll)
+    const oldStatKey = slots[slotIndex].statKey;
+    const statPool   = PVP_FORGE_BONUS_POOL.filter(s => s !== oldStatKey);
+    const newStatKey = statPool[Math.floor(Math.random() * statPool.length)];
+    const roll       = rollStatValue(newStatKey, def.rarity);
 
     if (!confirm) {
-      // Preview : ne pas appliquer, juste retourner le résultat
       await client.query('ROLLBACK');
-      return res.json({ ok: true, preview: true, stat: statKey, ...roll, costs, gold, runes });
+      return res.json({
+        ok: true, preview: true,
+        oldStat: oldStatKey, oldVal: slots[slotIndex].val,
+        stat: newStatKey, val: roll.val, ...roll,
+        milestone, slotIndex, costs, gold, runes,
+      });
     }
 
-    // Appliquer : déduire coût + modifier la stat
+    // ── Appliquer : remplacer l'ancien slot par le nouveau ──
+    // Reconstruire extra_stats dans le bon ordre (slot par slot)
+    const newExtra = {};
+    slots.forEach(function(slot, i) {
+      if (i === slotIndex) {
+        newExtra[newStatKey] = roll.val;
+      } else {
+        newExtra[slot.statKey] = slot.val;
+      }
+    });
+
     // Déduire or + runes atomiquement
     let runesDeduct = `runes`;
     for (const [runeType, qty] of Object.entries(costs.runes)) {
@@ -7075,11 +7114,16 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
     );
     const newRunes = deductQ.rows[0]?.runes || {};
 
-    const newExtra = { ...extraStats, [statKey]: roll.val };
     await client.query(`UPDATE pvp_equipment SET extra_stats=$1 WHERE id=$2`, [JSON.stringify(newExtra), itemId]);
     await client.query('COMMIT');
 
-    res.json({ ok: true, preview: false, stat: statKey, newVal: roll.val, grade: roll.grade, color: roll.color, emoji: roll.emoji, min: roll.min, max: roll.max, newExtra, costs, newRunes });
+    res.json({
+      ok: true, preview: false,
+      oldStat: oldStatKey, oldVal: slots[slotIndex].val,
+      stat: newStatKey, newVal: roll.val,
+      grade: roll.grade, color: roll.color, emoji: roll.emoji, min: roll.min, max: roll.max,
+      milestone, slotIndex, newExtra, newRunes,
+    });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
 });
