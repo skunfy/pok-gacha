@@ -6975,22 +6975,25 @@ app.post('/api/pvp/forge/shatter', auth, async (req, res) => {
 
     const rewards = SHATTER_REWARDS[def.rarity] || SHATTER_REWARDS.common;
 
-    // Or PVE
-    await client.query(`UPDATE users SET pve_gold = pve_gold + $1 WHERE id=$2`, [rewards.gold, req.user.id]);
-
-    // Runes — charger les runes actuelles puis ajouter
-    const runeQ = await client.query(`SELECT runes FROM users WHERE id=$1 FOR UPDATE`, [req.user.id]);
-    const currentRunes = runeQ.rows[0]?.runes || {};
-    for (const [runeType, qty] of Object.entries(rewards.runes)) {
-      currentRunes[runeType] = (currentRunes[runeType] || 0) + qty;
+    // Or PVE + Runes — tout en une seule requête atomique JSONB
+    // Pour chaque type de rune, on incrémente la valeur dans le JSONB via opérateurs natifs PostgreSQL
+    let runesUpdate = `runes`;
+    const runeEntries = Object.entries(rewards.runes);
+    for (const [runeType, qty] of runeEntries) {
+      // jsonb_set(runes, '{type}', (COALESCE((runes->>'type')::int, 0) + qty)::text::jsonb)
+      runesUpdate = `jsonb_set(${runesUpdate}, '{${runeType}}', to_jsonb(COALESCE((${runesUpdate}->>'${runeType}')::int, 0) + ${qty}))`;
     }
-    await client.query(`UPDATE users SET runes=$1 WHERE id=$2`, [JSON.stringify(currentRunes), req.user.id]);
+    const updateQ = await client.query(
+      `UPDATE users SET pve_gold = pve_gold + $1, runes = ${runesUpdate} WHERE id=$2 RETURNING runes`,
+      [rewards.gold, req.user.id]
+    );
+    const totalRunes = updateQ.rows[0]?.runes || {};
 
     // Supprimer l'item
     await client.query(`DELETE FROM pvp_equipment WHERE id=$1`, [itemId]);
     await client.query('COMMIT');
 
-    res.json({ ok: true, gold: rewards.gold, runes: rewards.runes, totalRunes: currentRunes, itemName: def.name, rarity: def.rarity });
+    res.json({ ok: true, gold: rewards.gold, runes: rewards.runes, totalRunes, itemName: def.name, rarity: def.rarity });
   } catch(e) { await client.query('ROLLBACK'); res.status(500).json({ error: e.message }); }
   finally { client.release(); }
 });
@@ -7045,12 +7048,16 @@ app.post('/api/pvp/forge/reroll', auth, async (req, res) => {
     }
 
     // Appliquer : déduire coût + modifier la stat
-    await client.query(`UPDATE users SET pve_gold = pve_gold - $1 WHERE id=$2`, [costs.gold, req.user.id]);
-    const newRunes = { ...runes };
+    // Déduire or + runes atomiquement
+    let runesDeduct = `runes`;
     for (const [runeType, qty] of Object.entries(costs.runes)) {
-      newRunes[runeType] = Math.max(0, (newRunes[runeType] || 0) - qty);
+      runesDeduct = `jsonb_set(${runesDeduct}, '{${runeType}}', to_jsonb(GREATEST(0, COALESCE((${runesDeduct}->>'${runeType}')::int, 0) - ${qty})))`;
     }
-    await client.query(`UPDATE users SET runes=$1 WHERE id=$2`, [JSON.stringify(newRunes), req.user.id]);
+    const deductQ = await client.query(
+      `UPDATE users SET pve_gold = pve_gold - $1, runes = ${runesDeduct} WHERE id=$2 RETURNING runes`,
+      [costs.gold, req.user.id]
+    );
+    const newRunes = deductQ.rows[0]?.runes || {};
 
     const newExtra = { ...extraStats, [statKey]: roll.val };
     await client.query(`UPDATE pvp_equipment SET extra_stats=$1 WHERE id=$2`, [JSON.stringify(newExtra), itemId]);

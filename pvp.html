@@ -2421,7 +2421,7 @@ function renderPvpForge() {
 
   // Construire le HTML en utilisant des variables intermédiaires pour éviter les conflits de quotes
   var shatterHtml  = renderShatterTab(inventory, _pvpForgeGold);
-  var rerollHtml   = renderRerollTab(inventory, _pvpForgeInv ? (_pvpForgeInv.runes || {}) : {}, _pvpForgeGold);
+  var rerollHtml   = renderRerollTab(inventory, _pvpForgeRunes || {}, _pvpForgeGold);
 
   var tabBtns = '<div class="forge-tabs">'
     + '<button class="forge-tab active" onclick="switchForgeTab(&quot;upgrade&quot;,this)">⚒️ Améliorer</button>'
