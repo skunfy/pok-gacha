@@ -3003,8 +3003,8 @@ app.get("/api/collection", auth, async (req, res) => {
   );
   const me = await pool.query(`SELECT money FROM users WHERE id=$1`, [req.user.id]);
 
-  // Cache 3 minutes — drastiquement moins d'egress
-  res.setHeader('Cache-Control', 'public, max-age=180, stale-while-revalidate=60');
+  // Jamais de cache public sur une collection personnelle
+  res.setHeader('Cache-Control', 'private, no-store');
   res.json({
     money: me.rows[0]?.money || 0,
     items: items.rows.map((x) => {
@@ -3044,7 +3044,7 @@ app.get("/api/collection/imagehigh", auth, async (req, res) => {
   const cardId = idKey;
   const raw    = x.imagehigh || x.imageHigh || x.image;
   const imageHigh = game === 'magic' ? rewriteMagicImageUrl(raw, cardId) : raw;
-  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Cache-Control', 'private, max-age=3600');
   res.json({ imageHigh, gradesJson: x.grades_json || null });
 });
 
@@ -3449,7 +3449,7 @@ app.get("/api/pulls", auth, async (req, res) => {
     [req.user.id, game]
   );
 
-  res.setHeader('Cache-Control', 'private, max-age=15');
+  res.setHeader('Cache-Control', 'private, no-store');
   res.json({
     pulls: rows.rows.map((r) => {
       const itemGame = r.game || game;
@@ -3600,8 +3600,10 @@ app.post("/api/sell_bulk", auth, async (req, res) => {
       if (!row) continue; // Carte pas en DB → ignorer silencieusement
 
       const owned = Number(row.count) || 0;
-      // Adapter qty au stock réel (évite erreur si désync client/serveur)
-      it.qty = Math.min(it.qty, owned);
+      // ✅ PROTECTION : sell_bulk ne vend jamais le dernier exemplaire d'une carte
+      // (évite de vider la collection si désync client/serveur)
+      const maxSellable = Math.max(0, owned - 1);
+      it.qty = Math.min(it.qty, maxSellable);
       if (it.qty <= 0) continue;
 
       const gradesArr = parseGrades(row.grades_json, owned);
@@ -3974,7 +3976,7 @@ app.post("/api/market/list", auth, async (req, res) => {
 
     // ✅ On récupère aussi cardId/setId/localId/imageHigh depuis la collection
     const cQ = await client.query(
-      `SELECT game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count
+      `SELECT game, cardId, setId, localId, name, setName, image, imageHigh, grade, mint, count, grades_json
        FROM collection
        WHERE user_id=$1 AND idKey=$2
        FOR UPDATE`,
@@ -3991,6 +3993,11 @@ app.post("/api/market/list", auth, async (req, res) => {
       return res.status(400).json({ error: "Quantité insuffisante" });
     }
 
+    // ✅ Mettre à jour grades_json lors de la mise en vente
+    const gradesArrList = parseGrades(it.grades_json, Number(it.count));
+    const remainingGradesList = removeGrades(gradesArrList, qty);
+    const newBestGradeList = remainingGradesList.length ? Math.max(...remainingGradesList) : it.grade;
+
     // retire de la collection
     if (Number(it.count) === qty) {
       await client.query(`DELETE FROM collection WHERE user_id=$1 AND idKey=$2`, [
@@ -3999,8 +4006,8 @@ app.post("/api/market/list", auth, async (req, res) => {
       ]);
     } else {
       await client.query(
-        `UPDATE collection SET count = count - $3 WHERE user_id=$1 AND idKey=$2`,
-        [req.user.id, idKey, qty]
+        `UPDATE collection SET count = count - $3, grades_json = $4, grade = $5 WHERE user_id=$1 AND idKey=$2`,
+        [req.user.id, idKey, qty, JSON.stringify(remainingGradesList), newBestGradeList]
       );
     }
 
