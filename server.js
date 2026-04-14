@@ -6418,19 +6418,19 @@ function pvpXpForLevel(lvl) {
 }
 
 function pvpStatBonus(char) {
-  const force  = Number(char.pvp_stat_force       || 5);
-  const agi    = Number(char.pvp_stat_agilite     || 5);
-  const intel  = Number(char.pvp_stat_intelligence|| 5);
-  const dex    = Number(char.pvp_stat_dexterite   || 5);
+  const force  = Number(char.pvp_stat_force        || 5);
+  const agi    = Number(char.pvp_stat_agilite      || 5);
+  const intel  = Number(char.pvp_stat_intelligence || 5);
+  const dex    = Number(char.pvp_stat_dexterite    || 5);
   return {
-    atk:      force  * 3,
+    atk:      force  * 4,        // Force → ATQ + PV
     hp:       force  * 20,
-    speed:    agi    * 2 + dex * 1,
+    speed:    agi    * 2,        // Agilité → Vitesse + Esquive
     dodge:    agi    * 0.8,
-    crit_pct: intel  * 0.6,
+    crit_pct: intel  * 0.6,     // Intelligence → Crit% + CritDMG%
     crit_dmg: intel  * 1.0,
+    def:      dex    * 1.5,     // Dextérité → DEF + Vol de vie
     lifesteal:dex    * 0.3,
-    def:      0,
   };
 }
 
@@ -6503,13 +6503,13 @@ const PVP_ITEMS = {
 };
 
 // Stats bonus possibles par palier de forge
-const PVP_FORGE_BONUS_POOL = ['atk','def','hp','speed','crit_pct','crit_dmg','dodge','lifesteal'];
+const PVP_FORGE_BONUS_POOL = ['atk','def','hp','speed','crit_pct','crit_dmg','dodge','lifesteal','hp_pct','atk_pct','def_pct'];
 const PVP_FORGE_MILESTONES = [3, 6, 9, 12, 15];
 
 function pvpForgeBonusValue(stat, rarity, milestone) {
   const base = { common: 1, rare: 1.5, epic: 2.5, legendary: 4 }[rarity] || 1;
   const tier  = PVP_FORGE_MILESTONES.indexOf(milestone) + 1;
-  const statMult = { hp: 15, atk: 2, def: 2, speed: 1.5, crit_pct: 0.8, crit_dmg: 1.5, dodge: 0.8, lifesteal: 0.5 }[stat] || 1;
+  const statMult = { hp: 15, atk: 2, def: 2, speed: 1.5, crit_pct: 0.8, crit_dmg: 1.5, dodge: 0.8, lifesteal: 0.5, hp_pct: 0.6, atk_pct: 0.5, def_pct: 0.5 }[stat] || 1;
   return Math.round(base * tier * statMult * 10) / 10;
 }
 
@@ -6523,9 +6523,13 @@ function pvpForgeCost(rarity, forgeLevel) {
 function pvpForgedStats(def, forgeLevel, extraStats) {
   const mult = 1 + (forgeLevel * 0.08);
   const result = {};
-  for (const s of PVP_FORGE_BONUS_POOL) {
+  // Stats plates (multiplicateur de forge appliqué sur les stats de base de l'item)
+  const FLAT_POOL = ['atk','def','hp','speed','crit_pct','crit_dmg','dodge','lifesteal'];
+  for (const s of FLAT_POOL) {
     result[s] = Math.round((def[s] || 0) * mult * 10) / 10;
   }
+  // Stats % : uniquement depuis les extra_stats (paliers de forge), pas de base item
+  result.hp_pct = 0; result.atk_pct = 0; result.def_pct = 0;
   for (const [stat, val] of Object.entries(extraStats || {})) {
     result[stat] = (result[stat] || 0) + val;
   }
@@ -6537,7 +6541,7 @@ async function getPvpEquipmentBonus(userId) {
     `SELECT item_key, forge_level, extra_stats FROM pvp_equipment WHERE user_id=$1 AND equipped_slot IS NOT NULL`,
     [userId]
   );
-  const bonus = { atk:0, def:0, hp:0, speed:0, crit_pct:0, crit_dmg:0, dodge:0, lifesteal:0 };
+  const bonus = { atk:0, def:0, hp:0, speed:0, crit_pct:0, crit_dmg:0, dodge:0, lifesteal:0, hp_pct:0, atk_pct:0, def_pct:0 };
   for (const r of rows) {
     const def = PVP_ITEMS[r.item_key];
     if (!def) continue;
@@ -6598,14 +6602,22 @@ async function buildPvpFighter(userId) {
   const cap    = EQ_CAPS[pvpRankName] || EQ_CAPS['Bronze'];
   const capEq  = (val, key) => Math.min(val, cap[key]);
 
-  const hp       = Math.round(200 + statB.hp       + capEq(eqB.hp||0,      'hp')      + pvpLvl * 10);
-  const atq      = Math.round(10  + statB.atk      + capEq(eqB.atk||0,     'atk'));
-  const def      = Math.round(       statB.def      + capEq(eqB.def||0,     'def'));
+  // Stats de base sans équipement (pour les bonus %)
+  const baseHp  = Math.round(200 + statB.hp  + pvpLvl * 10);
+  const baseAtk = Math.round(10  + statB.atk);
+  const baseDef = Math.round(statB.def);
+  // Bonus % venant des extra_stats forgées (appliqués sur les stats de base)
+  const hpPctBonus  = (eqB.hp_pct  || 0) / 100;
+  const atkPctBonus = (eqB.atk_pct || 0) / 100;
+  const defPctBonus = (eqB.def_pct || 0) / 100;
+  const hp       = Math.round(baseHp  * (1 + hpPctBonus)  + capEq(eqB.hp||0,  'hp'));
+  const atq      = Math.round(baseAtk * (1 + atkPctBonus) + capEq(eqB.atk||0, 'atk'));
+  const def      = Math.round(baseDef * (1 + defPctBonus) + capEq(eqB.def||0, 'def'));
   const speed    = Math.round(10  + statB.speed     + capEq(eqB.speed||0,   'speed'));
   const crit     = Math.min(80, Math.round(10 + statB.crit_pct  + capEq(eqB.crit_pct||0,  'crit_pct')));
   const crit_dmg = Math.round(120 + statB.crit_dmg + capEq(eqB.crit_dmg||0, 'crit_dmg'));
-  const dodge    = Math.min(40, Math.round(10 + statB.dodge + capEq(eqB.dodge||0,     'dodge')));
-  const lifesteal= Math.round(statB.lifesteal + capEq(eqB.lifesteal||0,      'lifesteal'));
+  const dodge    = Math.min(40, Math.round(10 + statB.dodge + capEq(eqB.dodge||0, 'dodge')));
+  const lifesteal= Math.round(statB.lifesteal + capEq(eqB.lifesteal||0, 'lifesteal'));
 
   const rankInfo = getRankInfo(Number(u.pvp_rank));
 
@@ -6920,18 +6932,22 @@ const REROLL_RANGES = {
   common: {
     hp: [10,40], atk: [2,8], def: [2,8], speed: [1,5],
     crit_pct: [0.5,2], crit_dmg: [1,4], dodge: [0.5,2], lifesteal: [0.3,1],
+    hp_pct: [0.5,3], atk_pct: [0.5,2.5], def_pct: [0.5,2.5],
   },
   rare: {
     hp: [25,80], atk: [5,18], def: [5,18], speed: [3,10],
     crit_pct: [1,4], crit_dmg: [2,8], dodge: [1,4], lifesteal: [0.5,2],
+    hp_pct: [1,5], atk_pct: [1,4], def_pct: [1,4],
   },
   epic: {
     hp: [50,150], atk: [10,35], def: [10,35], speed: [5,18],
     crit_pct: [2,8], crit_dmg: [5,15], dodge: [2,8], lifesteal: [1,4],
+    hp_pct: [2,8], atk_pct: [2,7], def_pct: [2,7],
   },
   legendary: {
     hp: [100,300], atk: [20,60], def: [20,60], speed: [10,30],
     crit_pct: [4,15], crit_dmg: [10,30], dodge: [4,15], lifesteal: [2,8],
+    hp_pct: [4,15], atk_pct: [3,12], def_pct: [3,12],
   },
 };
 

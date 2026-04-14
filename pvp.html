@@ -1276,13 +1276,15 @@ function renderPvpProgression(f) {
   var statsColors = { force:'#ff6464', agilite:'#33ff99', intelligence:'#c084ff', dexterite:'#4da6ff' };
   var ptsAvail = f.pvpPtsAvail || 0;
 
+  var STAT_HINTS = { force:'→ ATQ + PV', agilite:'→ VIT + Esquive', intelligence:'→ Crit% + CritDMG%', dexterite:'→ DEF + Vol de vie' };
   var statsHtml = Object.entries(statsLabels).map(function(entry) {
     var k = entry[0], label = entry[1];
     var btnHtml = ptsAvail > 0
       ? '<button onclick="spendPvpStat(\'' + k + '\')" style="padding:2px 8px;border:none;border-radius:6px;background:#7f5cff;color:#fff;font-size:11px;font-weight:700;cursor:pointer">+</button>'
       : '';
     return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-      + '<div style="width:90px;font-size:11px;opacity:.6">' + label + '</div>'
+      + '<div style="min-width:90px"><div style="font-size:11px;opacity:.6">' + label + '</div>'
+      + '<div style="font-size:9px;opacity:.3">' + (STAT_HINTS[k]||'') + '</div></div>'
       + '<div style="font-weight:900;color:' + statsColors[k] + ';min-width:28px">' + (f.pvpStats && f.pvpStats[k] != null ? f.pvpStats[k] : 5) + '</div>'
       + btnHtml
       + '</div>';
@@ -1376,7 +1378,7 @@ async function loadPvpInventory() {
 function renderPvpInventoryUI(d, wrap) {
   const slots = ['weapon','armor','boots','head','ring'];
   const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
-  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol Vie%' };
+  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol Vie%', hp_pct:'%PV', atk_pct:'%ATQ', def_pct:'%DEF' };
 
   // Slots équipés
   const equippedHtml = slots.map(slot => {
@@ -1516,7 +1518,7 @@ function showChestRewardPopup(item, chestRar) {
   const rarityColor = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
   const rarityLabel = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
   const col = rarityColor[item.rarity] || '#aaa';
-  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
+  const statLabels = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%', hp_pct:'%PV', atk_pct:'%ATQ', def_pct:'%DEF' };
   const stats = Object.entries(statLabels)
     .filter(([s]) => (item[s]||0) > 0)
     .map(([s,l]) => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0"><span style="opacity:.6">${l}</span><span style="color:${col};font-weight:700">+${item[s]}</span></div>`)
@@ -1797,8 +1799,8 @@ function renderPvpSlot(slot, equipped) {
   const def  = SLOT_DEF[slot];
   const item = equipped[slot];
   const rarityNames = { common:'Commun', rare:'Rare', epic:'Épique', legendary:'Légendaire' };
-  const statLabels = { atk:'⚔️ ATQ', def:'🛡️ DEF', hp:'❤️ PV', speed:'⚡ VIT', crit_pct:'💥 Crit%', crit_dmg:'🔥 CritDMG%', dodge:'💨 Esquive%', lifesteal:'🩸 Vol vie%' };
-  const statColors = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
+  const statLabels = { atk:'⚔️ ATQ', def:'🛡️ DEF', hp:'❤️ PV', speed:'⚡ VIT', crit_pct:'💥 Crit%', crit_dmg:'🔥 CritDMG%', dodge:'💨 Esquive%', lifesteal:'🩸 Vol vie%', hp_pct:'❤️ %PV', atk_pct:'⚔️ %ATQ', def_pct:'🛡️ %DEF' };
+  const statColors = { atk:'#ff4444', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ffd84d', hp_pct:'#ff6464', atk_pct:'#ff4444', def_pct:'#4da6ff' };
   if (item) {
     const col   = EQ_RARITY_COLOR[item.rarity] || '#aaa';
     const fl    = item.forge_level || 0;
@@ -2316,7 +2318,7 @@ const FORGE_SFX_PVP   = new Audio('https://raw.githubusercontent.com/skunfy/pok-
 FORGE_SFX_PVP.preload = 'auto';
 const PVP_RARITY_COLOR = { common:'#aaa', rare:'#4da6ff', epic:'#c084ff', legendary:'#ffd84d' };
 const PVP_STAT_LABELS  = { atk:'ATQ', def:'DEF', hp:'PV', speed:'VIT', crit_pct:'Crit%', crit_dmg:'CritDMG%', dodge:'Esquive%', lifesteal:'Vol vie%' };
-const PVP_STAT_COLORS  = { atk:'#ff8844', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ff6464' };
+const PVP_STAT_COLORS  = { atk:'#ff4444', def:'#4da6ff', hp:'#ff6464', speed:'#ffd84d', crit_pct:'#c084ff', crit_dmg:'#ff4488', dodge:'#33ff99', lifesteal:'#ffd84d', hp_pct:'#ff6464', atk_pct:'#ff4444', def_pct:'#4da6ff' };
 
 let _pvpForgeInv     = null;
 let _pvpForgeSelItem = null;
