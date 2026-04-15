@@ -2624,7 +2624,7 @@ app.get("/api/me", auth, async (req, res) => {
   await applyTicketsForUser(req.user.id);
 
   const userQ = await pool.query(
-  `SELECT name, money, friendCode, xp, avatar, tickets FROM users WHERE id=$1`,
+  `SELECT name, money, friendCode, xp, avatar, tickets, poker_chips FROM users WHERE id=$1`,
   [req.user.id]
 );
   const u = userQ.rows[0];
@@ -2680,6 +2680,7 @@ app.get("/api/me", auth, async (req, res) => {
     avatar: u?.avatar || "",
     tickets: Number(u?.tickets || 0),
     dollax:  Number(u?.money  || 0),
+    poker_chips: Number(u?.poker_chips || 0),
     payRate,
   });
 });
@@ -8730,13 +8731,28 @@ function pokerProcessAction(room, socketId, { action, amount }) {
   const active = pokerActivePlayers(room);
   if (active.length <= 1) { pokerResolvePot(room); return; }
 
-  const canStillAct = pokerCanAct(room);
-  const maxBet      = pokerHighestBet(room);
-  const allCalled   = canStillAct.every(p => p.currentBet >= maxBet);
-
+  // Passe au prochain joueur actif
   room.currentPlayer = pokerNextActive(room, pIdx);
 
-  if (room.currentPlayer < 0 || (allCalled && canStillAct.length > 0)) {
+  // La phase avance si : plus personne ne peut agir OU tout le monde a mis la même mise
+  if (room.currentPlayer < 0) {
+    pokerAdvancePhase(room); return;
+  }
+
+  const maxBet     = pokerHighestBet(room);
+  const canAct     = pokerCanAct(room);
+  // "Tout le monde a parlé" = tous les joueurs pouvant agir ont une mise égale au max ET
+  // le prochain joueur à agir est celui qui a mis la BB (tour complet bouclé en preflop)
+  // On vérifie simplement : le joueur suivant doit-il encore agir ?
+  const nextPlayer = room.players[room.currentPlayer];
+  const nextMustAct = nextPlayer && !nextPlayer.folded && !nextPlayer.allIn
+    && nextPlayer.stack > 0
+    && nextPlayer.currentBet < maxBet;
+
+  const anyoneUncalled = canAct.some(p => p.currentBet < maxBet);
+
+  if (!anyoneUncalled && canAct.length > 0) {
+    // Tout le monde a suivi/checké — on passe à la phase suivante
     pokerAdvancePhase(room);
   } else {
     pokerScheduleTurn(room);

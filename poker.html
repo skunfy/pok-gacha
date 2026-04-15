@@ -670,17 +670,50 @@
     .toast.gold { color: var(--gold); border-color: rgba(255,208,77,.3); }
 
     /* ---- Animations card deal ---- */
-    @keyframes dealIn {
-      from { opacity:0; transform:translateY(-20px) scale(.8) rotate(-5deg); }
-      to   { opacity:1; transform:none; }
+    @keyframes dealFromDeck {
+      0%   { opacity:0; transform:translate(-160px,-80px) rotate(-14deg) scale(.5); }
+      65%  { transform:translate(3px,3px) rotate(1.5deg) scale(1.04); }
+      82%  { transform:translate(-1px,-1px) rotate(-.5deg) scale(.99); }
+      100% { opacity:1; transform:none; }
     }
-    .card.dealing { animation: dealIn .3s cubic-bezier(.2,.9,.3,1) both; }
+    .card.dealing { animation: dealFromDeck .45s cubic-bezier(.2,.9,.3,1) both; }
+
+    @keyframes dealComm {
+      0%   { opacity:0; transform:translateY(-50px) scale(.65) rotate(-10deg); }
+      65%  { transform:translateY(3px) scale(1.06) rotate(1deg); }
+      100% { opacity:1; transform:none; }
+    }
+    .card.dealingComm { animation: dealComm .38s cubic-bezier(.2,.9,.3,1) both; }
+
+
+    /* ---- Chip stacks visuels ---- */
+    .chipStack {
+      display: flex; flex-direction: column-reverse; align-items: center;
+    }
+    .chipImg {
+      width: 32px; height: 32px; object-fit: contain;
+      margin-bottom: -17px;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.55));
+    }
+    .chipImg:last-child { margin-bottom: 0; }
+    .seatBetZone {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .seatBetAmt {
+      font-size: 11px; font-weight: 700; color: var(--gold);
+      background: rgba(0,0,0,.6); border: 1px solid rgba(255,208,77,.3);
+      border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+    }
 
   </style>
 </head>
 <body>
 
 <div class="toastContainer" id="toastContainer"></div>
+
+<!-- SFX -->
+<audio id="sfxDeal" preload="auto"><source src="/poker/sfx/deal.mp3" type="audio/mpeg"/></audio>
+<audio id="sfxChip" preload="auto"><source src="/poker/sfx/chip.mp3" type="audio/mpeg"/></audio>
 
 <!-- ===== LOBBY SCREEN ===== -->
 <div class="screen active" id="lobbyScreen">
@@ -861,21 +894,45 @@ function toast(msg, type='info') {
 
 function fmtN(n) { return Number(n || 0).toLocaleString('fr-FR'); }
 
-// ---- Card rendering ----
-const SUITS = { 'h':'♥','d':'♦','c':'♣','s':'♠' };
+// ---- Card rendering (PNG) ----
+const SUITS      = { 'h':'♥','d':'♦','c':'♣','s':'♠' };
 const SUIT_COLOR = { 'h':'red','d':'red','c':'black','s':'black' };
+const SUIT_NAME  = { 'h':'Hearts','d':'Diamonds','c':'Club','s':'Spades' };
+
+function cardImgSrc(card) {
+  if (!card) return null;
+  const rank     = card.slice(0,-1);
+  const suit     = card.slice(-1);
+  const rankName = rank === 'T' ? '10' : rank;
+  const suitName = SUIT_NAME[suit] || suit;
+  return `/poker/Cards/png/${suitName}_${rankName}.png`;
+}
+
+function buildChipStack(amount) {
+  if (!amount || amount <= 0) return '';
+  const denoms = [10000,5000,1000,500,100,50,25,5,1];
+  let rem = amount; const chips = [];
+  for (const d of denoms) {
+    const n = Math.min(Math.floor(rem / d), 4);
+    for (let i=0;i<n;i++) chips.push(d);
+    rem -= n*d;
+    if (chips.length >= 8) break;
+  }
+  if (!chips.length) chips.push(5);
+  return `<div class="chipStack">${
+    chips.map(d=>`<img class="chipImg" src="/poker/Chips/png/${d}.png" alt="${d}" onerror="this.style.display='none'"/>`).join('')
+  }</div>`;
+}
+
+function sfxPlay(id) {
+  try { const a=document.getElementById(id); if(a){a.currentTime=0;a.play().catch(()=>{});} } catch(e){}
+}
 
 function cardHTML(card, small=false) {
-  if (!card) return `<div class="card${small?' sm':''} back"></div>`;
-  const [rank, suit] = [card.slice(0,-1), card.slice(-1)];
-  const color = SUIT_COLOR[suit] || 'black';
-  const suitSym = SUITS[suit] || suit;
   const sz = small ? ' sm' : '';
-  return `<div class="card${sz} ${color}">
-    <div class="card-rank">${rank}<br>${suitSym}</div>
-    <div class="card-suit">${suitSym}</div>
-    <div class="card-rank-bot">${rank}<br>${suitSym}</div>
-  </div>`;
+  if (!card) return `<div class="card${sz} back"></div>`;
+  const src = cardImgSrc(card);
+  return `<div class="card${sz}" style="background-image:url('${src}');background-color:#fff;"></div>`;
 }
 
 function emptyCard(small=false) {
@@ -957,6 +1014,7 @@ function initSocket() {
   // --- Game events ---
   socket.on('poker:gameStarted', ({ state }) => {
     document.getElementById('waitOverlay').classList.add('hidden');
+    _prevCommLen = 0;
     applyState(state);
     toast('La partie commence !', 'gold');
   });
@@ -976,12 +1034,14 @@ function initSocket() {
 
   socket.on('poker:holeCards', ({ cards }) => {
     myHoleCards = cards;
-    renderMyCards(cards);
+    renderMyCards(cards);           // avec animation dealFromDeck
+    sfxPlay('sfxDeal');
     toast('Tes cartes sont distribuées', 'info');
   });
 
   socket.on('poker:communityCards', ({ cards, phase }) => {
-    renderCommunityCards(cards, phase);
+    renderCommunityCards(cards, phase, true);  // animated
+    sfxPlay('sfxDeal');
     const labels = { flop:'FLOP', turn:'TURN', river:'RIVER' };
     toast('▸ ' + (labels[phase] || phase), 'info');
   });
@@ -990,6 +1050,7 @@ function initSocket() {
     const actions = { fold:'se couche', check:'check', call:'suit', raise:'relance de', allin:'ALL IN' };
     const txt = `${player} ${actions[action]||action}${amount?' '+fmtN(amount)+' 🪙':''}`;
     addChatMsg(txt, true);
+    if (amount > 0) sfxPlay('sfxChip');
   });
 
   socket.on('poker:roundEnd', ({ winners, pot, hands, newStacks }) => {
@@ -1093,14 +1154,17 @@ function renderSeats(players, dealer=-1, currentPlayer=-1, myIdx=-1) {
         </div>
         ${isActive ? '<div class="timer" id="timerBar"></div>' : ''}
       </div>
-      ${p.currentBet > 0 ? `<div class="seatBet">🪙 ${fmtN(p.currentBet)}</div>` : ''}
+      ${p.currentBet > 0 ? `<div class="seatBetZone">
+        ${buildChipStack(p.currentBet)}
+        <div class="seatBetAmt">${fmtN(p.currentBet)} 🪙</div>
+      </div>` : ''}
       ${cardsHTML}
     `;
   }
 }
 
 // ---- Community cards ----
-function renderCommunityCards(cards, phase) {
+function renderCommunityCards(cards, phase, animated=false) {
   const el = document.getElementById('communityCards');
   const total = 5;
   let html = '';
