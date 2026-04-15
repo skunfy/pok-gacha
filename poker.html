@@ -178,7 +178,7 @@
     /* ====== GAME SCREEN ====== */
     #gameScreen {
       flex-direction: column;
-      background: radial-gradient(ellipse at 50% 40%, #0d2416 0%, #05060d 70%);
+      background: url('/poker/png/Dark-level-for-background.png') center/cover no-repeat, #05060d;
       overflow: hidden; position: relative;
     }
 
@@ -242,32 +242,13 @@
 
     /* Felt surface */
     .tableFelt {
-      position: absolute;
-      left: 50%; top: 50%;
+      position: absolute; left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      width: 88%; height: 82%;
-      background:
-        radial-gradient(ellipse at 50% 40%, #276a40 0%, #1a5c2e 45%, #0f3d1e 100%);
-      border-radius: 999px;
-      border: 3px solid #0d2d16;
-      box-shadow:
-        0 0 0 6px #1a4428,
-        0 0 0 9px #0d2d16,
-        0 30px 80px rgba(0,0,0,.7),
-        inset 0 2px 40px rgba(0,0,0,.3);
+      width: 96%; height: 96%;
+      background: url('/poker/png/table-red.png') center/contain no-repeat;
     }
+    .tableRail { display: none; }
 
-    /* Rail */
-    .tableRail {
-      position: absolute;
-      left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      width: 92%; height: 87%;
-      border-radius: 999px;
-      background: linear-gradient(145deg, #3d1f0a, #2a1406, #1a0d04);
-      z-index: -1;
-      box-shadow: 0 40px 100px rgba(0,0,0,.8);
-    }
 
     /* Community cards zone */
     .communityArea {
@@ -298,50 +279,33 @@
       text-transform: uppercase;
     }
 
-    /* ---- Cards ---- */
+    /* ---- Cards PNG (ratio 242x348) ---- */
     .card {
       width: 52px; height: 74px;
-      border-radius: 7px;
-      border: 1px solid rgba(255,255,255,.2);
-      background: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; font-weight: 900;
+      border-radius: 5px;
+      border: none;
+      background: #fff center/contain no-repeat;
+      display: block;
       box-shadow: 0 4px 16px rgba(0,0,0,.5);
       position: relative;
-      overflow: hidden;
       flex-shrink: 0;
       transition: transform .2s ease;
       cursor: default;
       user-select: none;
     }
-    .card.red { color: #e63946; }
+    .card.red   { color: #e63946; }
     .card.black { color: #1d1d1d; }
-    .card.back {
-      background: linear-gradient(135deg, #1e3a8a, #1e40af);
-      border-color: rgba(255,255,255,.15);
-    }
-    .card.back::after {
-      content: '♦';
-      font-size: 28px;
-      color: rgba(255,255,255,.12);
+    .card.back  {
+      background-image: url('/poker/Cards/png/back.png');
+      background-color: #1a3a6e;
+      background-size: contain;
     }
     .card.empty {
       background: rgba(255,255,255,.04);
-      border: 2px dashed rgba(255,255,255,.12);
-      color: transparent;
+      border: 2px dashed rgba(255,255,255,.15);
     }
-    .card-rank {
-      position: absolute; top: 4px; left: 5px;
-      font-size: 12px; font-weight: 900; line-height: 1;
-    }
-    .card-suit {
-      font-size: 20px;
-    }
-    .card-rank-bot {
-      position: absolute; bottom: 4px; right: 5px;
-      font-size: 12px; font-weight: 900; line-height: 1;
-      transform: rotate(180deg);
-    }
+    /* Cartes du hero plus grandes */
+    .myCardsAction .card { width: 62px; height: 88px; }
 
     /* Hole cards (small for opponents) */
     .card.sm {
@@ -399,10 +363,23 @@
     }
 
     .seatAvatar {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: rgba(255,255,255,.1);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,.1) center/cover no-repeat;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      overflow: hidden;
+      position: relative;
+    }
+    .seatAvatar img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 50%;
+    }
+    /* Frame de l'asset autour de l'avatar */
+    .seatAvatarFrame {
+      position: absolute; inset: -4px;
+      background: url('/poker/png/avatar_player.png') center/contain no-repeat;
+      pointer-events: none; z-index: 2;
     }
 
     .seatName {
@@ -491,11 +468,39 @@
     .actBtn:active { transform: scale(.97); }
     .actBtn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
-    .actBtn--fold { background: linear-gradient(135deg,#7f1d1d,#991b1b); color: #fca5a5; }
-    .actBtn--check { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; }
-    .actBtn--call { background: linear-gradient(135deg,#1e3a8a,#1e40af); color: #93c5fd; }
-    .actBtn--raise { background: linear-gradient(135deg,#ffd04d,#ff9500); color: #1a0a00; }
-    .actBtn--allin { background: linear-gradient(135deg,#7c3aed,#6d28d9); color: #ddd6fe; }
+    .actBtn--fold {
+      background: url('/poker/png/button_fold.png') center/contain no-repeat;
+      color: transparent; min-width: 90px; height: 46px;
+    }
+    .actBtn--check {
+      background: url('/poker/png/button_check.png') center/contain no-repeat;
+      color: transparent; min-width: 90px; height: 46px;
+    }
+    .actBtn--call {
+      background: url('/poker/png/button_call.png') center/contain no-repeat;
+      color: transparent; min-width: 90px; height: 46px;
+    }
+    .actBtn--raise {
+      background: url('/poker/png/button_raise.png') center/contain no-repeat;
+      color: transparent; min-width: 90px; height: 46px;
+    }
+    .actBtn--allin {
+      background: url('/poker/png/button_check-fold.png') center/contain no-repeat;
+      color: transparent; min-width: 90px; height: 46px;
+    }
+    /* Texte overlay sur les boutons PNG */
+    .actBtn { position: relative; }
+    .actBtn .btnLabel {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      font-size: 13px; font-weight: 900; color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.8);
+      pointer-events: none;
+    }
+    .actBtn .btnLabel .btnSub {
+      font-size: 11px; opacity: .85; font-weight: 700;
+    }
 
     .raiseControls {
       display: flex; align-items: center; gap: 8px;
@@ -844,14 +849,18 @@
     <div class="myCards" id="myCardsDisplay"></div>
     <div class="actionBtns">
       <button class="actBtn actBtn--fold" id="btnFold">FOLD</button>
-      <button class="actBtn actBtn--check" id="btnCheck">CHECK</button>
+      <button class="actBtn actBtn--check" id="btnCheck"><span class="btnLabel">CHECK</span></button>
       <button class="actBtn actBtn--call" id="btnCall">CALL <span id="callAmt"></span></button>
       <div class="raiseControls">
         <input class="raiseSlider" id="raiseSlider" type="range" min="0" max="1000" value="200"/>
         <div class="raiseAmount" id="raiseDisplay">200 🪙</div>
-        <button class="actBtn actBtn--raise" id="btnRaise">RAISE</button>
+        <button class="actBtn actBtn--raise" id="btnRaise">
+        <span class="btnLabel">RAISE</span>
+      </button>
       </div>
-      <button class="actBtn actBtn--allin" id="btnAllIn">ALL IN</button>
+      <button class="actBtn actBtn--allin" id="btnAllIn">
+        <span class="btnLabel">ALL IN</span>
+      </button>
     </div>
   </div>
 
@@ -945,6 +954,7 @@ async function loadMe() {
     const r = await fetch('/api/me', { headers:{ Authorization:'Bearer '+token } });
     const d = await r.json();
     myId = d.id;
+    myAvatar = d.avatar || '';
     document.getElementById('lobbyDollax').textContent = fmtN(d.money);
     document.getElementById('lobbyChips').textContent = fmtN(d.poker_chips || 0);
   } catch(e) {
@@ -1147,7 +1157,7 @@ function renderSeats(players, dealer=-1, currentPlayer=-1, myIdx=-1) {
       <div class="seatInfo${isActive?' active':''}${folded?' folded':''}${isHero?' hero':''}${p.winner?' winner':''}">
         ${isDealer ? '<div class="dealerBtn">D</div>' : ''}
         ${statusBadge}
-        <div class="seatAvatar">${p.avatar || '🃏'}</div>
+        <div class="seatAvatar">${p.avatar ? '<img src="'+p.avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.src=\'/poker/png/default_avatar.png\'">' : '<img src="/poker/png/default_avatar.png" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'}<div class="seatAvatarFrame"></div></div>
         <div>
           <div class="seatName">${p.name}</div>
           <div class="seatStack">🪙 ${fmtN(p.stack)}</div>
@@ -1304,7 +1314,7 @@ document.getElementById('btnCreate').addEventListener('click', () => {
   const buyin = parseInt(document.getElementById('buyinInput').value);
   if (!sb || !bb || sb >= bb) { showLobbyError('La grande blind doit être supérieure à la petite blind.'); return; }
   if (!buyin || buyin < bb * 2) { showLobbyError('Le buy-in minimum doit être au moins 2× la grande blind.'); return; }
-  socket.emit('poker:createRoom', { sb, bb, buyin });
+  socket.emit('poker:createRoom', { sb, bb, buyin, avatar: myAvatar });
 });
 
 // Join room
@@ -1313,7 +1323,7 @@ document.getElementById('btnJoin').addEventListener('click', () => {
   const buyin = parseInt(document.getElementById('buyinJoinInput').value);
   if (code.length !== 6) { showLobbyError('Le code doit faire 6 caractères.'); return; }
   if (!buyin || buyin < 1) { showLobbyError('Mise de départ invalide.'); return; }
-  socket.emit('poker:joinRoom', { code, buyin });
+  socket.emit('poker:joinRoom', { code, buyin, avatar: myAvatar });
 });
 
 // Start game (creator only)
