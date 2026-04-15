@@ -289,18 +289,141 @@
   .topLink:hover{background:rgba(255,255,255,.10); transform: translateY(-1px)}
   .topLink:active{transform: translateY(0px) scale(.99)}
 
-  .topLink--slot{
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
+  .topLink--casino{
+    background: linear-gradient(135deg, rgba(255,180,0,.15), rgba(255,100,0,.10));
+    border: 1px solid rgba(255,180,0,.30);
+    cursor:pointer;
+    font-family:inherit;
   }
-  .topLink--slot:hover{
-    background: linear-gradient(135deg, rgba(168,85,247,.4), rgba(74,127,255,.4));
-    border-color: rgba(168,85,247,.7);
+  .topLink--casino:hover{
+    background: linear-gradient(135deg, rgba(255,180,0,.35), rgba(255,100,0,.30));
+    border-color: rgba(255,180,0,.65);
     transform: translateY(-1px);
   }
-  .topLink--slot img{
-    width:15px; height:15px; object-fit:contain;
-    filter: drop-shadow(0 0 4px rgba(168,85,247,.6));
+
+  /* ===== Casino Popup ===== */
+  .casinoBackdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(6px);
+    z-index:9998;
+  }
+  .casinoBackdrop.open{ display:flex; align-items:center; justify-content:center; }
+
+  .casinoPopup{
+    background: linear-gradient(145deg, #0e0f1e, #141628);
+    border:1px solid rgba(255,180,0,.25);
+    border-radius:22px;
+    padding:28px 24px 24px;
+    width:min(340px, 92vw);
+    box-shadow:
+      0 40px 120px rgba(0,0,0,.7),
+      0 0 60px rgba(255,160,0,.08),
+      inset 0 1px 0 rgba(255,255,255,.08);
+    position:relative;
+    animation: casinoPop .22s cubic-bezier(.2,.9,.3,1) both;
+  }
+  @keyframes casinoPop{
+    0%{ opacity:0; transform:scale(.88) translateY(12px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+
+  .casinoPopup h2{
+    margin:0 0 6px;
+    font-size:20px;
+    font-weight:1000;
+    letter-spacing:.5px;
+    background: linear-gradient(90deg, #ffd04d, #ff9500);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .casinoPopup p{
+    margin:0 0 20px;
+    font-size:13px;
+    opacity:.6;
+  }
+
+  .casinoCloseBtn{
+    position:absolute;
+    top:14px; right:16px;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.12);
+    color:#fff;
+    font-size:18px;
+    width:32px; height:32px;
+    border-radius:999px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .12s;
+    padding:0;
+  }
+  .casinoCloseBtn:hover{ background:rgba(255,255,255,.13); }
+
+  .casinoGames{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .casinoGameBtn{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:16px 18px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+    color:#fff;
+    text-decoration:none;
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+  }
+  .casinoGameBtn:hover{
+    transform:translateY(-2px);
+    background:rgba(255,255,255,.09);
+    border-color:rgba(255,255,255,.20);
+  }
+  .casinoGameBtn:active{ transform:scale(.99); }
+
+  .casinoGameBtn--slot{
+    background: linear-gradient(135deg, rgba(168,85,247,.18), rgba(74,127,255,.12));
+    border-color: rgba(168,85,247,.35);
+  }
+  .casinoGameBtn--slot:hover{
+    background: linear-gradient(135deg, rgba(168,85,247,.30), rgba(74,127,255,.22));
+    border-color: rgba(168,85,247,.55);
+  }
+  .casinoGameBtn--poker{
+    background: linear-gradient(135deg, rgba(0,200,100,.15), rgba(0,160,80,.08));
+    border-color: rgba(0,200,100,.30);
+  }
+  .casinoGameBtn--poker:hover{
+    background: linear-gradient(135deg, rgba(0,200,100,.28), rgba(0,160,80,.18));
+    border-color: rgba(0,200,100,.55);
+  }
+
+  .casinoGameEmoji{ font-size:28px; flex:0 0 auto; }
+  .casinoGameInfo{ display:flex; flex-direction:column; gap:3px; text-align:left; }
+  .casinoGameInfo small{ font-size:12px; font-weight:500; opacity:.6; }
+  .casinoGameBadge{
+    margin-left:auto;
+    font-size:10px;
+    font-weight:900;
+    padding:4px 9px;
+    border-radius:999px;
+    flex:0 0 auto;
+  }
+  .casinoGameBadge--new{
+    background:rgba(0,200,100,.18);
+    border:1px solid rgba(0,200,100,.40);
+    color:rgba(100,255,170,.95);
   }
 
   /* ===== Buttons row ===== */
@@ -1704,9 +1827,9 @@
 
         <a class="topLink" href="#" id="changeGame">TCG</a>
 
-        <a class="topLink topLink--slot" href="/slot.html">
-           SLOT
-        </a>
+        <button class="topLink topLink--casino" id="casinoBtn" aria-haspopup="true" aria-expanded="false">
+          🎰 CASINO
+        </button>
 
         <a class="topLink" href="/collection.html">
           COLLECTION
@@ -3382,6 +3505,55 @@ profileBtn?.addEventListener("touchend", (e) => {
   loadNotifCount();
   setInterval(loadNotifCount, 30000);
   applySfxUi();
+</script>
+
+<!-- ===== CASINO POPUP ===== -->
+<div class="casinoBackdrop" id="casinoBackdrop" role="dialog" aria-modal="true" aria-label="Casino">
+  <div class="casinoPopup">
+    <button class="casinoCloseBtn" id="casinoClose" aria-label="Fermer">✕</button>
+    <h2>🎰 Casino</h2>
+    <p>Choisis ton jeu et tente ta chance !</p>
+    <div class="casinoGames">
+      <a class="casinoGameBtn casinoGameBtn--slot" href="/slot.html">
+        <span class="casinoGameEmoji">🎰</span>
+        <span class="casinoGameInfo">
+          <span>Slot Machine</span>
+          <small>Fais tourner et gagne des dollax</small>
+        </span>
+      </a>
+      <a class="casinoGameBtn casinoGameBtn--poker" href="/poker.html">
+        <span class="casinoGameEmoji">♠️</span>
+        <span class="casinoGameInfo">
+          <span>Poker</span>
+          <small>Texas Hold'em multijoueur</small>
+        </span>
+        <span class="casinoGameBadge casinoGameBadge--new">NOUVEAU</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CASINO POPUP =====
+(function(){
+  const btn      = document.getElementById("casinoBtn");
+  const backdrop = document.getElementById("casinoBackdrop");
+  const closeBtn = document.getElementById("casinoClose");
+
+  function openCasino(){
+    backdrop.classList.add("open");
+    btn?.setAttribute("aria-expanded","true");
+  }
+  function closeCasino(){
+    backdrop.classList.remove("open");
+    btn?.setAttribute("aria-expanded","false");
+  }
+
+  btn?.addEventListener("click", (e)=>{ e.stopPropagation(); openCasino(); });
+  closeBtn?.addEventListener("click", closeCasino);
+  backdrop?.addEventListener("click", (e)=>{ if(e.target === backdrop) closeCasino(); });
+  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeCasino(); });
+})();
 </script>
 
   <footer class="siteFooter">
