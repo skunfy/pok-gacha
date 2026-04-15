@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Boutique Jetons — Gachax Poker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
+    :root {
+      --gold: #ffd04d; --gold2: #ff9500;
+      --green: #2a9d5c; --green2: #1a6e3e;
+      --bg1: #05060d; --bg2: #090b18;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; min-height: 100vh;
+      font-family: 'Rajdhani', sans-serif;
+      color: #fff;
+      background:
+        radial-gradient(900px 520px at 20% 10%, rgba(80,130,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 85% 30%, rgba(255,80,220,.14), transparent 62%),
+        linear-gradient(180deg, #05060d, #090b18);
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topLogo {
+      font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900;
+      background: linear-gradient(90deg, #ffd04d, #ff9500);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .topBalances { display: flex; gap: 12px; align-items: center; }
+    .balancePill {
+      padding: 6px 14px; border-radius: 999px;
+      font-size: 14px; font-weight: 700;
+    }
+    .balancePill.money {
+      background: rgba(255,208,77,.08);
+      border: 1px solid rgba(255,208,77,.25);
+      color: var(--gold);
+    }
+    .balancePill.chips {
+      background: rgba(42,157,92,.08);
+      border: 1px solid rgba(42,157,92,.25);
+      color: #4ade80;
+    }
+    .backBtn {
+      padding: 7px 16px; border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.14);
+      color: #fff; cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 700;
+      text-decoration: none;
+      transition: background .12s;
+    }
+    .backBtn:hover { background: rgba(255,255,255,.12); }
+
+    /* Main */
+    .wrap {
+      max-width: 900px; margin: 0 auto;
+      padding: 40px 20px 60px;
+      display: flex; flex-direction: column; gap: 40px;
+    }
+
+    .pageTitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(22px, 5vw, 38px); font-weight: 900;
+      text-align: center;
+      background: linear-gradient(90deg, #ffd04d, #ff9500, #ffd04d);
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+    @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+    .pageSubtitle { text-align: center; font-size: 14px; opacity: .55; margin-top: -30px; letter-spacing: 2px; }
+
+    /* Rate banner */
+    .rateBanner {
+      display: flex; align-items: center; justify-content: center;
+      gap: 20px; flex-wrap: wrap;
+      padding: 16px 24px; border-radius: 16px;
+      background: rgba(255,208,77,.06);
+      border: 1px solid rgba(255,208,77,.18);
+    }
+    .rateItem {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 16px; font-weight: 700;
+    }
+    .rateArrow { font-size: 20px; opacity: .5; }
+
+    /* Section titles */
+    .sectionTitle {
+      font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700;
+      color: var(--gold); letter-spacing: 1px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sectionTitle::after {
+      content: ''; flex: 1; height: 1px;
+      background: rgba(255,208,77,.15);
+    }
+
+    /* Shop grid */
+    .shopGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .shopItem {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding: 20px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      text-align: center;
+      transition: transform .12s, border-color .12s, background .12s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .shopItem:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255,208,77,.3);
+      background: rgba(255,255,255,.07);
+    }
+    .shopItem.featured {
+      border-color: rgba(255,208,77,.35);
+      background: rgba(255,208,77,.05);
+    }
+    .shopItem.featured::before {
+      content: '⭐ POPULAIRE';
+      position: absolute; top: 10px; right: -1px;
+      font-size: 10px; font-weight: 900; letter-spacing: .5px;
+      padding: 3px 10px; border-radius: 4px 0 0 4px;
+      background: linear-gradient(135deg, #ffd04d, #ff9500);
+      color: #1a0a00;
+    }
+
+    .chipIcon { font-size: 48px; }
+    .chipAmount {
+      font-family: 'Cinzel', serif;
+      font-size: 22px; font-weight: 900;
+      color: #4ade80;
+    }
+    .chipBonus {
+      font-size: 12px; color: var(--gold);
+      background: rgba(255,208,77,.12);
+      border: 1px solid rgba(255,208,77,.25);
+      border-radius: 999px; padding: 2px 10px;
+      font-weight: 700;
+    }
+    .chipCost {
+      font-size: 16px; font-weight: 700;
+      color: var(--gold);
+    }
+    .chipCost small { font-size: 12px; opacity: .6; font-weight: 500; }
+
+    .btnBuy {
+      width: 100%; padding: 10px;
+      background: linear-gradient(135deg, #ffd04d, #ff9500);
+      border: none; border-radius: 10px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 800;
+      color: #1a0a00; cursor: pointer;
+      transition: opacity .12s, transform .12s;
+    }
+    .btnBuy:hover { opacity: .9; transform: scale(1.02); }
+    .btnBuy:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* Exchange section */
+    .exchangeBox {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 20px;
+      padding: 28px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .exchangeRow {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .exchangeLabel { font-size: 14px; font-weight: 600; opacity: .7; min-width: 140px; }
+
+    .exchangeInput {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      color: #fff; font-family: 'Rajdhani', sans-serif;
+      font-size: 18px; font-weight: 700;
+      padding: 10px 16px; width: 160px;
+      outline: none; transition: border-color .15s;
+    }
+    .exchangeInput:focus { border-color: rgba(255,208,77,.5); }
+
+    .exchangeResult {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 18px; font-weight: 700;
+    }
+    .exchangeResult .num { color: #4ade80; }
+
+    .btnExchange {
+      padding: 12px 24px; border-radius: 12px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px; font-weight: 800;
+      cursor: pointer; border: none;
+      transition: transform .12s, opacity .12s;
+    }
+    .btnExchange:hover { transform: translateY(-1px); }
+    .btnExchange:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btnExchange.buy {
+      background: linear-gradient(135deg, #ffd04d, #ff9500);
+      color: #1a0a00;
+    }
+    .btnExchange.sell {
+      background: linear-gradient(135deg, #2a9d5c, #1a6e3e);
+      color: #fff;
+    }
+
+    .exchangeNote { font-size: 12px; opacity: .45; }
+
+    /* History */
+    .historyList {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .historyItem {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      font-size: 14px;
+    }
+    .historyItem .hType { font-weight: 700; }
+    .historyItem .hType.buy { color: #4ade80; }
+    .historyItem .hType.sell { color: var(--gold); }
+    .historyItem .hDate { opacity: .45; font-size: 12px; }
+    .historyItem .hAmt { font-weight: 700; }
+    .historyEmpty { font-size: 13px; opacity: .4; text-align: center; padding: 20px; }
+
+    /* Toast */
+    .toastContainer {
+      position: fixed; top: 70px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 999; display: flex; flex-direction: column;
+      align-items: center; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      padding: 10px 20px; border-radius: 999px;
+      background: rgba(0,0,0,.85); border: 1px solid rgba(255,255,255,.12);
+      font-size: 14px; font-weight: 700;
+      backdrop-filter: blur(10px);
+      animation: toastIn .25s ease both, toastOut .3s ease 2.7s both;
+    }
+    @keyframes toastIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+    @keyframes toastOut { to{opacity:0;transform:translateY(-10px)} }
+    .toast.success { color: #4ade80; border-color: rgba(42,157,92,.3); }
+    .toast.error { color: #f87171; border-color: rgba(255,80,80,.3); }
+    .toast.gold { color: var(--gold); border-color: rgba(255,208,77,.3); }
+
+    /* Confirm modal */
+    .modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.6); backdrop-filter: blur(6px);
+      z-index: 100; align-items: center; justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .modalBox {
+      background: linear-gradient(145deg, #0e0f1e, #141628);
+      border: 1px solid rgba(255,208,77,.25);
+      border-radius: 22px; padding: 28px 32px;
+      width: min(360px, 92vw); text-align: center;
+      animation: popIn .22s cubic-bezier(.2,.9,.3,1) both;
+    }
+    @keyframes popIn { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
+    .modalBox h2 { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold); margin-bottom: 10px; }
+    .modalBox p { font-size: 14px; opacity: .7; margin-bottom: 20px; line-height: 1.6; }
+    .modalBtns { display: flex; gap: 10px; }
+    .modalBtns button {
+      flex: 1; padding: 12px; border-radius: 12px;
+      font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 800;
+      cursor: pointer; border: none; transition: opacity .12s;
+    }
+    .modalBtns .confirm {
+      background: linear-gradient(135deg, #ffd04d, #ff9500);
+      color: #1a0a00;
+    }
+    .modalBtns .cancel {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      color: #fff;
+    }
+    .modalBtns button:hover { opacity: .85; }
+
+    @media (max-width: 520px) {
+      .exchangeRow { flex-direction: column; align-items: flex-start; }
+      .shopGrid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toastContainer" id="toastContainer"></div>
+
+<!-- Confirm modal -->
+<div class="modal" id="confirmModal">
+  <div class="modalBox">
+    <h2 id="modalTitle">Confirmer l'achat</h2>
+    <p id="modalBody"></p>
+    <div class="modalBtns">
+      <button class="cancel" id="modalCancel">Annuler</button>
+      <button class="confirm" id="modalConfirm">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topLogo">♠ GACHAX POKER</div>
+  <div class="topBalances">
+    <div class="balancePill money">💰 <span id="dollaxDisplay">—</span> dollax</div>
+    <div class="balancePill chips">🪙 <span id="chipsDisplay">—</span> jetons</div>
+  </div>
+  <a class="backBtn" href="/poker.html">← Retour au Poker</a>
+</div>
+
+<div class="wrap">
+
+  <div>
+    <div class="pageTitle">🛒 Boutique de Jetons</div>
+    <div class="pageSubtitle" style="margin-top:8px">CONVERTIS TES DOLLAX EN JETONS · JOUE AU POKER · GAGNE PLUS</div>
+  </div>
+
+  <!-- Rate -->
+  <div class="rateBanner">
+    <div class="rateItem">💰 1 dollax <div class="rateArrow">⇄</div> 🪙 1 jeton</div>
+    <div style="width:1px;height:30px;background:rgba(255,255,255,.12)"></div>
+    <div style="font-size:13px;opacity:.6">Taux fixe • Échange instantané • Pas de frais</div>
+  </div>
+
+  <!-- Buy packs -->
+  <div>
+    <div class="sectionTitle">💰 Acheter des Jetons</div>
+    <div class="shopGrid" id="shopGrid">
+
+      <div class="shopItem" data-amount="500" data-cost="500">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">500</div>
+        <div class="chipCost">500 dollax <small>= 500 jetons</small></div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+      <div class="shopItem" data-amount="1000" data-cost="1000">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">1 000</div>
+        <div class="chipCost">1 000 dollax</div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+      <div class="shopItem featured" data-amount="5500" data-cost="5000">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">5 500</div>
+        <div class="chipBonus">+500 bonus !</div>
+        <div class="chipCost">5 000 dollax</div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+      <div class="shopItem" data-amount="11000" data-cost="10000">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">11 000</div>
+        <div class="chipBonus">+1 000 bonus !</div>
+        <div class="chipCost">10 000 dollax</div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+      <div class="shopItem" data-amount="30000" data-cost="25000">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">30 000</div>
+        <div class="chipBonus">+5 000 bonus !</div>
+        <div class="chipCost">25 000 dollax</div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+      <div class="shopItem" data-amount="75000" data-cost="50000">
+        <div class="chipIcon">🪙</div>
+        <div class="chipAmount">75 000</div>
+        <div class="chipBonus">+25 000 bonus !</div>
+        <div class="chipCost">50 000 dollax</div>
+        <button class="btnBuy">Acheter</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Exchange custom -->
+  <div>
+    <div class="sectionTitle">🔄 Échange Personnalisé</div>
+    <div class="exchangeBox">
+
+      <!-- Dollax → Jetons -->
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px">💰 Dollax → 🪙 Jetons</div>
+        <div class="exchangeRow">
+          <div class="exchangeLabel">Dollax à convertir :</div>
+          <input class="exchangeInput" id="buyInput" type="number" min="1" placeholder="Montant"/>
+          <div class="exchangeResult">= <span class="num" id="buyResult">0</span> jetons</div>
+          <button class="btnExchange buy" id="btnBuyCustom">Convertir</button>
+        </div>
+      </div>
+
+      <div style="height:1px;background:rgba(255,255,255,.08)"></div>
+
+      <!-- Jetons → Dollax -->
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#4ade80;margin-bottom:12px">🪙 Jetons → 💰 Dollax</div>
+        <div class="exchangeRow">
+          <div class="exchangeLabel">Jetons à reconvertir :</div>
+          <input class="exchangeInput" id="sellInput" type="number" min="1" placeholder="Montant"/>
+          <div class="exchangeResult">= <span class="num" id="sellResult">0</span> dollax</div>
+          <button class="btnExchange sell" id="btnSellCustom">Reconvertir</button>
+        </div>
+        <div class="exchangeNote" style="margin-top:8px">⚠️ Seuls les jetons hors-table peuvent être reconvertis.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- History -->
+  <div>
+    <div class="sectionTitle">📋 Historique des Échanges</div>
+    <div class="historyList" id="historyList">
+      <div class="historyEmpty">Aucun échange pour le moment.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TOKEN_KEY = 'gacha_token_v1';
+const token = localStorage.getItem(TOKEN_KEY);
+if (!token) window.location.href = '/login.html';
+
+let myDollax = 0;
+let myChips = 0;
+let pendingAction = null;
+
+function fmtN(n) { return Number(n||0).toLocaleString('fr-FR'); }
+
+function toast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+function updateUI() {
+  document.getElementById('dollaxDisplay').textContent = fmtN(myDollax);
+  document.getElementById('chipsDisplay').textContent = fmtN(myChips);
+}
+
+async function api(url, opts={}) {
+  const r = await fetch(url, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  return r.json();
+}
+
+async function loadMe() {
+  const d = await api('/api/me');
+  myDollax = d.money || 0;
+  myChips = d.poker_chips || 0;
+  updateUI();
+}
+
+async function loadHistory() {
+  try {
+    const d = await api('/api/poker/shop/history');
+    const list = document.getElementById('historyList');
+    if (!d.history || !d.history.length) return;
+    list.innerHTML = d.history.map(h => `
+      <div class="historyItem">
+        <div>
+          <span class="hType ${h.type}">${h.type === 'buy' ? '💰→🪙 Achat' : '🪙→💰 Revente'}</span>
+        </div>
+        <div class="hAmt">${h.type === 'buy' ? '+' + fmtN(h.chips) + ' 🪙' : '+' + fmtN(h.dollax) + ' 💰'}</div>
+        <div class="hDate">${new Date(h.createdAt).toLocaleDateString('fr-FR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+// ---- Confirm modal ----
+function openModal(title, body, onConfirm) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').textContent = body;
+  pendingAction = onConfirm;
+  document.getElementById('confirmModal').classList.add('open');
+}
+document.getElementById('modalCancel').addEventListener('click', () => {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingAction = null;
+});
+document.getElementById('modalConfirm').addEventListener('click', async () => {
+  document.getElementById('confirmModal').classList.remove('open');
+  if (pendingAction) await pendingAction();
+  pendingAction = null;
+});
+
+// ---- Shop packs ----
+document.querySelectorAll('.shopItem').forEach(item => {
+  const btn = item.querySelector('.btnBuy');
+  btn.addEventListener('click', async () => {
+    const amount = parseInt(item.dataset.amount);
+    const cost = parseInt(item.dataset.cost);
+    openModal(
+      '💰 Confirmer l\'achat',
+      `Acheter ${fmtN(amount)} jetons pour ${fmtN(cost)} dollax ?`,
+      async () => {
+        btn.disabled = true;
+        try {
+          const d = await api('/api/poker/shop/buy', {
+            method: 'POST',
+            body: JSON.stringify({ amount, cost })
+          });
+          if (d.error) { toast(d.error, 'error'); return; }
+          myDollax = d.newDollax;
+          myChips = d.newChips;
+          updateUI();
+          toast(`+${fmtN(amount)} jetons ajoutés ! 🎉`, 'gold');
+          loadHistory();
+        } catch(e) {
+          toast('Erreur lors de l\'achat.', 'error');
+        } finally {
+          btn.disabled = false;
+        }
+      }
+    );
+  });
+});
+
+// ---- Custom exchange ----
+document.getElementById('buyInput').addEventListener('input', e => {
+  const v = parseInt(e.target.value) || 0;
+  document.getElementById('buyResult').textContent = fmtN(v);
+});
+
+document.getElementById('sellInput').addEventListener('input', e => {
+  const v = parseInt(e.target.value) || 0;
+  document.getElementById('sellResult').textContent = fmtN(v);
+});
+
+document.getElementById('btnBuyCustom').addEventListener('click', () => {
+  const amount = parseInt(document.getElementById('buyInput').value);
+  if (!amount || amount < 1) { toast('Montant invalide.', 'error'); return; }
+  if (amount > myDollax) { toast('Pas assez de dollax.', 'error'); return; }
+  openModal(
+    '💰 Confirmer',
+    `Convertir ${fmtN(amount)} dollax en ${fmtN(amount)} jetons ?`,
+    async () => {
+      try {
+        const d = await api('/api/poker/shop/buy', {
+          method: 'POST',
+          body: JSON.stringify({ amount, cost: amount })
+        });
+        if (d.error) { toast(d.error, 'error'); return; }
+        myDollax = d.newDollax; myChips = d.newChips;
+        updateUI(); loadHistory();
+        toast(`+${fmtN(amount)} jetons !`, 'gold');
+        document.getElementById('buyInput').value = '';
+        document.getElementById('buyResult').textContent = '0';
+      } catch(e) { toast('Erreur.', 'error'); }
+    }
+  );
+});
+
+document.getElementById('btnSellCustom').addEventListener('click', () => {
+  const amount = parseInt(document.getElementById('sellInput').value);
+  if (!amount || amount < 1) { toast('Montant invalide.', 'error'); return; }
+  if (amount > myChips) { toast('Pas assez de jetons.', 'error'); return; }
+  openModal(
+    '🪙 Reconvertir',
+    `Reconvertir ${fmtN(amount)} jetons en ${fmtN(amount)} dollax ?`,
+    async () => {
+      try {
+        const d = await api('/api/poker/shop/sell', {
+          method: 'POST',
+          body: JSON.stringify({ amount })
+        });
+        if (d.error) { toast(d.error, 'error'); return; }
+        myDollax = d.newDollax; myChips = d.newChips;
+        updateUI(); loadHistory();
+        toast(`+${fmtN(amount)} dollax récupérés !`, 'success');
+        document.getElementById('sellInput').value = '';
+        document.getElementById('sellResult').textContent = '0';
+      } catch(e) { toast('Erreur.', 'error'); }
+    }
+  );
+});
+
+// ---- Init ----
+(async () => {
+  await loadMe();
+  await loadHistory();
+})();
+</script>
+</body>
+</html>
