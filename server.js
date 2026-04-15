@@ -4,11 +4,18 @@ import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
 import pg from "pg";
+import { createServer } from "http";
+import { Server as SocketIO } from "socket.io";
 
 const { Pool } = pg;
 
 const app = express();
 app.use(express.json());
+
+const httpServer = createServer(app);
+const io = new SocketIO(httpServer, {
+  cors: { origin: "*", methods: ["GET", "POST"] }
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1003,6 +1010,25 @@ async function initDb() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_pve_progress_user ON pve_progress(user_id)`);
+
+  // =========================
+  // POKER — Migrations
+  // =========================
+  await pool.query(`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS poker_chips BIGINT NOT NULL DEFAULT 0
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS poker_shop_history (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type VARCHAR(10) NOT NULL,
+      chips BIGINT NOT NULL DEFAULT 0,
+      dollax BIGINT NOT NULL DEFAULT 0,
+      "createdAt" BIGINT NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_poker_shop_history_user ON poker_shop_history(user_id, "createdAt" DESC)`);
 
   console.log("✅ Postgres DB ready");
 }
@@ -8230,11 +8256,751 @@ function scheduleWeeklyRewards() {
 }
 
 // =========================
+// POKER — Shop REST routes
+// =========================
+
+// GET /api/poker/shop/history
+app.get('/api/poker/shop/history', auth, async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT type, chips, dollax, "createdAt"
+       FROM poker_shop_history
+       WHERE user_id=$1
+       ORDER BY "createdAt" DESC LIMIT 30`,
+      [req.user.id]
+    );
+    res.json({ history: r.rows });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/poker/shop/buy — dollax → jetons
+app.post('/api/poker/shop/buy', auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { amount, cost } = req.body;
+    if (!amount || !cost || amount < 1 || cost < 1)
+      return res.status(400).json({ error: 'Paramètres invalides.' });
+
+    const validPacks = [
+      { cost: 500,   amount: 500   },
+      { cost: 1000,  amount: 1000  },
+      { cost: 5000,  amount: 5500  },
+      { cost: 10000, amount: 11000 },
+      { cost: 25000, amount: 30000 },
+      { cost: 50000, amount: 75000 },
+    ];
+    const isCustom = amount === cost;
+    const isPack   = validPacks.some(p => p.cost === cost && p.amount === amount);
+    if (!isCustom && !isPack)
+      return res.status(400).json({ error: 'Pack invalide.' });
+
+    await client.query('BEGIN');
+    const userQ = await client.query(
+      'SELECT money, poker_chips FROM users WHERE id=$1 FOR UPDATE', [req.user.id]
+    );
+    const user = userQ.rows[0];
+    if (!user || user.money < cost) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Pas assez de dollax.' });
+    }
+
+    const newMoney = user.money - cost;
+    const newChips = (user.poker_chips || 0) + amount;
+
+    await client.query(
+      'UPDATE users SET money=$1, poker_chips=$2 WHERE id=$3',
+      [newMoney, newChips, req.user.id]
+    );
+    await client.query(
+      `INSERT INTO poker_shop_history(user_id, type, chips, dollax, "createdAt")
+       VALUES($1,'buy',$2,$3,$4)`,
+      [req.user.id, amount, cost, Date.now()]
+    );
+    await client.query('COMMIT');
+    res.json({ ok: true, newDollax: newMoney, newChips });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// POST /api/poker/shop/sell — jetons → dollax
+app.post('/api/poker/shop/sell', auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { amount } = req.body;
+    if (!amount || amount < 1)
+      return res.status(400).json({ error: 'Montant invalide.' });
+
+    await client.query('BEGIN');
+    const userQ = await client.query(
+      'SELECT money, poker_chips FROM users WHERE id=$1 FOR UPDATE', [req.user.id]
+    );
+    const user = userQ.rows[0];
+    if (!user || (user.poker_chips || 0) < amount) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Pas assez de jetons.' });
+    }
+
+    const newChips = user.poker_chips - amount;
+    const newMoney = user.money + amount;
+
+    await client.query(
+      'UPDATE users SET money=$1, poker_chips=$2 WHERE id=$3',
+      [newMoney, newChips, req.user.id]
+    );
+    await client.query(
+      `INSERT INTO poker_shop_history(user_id, type, chips, dollax, "createdAt")
+       VALUES($1,'sell',$2,$3,$4)`,
+      [req.user.id, amount, amount, Date.now()]
+    );
+    await client.query('COMMIT');
+    res.json({ ok: true, newDollax: newMoney, newChips });
+  } catch(e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally { client.release(); }
+});
+
+// =========================
+// POKER — Logique Texas Hold'em
+// =========================
+
+function pokerCreateDeck() {
+  const suits = ['h','d','c','s'];
+  const ranks = ['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+  const deck = [];
+  for (const s of suits) for (const r of ranks) deck.push(r + s);
+  return deck;
+}
+
+function pokerShuffle(deck) {
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+const POKER_RANK_MAP = {
+  '2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,
+  'T':10,'J':11,'Q':12,'K':13,'A':14
+};
+
+function pokerGetCombinations(arr, k) {
+  if (k === arr.length) return [arr.slice()];
+  if (k === 1) return arr.map(x => [x]);
+  const result = [];
+  for (let i = 0; i <= arr.length - k; i++) {
+    const rest = pokerGetCombinations(arr.slice(i + 1), k - 1);
+    for (const r of rest) result.push([arr[i], ...r]);
+  }
+  return result;
+}
+
+function pokerGetKickers(freq, count, n) {
+  return Object.entries(freq)
+    .filter(([, v]) => v === count)
+    .map(([k]) => parseInt(k))
+    .sort((a, b) => b - a)
+    .slice(0, n)
+    .reduce((a, r, i) => a + r * Math.pow(100, n - 1 - i), 0);
+}
+
+function pokerScore5(cards) {
+  const ranks = cards.map(c => POKER_RANK_MAP[c[0]]).sort((a, b) => b - a);
+  const suits = cards.map(c => c[1]);
+  const isFlush = suits.every(s => s === suits[0]);
+
+  let isStraight = false;
+  let straightHigh = 0;
+  if (ranks[0] - ranks[4] === 4 && new Set(ranks).size === 5) {
+    isStraight = true; straightHigh = ranks[0];
+  }
+  if (JSON.stringify(ranks) === JSON.stringify([14, 5, 4, 3, 2])) {
+    isStraight = true; straightHigh = 5;
+  }
+
+  const freq = {};
+  for (const r of ranks) freq[r] = (freq[r] || 0) + 1;
+  const counts = Object.values(freq).sort((a, b) => b - a);
+
+  let name, score;
+  if (isStraight && isFlush && straightHigh === 14) { name = 'Quinte Flush Royale'; score = 9e10; }
+  else if (isStraight && isFlush)  { name = 'Quinte Flush';   score = 8e10 + straightHigh; }
+  else if (counts[0] === 4)        { name = 'Carré';          score = 7e10 + pokerGetKickers(freq, 4, 1); }
+  else if (counts[0] === 3 && counts[1] === 2) { name = 'Full'; score = 6e10 + pokerGetKickers(freq, 3, 1) * 100 + pokerGetKickers(freq, 2, 1); }
+  else if (isFlush)                { name = 'Couleur';        score = 5e10 + ranks.reduce((a, r, i) => a + r * Math.pow(100, 4 - i), 0); }
+  else if (isStraight)             { name = 'Suite';          score = 4e10 + straightHigh; }
+  else if (counts[0] === 3)        { name = 'Brelan';         score = 3e10 + pokerGetKickers(freq, 3, 1); }
+  else if (counts[0] === 2 && counts[1] === 2) { name = 'Double Paire'; score = 2e10 + pokerGetKickers(freq, 2, 2) * 10000 + pokerGetKickers(freq, 1, 1); }
+  else if (counts[0] === 2)        { name = 'Paire';          score = 1e10 + pokerGetKickers(freq, 2, 1) * 10000 + ranks.filter(r => freq[r] === 1).reduce((a, r, i) => a + r * Math.pow(100, 2 - i), 0); }
+  else { name = 'Hauteur'; score = ranks.reduce((a, r, i) => a + r * Math.pow(100, 4 - i), 0); }
+
+  return { score, name };
+}
+
+function pokerEvaluateHand(cards) {
+  const best = { score: -1, name: '', hand: [] };
+  for (const combo of pokerGetCombinations(cards, 5)) {
+    const result = pokerScore5(combo);
+    if (result.score > best.score) {
+      best.score = result.score;
+      best.name = result.name;
+      best.hand = combo;
+    }
+  }
+  return best;
+}
+
+// =========================
+// POKER — Gestion des salles
+// =========================
+
+const pokerRooms = new Map();
+
+function pokerGenCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function pokerPublicState(room) {
+  return {
+    code: room.code,
+    sb: room.sb,
+    bb: room.bb,
+    phase: room.phase,
+    pot: room.pot,
+    community: room.community,
+    currentPlayer: room.currentPlayer,
+    dealer: room.dealer,
+    players: room.players.map(p => p ? {
+      socketId: p.socketId,
+      name: p.name,
+      stack: p.stack,
+      currentBet: p.currentBet,
+      folded: p.folded,
+      allIn: p.allIn,
+      hasCards: p.hasCards,
+      isSmallBlind: p.isSmallBlind,
+      isBigBlind: p.isBigBlind,
+      winner: p.winner,
+    } : null),
+  };
+}
+
+function pokerGetRoomBySocket(socketId) {
+  for (const room of pokerRooms.values()) {
+    if (room.players.some(p => p && p.socketId === socketId)) return room;
+  }
+  return null;
+}
+
+function pokerNextActive(room, from) {
+  const n = room.players.length;
+  let idx = (from + 1) % n;
+  for (let tries = 0; tries < n; tries++) {
+    const p = room.players[idx];
+    if (p && !p.folded && !p.allIn && p.stack > 0) return idx;
+    idx = (idx + 1) % n;
+  }
+  return -1;
+}
+
+function pokerHighestBet(room) {
+  return Math.max(...room.players.filter(p => p).map(p => p.currentBet || 0));
+}
+
+function pokerActivePlayers(room) {
+  return room.players.filter(p => p && !p.folded);
+}
+
+function pokerCanAct(room) {
+  return room.players.filter(p => p && !p.folded && !p.allIn && p.stack > 0);
+}
+
+function pokerPostBlind(room, idx, amount, type) {
+  const p = room.players[idx];
+  if (!p) return;
+  const bet = Math.min(amount, p.stack);
+  p.stack -= bet;
+  p.currentBet = bet;
+  room.pot += bet;
+  if (type === 'small') p.isSmallBlind = true;
+  if (type === 'big')   p.isBigBlind   = true;
+  if (p.stack === 0)    p.allIn = true;
+}
+
+async function pokerUpdateChipsDB(room) {
+  for (const p of room.players) {
+    if (!p) continue;
+    try {
+      await pool.query('UPDATE users SET poker_chips=$1 WHERE id=$2', [p.stack, p.userId]);
+    } catch(e) { console.error('Poker chip sync error:', e.message); }
+  }
+}
+
+function pokerEndGame(room, reason) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+  io.to(room.code).emit('poker:gameEnd', { reason });
+  pokerUpdateChipsDB(room);
+  setTimeout(() => pokerRooms.delete(room.code), 30000);
+}
+
+function pokerScheduleTurn(room) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+
+  // Skip players who can't act
+  let guard = 0;
+  while (room.currentPlayer >= 0 && guard < 6) {
+    const p = room.players[room.currentPlayer];
+    if (p && !p.folded && !p.allIn && p.stack > 0) break;
+    room.currentPlayer = pokerNextActive(room, room.currentPlayer);
+    guard++;
+  }
+
+  if (room.currentPlayer < 0) {
+    pokerAdvancePhase(room);
+    return;
+  }
+
+  const player = room.players[room.currentPlayer];
+  if (!player) { pokerAdvancePhase(room); return; }
+
+  const cb = pokerHighestBet(room);
+  const callAmount = cb - (player.currentBet || 0);
+  const minRaise   = cb + room.bb;
+
+  io.to(player.socketId).emit('poker:yourTurn', {
+    timeLimit: 30,
+    callAmount,
+    minRaise,
+    stack: player.stack,
+    currentBet: cb,
+  });
+
+  room.turnTimer = setTimeout(() => {
+    pokerProcessAction(room, player.socketId, { action: 'fold' });
+  }, 31000);
+}
+
+function pokerStartGame(room) {
+  room.phase     = 'preflop';
+  room.pot       = 0;
+  room.community = [];
+  room.deck      = pokerShuffle(pokerCreateDeck());
+  room.readyCount = 0;
+
+  for (const p of room.players) {
+    if (!p) continue;
+    p.holeCards    = [];
+    p.currentBet   = 0;
+    p.folded       = false;
+    p.allIn        = false;
+    p.hasCards     = true;
+    p.winner       = false;
+    p.isSmallBlind = false;
+    p.isBigBlind   = false;
+  }
+
+  const activePlayers = room.players.filter(p => p && p.stack > 0);
+  if (activePlayers.length < 2) {
+    pokerEndGame(room, 'Pas assez de joueurs'); return;
+  }
+
+  // Advance dealer
+  do {
+    room.dealer = (room.dealer + 1) % room.players.length;
+  } while (!room.players[room.dealer]);
+
+  // Deal hole cards
+  for (const p of room.players) {
+    if (!p) continue;
+    p.holeCards = [room.deck.pop(), room.deck.pop()];
+    io.to(p.socketId).emit('poker:holeCards', { cards: p.holeCards });
+  }
+
+  // Post blinds
+  const sbIdx = pokerNextActive(room, room.dealer);
+  const bbIdx = pokerNextActive(room, sbIdx);
+  pokerPostBlind(room, sbIdx, room.sb, 'small');
+  pokerPostBlind(room, bbIdx, room.bb, 'big');
+
+  room.currentPlayer = pokerNextActive(room, bbIdx);
+
+  io.to(room.code).emit('poker:gameStarted', { state: pokerPublicState(room) });
+  io.to(room.code).emit('poker:stateUpdate',  { state: pokerPublicState(room) });
+
+  pokerScheduleTurn(room);
+}
+
+function pokerAdvancePhase(room) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+
+  for (const p of room.players) {
+    if (p) p.currentBet = 0;
+  }
+
+  switch (room.phase) {
+    case 'preflop':
+      room.phase     = 'flop';
+      room.community = [room.deck.pop(), room.deck.pop(), room.deck.pop()];
+      io.to(room.code).emit('poker:communityCards', { cards: room.community, phase: 'flop' });
+      break;
+    case 'flop':
+      room.phase = 'turn';
+      room.community.push(room.deck.pop());
+      io.to(room.code).emit('poker:communityCards', { cards: room.community, phase: 'turn' });
+      break;
+    case 'turn':
+      room.phase = 'river';
+      room.community.push(room.deck.pop());
+      io.to(room.code).emit('poker:communityCards', { cards: room.community, phase: 'river' });
+      break;
+    case 'river':
+    default:
+      room.phase = 'showdown';
+      pokerResolvePot(room);
+      return;
+  }
+
+  io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
+  room.currentPlayer = pokerNextActive(room, room.dealer);
+  if (room.currentPlayer < 0) { pokerResolvePot(room); return; }
+  pokerScheduleTurn(room);
+}
+
+function pokerProcessAction(room, socketId, { action, amount }) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+
+  const pIdx = room.players.findIndex(p => p && p.socketId === socketId);
+  if (pIdx < 0 || pIdx !== room.currentPlayer) return;
+
+  const player = room.players[pIdx];
+  const cb      = pokerHighestBet(room);
+  const callAmt = cb - (player.currentBet || 0);
+
+  switch (action) {
+    case 'fold':
+      player.folded = true;
+      io.to(room.code).emit('poker:actionResult', { action: 'fold', player: player.name });
+      break;
+
+    case 'check':
+      if (callAmt > 0) return;
+      io.to(room.code).emit('poker:actionResult', { action: 'check', player: player.name });
+      break;
+
+    case 'call': {
+      const actual = Math.min(callAmt, player.stack);
+      player.stack      -= actual;
+      player.currentBet += actual;
+      room.pot          += actual;
+      if (player.stack === 0) player.allIn = true;
+      io.to(room.code).emit('poker:actionResult', { action: 'call', player: player.name, amount: actual });
+      break;
+    }
+
+    case 'raise': {
+      if (!amount || amount < room.bb) return;
+      const extra = Math.min(amount, player.stack);
+      player.stack      -= extra;
+      player.currentBet += extra;
+      room.pot          += extra;
+      if (player.stack === 0) player.allIn = true;
+      io.to(room.code).emit('poker:actionResult', { action: 'raise', player: player.name, amount: extra });
+      break;
+    }
+
+    case 'allin': {
+      const all = player.stack;
+      player.stack       = 0;
+      player.currentBet += all;
+      room.pot          += all;
+      player.allIn       = true;
+      io.to(room.code).emit('poker:actionResult', { action: 'allin', player: player.name, amount: all });
+      break;
+    }
+
+    default: return;
+  }
+
+  io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
+
+  const active = pokerActivePlayers(room);
+  if (active.length <= 1) { pokerResolvePot(room); return; }
+
+  const canStillAct = pokerCanAct(room);
+  const maxBet      = pokerHighestBet(room);
+  const allCalled   = canStillAct.every(p => p.currentBet >= maxBet);
+
+  room.currentPlayer = pokerNextActive(room, pIdx);
+
+  if (room.currentPlayer < 0 || (allCalled && canStillAct.length > 0)) {
+    pokerAdvancePhase(room);
+  } else {
+    pokerScheduleTurn(room);
+  }
+}
+
+function pokerResolvePot(room) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+  room.phase = 'showdown';
+
+  const active = pokerActivePlayers(room);
+  const handResults = {};
+
+  for (const p of active) {
+    const all7   = [...p.holeCards, ...room.community];
+    const result = pokerEvaluateHand(all7);
+    handResults[p.socketId] = {
+      socketId: p.socketId, name: p.name,
+      cards: p.holeCards, hand: result.name, score: result.score,
+    };
+  }
+
+  const maxScore = Math.max(...active.map(p => handResults[p.socketId]?.score || 0));
+  const winners  = active.filter(p => handResults[p.socketId]?.score === maxScore);
+  const share    = Math.floor(room.pot / winners.length);
+
+  for (const w of winners) { w.stack += share; w.winner = true; }
+
+  io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
+  io.to(room.code).emit('poker:roundEnd', {
+    winners: winners.map(w => ({
+      socketId: w.socketId,
+      name:     w.name,
+      hand:     handResults[w.socketId]?.name,
+      amount:   share,
+    })),
+    pot:   room.pot,
+    hands: Object.values(handResults),
+  });
+
+  pokerUpdateChipsDB(room);
+  room.pot   = 0;
+  room.phase = 'waiting_next';
+
+  setTimeout(() => {
+    const stillIn = room.players.filter(p => p && p.stack > 0);
+    if (stillIn.length >= 2) {
+      pokerStartGame(room);
+    } else {
+      pokerEndGame(room, 'Plus assez de joueurs avec des jetons');
+    }
+  }, 6000);
+}
+
+async function pokerHandleLeave(socket, code) {
+  const room = pokerRooms.get(code);
+  if (!room) return;
+
+  const pIdx = room.players.findIndex(p => p && p.socketId === socket.id);
+  if (pIdx < 0) return;
+
+  const player = room.players[pIdx];
+  const name   = player.name;
+
+  // Rembourser les jetons restants
+  if (player.stack > 0) {
+    try {
+      await pool.query(
+        'UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2',
+        [player.stack, player.userId]
+      );
+    } catch(e) { console.error('Poker refund error:', e.message); }
+  }
+
+  room.players[pIdx] = null;
+  socket.leave(code);
+
+  const remaining = room.players.filter(p => p);
+
+  if (remaining.length === 0) {
+    pokerRooms.delete(code); return;
+  }
+
+  if (room.creatorSocketId === socket.id) {
+    room.creatorSocketId = remaining[0].socketId;
+  }
+
+  io.to(code).emit('poker:playerLeft', { players: remaining, name });
+  io.to(code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
+
+  if (room.phase !== 'waiting' && room.phase !== 'waiting_next') {
+    if (room.currentPlayer === pIdx) {
+      player.folded = true;
+      const active = pokerActivePlayers(room);
+      if (active.length <= 1) {
+        pokerResolvePot(room);
+      } else {
+        room.currentPlayer = pokerNextActive(room, pIdx);
+        if (room.currentPlayer >= 0) pokerScheduleTurn(room);
+        else pokerAdvancePhase(room);
+      }
+    }
+  }
+}
+
+// =========================
+// POKER — Socket.io
+// =========================
+
+// Middleware auth Socket.io (utilise le même token DB que le reste)
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Non authentifié'));
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, name, poker_chips FROM users WHERE token=$1', [token]
+    );
+    if (!rows[0]) return next(new Error('Token invalide'));
+    socket.userId   = rows[0].id;
+    socket.userName = rows[0].name;
+    socket.userChips = rows[0].poker_chips || 0;
+    next();
+  } catch(e) {
+    next(new Error('Erreur auth: ' + e.message));
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log(`🃏 Poker connected: ${socket.userName} (${socket.id})`);
+
+  // ---- Créer une salle ----
+  socket.on('poker:createRoom', async ({ sb, bb, buyin }) => {
+    try {
+      if (!sb || !bb || !buyin)
+        return socket.emit('poker:error', { message: 'Paramètres manquants.' });
+      if (sb >= bb)
+        return socket.emit('poker:error', { message: 'La grande blind doit être > petite blind.' });
+      if (buyin < bb * 2)
+        return socket.emit('poker:error', { message: `Buy-in minimum : ${bb * 2} jetons (2× BB).` });
+
+      const userQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [socket.userId]);
+      const chips = userQ.rows[0]?.poker_chips || 0;
+      if (chips < buyin)
+        return socket.emit('poker:error', { message: `Jetons insuffisants (${chips} < ${buyin}).` });
+
+      await pool.query(
+        'UPDATE users SET poker_chips=poker_chips-$1 WHERE id=$2', [buyin, socket.userId]
+      );
+
+      let code;
+      do { code = pokerGenCode(); } while (pokerRooms.has(code));
+
+      const room = {
+        code, sb, bb, buyin,
+        phase: 'waiting',
+        players: [{
+          socketId: socket.id, userId: socket.userId, name: socket.userName,
+          stack: buyin, holeCards: [], currentBet: 0,
+          folded: false, allIn: false, hasCards: false,
+          isSmallBlind: false, isBigBlind: false, winner: false,
+        }],
+        community: [], pot: 0, deck: [],
+        currentPlayer: -1, dealer: 0,
+        creatorSocketId: socket.id, turnTimer: null,
+      };
+
+      pokerRooms.set(code, room);
+      socket.join(code);
+      socket.emit('poker:roomCreated', { code, sb, bb, buyin });
+      console.log(`🃏 Room created: ${code} by ${socket.userName}`);
+    } catch(e) {
+      socket.emit('poker:error', { message: e.message });
+    }
+  });
+
+  // ---- Rejoindre une salle ----
+  socket.on('poker:joinRoom', async ({ code, buyin }) => {
+    try {
+      const room = pokerRooms.get((code || '').toUpperCase());
+      if (!room)
+        return socket.emit('poker:error', { message: 'Salle introuvable. Vérifie le code.' });
+      if (room.phase !== 'waiting')
+        return socket.emit('poker:error', { message: 'La partie a déjà commencé.' });
+      if (room.players.filter(p => p).length >= 6)
+        return socket.emit('poker:error', { message: 'La salle est pleine (6 joueurs max).' });
+      if (room.players.some(p => p && p.socketId === socket.id)) return;
+      if (buyin < room.buyin)
+        return socket.emit('poker:error', { message: `Buy-in minimum : ${room.buyin} jetons.` });
+
+      const userQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [socket.userId]);
+      const chips  = userQ.rows[0]?.poker_chips || 0;
+      if (chips < buyin)
+        return socket.emit('poker:error', { message: `Jetons insuffisants (${chips} < ${buyin}).` });
+
+      await pool.query(
+        'UPDATE users SET poker_chips=poker_chips-$1 WHERE id=$2', [buyin, socket.userId]
+      );
+
+      room.players.push({
+        socketId: socket.id, userId: socket.userId, name: socket.userName,
+        stack: buyin, holeCards: [], currentBet: 0,
+        folded: false, allIn: false, hasCards: false,
+        isSmallBlind: false, isBigBlind: false, winner: false,
+      });
+
+      socket.join(code);
+      socket.emit('poker:roomJoined', {
+        code, sb: room.sb, bb: room.bb,
+        players: room.players.filter(p => p),
+      });
+      io.to(code).emit('poker:playerJoined', { players: room.players.filter(p => p) });
+    } catch(e) {
+      socket.emit('poker:error', { message: e.message });
+    }
+  });
+
+  // ---- Démarrer la partie (créateur uniquement) ----
+  socket.on('poker:startGame', ({ code }) => {
+    const room = pokerRooms.get(code);
+    if (!room) return;
+    if (room.creatorSocketId !== socket.id)
+      return socket.emit('poker:error', { message: 'Seul le créateur peut démarrer.' });
+    if (room.players.filter(p => p).length < 2)
+      return socket.emit('poker:error', { message: '2 joueurs minimum pour démarrer.' });
+    pokerStartGame(room);
+  });
+
+  // ---- Action du joueur ----
+  socket.on('poker:action', ({ code, action, amount }) => {
+    const room = pokerRooms.get(code);
+    if (!room) return;
+    pokerProcessAction(room, socket.id, { action, amount });
+  });
+
+  // ---- Chat ----
+  socket.on('poker:chat', ({ code, message }) => {
+    if (!message?.trim()) return;
+    const room = pokerRooms.get(code);
+    if (!room) return;
+    io.to(code).emit('poker:chat', {
+      name: socket.userName,
+      message: message.trim().slice(0, 80),
+    });
+  });
+
+  // ---- Quitter ----
+  socket.on('poker:leave', async ({ code }) => {
+    await pokerHandleLeave(socket, code);
+  });
+
+  // ---- Déconnexion ----
+  socket.on('disconnect', async () => {
+    const room = pokerGetRoomBySocket(socket.id);
+    if (room) await pokerHandleLeave(socket, room.code);
+    console.log(`🃏 Poker disconnected: ${socket.userName}`);
+  });
+});
+
+// =========================
 // START
 // =========================
 initDb()
   .then(() => {
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`✅ Server listening on port ${PORT}`);
       console.log(`✅ Render PORT env is ${process.env.PORT || "(not set locally)"}`);
       scheduleWeeklyRewards(); // Démarrer le cron de récompenses ELO
