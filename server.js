@@ -8603,6 +8603,7 @@ function pokerStartGame(room) {
     p.winner       = false;
     p.isSmallBlind = false;
     p.isBigBlind   = false;
+    p.hasActed     = false;
   }
 
   const activePlayers = room.players.filter(p => p && p.stack > 0);
@@ -8640,7 +8641,7 @@ function pokerAdvancePhase(room) {
   if (room.turnTimer) clearTimeout(room.turnTimer);
 
   for (const p of room.players) {
-    if (p) p.currentBet = 0;
+    if (p) { p.currentBet = 0; p.hasActed = false; }
   }
 
   switch (room.phase) {
@@ -8710,16 +8711,27 @@ function pokerProcessAction(room, socketId, { action, amount }) {
       player.currentBet += extra;
       room.pot          += extra;
       if (player.stack === 0) player.allIn = true;
+      // Les autres doivent réagir à la relance
+      for (const p of room.players) {
+        if (p && p !== player && !p.folded && !p.allIn && p.stack > 0) p.hasActed = false;
+      }
       io.to(room.code).emit('poker:actionResult', { action: 'raise', player: player.name, amount: extra });
       break;
     }
 
     case 'allin': {
       const all = player.stack;
+      const prevBet = player.currentBet;
       player.stack       = 0;
       player.currentBet += all;
       room.pot          += all;
       player.allIn       = true;
+      // Si le all-in est une relance effective, les autres doivent réagir
+      if (player.currentBet > pokerHighestBet(room) - all) {
+        for (const p of room.players) {
+          if (p && p !== player && !p.folded && !p.allIn && p.stack > 0) p.hasActed = false;
+        }
+      }
       io.to(room.code).emit('poker:actionResult', { action: 'allin', player: player.name, amount: all });
       break;
     }
@@ -8727,33 +8739,31 @@ function pokerProcessAction(room, socketId, { action, amount }) {
     default: return;
   }
 
+  // Marque le joueur comme ayant agi
+  player.hasActed = true;
+
   io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
 
   const active = pokerActivePlayers(room);
   if (active.length <= 1) { pokerResolvePot(room); return; }
 
-  // Passe au prochain joueur actif
+  // Passe au prochain joueur actif (non folded, non allIn, avec stack)
   room.currentPlayer = pokerNextActive(room, pIdx);
 
-  // La phase avance si : plus personne ne peut agir OU tout le monde a mis la même mise
   if (room.currentPlayer < 0) {
+    // Plus personne ne peut agir
     pokerAdvancePhase(room); return;
   }
 
-  const maxBet     = pokerHighestBet(room);
-  const canAct     = pokerCanAct(room);
-  // "Tout le monde a parlé" = tous les joueurs pouvant agir ont une mise égale au max ET
-  // le prochain joueur à agir est celui qui a mis la BB (tour complet bouclé en preflop)
-  // On vérifie simplement : le joueur suivant doit-il encore agir ?
-  const nextPlayer = room.players[room.currentPlayer];
-  const nextMustAct = nextPlayer && !nextPlayer.folded && !nextPlayer.allIn
-    && nextPlayer.stack > 0
-    && nextPlayer.currentBet < maxBet;
+  const maxBet = pokerHighestBet(room);
+  const canAct = pokerCanAct(room); // joueurs non foldés, non allIn, avec stack
 
-  const anyoneUncalled = canAct.some(p => p.currentBet < maxBet);
+  // La phase avance quand :
+  // 1. Tous les joueurs pouvant agir ont agi (hasActed = true)
+  // 2. ET tous ont la même mise (currentBet === maxBet)
+  const allActedAndEqual = canAct.every(p => p.hasActed && p.currentBet === maxBet);
 
-  if (!anyoneUncalled && canAct.length > 0) {
-    // Tout le monde a suivi/checké — on passe à la phase suivante
+  if (allActedAndEqual) {
     pokerAdvancePhase(room);
   } else {
     pokerScheduleTurn(room);
