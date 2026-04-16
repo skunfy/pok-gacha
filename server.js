@@ -8534,10 +8534,16 @@ function pokerPostBlind(room, idx, amount, type) {
 }
 
 async function pokerUpdateChipsDB(room) {
+  // Appelé UNIQUEMENT à la fin de la partie (pokerEndGame) ou au leave individuel
+  // Le buy-in a déjà été déduit à l'entrée — on rend le stack restant
   for (const p of room.players) {
-    if (!p) continue;
+    if (!p || p.stack <= 0) continue;
     try {
-      await pool.query('UPDATE users SET poker_chips=$1 WHERE id=$2', [p.stack, p.userId]);
+      await pool.query(
+        'UPDATE users SET poker_chips = poker_chips + $1 WHERE id = $2',
+        [p.stack, p.userId]
+      );
+      p.stack = 0; // Marque comme remboursé pour éviter double-paiement
     } catch(e) { console.error('Poker chip sync error:', e.message); }
   }
 }
@@ -8805,7 +8811,7 @@ function pokerResolvePot(room) {
     hands: Object.values(handResults),
   });
 
-  pokerUpdateChipsDB(room);
+  // PAS de sync DB ici — les jetons restent dans la room jusqu'à fin de partie ou leave
   room.pot   = 0;
   room.phase = 'waiting_next';
 
@@ -8829,13 +8835,14 @@ async function pokerHandleLeave(socket, code) {
   const player = room.players[pIdx];
   const name   = player.name;
 
-  // Rembourser les jetons restants
+  // Rembourser les jetons restants (buy-in déjà déduit à l'entrée)
   if (player.stack > 0) {
     try {
       await pool.query(
         'UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2',
         [player.stack, player.userId]
       );
+      player.stack = 0; // Évite double-remboursement
     } catch(e) { console.error('Poker refund error:', e.message); }
   }
 
