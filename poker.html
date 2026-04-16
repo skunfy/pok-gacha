@@ -241,8 +241,8 @@
 
     .pokerTable {
       position: relative;
-      width: min(1060px, 96vw);
-      height: min(580px, 60vw);
+      width: min(1200px, 98vw);
+      height: min(650px, 64vw);
     }
 
     /* Felt surface */
@@ -286,7 +286,7 @@
 
     /* ---- Cards PNG (ratio 242x348) ---- */
     .card {
-      width: 66px; height: 94px;
+      width: 78px; height: 112px;
       border-radius: 6px;
       border: none;
       background: #fff center/contain no-repeat;
@@ -310,11 +310,11 @@
       border: 2px dashed rgba(255,255,255,.15);
     }
     /* Cartes du hero plus grandes */
-    .myCardsAction .card { width: 78px; height: 112px; }
+    .myCardsAction .card { width: 98px; height: 140px; }
 
     /* Hole cards (small for opponents) */
     .card.sm {
-      width: 46px; height: 64px; border-radius: 5px;
+      width: 54px; height: 76px; border-radius: 5px;
     }
     .card.sm .card-rank { font-size: 12px; top: 3px; left: 3px; }
     .card.sm .card-suit { font-size: 16px; }
@@ -466,7 +466,8 @@
       letter-spacing: 2px; pointer-events: none;
     }
 
-    .myCards { display: flex; gap: 8px; margin-right: 10px; }
+    .myCards { display: flex; gap: 10px; margin-right: 14px; }
+    .myCards .card { width: 82px; height: 118px; box-shadow: 0 6px 24px rgba(0,0,0,.7); }
 
     .actionBtns { display: flex; gap: 10px; flex: 1; justify-content: center; flex-wrap: wrap; align-items: center; }
 
