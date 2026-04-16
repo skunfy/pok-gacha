@@ -236,8 +236,8 @@
 
     .pokerTable {
       position: relative;
-      width: min(820px, 96vw);
-      height: min(460px, 56vw);
+      width: min(1060px, 96vw);
+      height: min(580px, 60vw);
     }
 
     /* Felt surface */
@@ -260,33 +260,33 @@
     }
 
     .communityCards {
-      display: flex; gap: 6px; align-items: center;
+      display: flex; gap: 8px; align-items: center;
     }
 
     .pot {
       font-family: 'Cinzel', serif;
-      font-size: 13px; font-weight: 700;
+      font-size: 15px; font-weight: 700;
       color: var(--gold);
-      background: rgba(0,0,0,.45);
-      border: 1px solid rgba(255,208,77,.25);
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,208,77,.3);
       border-radius: 999px;
-      padding: 5px 16px;
+      padding: 6px 20px;
       white-space: nowrap;
     }
 
     .phaseLabel {
-      font-size: 11px; letter-spacing: 2px; opacity: .55;
+      font-size: 12px; letter-spacing: 2px; opacity: .55;
       text-transform: uppercase;
     }
 
     /* ---- Cards PNG (ratio 242x348) ---- */
     .card {
-      width: 52px; height: 74px;
-      border-radius: 5px;
+      width: 66px; height: 94px;
+      border-radius: 6px;
       border: none;
       background: #fff center/contain no-repeat;
       display: block;
-      box-shadow: 0 4px 16px rgba(0,0,0,.5);
+      box-shadow: 0 4px 18px rgba(0,0,0,.55);
       position: relative;
       flex-shrink: 0;
       transition: transform .2s ease;
@@ -305,15 +305,15 @@
       border: 2px dashed rgba(255,255,255,.15);
     }
     /* Cartes du hero plus grandes */
-    .myCardsAction .card { width: 62px; height: 88px; }
+    .myCardsAction .card { width: 78px; height: 112px; }
 
     /* Hole cards (small for opponents) */
     .card.sm {
-      width: 36px; height: 50px; border-radius: 5px;
+      width: 46px; height: 64px; border-radius: 5px;
     }
-    .card.sm .card-rank { font-size: 10px; top: 3px; left: 3px; }
-    .card.sm .card-suit { font-size: 14px; }
-    .card.sm .card-rank-bot { font-size: 10px; bottom: 3px; right: 3px; }
+    .card.sm .card-rank { font-size: 12px; top: 3px; left: 3px; }
+    .card.sm .card-suit { font-size: 16px; }
+    .card.sm .card-rank-bot { font-size: 12px; bottom: 3px; right: 3px; }
 
     /* ---- Player Seats ---- */
     .seat {
@@ -337,12 +337,12 @@
     .seat[data-pos="5"] { bottom: 0%; right: 10%; }
 
     .seatInfo {
-      background: rgba(0,0,0,.7);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 12px;
-      padding: 6px 12px;
-      display: flex; align-items: center; gap: 8px;
-      min-width: 120px; justify-content: center;
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 8px 16px;
+      display: flex; align-items: center; gap: 10px;
+      min-width: 148px; justify-content: center;
       backdrop-filter: blur(8px);
       transition: border-color .2s, box-shadow .2s;
     }
@@ -363,11 +363,11 @@
     }
 
     .seatAvatar {
-      width: 36px; height: 36px; border-radius: 50%;
+      width: 46px; height: 46px; border-radius: 50%;
       background: rgba(255,255,255,.1) center/cover no-repeat;
       flex-shrink: 0;
-      border: 2px solid rgba(255,255,255,.2);
-      box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      border: 2px solid rgba(255,255,255,.25);
+      box-shadow: 0 2px 10px rgba(0,0,0,.5);
       overflow: hidden;
       position: relative;
     }
@@ -383,12 +383,12 @@
     }
 
     .seatName {
-      font-size: 13px; font-weight: 700;
-      max-width: 80px; overflow: hidden;
+      font-size: 15px; font-weight: 700;
+      max-width: 100px; overflow: hidden;
       text-overflow: ellipsis; white-space: nowrap;
     }
     .seatStack {
-      font-size: 12px; color: #4ade80; font-weight: 600;
+      font-size: 13px; color: #4ade80; font-weight: 600;
     }
 
     .seatEmpty {
@@ -444,82 +444,125 @@
     /* ---- Action Bar ---- */
     .actionBar {
       flex-shrink: 0;
-      padding: 12px 16px;
-      background: rgba(0,0,0,.5);
-      border-top: 1px solid rgba(255,255,255,.06);
-      display: flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      background: rgba(0,0,0,.6);
+      border-top: 1px solid rgba(255,208,77,.12);
+      display: flex; align-items: center; gap: 12px;
       z-index: 10;
     }
     .actionBar.hidden { display: none; }
 
-    .myCards { display: flex; gap: 6px; margin-right: 8px; }
+    .myCards { display: flex; gap: 8px; margin-right: 10px; }
 
-    .actionBtns { display: flex; gap: 8px; flex: 1; justify-content: center; flex-wrap: wrap; }
+    .actionBtns { display: flex; gap: 10px; flex: 1; justify-content: center; flex-wrap: wrap; align-items: center; }
 
+    /* actBtn base styles moved to premium section below */
+
+    /* ---- Boutons d'action premium dorés/noirs ---- */
     .actBtn {
-      padding: 10px 20px; border-radius: 12px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 15px; font-weight: 800; letter-spacing: .5px;
-      cursor: pointer; border: none;
-      transition: transform .12s, background .12s;
-      min-width: 90px;
+      position: relative;
+      padding: 0 22px;
+      height: 52px;
+      border-radius: 10px;
+      font-family: 'Cinzel', serif;
+      font-size: 14px; font-weight: 700; letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s, filter .12s;
+      border: none;
+      min-width: 100px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 2px;
+      text-transform: uppercase;
+      overflow: hidden;
     }
+    .actBtn::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 10px;
+      opacity: 0;
+      transition: opacity .15s;
+      background: rgba(255,255,255,.1);
+    }
+    .actBtn:hover::before { opacity: 1; }
     .actBtn:hover { transform: translateY(-2px); }
-    .actBtn:active { transform: scale(.97); }
-    .actBtn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .actBtn:active { transform: scale(.97) translateY(0); }
+    .actBtn:disabled { opacity: .38; cursor: not-allowed; transform: none; filter: grayscale(.4); }
 
     .actBtn--fold {
-      background: url('/poker/png/button_fold.png') center/contain no-repeat;
-      color: transparent; min-width: 90px; height: 46px;
+      background: linear-gradient(160deg, #1a0505 0%, #2e0a0a 50%, #1a0505 100%);
+      border: 1px solid rgba(220,60,60,.55);
+      color: #ff7070;
+      box-shadow: 0 4px 20px rgba(200,30,30,.25), inset 0 1px 0 rgba(255,100,100,.15);
     }
+    .actBtn--fold:hover { box-shadow: 0 6px 28px rgba(200,30,30,.4), inset 0 1px 0 rgba(255,100,100,.2); }
+
     .actBtn--check {
-      background: url('/poker/png/button_check.png') center/contain no-repeat;
-      color: transparent; min-width: 90px; height: 46px;
+      background: linear-gradient(160deg, #05150d 0%, #0a2616 50%, #05150d 100%);
+      border: 1px solid rgba(42,157,92,.5);
+      color: #4ade80;
+      box-shadow: 0 4px 20px rgba(42,157,92,.2), inset 0 1px 0 rgba(74,222,128,.12);
     }
+    .actBtn--check:hover { box-shadow: 0 6px 28px rgba(42,157,92,.35), inset 0 1px 0 rgba(74,222,128,.2); }
+
     .actBtn--call {
-      background: url('/poker/png/button_call.png') center/contain no-repeat;
-      color: transparent; min-width: 90px; height: 46px;
+      background: linear-gradient(160deg, #0d1a05 0%, #172b06 50%, #0d1a05 100%);
+      border: 1px solid rgba(120,200,50,.55);
+      color: #a8e060;
+      box-shadow: 0 4px 20px rgba(100,180,30,.22), inset 0 1px 0 rgba(140,220,60,.12);
     }
+    .actBtn--call:hover { box-shadow: 0 6px 28px rgba(100,180,30,.38), inset 0 1px 0 rgba(140,220,60,.2); }
+
     .actBtn--raise {
-      background: url('/poker/png/button_raise.png') center/contain no-repeat;
-      color: transparent; min-width: 90px; height: 46px;
+      background: linear-gradient(160deg, #1a1000 0%, #2e1c00 50%, #1a1000 100%);
+      border: 1px solid rgba(255,180,30,.6);
+      color: #ffd04d;
+      box-shadow: 0 4px 20px rgba(255,150,0,.28), inset 0 1px 0 rgba(255,208,77,.2);
     }
+    .actBtn--raise:hover { box-shadow: 0 6px 28px rgba(255,150,0,.45), inset 0 1px 0 rgba(255,208,77,.3); }
+
     .actBtn--allin {
-      background: url('/poker/png/button_check-fold.png') center/contain no-repeat;
-      color: transparent; min-width: 90px; height: 46px;
+      background: linear-gradient(160deg, #0d0516 0%, #180830 50%, #0d0516 100%);
+      border: 1px solid rgba(180,100,255,.6);
+      color: #c084fc;
+      box-shadow: 0 4px 20px rgba(140,60,220,.28), inset 0 1px 0 rgba(192,132,252,.15);
     }
-    /* Texte overlay sur les boutons PNG */
-    .actBtn { position: relative; }
+    .actBtn--allin:hover { box-shadow: 0 6px 28px rgba(140,60,220,.45), inset 0 1px 0 rgba(192,132,252,.25); }
+
     .actBtn .btnLabel {
-      position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       flex-direction: column;
-      font-size: 13px; font-weight: 900; color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,.8);
+      font-size: 14px; font-weight: 700;
       pointer-events: none;
     }
-    .actBtn .btnLabel .btnSub {
-      font-size: 11px; opacity: .85; font-weight: 700;
+    .actBtn .btnSub {
+      font-size: 11px; opacity: .8; font-weight: 600; font-family: 'Rajdhani', sans-serif; letter-spacing: .5px;
     }
 
     .raiseControls {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,208,77,.06);
+      border: 1px solid rgba(255,208,77,.15);
+      border-radius: 10px;
+      padding: 6px 14px;
     }
     .raiseSlider {
       -webkit-appearance: none;
-      width: 140px; height: 4px;
-      border-radius: 2px;
-      background: rgba(255,255,255,.15);
+      width: 160px; height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,.18);
       outline: none;
     }
     .raiseSlider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px; height: 16px; border-radius: 999px;
-      background: var(--gold); cursor: pointer;
+      width: 18px; height: 18px; border-radius: 999px;
+      background: linear-gradient(135deg, #ffd04d, #ff9500);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(255,150,0,.5);
     }
     .raiseAmount {
       font-size: 14px; font-weight: 700; color: var(--gold);
-      min-width: 60px; text-align: center;
+      min-width: 70px; text-align: center;
+      font-family: 'Cinzel', serif;
     }
 
     /* ---- Waiting overlay ---- */
@@ -651,6 +694,46 @@
       padding: 0 10px; background: rgba(255,208,77,.12);
       border: none; border-left: 1px solid rgba(255,255,255,.08);
       color: var(--gold); cursor: pointer; font-size: 14px;
+    }
+
+    /* ---- Bannière "À toi de jouer" ---- */
+    .yourTurnBanner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.7);
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .25s, transform .3s cubic-bezier(.2,.9,.3,1.2);
+    }
+    .yourTurnBanner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .yourTurnBanner.hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.15);
+      transition: opacity .4s ease, transform .4s ease;
+    }
+    .yourTurnInner {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(22px, 3.5vw, 38px);
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, #ffd04d, #ff9500, #ffd04d);
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2s linear infinite;
+      padding: 18px 40px;
+      border: 2px solid rgba(255,208,77,.5);
+      border-radius: 16px;
+      background-color: rgba(0,0,0,.82);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 60px rgba(255,150,0,.35), 0 20px 60px rgba(0,0,0,.8);
+      white-space: nowrap;
+      text-shadow: none;
     }
 
     /* ---- Toast ---- */
@@ -848,23 +931,24 @@
   <div class="actionBar hidden" id="actionBar">
     <div class="myCards" id="myCardsDisplay"></div>
     <div class="actionBtns">
-      <button class="actBtn actBtn--fold" id="btnFold">FOLD</button>
-      <button class="actBtn actBtn--check" id="btnCheck"><span class="btnLabel">CHECK</span></button>
-      <button class="actBtn actBtn--call" id="btnCall">CALL <span id="callAmt"></span></button>
+      <button class="actBtn actBtn--fold" id="btnFold">SE COUCHER</button>
+      <button class="actBtn actBtn--check" id="btnCheck">CHECK</button>
+      <button class="actBtn actBtn--call" id="btnCall">SUIVRE <span id="callAmt" style="font-size:11px;font-family:Rajdhani,sans-serif;opacity:.85;"></span></button>
       <div class="raiseControls">
         <input class="raiseSlider" id="raiseSlider" type="range" min="0" max="1000" value="200"/>
         <div class="raiseAmount" id="raiseDisplay">200 🪙</div>
-        <button class="actBtn actBtn--raise" id="btnRaise">
-        <span class="btnLabel">RAISE</span>
-      </button>
+        <button class="actBtn actBtn--raise" id="btnRaise">RELANCER</button>
       </div>
-      <button class="actBtn actBtn--allin" id="btnAllIn">
-        <span class="btnLabel">ALL IN</span>
-      </button>
+      <button class="actBtn actBtn--allin" id="btnAllIn">ALL IN</button>
     </div>
   </div>
 
 </div><!-- /gameScreen -->
+
+<!-- Bannière "À toi de jouer" -->
+<div class="yourTurnBanner" id="yourTurnBanner">
+  <div class="yourTurnInner">♠ À TOI DE JOUER ♠</div>
+</div>
 
 <script>
 // ======================================================
@@ -885,6 +969,7 @@ let myBet = 0;
 let currentBet = 0; // highest bet on table
 let myTurn = false;
 let myHoleCards = [];
+let myAvatar = '';
 
 // ---- UI helpers ----
 function showScreen(id) {
@@ -954,7 +1039,8 @@ async function loadMe() {
     const r = await fetch('/api/me', { headers:{ Authorization:'Bearer '+token } });
     const d = await r.json();
     myId = d.id;
-    myAvatar = d.avatar || '';
+    // Avatar Gachax : priorité à avatar_url, puis avatar, puis construit depuis username
+    myAvatar = d.avatar_url || d.avatar || (d.username ? `/avatars/${d.username}.png` : '');
     document.getElementById('lobbyDollax').textContent = fmtN(d.money);
     document.getElementById('lobbyChips').textContent = fmtN(d.poker_chips || 0);
   } catch(e) {
@@ -1039,6 +1125,7 @@ function initSocket() {
     myStack = stack;
     setupActionBar(callAmount, minRaise, stack);
     startTurnTimer(timeLimit);
+    showYourTurnBanner();
     toast('À toi de jouer !', 'gold');
   });
 
@@ -1230,6 +1317,18 @@ function setupActionBar(callAmount, minRaise, stack) {
 
   document.getElementById('btnRaise').disabled = stack < minRaise;
   document.getElementById('btnAllIn').disabled = stack <= 0;
+}
+
+// ---- "Your Turn" banner ----
+function showYourTurnBanner() {
+  const banner = document.getElementById('yourTurnBanner');
+  banner.classList.remove('hide');
+  banner.classList.add('show');
+  setTimeout(() => {
+    banner.classList.remove('show');
+    banner.classList.add('hide');
+    setTimeout(() => banner.classList.remove('hide'), 500);
+  }, 2200);
 }
 
 function disableActions() {
