@@ -8478,6 +8478,7 @@ function pokerPublicState(room) {
     players: room.players.map(p => p ? {
       socketId: p.socketId,
       name: p.name,
+      avatar: p.avatar || '',
       stack: p.stack,
       currentBet: p.currentBet,
       folded: p.folded,
@@ -8770,7 +8771,7 @@ function pokerResolvePot(room) {
     const all7   = [...p.holeCards, ...room.community];
     const result = pokerEvaluateHand(all7);
     handResults[p.socketId] = {
-      socketId: p.socketId, name: p.name,
+      socketId: p.socketId, name: p.name, avatar: p.avatar || '',
       cards: p.holeCards, hand: result.name, score: result.score,
     };
   }
@@ -8786,6 +8787,7 @@ function pokerResolvePot(room) {
     winners: winners.map(w => ({
       socketId: w.socketId,
       name:     w.name,
+      avatar:   w.avatar || '',
       hand:     handResults[w.socketId]?.name,
       amount:   share,
     })),
@@ -8868,12 +8870,13 @@ io.use(async (socket, next) => {
   if (!token) return next(new Error('Non authentifié'));
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, poker_chips FROM users WHERE token=$1', [token]
+      'SELECT id, name, poker_chips, avatar FROM users WHERE token=$1', [token]
     );
     if (!rows[0]) return next(new Error('Token invalide'));
     socket.userId   = rows[0].id;
     socket.userName = rows[0].name;
     socket.userChips = rows[0].poker_chips || 0;
+    socket.userAvatar = rows[0].avatar || '';
     next();
   } catch(e) {
     next(new Error('Erreur auth: ' + e.message));
@@ -8910,6 +8913,7 @@ io.on('connection', (socket) => {
         phase: 'waiting',
         players: [{
           socketId: socket.id, userId: socket.userId, name: socket.userName,
+          avatar: socket.userAvatar || '',
           stack: buyin, holeCards: [], currentBet: 0,
           folded: false, allIn: false, hasCards: false,
           isSmallBlind: false, isBigBlind: false, winner: false,
@@ -8953,6 +8957,7 @@ io.on('connection', (socket) => {
 
       room.players.push({
         socketId: socket.id, userId: socket.userId, name: socket.userName,
+        avatar: socket.userAvatar || '',
         stack: buyin, holeCards: [], currentBet: 0,
         folded: false, allIn: false, hasCards: false,
         isSmallBlind: false, isBigBlind: false, winner: false,

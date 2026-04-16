@@ -178,7 +178,12 @@
     /* ====== GAME SCREEN ====== */
     #gameScreen {
       flex-direction: column;
-      background: url('/poker/png/Dark-level-for-background.png') center/cover no-repeat, #05060d;
+      background:
+        radial-gradient(ellipse 900px 500px at 15% 20%, rgba(60,100,255,.13), transparent 60%),
+        radial-gradient(ellipse 800px 500px at 85% 70%, rgba(180,60,220,.10), transparent 60%),
+        radial-gradient(ellipse 600px 400px at 50% 100%, rgba(255,130,0,.07), transparent 55%),
+        url('/poker/png/Dark-level-for-background.png') center/cover no-repeat,
+        linear-gradient(160deg, #05060d 0%, #090b18 50%, #06080f 100%);
       overflow: hidden; position: relative;
     }
 
@@ -449,8 +454,17 @@
       border-top: 1px solid rgba(255,208,77,.12);
       display: flex; align-items: center; gap: 12px;
       z-index: 10;
+      position: relative;
     }
     .actionBar.hidden { display: none; }
+    .actionBar.waiting .actBtn { opacity: .28; cursor: not-allowed; pointer-events: none; filter: grayscale(.6); }
+    .actionBar.waiting .raiseSlider { opacity: .28; pointer-events: none; }
+    .actionBar.waiting::after {
+      content: 'En attente de votre tour...';
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      font-family: 'Cinzel', serif; font-size: 13px; color: rgba(255,208,77,.4);
+      letter-spacing: 2px; pointer-events: none;
+    }
 
     .myCards { display: flex; gap: 8px; margin-right: 10px; }
 
@@ -614,41 +628,100 @@
     .btnStart.show { display: block; }
     .btnStart:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+    /* ---- Showdown reveal overlay ---- */
+    .showdownOverlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,.72);
+      display: none; align-items: center; justify-content: center;
+      z-index: 55; backdrop-filter: blur(6px);
+      animation: fadeIn .35s ease both;
+    }
+    .showdownOverlay.show { display: flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .showdownCards {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      padding: 24px 32px;
+      background: linear-gradient(145deg, rgba(14,15,30,.95), rgba(20,22,40,.95));
+      border: 1px solid rgba(255,208,77,.2);
+      border-radius: 20px;
+      box-shadow: 0 40px 100px rgba(0,0,0,.8);
+      flex-direction: column; align-items: center; gap: 18px;
+    }
+    .showdownCards h3 {
+      font-family: 'Cinzel', serif; font-size: 20px; font-weight: 900;
+      color: var(--gold); letter-spacing: 3px; text-align: center;
+    }
+    .showdownPlayers { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .showdownPlayer {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 14px;
+      min-width: 120px;
+    }
+    .showdownPlayer.winner {
+      border-color: rgba(74,222,128,.5);
+      background: rgba(74,222,128,.06);
+      box-shadow: 0 0 30px rgba(74,222,128,.2);
+    }
+    .showdownPlayerAvatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      object-fit: cover; border: 2px solid rgba(255,255,255,.2);
+    }
+    .showdownPlayerName { font-size: 13px; font-weight: 700; }
+    .showdownPlayerHand { font-size: 11px; color: var(--gold); opacity: .85; letter-spacing: .5px; }
+    .showdownPlayerCards { display: flex; gap: 4px; }
+
     /* ---- Result popup ---- */
     .resultPopup {
       position: absolute;
       left: 50%; top: 50%;
-      transform: translate(-50%,-50%) scale(.8);
+      transform: translate(-50%,-50%) scale(.85);
       background: linear-gradient(145deg,#0e0f1e,#141628);
-      border: 1px solid rgba(255,208,77,.3);
-      border-radius: 22px;
-      padding: 28px 36px;
+      border: 1px solid rgba(255,208,77,.35);
+      border-radius: 24px;
+      padding: 32px 40px;
       text-align: center;
-      z-index: 60;
-      min-width: 260px;
+      z-index: 65;
+      min-width: 300px;
       display: none;
-      box-shadow: 0 40px 100px rgba(0,0,0,.8);
-      animation: popIn .3s cubic-bezier(.2,.9,.3,1) both;
+      box-shadow: 0 40px 100px rgba(0,0,0,.85);
     }
     @keyframes popIn {
-      from { opacity:0; transform:translate(-50%,-50%) scale(.8); }
+      from { opacity:0; transform:translate(-50%,-50%) scale(.7); }
       to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
     }
-    .resultPopup.show { display: block; }
-    .resultPopup h2 { font-family:'Cinzel',serif; font-size:22px; margin-bottom:8px; }
+    .resultPopup.show { display: block; animation: popIn .4s cubic-bezier(.2,.9,.3,1.1) both; }
+
+    .resultWinnerAvatar {
+      width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+      border: 3px solid rgba(74,222,128,.6);
+      box-shadow: 0 0 30px rgba(74,222,128,.3);
+      margin: 0 auto 12px;
+      display: block;
+    }
+    .resultPopup h2 { font-family:'Cinzel',serif; font-size:24px; margin-bottom:6px; }
     .resultPopup.win h2 { color: #4ade80; }
     .resultPopup.lose h2 { color: #f87171; }
-    .resultPopup .handName { font-size:14px; opacity:.7; margin-bottom:12px; }
-    .resultPopup .resultAmt { font-size:28px; font-weight:900; font-family:'Cinzel',serif; }
+    .resultWinnerName { font-size: 16px; font-weight: 700; opacity: .9; margin-bottom: 6px; }
+    .resultPopup .handName {
+      font-size:15px; color: var(--gold); font-family: 'Cinzel', serif;
+      margin-bottom:12px; letter-spacing: 1px;
+    }
+    .resultPopup .resultAmt { font-size:30px; font-weight:900; font-family:'Cinzel',serif; }
     .resultPopup.win .resultAmt { color: #4ade80; }
     .resultPopup.lose .resultAmt { color: #f87171; }
     .resultPopup .btnContinue {
-      margin-top:16px; padding:10px 24px; border-radius:12px;
+      margin-top:18px; padding:12px 28px; border-radius:12px;
       background:linear-gradient(135deg,#ffd04d,#ff9500);
       border:none; cursor:pointer;
-      font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:800;
-      color:#1a0a00;
+      font-family:'Cinzel',sans-serif; font-size:14px; font-weight:800;
+      color:#1a0a00; letter-spacing: 1px;
+      transition: transform .12s;
     }
+    .resultPopup .btnContinue:hover { transform: translateY(-2px); }
 
     /* ---- Chat ---- */
     .chatPanel {
@@ -903,12 +976,22 @@
         <button class="btnStart" id="btnStart">▶ Lancer la partie</button>
       </div>
 
-      <!-- Result popup -->
+      <!-- Showdown overlay (révélation des cartes) -->
+      <div class="showdownOverlay" id="showdownOverlay">
+        <div class="showdownCards">
+          <h3>♠ ABATTAGE ♠</h3>
+          <div class="showdownPlayers" id="showdownPlayers"></div>
+        </div>
+      </div>
+
+      <!-- Result popup (gagnant) -->
       <div class="resultPopup" id="resultPopup">
+        <img class="resultWinnerAvatar" id="resultWinnerAvatar" src="" alt=""/>
         <h2 id="resultTitle"></h2>
+        <div class="resultWinnerName" id="resultWinnerName"></div>
         <div class="handName" id="resultHand"></div>
         <div class="resultAmt" id="resultAmt"></div>
-        <button class="btnContinue" id="btnContinue">Continuer</button>
+        <button class="btnContinue" id="btnContinue">Continuer ▶</button>
       </div>
 
     </div><!-- /pokerTable -->
@@ -927,8 +1010,8 @@
 
   </div><!-- /tableArea -->
 
-  <!-- Action Bar -->
-  <div class="actionBar hidden" id="actionBar">
+  <!-- Action Bar (toujours visible, désactivée en attente) -->
+  <div class="actionBar waiting" id="actionBar">
     <div class="myCards" id="myCardsDisplay"></div>
     <div class="actionBtns">
       <button class="actBtn actBtn--fold" id="btnFold">SE COUCHER</button>
@@ -1110,6 +1193,8 @@ function initSocket() {
   // --- Game events ---
   socket.on('poker:gameStarted', ({ state }) => {
     document.getElementById('waitOverlay').classList.add('hidden');
+    document.getElementById('showdownOverlay').classList.remove('show');
+    document.getElementById('resultPopup').classList.remove('show');
     _prevCommLen = 0;
     applyState(state);
     toast('La partie commence !', 'gold');
@@ -1196,9 +1281,11 @@ function applyState(state) {
     document.getElementById('hudChips').textContent = fmtN(me.stack);
   }
 
-  // Show/hide action bar based on whose turn it is
+  // Barre d'action : toujours visible, en mode "waiting" si c'est pas mon tour
   if (!myTurn) {
-    document.getElementById('actionBar').classList.add('hidden');
+    const bar = document.getElementById('actionBar');
+    bar.classList.add('waiting');
+    bar.querySelectorAll('.actBtn').forEach(b => b.disabled = true);
   }
 }
 
@@ -1286,7 +1373,7 @@ function renderMyCards(cards) {
 // ---- Action bar ----
 function setupActionBar(callAmount, minRaise, stack) {
   const bar = document.getElementById('actionBar');
-  bar.classList.remove('hidden');
+  bar.classList.remove('waiting');
 
   // Call button
   const btnCall = document.getElementById('btnCall');
@@ -1333,7 +1420,10 @@ function showYourTurnBanner() {
 
 function disableActions() {
   myTurn = false;
-  document.getElementById('actionBar').classList.add('hidden');
+  const bar = document.getElementById('actionBar');
+  bar.classList.add('waiting');
+  // disable all buttons
+  bar.querySelectorAll('.actBtn').forEach(b => b.disabled = true);
   const tb = document.getElementById('timerBar');
   if (tb) tb.style.transform = 'scaleX(0)';
 }
@@ -1359,31 +1449,65 @@ function startTurnTimer(seconds) {
   }, 1000);
 }
 
-// ---- Round end ----
+// ---- Round end with showdown ----
 function handleRoundEnd(winners, pot, hands, newStacks) {
-  const popup = document.getElementById('resultPopup');
-  const isWinner = winners.some(w => w.socketId === mySocketId);
-  const myWinData = winners.find(w => w.socketId === mySocketId);
-
-  popup.className = 'resultPopup show ' + (isWinner ? 'win' : 'lose');
-  document.getElementById('resultTitle').textContent = isWinner ? '🏆 Victoire !' : '💸 Défaite';
-
-  if (isWinner) {
-    document.getElementById('resultHand').textContent = myWinData?.hand || '';
-    document.getElementById('resultAmt').textContent = '+' + fmtN(myWinData?.amount) + ' 🪙';
-  } else {
-    document.getElementById('resultHand').textContent = 'Meilleure main : ' + (winners[0]?.hand || '');
-    document.getElementById('resultAmt').textContent = '−' + fmtN(pot) + ' 🪙';
-  }
-
   disableActions();
   myHoleCards = [];
 
-  // Show opponent cards
-  if (hands) {
-    hands.forEach(({ socketId, cards, name }) => {
-      // Update seat visuals with revealed cards
-    });
+  // 1. Afficher l'overlay showdown avec les cartes de tous
+  const showdownEl = document.getElementById('showdownOverlay');
+  const showdownPlayers = document.getElementById('showdownPlayers');
+
+  if (hands && hands.length > 0) {
+    showdownEl.classList.add('show');
+    showdownPlayers.innerHTML = hands.map(h => {
+      const isWinner = winners.some(w => w.socketId === h.socketId);
+      const winnerData = winners.find(w => w.socketId === h.socketId);
+      const avatarSrc = h.avatar || gameState.players?.find(p => p && p.socketId === h.socketId)?.avatar || '';
+      const cardsHtml = (h.cards || []).map(c => cardHTML(c)).join('');
+      return `
+        <div class="showdownPlayer${isWinner ? ' winner' : ''}">
+          <img class="showdownPlayerAvatar" src="${avatarSrc || '/poker/png/default_avatar.png'}" onerror="this.src='/poker/png/default_avatar.png'" alt=""/>
+          <div class="showdownPlayerName">${h.name}${isWinner ? ' 🏆' : ''}</div>
+          ${winnerData?.hand ? `<div class="showdownPlayerHand">${winnerData.hand}</div>` : ''}
+          <div class="showdownPlayerCards">${cardsHtml}</div>
+        </div>`;
+    }).join('');
+
+    // 2. Après 2.5s, cacher showdown et afficher popup gagnant
+    setTimeout(() => {
+      showdownEl.classList.remove('show');
+      showWinnerPopup(winners, pot);
+    }, 2500);
+  } else {
+    // Pas de hands révélées (fold), afficher direct le popup
+    showWinnerPopup(winners, pot);
+  }
+}
+
+function showWinnerPopup(winners, pot) {
+  const popup = document.getElementById('resultPopup');
+  const isWinner = winners.some(w => w.socketId === mySocketId);
+  const mainWinner = winners[0];
+
+  const avatarEl = document.getElementById('resultWinnerAvatar');
+  const winnerAvatar = mainWinner?.avatar
+    || gameState.players?.find(p => p && p.socketId === mainWinner?.socketId)?.avatar
+    || '';
+  avatarEl.src = winnerAvatar || '/poker/png/default_avatar.png';
+  avatarEl.onerror = () => { avatarEl.src = '/poker/png/default_avatar.png'; };
+  avatarEl.style.display = 'block';
+
+  popup.className = 'resultPopup show ' + (isWinner ? 'win' : 'lose');
+  document.getElementById('resultTitle').textContent = isWinner ? '🏆 Victoire !' : '💸 Défaite';
+  document.getElementById('resultWinnerName').textContent = mainWinner?.name || '';
+  document.getElementById('resultHand').textContent = mainWinner?.hand || '';
+
+  if (isWinner) {
+    const myWinData = winners.find(w => w.socketId === mySocketId);
+    document.getElementById('resultAmt').textContent = '+' + fmtN(myWinData?.amount) + ' 🪙';
+  } else {
+    document.getElementById('resultAmt').textContent = '−' + fmtN(pot) + ' 🪙';
   }
 }
 
@@ -1465,6 +1589,9 @@ document.getElementById('btnAllIn').addEventListener('click', () => {
 // Continue after round
 document.getElementById('btnContinue').addEventListener('click', () => {
   document.getElementById('resultPopup').classList.remove('show');
+  document.getElementById('showdownOverlay').classList.remove('show');
+  myHoleCards = [];
+  document.getElementById('myCardsDisplay').innerHTML = '';
   socket.emit('poker:ready', { code: currentRoomCode });
 });
 
