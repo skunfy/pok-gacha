@@ -721,8 +721,46 @@
       font-family:'Cinzel',sans-serif; font-size:14px; font-weight:800;
       color:#1a0a00; letter-spacing: 1px;
       transition: transform .12s;
+      display: none; /* caché, remplacé par voteSection */
     }
     .resultPopup .btnContinue:hover { transform: translateY(-2px); }
+
+    /* ---- Vote Rester / Partir ---- */
+    .voteSection { margin-top:16px; display:flex; flex-direction:column; gap:10px; align-items:center; }
+    .voteLabel { font-size:12px; opacity:.6; letter-spacing:1px; text-transform:uppercase; font-family:'Cinzel',serif; }
+    .voteBtns { display:flex; gap:10px; }
+    .btnVoteStay {
+      padding:11px 22px; border-radius:12px;
+      background:linear-gradient(135deg,#2a9d5c,#1a6e3e);
+      border:none; cursor:pointer;
+      font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:800;
+      color:#fff; transition:transform .12s, opacity .12s;
+    }
+    .btnVoteStay:hover { transform:translateY(-2px); }
+    .btnVoteStay:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+    .btnVoteLeave {
+      padding:11px 22px; border-radius:12px;
+      background:rgba(255,80,80,.12); border:1px solid rgba(255,80,80,.35);
+      cursor:pointer; font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:800;
+      color:#ff6b6b; transition:transform .12s, background .12s;
+    }
+    .btnVoteLeave:hover { background:rgba(255,80,80,.22); transform:translateY(-2px); }
+    .btnVoteLeave:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+    .voteProgress { font-size:12px; opacity:.45; }
+    .voteTimerBar { width:180px; height:3px; background:rgba(255,255,255,.10); border-radius:3px; overflow:hidden; }
+    .voteTimerFill { height:100%; background:var(--gold); border-radius:3px; transition:width 1s linear; }
+
+    /* ---- Pending overlay (en attente de la prochaine main) ---- */
+    .pendingOverlay {
+      position:absolute; inset:0;
+      background:rgba(5,6,13,.85);
+      display:none; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:14px; z-index:48; backdrop-filter:blur(3px);
+    }
+    .pendingOverlay.show { display:flex; }
+    .pendingTitle { font-family:'Cinzel',serif; font-size:20px; font-weight:900; color:var(--gold); }
+    .pendingMsg { font-size:13px; opacity:.55; letter-spacing:1px; text-align:center; max-width:260px; line-height:1.5; }
 
     /* ---- Chat ---- */
     .chatPanel {
@@ -992,7 +1030,24 @@
         <div class="resultWinnerName" id="resultWinnerName"></div>
         <div class="handName" id="resultHand"></div>
         <div class="resultAmt" id="resultAmt"></div>
-        <button class="btnContinue" id="btnContinue">Continuer ▶</button>
+        <button class="btnContinue" id="btnContinue" style="display:none">Continuer ▶</button>
+        <!-- Vote rester / partir -->
+        <div class="voteSection" id="voteSection" style="display:none">
+          <div class="voteLabel">Prochaine main ?</div>
+          <div class="voteBtns">
+            <button class="btnVoteStay" id="btnVoteStay">✅ Rester</button>
+            <button class="btnVoteLeave" id="btnVoteLeave">🚪 Partir</button>
+          </div>
+          <div class="voteProgress" id="voteProgress"></div>
+          <div class="voteTimerBar"><div class="voteTimerFill" id="voteTimerFill" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <!-- Pending overlay (en attente pour rejoindre) -->
+      <div class="pendingOverlay" id="pendingOverlay">
+        <div class="pendingTitle">⏳ En attente</div>
+        <div class="pendingMsg">La partie est en cours.<br/>Tu seras intégré à la prochaine main !</div>
+        <div id="pendingWaitPlayers" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px;"></div>
       </div>
 
     </div><!-- /pokerTable -->
@@ -1055,6 +1110,9 @@ let myTurn = false;
 let myHoleCards = [];
 let myAvatar = '';
 let _prevCommLen = 0; // track community cards length for animation
+let myVote = null;      // vote en cours : null | 'stay' | 'leave'
+let voteTimerInterval = null;
+let isPending = false;  // vrai si on attend la prochaine main
 
 // ---- UI helpers ----
 function showScreen(id) {
@@ -1157,17 +1215,28 @@ function initSocket() {
     renderSeats([]);
   });
 
-  socket.on('poker:roomJoined', ({ code, sb, bb, players }) => {
+  socket.on('poker:roomJoined', ({ code, sb, bb, players, pending }) => {
     currentRoomCode = code;
     isCreator = false;
     showScreen('gameScreen');
     document.getElementById('hudRoomCode').textContent = 'Salle : ' + code;
     document.getElementById('hudBlinds').textContent = `Blinds ${sb}/${bb}`;
-    document.getElementById('waitOverlay').classList.remove('hidden');
-    document.getElementById('waitCode').textContent = code;
-    updateWaitPlayers(players);
-    // Hide start button for non-creator
     document.getElementById('btnStart').classList.remove('show');
+
+    if (pending) {
+      // Partie en cours → afficher le pending overlay au lieu du wait overlay
+      isPending = true;
+      document.getElementById('waitOverlay').classList.add('hidden');
+      document.getElementById('pendingOverlay').classList.add('show');
+      updatePendingList(players);
+      toast('Tu rejoindras à la prochaine main 🎴', 'gold');
+    } else {
+      // Partie pas encore commencée
+      isPending = false;
+      document.getElementById('waitOverlay').classList.remove('hidden');
+      document.getElementById('waitCode').textContent = code;
+      updateWaitPlayers(players);
+    }
   });
 
   socket.on('poker:playerJoined', ({ players }) => {
@@ -1194,8 +1263,11 @@ function initSocket() {
   // --- Game events ---
   socket.on('poker:gameStarted', ({ state }) => {
     document.getElementById('waitOverlay').classList.add('hidden');
+    document.getElementById('pendingOverlay').classList.remove('show');
     document.getElementById('showdownOverlay').classList.remove('show');
     document.getElementById('resultPopup').classList.remove('show');
+    clearVote();
+    isPending = false;
     _prevCommLen = 0;
     applyState(state);
     toast('La partie commence !', 'gold');
@@ -1240,9 +1312,45 @@ function initSocket() {
     handleRoundEnd(winners, pot, hands, newStacks);
   });
 
+  // Vote rester / partir
+  socket.on('poker:voteNext', ({ timeoutMs, players }) => {
+    myVote = null;
+    startVote(timeoutMs, players);
+  });
+
+  socket.on('poker:voteUpdate', ({ socketId, name, vote, totalVoted, totalNeeded }) => {
+    const label = vote === 'stay' ? '✅ reste' : '🚪 part';
+    addChatMsg(`${name} ${label}`, true);
+    const prog = document.getElementById('voteProgress');
+    if (prog) prog.textContent = `${totalVoted} / ${totalNeeded} ont voté`;
+  });
+
+  // Prochain round sur le point de démarrer
+  socket.on('poker:nextRoundStarting', ({ inMs }) => {
+    clearVote();
+    document.getElementById('resultPopup').classList.remove('show');
+    const sec = Math.round(inMs / 1000);
+    toast(`Prochaine main dans ${sec}s...`, 'gold');
+  });
+
+  // Ce joueur a voté "partir" et est sorti
+  socket.on('poker:leftByVote', () => {
+    clearVote();
+    toast('Tu as quitté la table. Tes jetons vont être remboursés.', 'info');
+    setTimeout(() => window.location.reload(), 2500);
+  });
+
+  // Joueur en pending qui rejoint
+  socket.on('poker:pendingJoin', ({ name, stack }) => {
+    addChatMsg(`${name} (${fmtN(stack)} 🪙) va rejoindre à la prochaine main`, true);
+    // Mettre à jour la liste affichée dans pending overlay si visible
+    updatePendingList();
+  });
+
   socket.on('poker:gameEnd', ({ reason }) => {
+    clearVote();
     toast('Partie terminée : ' + reason, 'info');
-    setTimeout(() => { window.location.reload(); }, 3000);
+    setTimeout(() => { window.location.reload(); }, 3500);
   });
 
   socket.on('poker:chipUpdate', ({ chips }) => {
@@ -1455,6 +1563,12 @@ function startTurnTimer(seconds) {
 function handleRoundEnd(winners, pot, hands, newStacks) {
   disableActions();
   myHoleCards = [];
+  // Reset vote buttons pour ce round
+  const btnStay  = document.getElementById('btnVoteStay');
+  const btnLeave = document.getElementById('btnVoteLeave');
+  if (btnStay)  { btnStay.disabled = false;  btnStay.textContent  = '✅ Rester'; }
+  if (btnLeave) { btnLeave.disabled = false; btnLeave.textContent = '🚪 Partir'; }
+  document.getElementById('voteSection').style.display = 'none';
 
   // 1. Afficher l'overlay showdown avec les cartes de tous
   const showdownEl = document.getElementById('showdownOverlay');
@@ -1511,6 +1625,57 @@ function showWinnerPopup(winners, pot) {
   } else {
     document.getElementById('resultAmt').textContent = '−' + fmtN(pot) + ' 🪙';
   }
+
+  // Le vote sera affiché via poker:voteNext
+  // On cache le voteSection jusqu'à réception de l'event
+  document.getElementById('voteSection').style.display = 'none';
+}
+
+// ---- Gestion du vote ----
+function startVote(timeoutMs, players) {
+  const section = document.getElementById('voteSection');
+  section.style.display = 'flex';
+  myVote = null;
+
+  const btnStay  = document.getElementById('btnVoteStay');
+  const btnLeave = document.getElementById('btnVoteLeave');
+  btnStay.disabled  = false;
+  btnLeave.disabled = false;
+
+  document.getElementById('voteProgress').textContent = `0 / ${players.length} ont voté`;
+
+  // Timer visuel
+  clearInterval(voteTimerInterval);
+  let elapsed = 0;
+  const fill = document.getElementById('voteTimerFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  // force reflow
+  fill.offsetHeight;
+  fill.style.transition = `width ${timeoutMs}ms linear`;
+  fill.style.width = '0%';
+
+  voteTimerInterval = setInterval(() => {
+    elapsed += 1000;
+    if (elapsed >= timeoutMs) clearInterval(voteTimerInterval);
+  }, 1000);
+}
+
+function clearVote() {
+  clearInterval(voteTimerInterval);
+  voteTimerInterval = null;
+  myVote = null;
+  const section = document.getElementById('voteSection');
+  if (section) section.style.display = 'none';
+}
+
+function updatePendingList(players) {
+  const el = document.getElementById('pendingWaitPlayers');
+  if (!el) return;
+  const list = players || gameState?.players?.filter(p => p) || [];
+  el.innerHTML = list.map(p =>
+    `<div style="padding:4px 12px;border-radius:999px;background:rgba(255,208,77,.08);border:1px solid rgba(255,208,77,.2);font-size:12px;color:var(--gold)">👤 ${p.name} 🪙${fmtN(p.stack)}</div>`
+  ).join('');
 }
 
 // ---- Chat ----
@@ -1588,13 +1753,34 @@ document.getElementById('btnAllIn').addEventListener('click', () => {
   disableActions();
 });
 
-// Continue after round
+// Vote Rester
+document.getElementById('btnVoteStay').addEventListener('click', () => {
+  if (myVote) return; // déjà voté
+  myVote = 'stay';
+  document.getElementById('btnVoteStay').disabled = true;
+  document.getElementById('btnVoteLeave').disabled = true;
+  document.getElementById('btnVoteStay').textContent = '✅ Rester (voté)';
+  socket.emit('poker:voteNext', { code: currentRoomCode, vote: 'stay' });
+  toast('Tu restes à la table 🎴', 'success');
+});
+
+// Vote Partir
+document.getElementById('btnVoteLeave').addEventListener('click', () => {
+  if (myVote) return;
+  myVote = 'leave';
+  document.getElementById('btnVoteStay').disabled = true;
+  document.getElementById('btnVoteLeave').disabled = true;
+  document.getElementById('btnVoteLeave').textContent = '🚪 Partir (voté)';
+  socket.emit('poker:voteNext', { code: currentRoomCode, vote: 'leave' });
+  toast('Tu vas quitter la table...', 'info');
+});
+
+// Continue legacy (caché, gardé pour sécurité)
 document.getElementById('btnContinue').addEventListener('click', () => {
   document.getElementById('resultPopup').classList.remove('show');
   document.getElementById('showdownOverlay').classList.remove('show');
   myHoleCards = [];
   document.getElementById('myCardsDisplay').innerHTML = '';
-  socket.emit('poker:ready', { code: currentRoomCode });
 });
 
 // Chat

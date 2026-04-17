@@ -8624,6 +8624,10 @@ function pokerStartGame(room) {
   room.community = [];
   room.deck      = pokerShuffle(pokerCreateDeck());
   room.readyCount = 0;
+  // Réinitialiser le vote
+  room.voteMap    = new Map();
+  room.voteNeeded = new Set();
+  if (room.voteTimer) { clearTimeout(room.voteTimer); room.voteTimer = null; }
 
   for (const p of room.players) {
     if (!p) continue;
@@ -8821,46 +8825,138 @@ function pokerResolvePot(room) {
   const maxScore = Math.max(...active.map(p => handResults[p.socketId]?.score || 0));
   const winners  = active.filter(p => handResults[p.socketId]?.score === maxScore);
   const share    = Math.floor(room.pot / winners.length);
-  const remainder = room.pot - (share * winners.length); // jetons résiduels (division entière)
+  const remainder = room.pot - (share * winners.length);
 
   for (let i = 0; i < winners.length; i++) {
     const w = winners[i];
-    // Le premier gagnant récupère aussi le reste de la division entière
     w.stack += share + (i === 0 ? remainder : 0);
     w.winner = true;
   }
 
   io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
   io.to(room.code).emit('poker:roundEnd', {
-    winners: winners.map(w => ({
+    winners: winners.map((w, i) => ({
       socketId: w.socketId,
       name:     w.name,
       avatar:   w.avatar || '',
       hand:     handResults[w.socketId]?.name,
-      amount:   share,
+      amount:   share + (i === 0 ? remainder : 0),
     })),
     pot:   room.pot,
     hands: Object.values(handResults),
   });
 
-  // PAS de sync DB ici — les jetons restent dans la room jusqu'à fin de partie ou leave
   room.pot   = 0;
   room.phase = 'waiting_next';
 
-  setTimeout(() => {
-    const stillIn = room.players.filter(p => p && p.stack > 0);
-    if (stillIn.length >= 2) {
-      pokerStartGame(room);
-    } else {
-      pokerEndGame(room, 'Plus assez de joueurs avec des jetons');
+  // === VOTE RESTER / PARTIR ===
+  const seated = room.players.filter(p => p && p.stack > 0);
+  room.voteMap    = new Map();
+  room.voteNeeded = new Set(seated.map(p => p.socketId));
+
+  // Timer de sécurité : 25s max pour voter, sinon tout le monde est considéré "reste"
+  room.voteTimer = setTimeout(() => { pokerHandleVoteResult(room); }, 25000);
+
+  io.to(room.code).emit('poker:voteNext', {
+    timeoutMs: 25000,
+    players: seated.map(p => ({ socketId: p.socketId, name: p.name })),
+  });
+}
+
+// Traitement du vote collectif Rester/Partir
+async function pokerHandleVoteResult(room) {
+  if (!room || room.phase !== 'waiting_next') return;
+  if (room.voteTimer) { clearTimeout(room.voteTimer); room.voteTimer = null; }
+
+  // Joueurs qui ont voté "partir" OU dont le stack est à 0
+  const leaverSocketIds = [];
+  for (const [socketId, vote] of (room.voteMap || new Map())) {
+    if (vote === 'leave') leaverSocketIds.push(socketId);
+  }
+
+  for (const socketId of leaverSocketIds) {
+    const pIdx = room.players.findIndex(p => p && p.socketId === socketId);
+    if (pIdx < 0) continue;
+    const player = room.players[pIdx];
+    if (player.stack > 0) {
+      try {
+        await pool.query('UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2', [player.stack, player.userId]);
+        const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [player.userId]);
+        const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
+        io.to(socketId).emit('poker:chipUpdate', { chips: newChips });
+        player.stack = 0;
+      } catch(e) { console.error('Vote leave refund error:', e.message); }
     }
-  }, 6000);
+    room.players[pIdx] = null;
+    io.to(socketId).emit('poker:leftByVote');
+    const sock = io.sockets.sockets.get(socketId);
+    if (sock) sock.leave(room.code);
+    io.to(room.code).emit('poker:playerLeft', { players: room.players.filter(p => p), name: player.name });
+  }
+
+  // Intégrer les joueurs en attente (arrivés pendant la partie en cours)
+  if (room.pendingPlayers && room.pendingPlayers.length > 0) {
+    for (const pending of room.pendingPlayers) {
+      const sock = io.sockets.sockets.get(pending.socketId);
+      if (!sock) continue;
+      const nullIdx = room.players.indexOf(null);
+      if (nullIdx >= 0) {
+        room.players[nullIdx] = pending;
+      } else if (room.players.length < 6) {
+        room.players.push(pending);
+      } else {
+        // Salle pleine -> rembourser
+        try {
+          await pool.query('UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2', [pending.stack, pending.userId]);
+          const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [pending.userId]);
+          const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
+          io.to(pending.socketId).emit('poker:chipUpdate', { chips: newChips });
+        } catch(e) {}
+        io.to(pending.socketId).emit('poker:error', { message: 'La salle est pleine, tes jetons ont été remboursés.' });
+        continue;
+      }
+      io.to(room.code).emit('poker:playerJoined', { players: room.players.filter(p => p) });
+    }
+    room.pendingPlayers = [];
+  }
+
+  const stillIn = room.players.filter(p => p && p.stack > 0);
+  if (stillIn.length >= 2) {
+    io.to(room.code).emit('poker:nextRoundStarting', { inMs: 2000 });
+    setTimeout(() => pokerStartGame(room), 2000);
+  } else {
+    const msg = stillIn.length === 1
+      ? `${stillIn[0].name} remporte la partie !`
+      : 'Plus assez de joueurs avec des jetons';
+    await pokerEndGame(room, msg);
+  }
 }
 
 async function pokerHandleLeave(socket, code) {
   const room = pokerRooms.get(code);
   if (!room) return;
 
+  // ---- Cas 1 : joueur en attente (pending) ----
+  if (room.pendingPlayers) {
+    const pendingIdx = room.pendingPlayers.findIndex(p => p.socketId === socket.id);
+    if (pendingIdx >= 0) {
+      const pending = room.pendingPlayers[pendingIdx];
+      // Rembourser le buy-in du pending
+      if (pending.stack > 0) {
+        try {
+          await pool.query('UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2', [pending.stack, pending.userId]);
+          const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [pending.userId]);
+          const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
+          socket.emit('poker:chipUpdate', { chips: newChips });
+        } catch(e) { console.error('Pending refund error:', e.message); }
+      }
+      room.pendingPlayers.splice(pendingIdx, 1);
+      socket.leave(code);
+      return;
+    }
+  }
+
+  // ---- Cas 2 : joueur actif ----
   const pIdx = room.players.findIndex(p => p && p.socketId === socket.id);
   if (pIdx < 0) return;
 
@@ -8874,22 +8970,25 @@ async function pokerHandleLeave(socket, code) {
         'UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2',
         [player.stack, player.userId]
       );
-      // Notifier le client de son nouveau solde
       const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [player.userId]);
       const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
       socket.emit('poker:chipUpdate', { chips: newChips });
-      player.stack = 0; // Évite double-remboursement
+      player.stack = 0;
     } catch(e) { console.error('Poker refund error:', e.message); }
   }
 
-  // Marquer le joueur comme foldé dans tous les cas (peu importe la phase)
   player.folded = true;
   room.players[pIdx] = null;
   socket.leave(code);
 
+  // Retirer du vote si en cours
+  if (room.voteNeeded) room.voteNeeded.delete(socket.id);
+  if (room.voteMap)    room.voteMap.delete(socket.id);
+
   const remaining = room.players.filter(p => p);
 
   if (remaining.length === 0) {
+    if (room.voteTimer) clearTimeout(room.voteTimer);
     pokerRooms.delete(code); return;
   }
 
@@ -8900,37 +8999,32 @@ async function pokerHandleLeave(socket, code) {
   io.to(code).emit('poker:playerLeft', { players: remaining, name });
   io.to(code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
 
-  // Si une partie est en cours, gérer les conséquences du départ
+  // Phase en cours → gérer le départ en jeu
   if (room.phase !== 'waiting' && room.phase !== 'waiting_next') {
     const active = pokerActivePlayers(room);
-
     if (active.length <= 1) {
-      // Plus assez de joueurs → résoudre immédiatement
       pokerResolvePot(room);
     } else if (room.currentPlayer === pIdx) {
-      // C'était son tour → passer au suivant
       room.currentPlayer = pokerNextActive(room, pIdx);
       if (room.currentPlayer >= 0) {
-        // Vérifier si la phase peut avancer
         const maxBet = pokerHighestBet(room);
         const canAct = pokerCanAct(room);
         const allActedAndEqual = canAct.length === 0 || canAct.every(p => p.hasActed && p.currentBet === maxBet);
-        if (allActedAndEqual) {
-          pokerAdvancePhase(room);
-        } else {
-          pokerScheduleTurn(room);
-        }
+        if (allActedAndEqual) pokerAdvancePhase(room);
+        else pokerScheduleTurn(room);
       } else {
         pokerAdvancePhase(room);
       }
     } else {
-      // Ce n'était pas son tour, mais vérifier si la phase peut avancer maintenant
       const maxBet = pokerHighestBet(room);
       const canAct = pokerCanAct(room);
       const allActedAndEqual = canAct.length === 0 || canAct.every(p => p.hasActed && p.currentBet === maxBet);
-      if (allActedAndEqual) {
-        pokerAdvancePhase(room);
-      }
+      if (allActedAndEqual) pokerAdvancePhase(room);
+    }
+  } else if (room.phase === 'waiting_next') {
+    // Pendant le vote : si ce joueur était le dernier à voter, déclencher le résultat
+    if (room.voteNeeded && room.voteMap && room.voteMap.size >= room.voteNeeded.size) {
+      await pokerHandleVoteResult(room);
     }
   }
 }
@@ -8996,6 +9090,7 @@ io.on('connection', (socket) => {
         community: [], pot: 0, deck: [],
         currentPlayer: -1, dealer: 0,
         creatorSocketId: socket.id, turnTimer: null,
+        pendingPlayers: [], voteMap: new Map(), voteNeeded: new Set(), voteTimer: null,
       };
 
       pokerRooms.set(code, room);
@@ -9013,13 +9108,18 @@ io.on('connection', (socket) => {
       const room = pokerRooms.get((code || '').toUpperCase());
       if (!room)
         return socket.emit('poker:error', { message: 'Salle introuvable. Vérifie le code.' });
-      if (room.phase !== 'waiting')
-        return socket.emit('poker:error', { message: 'La partie a déjà commencé.' });
-      if (room.players.filter(p => p).length >= 6)
-        return socket.emit('poker:error', { message: 'La salle est pleine (6 joueurs max).' });
-      if (room.players.some(p => p && p.socketId === socket.id)) return;
+
+      // Vérifier que ce joueur n'est pas déjà dans la room
+      const alreadyIn = room.players.some(p => p && p.socketId === socket.id)
+        || (room.pendingPlayers || []).some(p => p.socketId === socket.id);
+      if (alreadyIn) return;
+
       if (buyin < room.buyin)
         return socket.emit('poker:error', { message: `Buy-in minimum : ${room.buyin} jetons.` });
+
+      const totalActive = room.players.filter(p => p).length + (room.pendingPlayers || []).length;
+      if (totalActive >= 6)
+        return socket.emit('poker:error', { message: 'La salle est pleine (6 joueurs max).' });
 
       const userQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [socket.userId]);
       const chips  = Number(userQ.rows[0]?.poker_chips || 0);
@@ -9030,20 +9130,44 @@ io.on('connection', (socket) => {
         'UPDATE users SET poker_chips=poker_chips-$1 WHERE id=$2', [buyin, socket.userId]
       );
 
-      room.players.push({
+      const playerObj = {
         socketId: socket.id, userId: socket.userId, name: socket.userName,
         avatar: socket.userAvatar || '',
         stack: buyin, holeCards: [], currentBet: 0,
         folded: false, allIn: false, hasCards: false,
         isSmallBlind: false, isBigBlind: false, winner: false,
-      });
+      };
 
       socket.join(code);
-      socket.emit('poker:roomJoined', {
-        code, sb: room.sb, bb: room.bb,
-        players: room.players.filter(p => p),
-      });
-      io.to(code).emit('poker:playerJoined', { players: room.players.filter(p => p) });
+
+      if (room.phase === 'waiting') {
+        // Partie pas encore commencée → rejoindre normalement
+        room.players.push(playerObj);
+        socket.emit('poker:roomJoined', {
+          code, sb: room.sb, bb: room.bb,
+          players: room.players.filter(p => p),
+        });
+        io.to(code).emit('poker:playerJoined', { players: room.players.filter(p => p) });
+      } else {
+        // Partie en cours → mettre en attente pour la prochaine main
+        if (!room.pendingPlayers) room.pendingPlayers = [];
+        room.pendingPlayers.push(playerObj);
+        socket.emit('poker:roomJoined', {
+          code, sb: room.sb, bb: room.bb,
+          players: room.players.filter(p => p),
+          pending: true, // indique qu'on est en attente de la prochaine main
+        });
+        // Notifier les autres qu'un joueur va rejoindre
+        io.to(code).emit('poker:pendingJoin', { name: socket.userName, stack: buyin });
+        toast_server = `${socket.userName} rejoindra à la prochaine main`;
+        io.to(code).emit('poker:chat', { name: '🃏 Poker', message: `${socket.userName} rejoindra à la prochaine main.` });
+
+        // Si la partie est en waiting_next et le vote est en cours, déclencher le check
+        if (room.phase === 'waiting_next') {
+          // Ajouter un vote automatique "stay" pour le pending (il vient d'arriver)
+          // Le décompte du vote ne change pas, c'est bien
+        }
+      }
     } catch(e) {
       socket.emit('poker:error', { message: e.message });
     }
@@ -9078,11 +9202,33 @@ io.on('connection', (socket) => {
     });
   });
 
-  // ---- Ready (client confirme qu'il a vu le résultat du round) ----
-  socket.on('poker:ready', ({ code }) => {
-    // Rien à faire côté serveur — le prochain round démarre automatiquement
-    // après le timeout dans pokerResolvePot. On ignore simplement l'event.
+  // ---- Vote Rester / Partir après un round ----
+  socket.on('poker:voteNext', async ({ code, vote }) => {
+    const room = pokerRooms.get(code);
+    if (!room || room.phase !== 'waiting_next') return;
+    if (!room.voteNeeded || !room.voteMap) return;
+    if (!room.voteNeeded.has(socket.id)) return; // ce joueur n'a pas à voter
+
+    room.voteMap.set(socket.id, vote); // 'stay' ou 'leave'
+
+    // Annoncer le vote aux autres
+    const pName = room.players.find(p => p && p.socketId === socket.id)?.name || 'Joueur';
+    io.to(code).emit('poker:voteUpdate', {
+      socketId: socket.id,
+      name: pName,
+      vote,
+      totalVoted: room.voteMap.size,
+      totalNeeded: room.voteNeeded.size,
+    });
+
+    // Si tout le monde a voté → résoudre immédiatement
+    if (room.voteMap.size >= room.voteNeeded.size) {
+      await pokerHandleVoteResult(room);
+    }
   });
+
+  // ---- Ready (alias legacy, ignoré) ----
+  socket.on('poker:ready', ({ code }) => {});
 
   // ---- Quitter ----
   socket.on('poker:leave', async ({ code }) => {
