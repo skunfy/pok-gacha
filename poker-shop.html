@@ -475,7 +475,9 @@ async function api(url, opts={}) {
     ...opts,
     headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers||{}) }
   });
-  return r.json();
+  const d = await r.json();
+  if (!r.ok && d.error) throw new Error(d.error);
+  return d;
 }
 
 async function loadMe() {
@@ -542,7 +544,7 @@ document.querySelectorAll('.shopItem').forEach(item => {
           toast(`+${fmtN(amount)} jetons ajoutés ! 🎉`, 'gold');
           loadHistory();
         } catch(e) {
-          toast('Erreur lors de l\'achat.', 'error');
+          toast(e.message || 'Erreur lors de l\'achat.', 'error');
         } finally {
           btn.disabled = false;
         }
@@ -581,7 +583,7 @@ document.getElementById('btnBuyCustom').addEventListener('click', () => {
         toast(`+${fmtN(amount)} jetons !`, 'gold');
         document.getElementById('buyInput').value = '';
         document.getElementById('buyResult').textContent = '0';
-      } catch(e) { toast('Erreur.', 'error'); }
+      } catch(e) { toast(e.message || 'Erreur.', 'error'); }
     }
   );
 });
@@ -605,7 +607,7 @@ document.getElementById('btnSellCustom').addEventListener('click', () => {
         toast(`+${fmtN(amount)} dollax récupérés !`, 'success');
         document.getElementById('sellInput').value = '';
         document.getElementById('sellResult').textContent = '0';
-      } catch(e) { toast('Erreur.', 'error'); }
+      } catch(e) { toast(e.message || 'Erreur.', 'error'); }
     }
   );
 });

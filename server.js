@@ -8295,6 +8295,14 @@ app.post('/api/poker/shop/buy', auth, async (req, res) => {
     if (!isCustom && !isPack)
       return res.status(400).json({ error: 'Pack invalide.' });
 
+    // Vérifie si le joueur est actuellement en table
+    const isInGame = [...pokerRooms.values()].some(room =>
+      room.players.some(p => p && p.userId === req.user.id)
+    );
+    if (isInGame) {
+      return res.status(400).json({ error: 'Impossible d\'acheter des jetons pendant une partie. Quitte la table d\'abord.' });
+    }
+
     await client.query('BEGIN');
     const userQ = await client.query(
       'SELECT money, poker_chips FROM users WHERE id=$1 FOR UPDATE', [req.user.id]
@@ -8332,6 +8340,14 @@ app.post('/api/poker/shop/sell', auth, async (req, res) => {
     const { amount } = req.body;
     if (!amount || amount < 1)
       return res.status(400).json({ error: 'Montant invalide.' });
+
+    // Vérifie si le joueur est en table
+    const isInGame = [...pokerRooms.values()].some(room =>
+      room.players.some(p => p && p.userId === req.user.id)
+    );
+    if (isInGame) {
+      return res.status(400).json({ error: 'Impossible de reconvertir des jetons pendant une partie. Quitte la table d\'abord.' });
+    }
 
     await client.query('BEGIN');
     const userQ = await client.query(
