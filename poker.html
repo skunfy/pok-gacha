@@ -1308,8 +1308,8 @@ function initSocket() {
     if (amount > 0) sfxPlay('sfxChip');
   });
 
-  socket.on('poker:roundEnd', ({ winners, pot, hands, newStacks }) => {
-    handleRoundEnd(winners, pot, hands, newStacks);
+  socket.on('poker:roundEnd', ({ winners, pot, hands, newStacks, contribs }) => {
+    handleRoundEnd(winners, pot, hands, newStacks, contribs);
   });
 
   // Vote rester / partir
@@ -1336,8 +1336,9 @@ function initSocket() {
   // Ce joueur a voté "partir" et est sorti
   socket.on('poker:leftByVote', () => {
     clearVote();
-    toast('Tu as quitté la table. Tes jetons vont être remboursés.', 'info');
-    setTimeout(() => window.location.reload(), 2500);
+    toast('Tu as quitté la table. Tes jetons ont été remboursés.', 'info');
+    // Le chipUpdate est envoyé juste avant leftByVote côté serveur → on attend un peu
+    setTimeout(() => window.location.reload(), 1500);
   });
 
   // Joueur en pending qui rejoint
@@ -1350,7 +1351,8 @@ function initSocket() {
   socket.on('poker:gameEnd', ({ reason }) => {
     clearVote();
     toast('Partie terminée : ' + reason, 'info');
-    setTimeout(() => { window.location.reload(); }, 3500);
+    // chipUpdate est envoyé avant gameEnd via pokerUpdateChipsDB (await) → 2s suffisent
+    setTimeout(() => { window.location.reload(); }, 2000);
   });
 
   socket.on('poker:chipUpdate', ({ chips }) => {
@@ -1560,7 +1562,7 @@ function startTurnTimer(seconds) {
 }
 
 // ---- Round end with showdown ----
-function handleRoundEnd(winners, pot, hands, newStacks) {
+function handleRoundEnd(winners, pot, hands, newStacks, contribs) {
   disableActions();
   myHoleCards = [];
   // Reset vote buttons pour ce round
@@ -1593,15 +1595,15 @@ function handleRoundEnd(winners, pot, hands, newStacks) {
     // 2. Après 2.5s, cacher showdown et afficher popup gagnant
     setTimeout(() => {
       showdownEl.classList.remove('show');
-      showWinnerPopup(winners, pot);
+      showWinnerPopup(winners, pot, contribs);
     }, 2500);
   } else {
     // Pas de hands révélées (fold), afficher direct le popup
-    showWinnerPopup(winners, pot);
+    showWinnerPopup(winners, pot, contribs);
   }
 }
 
-function showWinnerPopup(winners, pot) {
+function showWinnerPopup(winners, pot, contribs) {
   const popup = document.getElementById('resultPopup');
   const isWinner = winners.some(w => w.socketId === mySocketId);
   const mainWinner = winners[0];
@@ -1621,13 +1623,17 @@ function showWinnerPopup(winners, pot) {
 
   if (isWinner) {
     const myWinData = winners.find(w => w.socketId === mySocketId);
-    document.getElementById('resultAmt').textContent = '+' + fmtN(myWinData?.amount) + ' 🪙';
+    // Afficher le gain NET (ce qu'on gagne vraiment, pas le pot total)
+    const netGain = myWinData?.netGain ?? (myWinData?.amount ?? 0);
+    document.getElementById('resultAmt').textContent = '+' + fmtN(netGain) + ' 🪙';
   } else {
-    document.getElementById('resultAmt').textContent = '−' + fmtN(pot) + ' 🪙';
+    // Afficher la perte réelle (ce qu'on avait misé ce round)
+    const myContrib = (contribs && contribs[mySocketId]) ?? 0;
+    const lossAmt = myContrib > 0 ? myContrib : pot;
+    document.getElementById('resultAmt').textContent = '−' + fmtN(lossAmt) + ' 🪙';
   }
 
   // Le vote sera affiché via poker:voteNext
-  // On cache le voteSection jusqu'à réception de l'event
   document.getElementById('voteSection').style.display = 'none';
 }
 
@@ -1725,8 +1731,17 @@ document.getElementById('btnStart').addEventListener('click', () => {
 // Leave
 document.getElementById('btnLeave').addEventListener('click', () => {
   if (confirm('Quitter la table ? Tes jetons restants te seront rendus.')) {
+    const btn = document.getElementById('btnLeave');
+    btn.disabled = true;
+    btn.textContent = 'Remboursement...';
     socket.emit('poker:leave', { code: currentRoomCode });
-    window.location.reload();
+    // Attendre la confirmation du serveur (remboursement DB effectué) avant de recharger
+    // Timeout de sécurité : 4s max au cas où l'event n'arrive pas
+    const safetyTimer = setTimeout(() => window.location.reload(), 4000);
+    socket.once('poker:leaveConfirmed', () => {
+      clearTimeout(safetyTimer);
+      window.location.reload();
+    });
   }
 });
 
