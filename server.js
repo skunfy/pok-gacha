@@ -8308,13 +8308,16 @@ app.post('/api/poker/shop/buy', auth, async (req, res) => {
       'SELECT money, poker_chips FROM users WHERE id=$1 FOR UPDATE', [req.user.id]
     );
     const user = userQ.rows[0];
-    if (!user || user.money < cost) {
+    // Cast BIGINT/INTEGER from pg (returned as string for BIGINT) to Number
+    const userMoney = Number(user?.money || 0);
+    const userChips = Number(user?.poker_chips || 0);
+    if (!user || userMoney < cost) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Pas assez de dollax.' });
     }
 
-    const newMoney = user.money - cost;
-    const newChips = (user.poker_chips || 0) + amount;
+    const newMoney = userMoney - cost;
+    const newChips = userChips + amount;
 
     await client.query(
       'UPDATE users SET money=$1, poker_chips=$2 WHERE id=$3',
@@ -8354,13 +8357,16 @@ app.post('/api/poker/shop/sell', auth, async (req, res) => {
       'SELECT money, poker_chips FROM users WHERE id=$1 FOR UPDATE', [req.user.id]
     );
     const user = userQ.rows[0];
-    if (!user || (user.poker_chips || 0) < amount) {
+    // Cast BIGINT/INTEGER from pg (returned as string for BIGINT) to Number
+    const userMoney = Number(user?.money || 0);
+    const userChips = Number(user?.poker_chips || 0);
+    if (!user || userChips < amount) {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Pas assez de jetons.' });
     }
 
-    const newChips = user.poker_chips - amount;
-    const newMoney = user.money + amount;
+    const newChips = userChips - amount;
+    const newMoney = userMoney + amount;
 
     await client.query(
       'UPDATE users SET money=$1, poker_chips=$2 WHERE id=$3',
@@ -8559,15 +8565,19 @@ async function pokerUpdateChipsDB(room) {
         'UPDATE users SET poker_chips = poker_chips + $1 WHERE id = $2',
         [p.stack, p.userId]
       );
+      // Récupérer le nouveau solde pour l'envoyer au client
+      const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [p.userId]);
+      const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
+      io.to(p.socketId).emit('poker:chipUpdate', { chips: newChips });
       p.stack = 0; // Marque comme remboursé pour éviter double-paiement
     } catch(e) { console.error('Poker chip sync error:', e.message); }
   }
 }
 
-function pokerEndGame(room, reason) {
+async function pokerEndGame(room, reason) {
   if (room.turnTimer) clearTimeout(room.turnTimer);
   io.to(room.code).emit('poker:gameEnd', { reason });
-  pokerUpdateChipsDB(room);
+  await pokerUpdateChipsDB(room);
   setTimeout(() => pokerRooms.delete(room.code), 30000);
 }
 
@@ -8811,8 +8821,14 @@ function pokerResolvePot(room) {
   const maxScore = Math.max(...active.map(p => handResults[p.socketId]?.score || 0));
   const winners  = active.filter(p => handResults[p.socketId]?.score === maxScore);
   const share    = Math.floor(room.pot / winners.length);
+  const remainder = room.pot - (share * winners.length); // jetons résiduels (division entière)
 
-  for (const w of winners) { w.stack += share; w.winner = true; }
+  for (let i = 0; i < winners.length; i++) {
+    const w = winners[i];
+    // Le premier gagnant récupère aussi le reste de la division entière
+    w.stack += share + (i === 0 ? remainder : 0);
+    w.winner = true;
+  }
 
   io.to(room.code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
   io.to(room.code).emit('poker:roundEnd', {
@@ -8858,10 +8874,16 @@ async function pokerHandleLeave(socket, code) {
         'UPDATE users SET poker_chips=poker_chips+$1 WHERE id=$2',
         [player.stack, player.userId]
       );
+      // Notifier le client de son nouveau solde
+      const newBalQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [player.userId]);
+      const newChips = Number(newBalQ.rows[0]?.poker_chips || 0);
+      socket.emit('poker:chipUpdate', { chips: newChips });
       player.stack = 0; // Évite double-remboursement
     } catch(e) { console.error('Poker refund error:', e.message); }
   }
 
+  // Marquer le joueur comme foldé dans tous les cas (peu importe la phase)
+  player.folded = true;
   room.players[pIdx] = null;
   socket.leave(code);
 
@@ -8878,16 +8900,36 @@ async function pokerHandleLeave(socket, code) {
   io.to(code).emit('poker:playerLeft', { players: remaining, name });
   io.to(code).emit('poker:stateUpdate', { state: pokerPublicState(room) });
 
+  // Si une partie est en cours, gérer les conséquences du départ
   if (room.phase !== 'waiting' && room.phase !== 'waiting_next') {
-    if (room.currentPlayer === pIdx) {
-      player.folded = true;
-      const active = pokerActivePlayers(room);
-      if (active.length <= 1) {
-        pokerResolvePot(room);
+    const active = pokerActivePlayers(room);
+
+    if (active.length <= 1) {
+      // Plus assez de joueurs → résoudre immédiatement
+      pokerResolvePot(room);
+    } else if (room.currentPlayer === pIdx) {
+      // C'était son tour → passer au suivant
+      room.currentPlayer = pokerNextActive(room, pIdx);
+      if (room.currentPlayer >= 0) {
+        // Vérifier si la phase peut avancer
+        const maxBet = pokerHighestBet(room);
+        const canAct = pokerCanAct(room);
+        const allActedAndEqual = canAct.length === 0 || canAct.every(p => p.hasActed && p.currentBet === maxBet);
+        if (allActedAndEqual) {
+          pokerAdvancePhase(room);
+        } else {
+          pokerScheduleTurn(room);
+        }
       } else {
-        room.currentPlayer = pokerNextActive(room, pIdx);
-        if (room.currentPlayer >= 0) pokerScheduleTurn(room);
-        else pokerAdvancePhase(room);
+        pokerAdvancePhase(room);
+      }
+    } else {
+      // Ce n'était pas son tour, mais vérifier si la phase peut avancer maintenant
+      const maxBet = pokerHighestBet(room);
+      const canAct = pokerCanAct(room);
+      const allActedAndEqual = canAct.length === 0 || canAct.every(p => p.hasActed && p.currentBet === maxBet);
+      if (allActedAndEqual) {
+        pokerAdvancePhase(room);
       }
     }
   }
@@ -8930,7 +8972,7 @@ io.on('connection', (socket) => {
         return socket.emit('poker:error', { message: `Buy-in minimum : ${bb * 2} jetons (2× BB).` });
 
       const userQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [socket.userId]);
-      const chips = userQ.rows[0]?.poker_chips || 0;
+      const chips = Number(userQ.rows[0]?.poker_chips || 0);
       if (chips < buyin)
         return socket.emit('poker:error', { message: `Jetons insuffisants (${chips} < ${buyin}).` });
 
@@ -8980,7 +9022,7 @@ io.on('connection', (socket) => {
         return socket.emit('poker:error', { message: `Buy-in minimum : ${room.buyin} jetons.` });
 
       const userQ = await pool.query('SELECT poker_chips FROM users WHERE id=$1', [socket.userId]);
-      const chips  = userQ.rows[0]?.poker_chips || 0;
+      const chips  = Number(userQ.rows[0]?.poker_chips || 0);
       if (chips < buyin)
         return socket.emit('poker:error', { message: `Jetons insuffisants (${chips} < ${buyin}).` });
 
@@ -9034,6 +9076,12 @@ io.on('connection', (socket) => {
       name: socket.userName,
       message: message.trim().slice(0, 80),
     });
+  });
+
+  // ---- Ready (client confirme qu'il a vu le résultat du round) ----
+  socket.on('poker:ready', ({ code }) => {
+    // Rien à faire côté serveur — le prochain round démarre automatiquement
+    // après le timeout dans pokerResolvePot. On ignore simplement l'event.
   });
 
   // ---- Quitter ----

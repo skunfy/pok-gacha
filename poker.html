@@ -1054,6 +1054,7 @@ let currentBet = 0; // highest bet on table
 let myTurn = false;
 let myHoleCards = [];
 let myAvatar = '';
+let _prevCommLen = 0; // track community cards length for animation
 
 // ---- UI helpers ----
 function showScreen(id) {
@@ -1122,11 +1123,10 @@ async function loadMe() {
   try {
     const r = await fetch('/api/me', { headers:{ Authorization:'Bearer '+token } });
     const d = await r.json();
-    myId = d.id;
-    // Avatar Gachax : priorité à avatar_url, puis avatar, puis construit depuis username
-    myAvatar = d.avatar_url || d.avatar || (d.username ? `/avatars/${d.username}.png` : '');
+    // /api/me ne retourne pas d.id directement — on l'identifie via le socketId après connexion
+    myAvatar = d.avatar_url || d.avatar || '';
     document.getElementById('lobbyDollax').textContent = fmtN(d.money);
-    document.getElementById('lobbyChips').textContent = fmtN(d.poker_chips || 0);
+    document.getElementById('lobbyChips').textContent = fmtN(Number(d.poker_chips || 0));
   } catch(e) {
     window.location.href = '/login.html';
   }
@@ -1246,8 +1246,9 @@ function initSocket() {
   });
 
   socket.on('poker:chipUpdate', ({ chips }) => {
-    document.getElementById('hudChips').textContent = fmtN(chips);
-    document.getElementById('lobbyChips').textContent = fmtN(chips);
+    const n = Number(chips || 0);
+    document.getElementById('hudChips').textContent = fmtN(n);
+    document.getElementById('lobbyChips').textContent = fmtN(n);
   });
 
   // --- Chat ---

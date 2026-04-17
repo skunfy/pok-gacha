@@ -482,8 +482,8 @@ async function api(url, opts={}) {
 
 async function loadMe() {
   const d = await api('/api/me');
-  myDollax = d.money || 0;
-  myChips = d.poker_chips || 0;
+  myDollax = Number(d.money || 0);
+  myChips = Number(d.poker_chips || 0);
   updateUI();
 }
 
@@ -538,8 +538,8 @@ document.querySelectorAll('.shopItem').forEach(item => {
             body: JSON.stringify({ amount, cost })
           });
           if (d.error) { toast(d.error, 'error'); return; }
-          myDollax = d.newDollax;
-          myChips = d.newChips;
+          myDollax = Number(d.newDollax || 0);
+          myChips = Number(d.newChips || 0);
           updateUI();
           toast(`+${fmtN(amount)} jetons ajoutés ! 🎉`, 'gold');
           loadHistory();
@@ -578,7 +578,7 @@ document.getElementById('btnBuyCustom').addEventListener('click', () => {
           body: JSON.stringify({ amount, cost: amount })
         });
         if (d.error) { toast(d.error, 'error'); return; }
-        myDollax = d.newDollax; myChips = d.newChips;
+        myDollax = Number(d.newDollax || 0); myChips = Number(d.newChips || 0);
         updateUI(); loadHistory();
         toast(`+${fmtN(amount)} jetons !`, 'gold');
         document.getElementById('buyInput').value = '';
@@ -602,7 +602,7 @@ document.getElementById('btnSellCustom').addEventListener('click', () => {
           body: JSON.stringify({ amount })
         });
         if (d.error) { toast(d.error, 'error'); return; }
-        myDollax = d.newDollax; myChips = d.newChips;
+        myDollax = Number(d.newDollax || 0); myChips = Number(d.newChips || 0);
         updateUI(); loadHistory();
         toast(`+${fmtN(amount)} dollax récupérés !`, 'success');
         document.getElementById('sellInput').value = '';
