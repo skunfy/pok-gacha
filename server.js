@@ -8059,9 +8059,9 @@ app.post('/api/pvp/defi/fight', auth, async (req, res) => {
 //  • Chaque jour le buffer est consommé avant d'appliquer la pénalité
 
 const ELO_DECAY_THRESHOLD_RANK = 'Diamant'; // à partir de ce rang
-const ELO_DECAY_MIN_GAMES      = 4;         // games obligatoires/jour
-const ELO_DECAY_AMOUNT         = 50;        // pénalité ELO par jour inactif
-const ELO_BUFFER_MAX           = 9;         // max 9 jours de buffer
+const ELO_DECAY_MIN_GAMES      = 1;         // games obligatoires/jour
+const ELO_DECAY_AMOUNT         = 15;        // pénalité ELO par jour inactif
+const ELO_BUFFER_MAX           = 10;         // max 9 jours de buffer
 
 async function applyDailyEloDecay() {
   try {
